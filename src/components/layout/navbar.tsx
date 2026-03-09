@@ -13,7 +13,7 @@ const navLinks = [
   { label: "Modules", href: "#modules" },
   { label: "Tarifs", href: "#tarifs" },
   { label: "FAQ", href: "#faq" },
-  { label: "App", href: "/app"}
+  { label: "Prévisionnel", href: "/previsionnel"}
 ];
 
 export default function Navbar() {
