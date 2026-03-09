@@ -1,0 +1,117 @@
+model Apport {
+  id           String     @id @default(cuid())
+  libelle      String
+  type         TypeApport @default(CAPITAL)
+  montant      Decimal    @db.Decimal(15, 2)
+  dateApport   DateTime
+  description  String?
+  remboursable Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  scenarioId   String
+  scenario     Scenario   @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("apport")
+}
+
+model Subvention {
+  id               String         @id @default(cuid())
+  libelle          String
+  type             TypeSubvention @default(AIDE_DEMARRAGE)
+  montant          Decimal        @db.Decimal(15, 2)
+  dateObtention    DateTime?
+  dateEncaissement DateTime?
+  description      String?
+  imposable        Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  scenarioId       String
+  scenario         Scenario       @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("subvention")
+}
+
+model Emprunt {
+  id                    String                @id @default(cuid())
+  libelle               String
+  montant               Decimal               @db.Decimal(15, 2)
+  tauxAnnuel            Decimal               @db.Decimal(6, 4)
+  tauxAssurance         Decimal               @default(0.00) @db.Decimal(5, 4)
+  dureeEnMois           Int
+  periodicite           PeriodiciteEmprunt    @default(MENSUEL)
+  dateDéblocage        DateTime
+  typeDiffere           TypeDifferé          @default(AUCUN)
+  dureeDiffereEnMois    Int                   @default(0)
+  fraisDossier          Decimal               @default(0.00) @db.Decimal(15, 2)
+  garanties             String?
+  description           String?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  scenarioId            String
+  modaliteRemboursement ModaliteRemboursement @default(ECHEANCE_CONSTANTE)
+  modeAssurance         ModeAssurance         @default(CAPITAL_RESTANT)
+  typeEmprunt           TypeEmprunt           @default(AMORTISSABLE)
+  scenario              Scenario              @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  lignesEcheancier      LigneEcheancier[]
+
+  @@map("emprunt")
+}
+
+model LigneEcheancier {
+  id                  String   @id @default(cuid())
+  moisNumero          Int
+  dateEcheance        DateTime
+  capitalRestantDebut Decimal  @db.Decimal(15, 2)
+  interesMois         Decimal  @db.Decimal(15, 2)
+  assuranceMois       Decimal  @db.Decimal(15, 2)
+  capitalRembourse    Decimal  @db.Decimal(15, 2)
+  mensualiteTotale    Decimal  @db.Decimal(15, 2)
+  capitalRestantFin   Decimal  @db.Decimal(15, 2)
+  empruntId           String
+  emprunt             Emprunt  @relation(fields: [empruntId], references: [id], onDelete: Cascade)
+
+  @@unique([empruntId, moisNumero])
+  @@map("ligne_echeancier")
+}
+
+enum TypeApport {
+  CAPITAL
+  COMPTE_COURANT
+  APPORT_NATURE
+}
+
+enum TypeSubvention {
+  SUBVENTION_INVESTISSEMENT
+  SUBVENTION_EXPLOITATION
+  AIDE_DEMARRAGE
+  PRET_HONNEUR
+  AUTRE
+}
+
+enum PeriodiciteEmprunt {
+  MENSUEL
+  TRIMESTRIEL
+  SEMESTRIEL
+  ANNUEL
+}
+
+enum TypeDifferé {
+  AUCUN
+  PARTIEL
+  TOTAL
+}
+
+enum TypeEmprunt {
+  AMORTISSABLE
+  IN_FINE
+}
+
+enum ModaliteRemboursement {
+  ECHEANCE_CONSTANTE
+  CAPITAL_CONSTANT
+}
+
+enum ModeAssurance {
+  CAPITAL_RESTANT
+  CAPITAL_INITIAL
+}

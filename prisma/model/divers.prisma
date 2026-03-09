@@ -1,0 +1,87 @@
+// ── Divers ────────────────────────────────────────────────────────────────────
+// Regroupe : remboursements C/C, dividendes, opérations en capital,
+// déblocages participation, prêts inter-entreprises, encaissements/décaissements.
+
+/// Flux datés sur 3 exercices — commun à plusieurs sections Divers
+model DiversFluxDate {
+  id         String          @id @default(cuid())
+  actif      Boolean         @default(true)
+  libelle    String
+  hypothese  String?
+  type       TypeDiversFlux
+  dateN      String?
+  montantN   Decimal         @default(0) @db.Decimal(15, 2)
+  dateN1     String?
+  montantN1  Decimal         @default(0) @db.Decimal(15, 2)
+  dateN2     String?
+  montantN2  Decimal         @default(0) @db.Decimal(15, 2)
+  ordre      Int             @default(0)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  scenarioId String
+  scenario   Scenario        @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("divers_flux_date")
+}
+
+/// Opérations sur le capital : augmentation par incorporation de réserves, réduction de capital
+model DiversOperationCapital {
+  id         String                  @id @default(cuid())
+  actif      Boolean                 @default(true)
+  libelle    String
+  hypothese  String?
+  type       TypeOperationCapital
+  /// date unique utilisée pour la réduction de capital
+  date       String?
+  montantN   Decimal                 @default(0) @db.Decimal(15, 2)
+  montantN1  Decimal                 @default(0) @db.Decimal(15, 2)
+  montantN2  Decimal                 @default(0) @db.Decimal(15, 2)
+  ordre      Int                     @default(0)
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  scenarioId String
+  scenario   Scenario                @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("divers_operation_capital")
+}
+
+/// Prêts inter-entreprises avec calcul d'échéancier
+model DiversPret {
+  id          String                  @id @default(cuid())
+  actif       Boolean                 @default(true)
+  libelle     String
+  hypothese   String?
+  dateDebut   String?
+  capital     Decimal                 @default(0) @db.Decimal(15, 2)
+  taux        Decimal                 @default(0) @db.Decimal(7, 4)
+  dureeMois   Int                     @default(12)
+  periodicite PeriodicitePret         @default(MENSUELLE)
+  ordre       Int                     @default(0)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  scenarioId  String
+  scenario    Scenario                @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("divers_pret")
+}
+
+// ── Enums ─────────────────────────────────────────────────────────────────────
+
+enum TypeDiversFlux {
+  REMBOURSEMENT_CC
+  DIVIDENDE
+  DEBLOCAGE_PARTICIPATION
+  ENCAISSEMENT
+  DECAISSEMENT
+}
+
+enum TypeOperationCapital {
+  AUGMENTATION_INCORPORATION
+  REDUCTION
+}
+
+enum PeriodicitePret {
+  MENSUELLE
+  TRIMESTRIELLE
+  ANNUELLE
+}

@@ -1,0 +1,53 @@
+model Commentaire {
+  id         String          @id @default(cuid())
+  contenu    String
+  type       TypeCommentaire @default(GENERAL)
+  entiteType String?
+  entiteId   String?
+  resolu     Boolean         @default(false)
+  resoluLe   DateTime?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  auteurId   String
+  dossierId  String
+  parentId   String?
+  auteur     User            @relation(fields: [auteurId], references: [id], onDelete: Cascade)
+  dossier    Dossier         @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  parent     Commentaire?    @relation("ReponsesCommentaire", fields: [parentId], references: [id])
+  reponses   Commentaire[]   @relation("ReponsesCommentaire")
+
+  @@map("commentaire")
+}
+
+model ChecklistPiece {
+  id             String      @id @default(cuid())
+  libelle        String
+  description    String?
+  statut         StatutPiece @default(A_FOURNIR)
+  obligatoire    Boolean     @default(false)
+  fichierUrl     String?
+  fichierNom     String?
+  noteInterne    String?
+  dateReception  DateTime?
+  dateValidation DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  dossierId      String
+  dossier        Dossier     @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  @@map("checklist_piece")
+}
+
+enum StatutPiece {
+  A_FOURNIR
+  RECU
+  VALIDE
+  REFUSE
+}
+
+enum TypeCommentaire {
+  GENERAL
+  HYPOTHESE
+  ALERTE
+  VALIDATION
+}

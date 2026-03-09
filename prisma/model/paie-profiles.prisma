@@ -1,0 +1,82 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// PAIE — INFRASTRUCTURE PROFILES & EXTENSIONS (Lot P)
+//
+// Ces tables stockent la configuration des profils salariés spéciaux,
+// leurs rule sets associés et les adapters de schémas externes.
+// Elles sont gérées par les server actions d'administration (P-16).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Catalogue des profils salariés spéciaux.
+/// Miroir Prisma de `SpecialProfile` (lib/paie/profiles/types.ts).
+/// Les profils built-in (regime_general, apprentissage, etc.) sont pré-insérés
+/// par seed — les profils customs peuvent être créés via l'interface admin.
+model SpecialProfileDb {
+  /// Code unique du profil (ex. "btp_ouvrier", "intermittent_artiste")
+  profileCode   String   @id
+  /// Label affiché dans l'interface
+  label         String
+  /// Profil parent pour l'héritage des règles (null = racine)
+  parentProfile String?
+  /// Description métier
+  description   String?
+  /// Date de début de validité (ISO 8601 date string, ex. "2026-01-01")
+  validFrom     String?
+  /// Date de fin de validité
+  validTo       String?
+  /// Codes de rule sets associés (JSON array of strings, ex. ["vrp_abattement"])
+  ruleSetCodes  String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  /// Règles de cotisations liées à ce profil
+  profileRuleSets ProfileRuleSetDb[]
+
+  @@map("paie_special_profile")
+}
+
+/// Association entre un profil salarié et un rule set de cotisations.
+/// Permet de définir plusieurs jeux de règles par profil (ordre de priorité).
+model ProfileRuleSetDb {
+  id          String   @id @default(cuid())
+  /// Code du profil référencé
+  profileCode String
+  /// Code fonctionnel du rule set (ex. "vrp_abattement_30", "apprenti_exo_sal")
+  ruleSetCode String
+  /// Priorité d'application (plus grand = priorité plus haute)
+  priority    Int      @default(0)
+  /// Date de début de validité
+  validFrom   String?
+  /// Date de fin de validité
+  validTo     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile SpecialProfileDb @relation(fields: [profileCode], references: [profileCode], onDelete: Cascade)
+
+  @@index([profileCode])
+  @@map("paie_profile_rule_set")
+}
+
+/// Catalogue des adapters de schémas externes (BTP, épargne salariale, etc.).
+/// Chaque adapter est un module pluggable qui s'insère à une ou plusieurs
+/// étapes du pipeline de simulation.
+model ExternalSchemeAdapterDb {
+  /// Code unique de l'adapter (ex. "btp_probtp", "interimaire_faf_tt")
+  adapterCode          String   @id
+  /// Label descriptif affiché dans l'interface admin
+  label                String
+  /// Type de schéma : paid_leave_fund | savings | international | entertainment | specific
+  schemeType           String
+  /// Étapes du pipeline où l'adapter s'insère (JSON array of numbers, ex. [7, 11])
+  insertAtSteps        String   @db.Text
+  /// Condition d'activation (expression lisible, ex. "profileCode === 'btp_ouvrier'")
+  activationCondition  String?
+  /// Date de début de validité
+  validFrom            String?
+  /// Date de fin de validité
+  validTo              String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("paie_external_scheme_adapter")
+}

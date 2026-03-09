@@ -1,0 +1,67 @@
+// ── Unités d'œuvre ────────────────────────────────────────────────────────────
+// Indicateurs opérationnels pour modéliser la formation du chiffre d'affaires.
+// Chaque unité permet de décomposer le CA en volumes × prix sur 3 exercices (N/N+1/N+2).
+
+model UniteDOeuvre {
+  id             String           @id @default(cuid())
+  actif          Boolean          @default(true)
+  libelle        String           @default("")
+  typeUnite      TypeUniteOeuvre  @default(COUVERT)
+  typeIndicateur TypeIndicateurUO @default(CHIFFRE_AFFAIRES)
+  typeDuree      TypeDureeUO      @default(JOURS_AN)
+  ordre          Int              @default(0)
+
+  // ── Exercice N ──────────────────────────────────────────────────────────────
+  indicateurBaseN   Decimal @default(0) @db.Decimal(15, 2)
+  partPctN          Decimal @default(0) @db.Decimal(7, 4)
+  chiffreAffairesN  Decimal @default(0) @db.Decimal(15, 2)
+  nbJoursN          Decimal @default(365) @db.Decimal(7, 2)
+  parJourN          Decimal @default(0) @db.Decimal(15, 4)
+  prixMoyenN        Decimal @default(0) @db.Decimal(15, 4)
+  quantiteN         Decimal @default(0) @db.Decimal(15, 4)
+
+  // ── Exercice N+1 ────────────────────────────────────────────────────────────
+  indicateurBaseN1  Decimal @default(0) @db.Decimal(15, 2)
+  partPctN1         Decimal @default(0) @db.Decimal(7, 4)
+  chiffreAffairesN1 Decimal @default(0) @db.Decimal(15, 2)
+  nbJoursN1         Decimal @default(365) @db.Decimal(7, 2)
+  parJourN1         Decimal @default(0) @db.Decimal(15, 4)
+  prixMoyenN1       Decimal @default(0) @db.Decimal(15, 4)
+  quantiteN1        Decimal @default(0) @db.Decimal(15, 4)
+
+  // ── Exercice N+2 ────────────────────────────────────────────────────────────
+  indicateurBaseN2  Decimal @default(0) @db.Decimal(15, 2)
+  partPctN2         Decimal @default(0) @db.Decimal(7, 4)
+  chiffreAffairesN2 Decimal @default(0) @db.Decimal(15, 2)
+  nbJoursN2         Decimal @default(365) @db.Decimal(7, 2)
+  parJourN2         Decimal @default(0) @db.Decimal(15, 4)
+  prixMoyenN2       Decimal @default(0) @db.Decimal(15, 4)
+  quantiteN2        Decimal @default(0) @db.Decimal(15, 4)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  scenarioId String
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("unite_d_oeuvre")
+}
+
+enum TypeUniteOeuvre {
+  COUVERT
+  PRODUIT
+  HEURE
+  CLIENT
+  AUTRE
+}
+
+enum TypeIndicateurUO {
+  CHIFFRE_AFFAIRES
+  QUANTITE
+  PRODUCTION
+}
+
+enum TypeDureeUO {
+  JOURS_AN
+  MOIS_AN
+  PERSONNALISEE
+}

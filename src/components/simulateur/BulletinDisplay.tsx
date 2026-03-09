@@ -1,0 +1,339 @@
+"use client";
+
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { CotisationLine, CotisationTableHeader } from "./CotisationLine";
+import type { LigneCotisation, SimulationInput, SimulationResultat, FamilleCotisation } from "@/lib/paie/types";
+import { calcSalaireBase } from "@/lib/paie/engine/assiettes";
+import { PARAMS_2026 } from "@/lib/paie/params/2026";
+import { CONVENTION_CATALOG } from "@/lib/paie/conventions/catalog";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ordre d'affichage des familles
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Groupes de familles pour l'affichage structuré
+type GroupeLabel = {
+  label: string;
+  familles: FamilleCotisation[];
+};
+
+const GROUPES: GroupeLabel[] = [
+  {
+    label: "Sécurité sociale",
+    familles: ["assurance_maladie", "assurance_vieillesse", "allocations_familiales", "fnal", "csa", "dialogue_social", "at_mp"],
+  },
+  {
+    label: "Chômage & AGS",
+    familles: ["assurance_chomage", "ags"],
+  },
+  {
+    label: "Retraite complémentaire",
+    familles: ["retraite_complementaire", "ceg", "cet", "apec"],
+  },
+  {
+    label: "CSG & CRDS",
+    familles: ["csg_deductible", "csg_non_deductible", "crds"],
+  },
+  {
+    label: "Versement mobilité",
+    familles: ["versement_mobilite"],
+  },
+  {
+    label: "Prévoyance & mutuelle conventionnelle",
+    familles: ["prevoyance_prevoyance", "prevoyance_mutuelle"],
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BulletinDisplay
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface BulletinDisplayProps {
+  resultat: SimulationResultat;
+  input: SimulationInput;
+}
+
+export function BulletinDisplay({ resultat, input }: BulletinDisplayProps) {
+  const { lignes } = resultat;
+  const sal = input.salarié;
+
+  // ── Convention collective ─────────────────────────────────────────────────
+  const convMeta = sal.conventionCode
+    ? CONVENTION_CATALOG.get(sal.conventionCode)
+    : undefined;
+
+  // ── Composition du brut ───────────────────────────────────────────────────
+  const HEURES_LEGALES = PARAMS_2026.heuresLegalesMensuelles;
+  const salaireBase = calcSalaireBase(sal);
+  const heuresNormales = Math.min(sal.heuresContrat, HEURES_LEGALES);
+  const tauxHoraire = sal.brutMensuel > 0 ? sal.brutMensuel / heuresNormales : 0;
+  const nbHeuresSup = sal.heuresSupplementaires ?? 0;
+  // Utilise le montant réel calculé par le moteur (prend en compte les surcharges
+  // conventionnelles ex. HCR : 10 %/20 %/50 % au lieu du légal 25 %/50 %).
+  const montantHS = nbHeuresSup > 0 ? (resultat.heuresSup ?? 0) : 0;
+  // Taux implicite (pour l'affichage détail) : back-calculé depuis le montant réel
+  const tauxMajoration =
+    nbHeuresSup > 0 && tauxHoraire > 0
+      ? montantHS / (nbHeuresSup * tauxHoraire) - 1
+      : (sal.tauxMajorationHeuresSup ?? 0.25);
+  const primes = sal.primesSoumises ?? 0;
+  const avantages = sal.avantagesEnNature ?? 0;
+  const absences = sal.absencesNonRemunerees ?? 0;
+  const aDesExtras = nbHeuresSup > 0 || primes > 0 || avantages > 0 || absences > 0;
+
+  // ── Cotisations ───────────────────────────────────────────────────────────
+  const lignesReduction = lignes.filter(
+    (l) => l.famille === "rgdu" || l.famille === "exoneration"
+  );
+  const lignesStandard = lignes.filter(
+    (l) => l.famille !== "rgdu" && l.famille !== "exoneration"
+  );
+  const parFamille = new Map<FamilleCotisation, LigneCotisation[]>();
+  for (const ligne of lignesStandard) {
+    if (!parFamille.has(ligne.famille)) parFamille.set(ligne.famille, []);
+    parFamille.get(ligne.famille)!.push(ligne);
+  }
+
+  // ── Totaux ────────────────────────────────────────────────────────────────
+  const totalSal = resultat.totalCotisationsSalariales;
+  const totalPat = resultat.totalCotisationsPatronales;
+
+  return (
+    <div className="flex flex-col gap-0 text-sm">
+
+      {/* ── En-tête ── */}
+      <div className="flex items-center justify-between px-3 pb-3">
+        <div>
+          <p className="font-semibold">Bulletin de simulation</p>
+          <p className="text-xs text-muted-foreground">
+            Paramètres 2026 — Régime général
+            {convMeta && (
+              <> — <span className="text-foreground font-medium">CCN IDCC {sal.conventionCode} — {convMeta.label}</span>
+                {convMeta.statut === "partial" && (
+                  <span className="ml-1 text-amber-600 dark:text-amber-400" title="Implémentation partielle">●</span>
+                )}
+              </>
+            )}
+          </p>
+        </div>
+        <Badge variant="secondary">
+          {new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(new Date())}
+        </Badge>
+      </div>
+
+      {/* ── SECTION 1 : Composition du brut ── */}
+      <div className="rounded-md border bg-muted/30 mx-1 mb-3 overflow-hidden">
+        <p className="px-3 pt-2 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground border-b">
+          Composition du brut
+        </p>
+
+        <BrutRow
+          label="Salaire de base"
+          detail={`${heuresNormales.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} h × ${formatEur(tauxHoraire)}/h`}
+          montant={salaireBase}
+        />
+
+        {nbHeuresSup > 0 && (
+          <BrutRow
+            label="Heures supplémentaires"
+            detail={`${nbHeuresSup.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} h × ${(100 + tauxMajoration * 100).toFixed(1)} % × ${formatEur(tauxHoraire)}/h`}
+            montant={montantHS}
+            extra
+          />
+        )}
+
+        {primes > 0 && (
+          <BrutRow label="Primes soumises" montant={primes} extra />
+        )}
+
+        {avantages > 0 && (
+          <BrutRow label="Avantages en nature" montant={avantages} extra />
+        )}
+
+        {absences > 0 && (
+          <BrutRow label="Absences non rémunérées" montant={-absences} extra />
+        )}
+
+        <div className={`grid grid-cols-[1fr_auto] items-center gap-x-4 ${aDesExtras ? "border-t" : ""} bg-background px-3 py-2`}>
+          <span className="font-semibold">Brut soumis à cotisations</span>
+          <span className="w-28 text-right font-mono font-semibold">
+            {formatEur(resultat.brutSoumis)}
+          </span>
+        </div>
+      </div>
+
+      {/* ── SECTION 2 : Bases de référence ── */}
+      <div className="mx-1 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
+        <span className="font-semibold uppercase tracking-wide text-[10px]">Bases</span>
+        <BaseChip label="PMSS" value={formatEur(resultat.pmssProratise)} />
+        <span className="text-border">·</span>
+        <BaseChip label="Assiette CSG" value={formatEur(resultat.assietteCsg)} />
+        <span className="text-border">·</span>
+        <BaseChip label="T1 Agirc-Arrco" value={formatEur(resultat.baseT1)} />
+        {resultat.baseT2 > 0 && (
+          <>
+            <span className="text-border">·</span>
+            <BaseChip label="T2 Agirc-Arrco" value={formatEur(resultat.baseT2)} />
+          </>
+        )}
+      </div>
+
+      {/* ── SECTION 3 : Cotisations ── */}
+      <CotisationTableHeader />
+
+      {GROUPES.map(({ label, familles }) => {
+        const lignesGroupe = familles.flatMap((f) => parFamille.get(f) ?? []);
+        if (lignesGroupe.length === 0) return null;
+        return (
+          <div key={label}>
+            <p className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase text-muted-foreground tracking-wide">
+              {label}
+            </p>
+            {lignesGroupe.map((l) => (
+              <CotisationLine key={l.code} ligne={l} />
+            ))}
+          </div>
+        );
+      })}
+
+      {/* Réductions / exonérations */}
+      {lignesReduction.length > 0 && (
+        <div>
+          <p className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase text-muted-foreground tracking-wide">
+            Réductions &amp; Exonérations
+          </p>
+          {lignesReduction.map((l) => (
+            <CotisationLine key={l.code} ligne={l} highlight />
+          ))}
+        </div>
+      )}
+
+      {/* Total des cotisations */}
+      <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4 border-t mt-1 px-3 py-2 font-semibold bg-muted/30 text-sm">
+        <span>Total cotisations</span>
+        <span className="hidden md:block" />
+        <span className="w-20 text-right font-mono text-destructive">
+          -{formatEur(totalSal)}
+        </span>
+        <span className="w-20 text-right font-mono text-muted-foreground">
+          {formatEur(totalPat)}
+        </span>
+      </div>
+
+      <Separator className="my-3" />
+
+      {/* ── SECTION 4 : Net et fiscalité ── */}
+      <div className="flex flex-col gap-0.5 px-3">
+        <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
+          <span className="text-muted-foreground">Net avant PAS</span>
+          <span className="w-28 text-right font-mono">{formatEur(resultat.netAvantPAS)}</span>
+        </div>
+
+        <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
+          <span className="text-muted-foreground">Net imposable</span>
+          <span className="w-28 text-right font-mono text-muted-foreground">
+            {formatEur(resultat.netImposable)}
+          </span>
+        </div>
+
+        {resultat.pas > 0 && (
+          <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
+            <span className="text-muted-foreground">
+              Prélèvement à la source
+              {sal.tauxPAS ? ` (${((sal.tauxPAS ?? 0) * 100).toFixed(1)} %)` : ""}
+            </span>
+            <span className="w-28 text-right font-mono text-destructive">
+              -{formatEur(resultat.pas)}
+            </span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-[1fr_auto] gap-x-4 rounded-md border px-3 py-2.5 text-base font-bold mt-1">
+          <span>Net à payer</span>
+          <span className="w-28 text-right font-mono text-green-700 dark:text-green-400">
+            {formatEur(resultat.netAPayer)}
+          </span>
+        </div>
+      </div>
+
+      <Separator className="my-3" />
+
+      {/* ── Coût employeur ── */}
+      <div className="flex flex-col gap-0.5 px-3">
+        {resultat.montantRGDU > 0 && (
+          <>
+            <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
+              <span className="text-muted-foreground">Cotisations patronales brutes</span>
+              <span className="w-28 text-right font-mono">{formatEur(totalPat)}</span>
+            </div>
+            <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
+              <span className="text-green-700 dark:text-green-400">Réduction générale (RGDU)</span>
+              <span className="w-28 text-right font-mono text-green-700 dark:text-green-400">
+                -{formatEur(resultat.montantRGDU)}
+              </span>
+            </div>
+          </>
+        )}
+        <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 font-semibold">
+          <span className="text-muted-foreground">Coût total employeur</span>
+          <span className="w-28 text-right font-mono">{formatEur(resultat.coutEmployeur)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sous-composants
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Ligne dans la section composition du brut */
+function BrutRow({
+  label,
+  detail,
+  montant,
+  extra,
+}: {
+  label: string;
+  detail?: string;
+  montant: number;
+  extra?: boolean;
+}) {
+  const neg = montant < 0;
+  return (
+    <div className={`grid grid-cols-[1fr_auto] items-baseline gap-x-4 px-3 py-1 text-sm ${
+      extra ? "text-muted-foreground" : ""
+    }`}>
+      <div className="flex flex-col">
+        <span className={extra ? "" : "font-medium"}>{label}</span>
+        {detail && <span className="text-[11px] text-muted-foreground">{detail}</span>}
+      </div>
+      <span className={`w-28 text-right font-mono ${
+        neg ? "text-destructive" : extra ? "text-muted-foreground" : ""
+      }`}>
+        {neg ? "-" : extra ? "+" : ""}{formatEur(Math.abs(montant))}
+      </span>
+    </div>
+  );
+}
+
+/** Chip d'une base de référence */
+function BaseChip({ label, value }: { label: string; value: string }) {
+  return (
+    <span>
+      {label} : <strong className="text-foreground">{value}</strong>
+    </span>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+function formatEur(n: number) {
+  return n.toLocaleString("fr-FR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }) + " €";
+}

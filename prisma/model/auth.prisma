@@ -1,0 +1,107 @@
+model Cabinet {
+  id         String    @id @default(cuid())
+  nom        String
+  siret      String?   @unique
+  email      String?
+  telephone  String?
+  adresse    String?
+  codePostal String?
+  ville      String?
+  logoUrl    String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  dossiers   Dossier[]
+  users      User[]
+
+  @@map("cabinet")
+}
+
+model User {
+  id                  String           @id @default(cuid())
+  name                String
+  email               String           @unique
+  emailVerified       Boolean          @default(false)
+  image               String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  cabinetId           String?
+  role                RoleUtilisateur  @default(COLLABORATEUR)
+  accounts            Account[]
+  auditLogs           AuditLog[]
+  commentaires        Commentaire[]
+  invitationsEnvoyees Invitation[]     @relation("InviteurRelation")
+  rapports            RapportExporte[]
+  sessions            Session[]
+  cabinet             Cabinet?         @relation(fields: [cabinetId], references: [id])
+  dossiersAcces       UserDossier[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@map("verification")
+}
+
+model Invitation {
+  id         String          @id @default(cuid())
+  email      String
+  token      String          @unique @default(cuid())
+  role       RoleUtilisateur @default(CLIENT)
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime        @default(now())
+  inviteurId String
+  dossierId  String?
+  dossier    Dossier?        @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  inviteur   User            @relation("InviteurRelation", fields: [inviteurId], references: [id], onDelete: Cascade)
+
+  @@map("invitation")
+}
+
+enum RoleUtilisateur {
+  ADMIN_CABINET
+  COLLABORATEUR
+  EXPERT_COMPTABLE
+  CLIENT
+  LECTEUR
+}

@@ -1,0 +1,17 @@
+-- AlterTable
+ALTER TABLE "dossier" ADD COLUMN     "activiteSociete" TEXT,
+ADD COLUMN     "adresse1" TEXT,
+ADD COLUMN     "adresse2" TEXT,
+ADD COLUMN     "codePostal" TEXT,
+ADD COLUMN     "email" TEXT,
+ADD COLUMN     "pays" TEXT DEFAULT 'France',
+ADD COLUMN     "portable" TEXT,
+ADD COLUMN     "raisonSociale" TEXT,
+ADD COLUMN     "responsableCivilite" TEXT,
+ADD COLUMN     "responsableFonction" TEXT,
+ADD COLUMN     "responsableNom" TEXT,
+ADD COLUMN     "responsablePrenom" TEXT,
+ADD COLUMN     "siret" TEXT,
+ADD COLUMN     "telecopie" TEXT,
+ADD COLUMN     "telephone" TEXT,
+ADD COLUMN     "ville" TEXT;

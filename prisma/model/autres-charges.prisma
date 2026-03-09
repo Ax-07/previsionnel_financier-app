@@ -1,0 +1,80 @@
+// ── Autres charges ────────────────────────────────────────────────────────────
+// Regroupe : dotations sur provisions, charges datées (gestion/financière/exceptionnelle),
+// charges constatées d'avance (CCA) et charges à payer (CAP).
+
+/// Dotations sur provisions (ex : dépréciation créances, provision risques, litiges)
+model AutreChargeProvision {
+  id         String   @id @default(cuid())
+  actif      Boolean  @default(true)
+  libelle    String
+  nature     String   @default("")
+  montantN   Decimal  @default(0) @db.Decimal(15, 2)
+  montantN1  Decimal  @default(0) @db.Decimal(15, 2)
+  montantN2  Decimal  @default(0) @db.Decimal(15, 2)
+  ordre      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  scenarioId String
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("autre_charge_provision")
+}
+
+/// Charges datées : gestion courante / financières / exceptionnelles — avec date de décaissement et TVA optionnelle
+model AutreChargeDatee {
+  id         String                    @id @default(cuid())
+  actif      Boolean                   @default(true)
+  libelle    String
+  categorie  CategorieAutreChargeDatee @default(GESTION_COURANTE)
+  dateN      String?
+  montantN   Decimal                   @default(0) @db.Decimal(15, 2)
+  dateN1     String?
+  montantN1  Decimal                   @default(0) @db.Decimal(15, 2)
+  dateN2     String?
+  montantN2  Decimal                   @default(0) @db.Decimal(15, 2)
+  tauxTVA    Decimal                   @default(0) @db.Decimal(5, 2)
+  typeTVA    TypeTVAAutreCharge?
+  ordre      Int                       @default(0)
+  createdAt  DateTime                  @default(now())
+  updatedAt  DateTime                  @updatedAt
+  scenarioId String
+  scenario   Scenario                  @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("autre_charge_datee")
+}
+
+/// Charges constatées d'avance (CCA) et charges à payer (CAP) — soldes fin d'exercice
+model AutreChargeBilan {
+  id         String               @id @default(cuid())
+  actif      Boolean              @default(true)
+  libelle    String
+  type       TypeAutreChargeBilan @default(CHARGE_CONSTATEE_AVANCE)
+  nature     String               @default("")
+  montantN   Decimal              @default(0) @db.Decimal(15, 2)
+  montantN1  Decimal              @default(0) @db.Decimal(15, 2)
+  montantN2  Decimal              @default(0) @db.Decimal(15, 2)
+  ordre      Int                  @default(0)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+  scenarioId String
+  scenario   Scenario             @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("autre_charge_bilan")
+}
+
+enum CategorieAutreChargeDatee {
+  GESTION_COURANTE
+  FINANCIERE
+  EXCEPTIONNELLE
+}
+
+enum TypeTVAAutreCharge {
+  FACTURATION
+  DECAISSEMENT
+  NON_RECUPERABLE
+}
+
+enum TypeAutreChargeBilan {
+  CHARGE_CONSTATEE_AVANCE
+  CHARGE_A_PAYER
+}

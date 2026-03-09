@@ -1,0 +1,59 @@
+model AuditLog {
+  id            String     @id @default(cuid())
+  action        TypeAction
+  entiteType    String
+  entiteId      String
+  valeurAvant   Json?
+  valeurApres   Json?
+  description   String?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime   @default(now())
+  utilisateurId String
+  dossierId     String?
+  dossier       Dossier?   @relation(fields: [dossierId], references: [id])
+  utilisateur   User       @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  @@index([entiteType, entiteId])
+  @@index([dossierId])
+  @@index([createdAt])
+  @@map("audit_log")
+}
+
+model RapportExporte {
+  id            String     @id @default(cuid())
+  nom           String
+  typeExport    TypeExport
+  fichierUrl    String?
+  tailleFichier Int?
+  parametres    Json?
+  version       Int        @default(1)
+  scenarioIds   Json?
+  estValide     Boolean    @default(false)
+  valideLe      DateTime?
+  createdAt     DateTime   @default(now())
+  generateurId  String
+  dossierId     String
+  dossier       Dossier    @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  generateur    User       @relation(fields: [generateurId], references: [id], onDelete: Cascade)
+
+  @@index([dossierId])
+  @@map("rapport_exporte")
+}
+
+enum TypeAction {
+  CREATION
+  MODIFICATION
+  SUPPRESSION
+  DUPLICATION
+  EXPORT
+  VALIDATION
+  INVITATION
+  CONNEXION
+}
+
+enum TypeExport {
+  PDF
+  EXCEL
+  CSV
+}

@@ -1,0 +1,214 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// COTISATIONS TNS
+// Sél. | Libellé | Calcul auto | N | N+1 | N+2
+// ─────────────────────────────────────────────────────────────────────────────
+model LigneCotisationTNS {
+  id         String   @id @default(cuid())
+  libelle    String
+  actif      Boolean  @default(true)
+  calcAuto   Boolean  @default(false)
+  montantN   Decimal  @default(0) @db.Decimal(15, 2)
+  montantN1  Decimal  @default(0) @db.Decimal(15, 2)
+  montantN2  Decimal  @default(0) @db.Decimal(15, 2)
+  ordre      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  scenarioId String
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("ligne_cotisation_tns")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAXES ASSISES SUR LES SALAIRES
+// Sél. | Libellé | Hypothèse | Calcul | Taux | Date N | N | Date N+1 | N+1 | Date N+2 | N+2
+// ─────────────────────────────────────────────────────────────────────────────
+model LigneTaxeSalaire {
+  id         String   @id @default(cuid())
+  libelle    String
+  actif      Boolean  @default(true)
+  hypothese  String   @default("normale")
+  calcAuto   Boolean  @default(false)
+  taux       Decimal  @default(0) @db.Decimal(8, 2)
+  dateN      String?
+  montantN   Decimal  @default(0) @db.Decimal(15, 2)
+  dateN1     String?
+  montantN1  Decimal  @default(0) @db.Decimal(15, 2)
+  dateN2     String?
+  montantN2  Decimal  @default(0) @db.Decimal(15, 2)
+  ordre      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  scenarioId String
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("ligne_taxe_salaire")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTRES CHARGES / REMBOURSEMENTS / PARTICIPATION DES SALARIÉS
+// type: "AUTRE" | "REMBOURSEMENT" | "PARTICIPATION"
+// Sél. | Libellé | Hypothèse | (CalcAuto pour participation) | Date N | N | Date N+1 | N+1 | Date N+2 | N+2
+// ─────────────────────────────────────────────────────────────────────────────
+model LigneChargePersonnel {
+  id         String   @id @default(cuid())
+  libelle    String
+  actif      Boolean  @default(true)
+  hypothese  String   @default("normale")
+  type       String   @default("AUTRE") // AUTRE | REMBOURSEMENT | PARTICIPATION
+  calcAuto   Boolean  @default(false)
+  dateN      String?
+  montantN   Decimal  @default(0) @db.Decimal(15, 2)
+  dateN1     String?
+  montantN1  Decimal  @default(0) @db.Decimal(15, 2)
+  dateN2     String?
+  montantN2  Decimal  @default(0) @db.Decimal(15, 2)
+  ordre      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  scenarioId String
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("ligne_charge_personnel")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RÉMUNÉRATIONS SALARIÉS (lignes prévisionnelles simples)
+// ─────────────────────────────────────────────────────────────────────────────
+model LigneSalarie {
+  id          String   @id @default(cuid())
+  libelle     String
+  actif       Boolean  @default(true)
+  hypothese   String   @default("normale")
+  montantN    Decimal  @default(0) @db.Decimal(15, 2)
+  evolutionN1 Decimal  @default(0) @db.Decimal(8, 2)
+  montantN1   Decimal  @default(0) @db.Decimal(15, 2)
+  evolutionN2 Decimal  @default(0) @db.Decimal(8, 2)
+  montantN2   Decimal  @default(0) @db.Decimal(15, 2)
+  tauxCotSal       Decimal  @default(22) @db.Decimal(8, 2)
+  tauxCotPat       Decimal  @default(42) @db.Decimal(8, 2)
+  tauxFixe         Decimal  @default(100) @db.Decimal(8, 2)
+  // ── Détail mensuel (modal) ────────────────────────────────────────────────
+  hasCommission    Boolean  @default(false)
+  hasPrime         Boolean  @default(false)
+  cotisationConges Boolean  @default(false)
+  detailMensuelN   Json?    // {effectif: number[], brutIndividuel: number[]}
+  detailMensuelN1  Json?
+  detailMensuelN2  Json?
+  ordre            Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  scenarioId       String
+  scenario         Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("ligne_salarie")
+}
+
+model LigneDirigeant {
+  id                    String   @id @default(cuid())
+  libelle               String
+  actif                 Boolean  @default(true)
+  hypothese             String   @default("normale")
+  montantN              Decimal  @default(0) @db.Decimal(15, 2)
+  evolutionN1           Decimal  @default(0) @db.Decimal(8, 2)
+  montantN1             Decimal  @default(0) @db.Decimal(15, 2)
+  evolutionN2           Decimal  @default(0) @db.Decimal(8, 2)
+  montantN2             Decimal  @default(0) @db.Decimal(15, 2)
+  exonerationTNS        String?
+  conjointCollaborateur Boolean  @default(false)
+  tauxFixe              Decimal  @default(100) @db.Decimal(8, 2)
+  ordre                 Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  // Détail mensuel (répartition mensuelle par exercice)
+  detailMensuelN        Json?
+  detailMensuelN1       Json?
+  detailMensuelN2       Json?
+  scenarioId            String
+  scenario              Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("ligne_dirigeant")
+}
+
+model Salarie {
+  id                            String        @id @default(cuid())
+  prenom                        String
+  nom                           String
+  poste                         String
+  statut                        StatutSalarie @default(ACTIF)
+  salaireBrutMensuel            Decimal       @db.Decimal(15, 2)
+  tauxChargesSocialesPatronales Decimal       @default(42.00) @db.Decimal(6, 4)
+  tauxChargesSocialesSalariales Decimal       @default(22.00) @db.Decimal(6, 4)
+  dateEntree                    DateTime
+  dateSortie                    DateTime?
+  tauxEvolutionAnnuel           Decimal       @default(0.00) @db.Decimal(5, 2)
+  quotiteTravail                Decimal       @default(100.00) @db.Decimal(5, 2)
+  description                   String?
+  ordre                         Int           @default(0)
+  createdAt                     DateTime      @default(now())
+  updatedAt                     DateTime      @updatedAt
+  scenarioId                    String
+  primes                        Prime[]
+  scenario                      Scenario      @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("salarie")
+}
+
+model Prime {
+  id          String     @id @default(cuid())
+  libelle     String
+  type        TypePrime  @default(PRIME_ANNUELLE)
+  montant     Decimal    @db.Decimal(15, 2)
+  annee       Int
+  taux        Decimal?   @db.Decimal(6, 4)
+  createdAt   DateTime   @default(now())
+  salarieId   String?
+  dirigeantId String?
+  dirigeant   Dirigeant? @relation(fields: [dirigeantId], references: [id], onDelete: Cascade)
+  salarie     Salarie?   @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("prime")
+}
+
+model Dirigeant {
+  id                    String          @id @default(cuid())
+  prenom                String
+  nom                   String
+  statut                StatutDirigeant @default(TNS)
+  remunerationMensuelle Decimal         @db.Decimal(15, 2)
+  tauxCotisationsTNS    Decimal?        @default(45.00) @db.Decimal(6, 4)
+  tauxChargesPatronales Decimal?        @db.Decimal(6, 4)
+  tauxChargesSalariales Decimal?        @db.Decimal(6, 4)
+  tauxEvolutionAnnuel   Decimal         @default(0.00) @db.Decimal(5, 2)
+  datePrisePoste        DateTime
+  description           String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  scenarioId            String
+  scenario              Scenario        @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  primes                Prime[]
+
+  @@map("dirigeant")
+}
+
+// Modèle UniteDOeuvre défini dans prisma/model/unites-oeuvre.prisma
+
+enum StatutSalarie {
+  ACTIF
+  INACTIF
+  EN_CONGE
+}
+
+enum StatutDirigeant {
+  TNS
+  ASSIMILE_SALARIE
+}
+
+enum TypePrime {
+  PRIME_ANNUELLE
+  PRIME_VARIABLE
+  TREIZIEME_MOIS
+  PARTICIPATION
+  INTERESSEMENT
+  AUTRE
+}

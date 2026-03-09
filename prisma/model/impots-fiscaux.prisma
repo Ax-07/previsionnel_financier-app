@@ -1,0 +1,100 @@
+// ── Impôts fiscaux ───────────────────────────────────────────────────────────
+// Réintégrations et déductions fiscales (lignes de tableau)
+
+model AjustementFiscal {
+  id        String               @id @default(cuid())
+  type      TypeAjustementFiscal
+  actif     Boolean              @default(true)
+  libelle   String               @default("")
+  montantN  Decimal              @default(0) @db.Decimal(15, 2)
+  montantN1 Decimal              @default(0) @db.Decimal(15, 2)
+  montantN2 Decimal              @default(0) @db.Decimal(15, 2)
+  ordre     Int                  @default(0)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  scenarioId String
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("ajustement_fiscal")
+}
+
+enum TypeAjustementFiscal {
+  REINTEGRATION
+  DEDUCTION
+}
+
+// ── Paramètres IS + CIR + PVLT (singleton par scénario) ──────────────────────
+
+model ParametresIS {
+  id        String  @id @default(cuid())
+  isEnabled Boolean @default(true)
+
+  // ── Paramètres IS exercice N ──────────────────────────────────────────────
+  tauxReduitN            Decimal          @default(15) @db.Decimal(5, 2)
+  plafondReduitN         Decimal          @default(42500) @db.Decimal(15, 2)
+  tauxNormalN            Decimal          @default(25) @db.Decimal(5, 2)
+  contributionVolN       Decimal          @default(0) @db.Decimal(15, 2)
+  creditImpotN           Decimal          @default(0) @db.Decimal(15, 2)
+  modaliteAcomptesN      ModaliteAcomptes @default(CALCUL)
+  montantAcomptesManuelN Decimal?         @db.Decimal(15, 2)
+
+  // ── Paramètres IS exercice N+1 ────────────────────────────────────────────
+  tauxReduitN1            Decimal          @default(15) @db.Decimal(5, 2)
+  plafondReduitN1         Decimal          @default(42500) @db.Decimal(15, 2)
+  tauxNormalN1            Decimal          @default(25) @db.Decimal(5, 2)
+  contributionVolN1       Decimal          @default(0) @db.Decimal(15, 2)
+  creditImpotN1           Decimal          @default(0) @db.Decimal(15, 2)
+  modaliteAcomptesN1      ModaliteAcomptes @default(CALCUL)
+  montantAcomptesManuelN1 Decimal?         @db.Decimal(15, 2)
+
+  // ── Paramètres IS exercice N+2 ────────────────────────────────────────────
+  tauxReduitN2            Decimal          @default(15) @db.Decimal(5, 2)
+  plafondReduitN2         Decimal          @default(42500) @db.Decimal(15, 2)
+  tauxNormalN2            Decimal          @default(25) @db.Decimal(5, 2)
+  contributionVolN2       Decimal          @default(0) @db.Decimal(15, 2)
+  creditImpotN2           Decimal          @default(0) @db.Decimal(15, 2)
+  modaliteAcomptesN2      ModaliteAcomptes @default(CALCUL)
+  montantAcomptesManuelN2 Decimal?         @db.Decimal(15, 2)
+
+  // ── Règlement IS ─────────────────────────────────────────────────────────
+  plancherDispense       Decimal @default(3000) @db.Decimal(15, 2)
+  delaiSoldeJours        Int     @default(105)
+  delaiRemboursementMois Int     @default(2)
+
+  // ── CIR (Crédit d'impôt recherche) ────────────────────────────────────────
+  cirEnabled   Boolean     @default(false)
+  cirMontantN  Decimal     @default(0) @db.Decimal(15, 2)
+  cirMontantN1 Decimal     @default(0) @db.Decimal(15, 2)
+  cirMontantN2 Decimal     @default(0) @db.Decimal(15, 2)
+  cirModaliteN ModaliteCIR @default(REPORT)
+  cirModaliteN1 ModaliteCIR @default(REPORT)
+  cirModaliteN2 ModaliteCIR @default(REPORT)
+  cirDelaiN    Int         @default(3)
+  cirDelaiN1   Int         @default(3)
+  cirDelaiN2   Int         @default(3)
+
+  // ── PVLT ──────────────────────────────────────────────────────────────────
+  pvltEnabled Boolean @default(true)
+  pvltTaux    Decimal @default(15) @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scenarioId String   @unique
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("parametres_is")
+}
+
+enum ModaliteAcomptes {
+  CALCUL
+  MANUEL
+  AUCUN
+}
+
+enum ModaliteCIR {
+  REPORT
+  REMBOURSEMENT
+  MIXTE
+}

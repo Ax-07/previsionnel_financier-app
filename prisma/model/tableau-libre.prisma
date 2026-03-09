@@ -1,0 +1,72 @@
+// ── Tableaux libres ───────────────────────────────────────────────────────────
+// Tableaux personnalisés permettant de construire des indicateurs spécifiques,
+// des agrégats personnalisés et des données prévisionnelles sur mesure.
+
+model TableauLibre {
+  id   String @id @default(cuid())
+  nom  String @default("Nouveau tableau")
+  ordre Int   @default(0)
+
+  // ── Propriétés d'affichage ──────────────────────────────────────────────────
+  showZeroLines    Boolean @default(false)
+  hidePreviousYear Boolean @default(false)
+  pieChart         Boolean @default(false)
+  histogram        Boolean @default(false)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  scenarioId String
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  lignes     TableauLibreLigne[]
+
+  @@map("tableau_libre")
+}
+
+model TableauLibreLigne {
+  id            String             @id @default(cuid())
+  actif         Boolean            @default(true)
+  libelle       String             @default("")
+  format        FormatTableauLibre @default(MONTANT)
+  detailEnabled Boolean            @default(false)
+  ordre         Int                @default(0)
+
+  // ── Valeurs annuelles ───────────────────────────────────────────────────────
+  nValeur      Decimal @default(0) @db.Decimal(15, 2)
+  growthRateN1 Decimal @default(0) @db.Decimal(7, 4) // % évolution N → N+1
+  growthRateN2 Decimal @default(0) @db.Decimal(7, 4) // % évolution N+1 → N+2
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tableauId String
+  tableau   TableauLibre         @relation(fields: [tableauId], references: [id], onDelete: Cascade)
+  details   TableauLibreDetail[]
+
+  @@map("tableau_libre_ligne")
+}
+
+model TableauLibreDetail {
+  id          String               @id @default(cuid())
+  mois        Int // 1-12
+  montant     Decimal              @default(0) @db.Decimal(15, 2)
+  pourcentage Decimal              @default(0) @db.Decimal(7, 4)
+  exercice    ExerciceTableauLibre @default(N)
+
+  ligneId String
+  ligne   TableauLibreLigne @relation(fields: [ligneId], references: [id], onDelete: Cascade)
+
+  @@unique([ligneId, mois, exercice])
+  @@map("tableau_libre_detail")
+}
+
+enum FormatTableauLibre {
+  MONTANT
+  POURCENTAGE
+  QUANTITE
+  CALCULE
+}
+
+enum ExerciceTableauLibre {
+  N
+  N1
+  N2
+}

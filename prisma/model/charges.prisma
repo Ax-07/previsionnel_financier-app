@@ -1,0 +1,139 @@
+model ChargeFixe {
+  id                  String            @id @default(cuid())
+  libelle             String
+  description         String?
+  montant             Decimal           @db.Decimal(15, 2)
+  periodicite         PeriodiciteCharge @default(MENSUEL)
+  tauxTVA             Decimal           @default(20.00) @db.Decimal(5, 2)
+  deductibleTVA       Boolean           @default(true)
+  dateDebut           DateTime?
+  dateFin             DateTime?
+  tauxIndexation      Decimal?          @default(0.00) @db.Decimal(5, 2)
+  estChargeFinanciere Boolean           @default(false)
+  ordre               Int               @default(0)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  scenarioId          String
+  scenario            Scenario          @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("charge_fixe")
+}
+
+model ChargeVariable {
+  id              String             @id @default(cuid())
+  libelle         String
+  description     String?
+  type            TypeChargeVariable @default(POURCENTAGE_CA)
+  tauxPourcentage Decimal?           @db.Decimal(6, 4)
+  coutUnitaire    Decimal?           @db.Decimal(15, 4)
+  montantFixe     Decimal?           @db.Decimal(15, 2)
+  tauxTVA         Decimal            @default(20.00) @db.Decimal(5, 2)
+  deductibleTVA   Boolean            @default(true)
+  activiteId      String?
+  tauxIndexation  Decimal?           @default(0.00) @db.Decimal(5, 2)
+  ordre           Int                @default(0)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  scenarioId      String
+  scenario        Scenario           @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("charge_variable")
+}
+
+model AutreCharge {
+  id          String   @id @default(cuid())
+  libelle     String
+  montant     Decimal  @db.Decimal(15, 2)
+  annee       Int
+  tauxTVA     Decimal  @default(20.00) @db.Decimal(5, 2)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  scenarioId  String
+  scenario    Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("autre_charge")
+}
+
+model ChargeExploitation {
+  id             String                      @id @default(cuid())
+  libelle        String
+  categorie      CategorieChargeExploitation @default(FOURNITURE_CONSOMMABLE)
+  actif          Boolean                     @default(true)
+  hypothese      String                      @default("normal")
+  montantN       Decimal                     @default(0) @db.Decimal(15, 2)
+  evolutionN1    Decimal                     @default(0) @db.Decimal(6, 2)
+  montantN1      Decimal                     @default(0) @db.Decimal(15, 2)
+  evolutionN2    Decimal                     @default(0) @db.Decimal(6, 2)
+  montantN2      Decimal                     @default(0) @db.Decimal(15, 2)
+  tauxFixe       Decimal                     @default(0) @db.Decimal(5, 2)
+  frequence      FrequenceChargeExploitation @default(MENSUELLE)
+  delaiReglement Int                         @default(30)
+  tauxTVA        Decimal                     @default(20) @db.Decimal(5, 2)
+  typeTVA        TypeTVAChargeExploitation   @default(FACTURATION)
+  ordre          Int                         @default(0)
+  // Détail de calcul : mode (FIXE/POURCENTAGE_CA), saisonnalité, taux par activité, sélection activités
+  detailCalc     Json?
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+  scenarioId     String
+  scenario       Scenario                    @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("charge_exploitation")
+}
+
+model ImpotTaxe {
+  id               String   @id @default(cuid())
+  libelle          String
+  actif            Boolean  @default(true)
+  hypothese        String   @default("normal")
+  dateN            String?
+  montantN         Decimal  @default(0) @db.Decimal(15, 2)
+  dateN1           String?
+  montantN1        Decimal  @default(0) @db.Decimal(15, 2)
+  dateN2           String?
+  montantN2        Decimal  @default(0) @db.Decimal(15, 2)
+  ordre            Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  scenarioId       String
+  baseImposableCFE Decimal? @db.Decimal(15, 2)
+  isCFE            Boolean  @default(false)
+  tauxCFE          Decimal? @db.Decimal(5, 2)
+  cfeModeCalc      Boolean  @default(false)
+  scenario         Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("impot_taxe")
+}
+
+enum PeriodiciteCharge {
+  MENSUEL
+  TRIMESTRIEL
+  SEMESTRIEL
+  ANNUEL
+  PONCTUEL
+}
+
+enum TypeChargeVariable {
+  POURCENTAGE_CA
+  COUT_UNITAIRE
+  MONTANT_FIXE
+}
+
+enum CategorieChargeExploitation {
+  FOURNITURE_CONSOMMABLE
+  SERVICE_EXTERIEUR
+}
+
+enum FrequenceChargeExploitation {
+  MENSUELLE
+  TRIMESTRIELLE
+  SEMESTRIELLE
+  ANNUELLE
+  PERSONNALISEE
+}
+
+enum TypeTVAChargeExploitation {
+  FACTURATION
+  ENCAISSEMENT
+}

@@ -1,0 +1,91 @@
+// ── Autres produits ───────────────────────────────────────────────────────────
+// Regroupe : reprises sur provisions, produits datés (transferts, gestion
+// courante, financiers, exceptionnels) et produits constatés d'avance (PCA).
+
+/// Reprises sur provisions (ex : dépréciation de créances, risques, litiges)
+model AutreProduitReprise {
+  id         String   @id @default(cuid())
+  actif      Boolean  @default(true)
+  libelle    String
+  nature     String   @default("")
+  montantN   Decimal  @default(0) @db.Decimal(15, 2)
+  montantN1  Decimal  @default(0) @db.Decimal(15, 2)
+  montantN2  Decimal  @default(0) @db.Decimal(15, 2)
+  ordre      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  scenarioId String
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("autre_produit_reprise")
+}
+
+/// Produits datés : transferts de charges / gestion courante / financiers / exceptionnels
+/// Les sections avec TVA applicables : GESTION_COURANTE et EXCEPTIONNEL
+model AutreProduitDate {
+  id         String                    @id @default(cuid())
+  actif      Boolean                   @default(true)
+  libelle    String
+  categorie  CategorieAutreProduitDate @default(GESTION_COURANTE)
+  dateN      String?
+  montantN   Decimal                   @default(0) @db.Decimal(15, 2)
+  dateN1     String?
+  montantN1  Decimal                   @default(0) @db.Decimal(15, 2)
+  dateN2     String?
+  montantN2  Decimal                   @default(0) @db.Decimal(15, 2)
+  tauxTVA    Decimal                   @default(0) @db.Decimal(5, 2)
+  typeTVA    TypeTVAAutreProduit?
+  ordre      Int                       @default(0)
+  createdAt  DateTime                  @default(now())
+  updatedAt  DateTime                  @updatedAt
+  scenarioId String
+  scenario   Scenario                  @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("autre_produit_date")
+}
+
+/// Produits constatés d'avance (PCA) — soldes de fin d'exercice (passif bilan)
+model AutreProduitConstate {
+  id         String   @id @default(cuid())
+  actif      Boolean  @default(true)
+  libelle    String
+  nature     String   @default("")
+  montantN   Decimal  @default(0) @db.Decimal(15, 2)
+  montantN1  Decimal  @default(0) @db.Decimal(15, 2)
+  montantN2  Decimal  @default(0) @db.Decimal(15, 2)
+  ordre      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  scenarioId String
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("autre_produit_constate")
+}
+
+enum CategorieAutreProduitDate {
+  TRANSFERT
+  GESTION_COURANTE
+  FINANCIER
+  EXCEPTIONNEL
+}
+
+enum TypeTVAAutreProduit {
+  FACTURATION
+  ENCAISSEMENT
+  NON_APPLICABLE
+}
+
+enum NatureRepriseProduit {
+  DEPRECIATION_CREANCES
+  PROVISION_RISQUES
+  PROVISION_LITIGES
+  PROVISION_GARANTIES
+  PROVISION_CHARGES
+  AUTRE
+}
+
+enum NaturePCA {
+  CLIENTS
+  PRODUITS_EXPLOITATION
+  AUTRE
+}

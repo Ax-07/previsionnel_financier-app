@@ -1,0 +1,105 @@
+model Immobilisation {
+  id                    String               @id @default(cuid())
+  libelle               String
+  montantHT             Decimal              @db.Decimal(15, 2)
+  tauxTVA               Decimal              @default(20.00) @db.Decimal(5, 2)
+  dureeAmortissement    Int                  @default(5)
+  modeAmortissement     ModeAmortissement    @default(LINEAIRE)
+  dateAcquisition       DateTime
+  renouvellement        Boolean              @default(false)
+  periodeRenouvellement Int?
+  ordre                 Int                  @default(0)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  scenarioId            String
+  differe               Int                  @default(0)
+  nature                NatureImmobilisation @default(CORPOREL)
+  typeTva               TypeTVA              @default(RECUPERABLE)
+  actif                 Boolean              @default(true)
+  scenario              Scenario             @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  lignesAmortissement   LigneAmortissement[]
+
+  @@map("immobilisation")
+}
+
+model LigneAmortissement {
+  id                  String         @id @default(cuid())
+  annee               Int
+  mois                Int?
+  valeurBruteDebut    Decimal        @db.Decimal(15, 2)
+  dotationAnnuelle    Decimal        @db.Decimal(15, 2)
+  amortissementCumule Decimal        @db.Decimal(15, 2)
+  valeurNette         Decimal        @db.Decimal(15, 2)
+  immobilisationId    String
+  immobilisation      Immobilisation @relation(fields: [immobilisationId], references: [id], onDelete: Cascade)
+
+  @@unique([immobilisationId, annee, mois])
+  @@map("ligne_amortissement")
+}
+
+model CessionImmobilisation {
+  id          String               @id @default(cuid())
+  libelle     String
+  nature      NatureImmobilisation @default(CORPOREL)
+  dateCession DateTime
+  prixVente   Decimal              @db.Decimal(15, 2)
+  prixAchat   Decimal              @db.Decimal(15, 2)
+  dejaAmortie Decimal              @db.Decimal(15, 2)
+  tauxTVA     Decimal              @default(20.00) @db.Decimal(5, 2)
+  ordre       Int                  @default(0)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  scenarioId  String
+  actif       Boolean              @default(true)
+  scenario    Scenario             @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("cession_immobilisation")
+}
+
+model CreditBail {
+  id               String            @id @default(cuid())
+  libelle          String
+  dateDebut        DateTime
+  montantHT        Decimal           @db.Decimal(15, 2)
+  taux             Decimal           @db.Decimal(5, 2)
+  duree            Int
+  periodicite      PeriodiciteCredit @default(MENSUEL)
+  dateEcheance     DateTime?
+  valeurResiduelle Decimal?          @db.Decimal(15, 2)
+  premierLoyer     Decimal?          @db.Decimal(15, 2)
+  loyerHT          Decimal?          @db.Decimal(15, 2)
+  tauxTVA          Decimal           @default(20.00) @db.Decimal(5, 2)
+  ordre            Int               @default(0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  scenarioId       String
+  actif            Boolean           @default(true)
+  scenario         Scenario          @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("credit_bail")
+}
+
+enum NatureImmobilisation {
+  CORPOREL
+  INCORPOREL
+  FINANCIER
+}
+
+enum ModeAmortissement {
+  LINEAIRE
+  DEGRESSIF
+  AUCUN
+}
+
+enum TypeTVA {
+  RECUPERABLE
+  NON_RECUPERABLE
+  EXONEREE
+}
+
+enum PeriodiciteCredit {
+  MENSUEL
+  TRIMESTRIEL
+  SEMESTRIEL
+  ANNUEL
+}

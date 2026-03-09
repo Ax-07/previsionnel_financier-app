@@ -1,0 +1,178 @@
+model Activite {
+  id                    String                 @id @default(cuid())
+  libelle               String
+  description           String?
+  typeActivite          TypeActivite           @default(PRESTATION_SERVICES)
+  unite                 String?
+  prixUnitaireHT        Decimal                @default(0) @db.Decimal(15, 4)
+  tauxTVA               Decimal                @default(20.00) @db.Decimal(5, 2)
+  frequence             FrequenceCA            @default(MENSUEL)
+  ordre                 Int                    @default(0)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  scenarioId            String
+  actif                 Boolean                @default(true)
+  evolutionN1           Decimal                @default(0) @db.Decimal(8, 4)
+  evolutionN2           Decimal                @default(0) @db.Decimal(8, 4)
+  hypothese             String                 @default("normal")
+  montantN              Decimal                @default(0) @db.Decimal(15, 2)
+  montantN1             Decimal                @default(0) @db.Decimal(15, 2)
+  montantN2             Decimal                @default(0) @db.Decimal(15, 2)
+  reglementClients      Int?
+  reglementFournisseurs Int?
+  secteur               String                 @default("SERVICE")
+  stocks                Int?
+  tauxMarge             Decimal                @default(0) @db.Decimal(8, 4)
+  tvaAchats             Decimal                @default(20.00) @db.Decimal(5, 2)
+  // Saisonnalité stockée en JSON : { N: number[], N1: number[], N2: number[] }
+  saisonnaliteCA           Json?
+  saisonnaliteAchats       Json?
+  // Achats de stock ponctuels (ex : stock initial) : { N: number[], N1: number[], N2: number[] }
+  achatsStockPonctuel      Json?
+  scenario              Scenario               @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  croissances           CroissanceActivite[]
+  saisonnalites         SaisonnaliteActivite[]
+  volumesAnnuels        VolumeActivite[]
+
+  @@map("activite")
+}
+
+model VolumeActivite {
+  id         String   @id @default(cuid())
+  annee      Int
+  volume     Decimal  @db.Decimal(15, 4)
+  activiteId String
+  activite   Activite @relation(fields: [activiteId], references: [id], onDelete: Cascade)
+
+  @@unique([activiteId, annee])
+  @@map("volume_activite")
+}
+
+model SaisonnaliteActivite {
+  id         String   @id @default(cuid())
+  annee      Int
+  janvier    Decimal  @default(8.33) @db.Decimal(6, 4)
+  fevrier    Decimal  @default(8.33) @db.Decimal(6, 4)
+  mars       Decimal  @default(8.33) @db.Decimal(6, 4)
+  avril      Decimal  @default(8.33) @db.Decimal(6, 4)
+  mai        Decimal  @default(8.33) @db.Decimal(6, 4)
+  juin       Decimal  @default(8.33) @db.Decimal(6, 4)
+  juillet    Decimal  @default(8.33) @db.Decimal(6, 4)
+  aout       Decimal  @default(8.33) @db.Decimal(6, 4)
+  septembre  Decimal  @default(8.33) @db.Decimal(6, 4)
+  octobre    Decimal  @default(8.33) @db.Decimal(6, 4)
+  novembre   Decimal  @default(8.33) @db.Decimal(6, 4)
+  decembre   Decimal  @default(8.37) @db.Decimal(6, 4)
+  activiteId String
+  activite   Activite @relation(fields: [activiteId], references: [id], onDelete: Cascade)
+
+  @@unique([activiteId, annee])
+  @@map("saisonnalite_activite")
+}
+
+model CroissanceActivite {
+  id             String   @id @default(cuid())
+  annee          Int
+  tauxCroissance Decimal  @db.Decimal(6, 4)
+  activiteId     String
+  activite       Activite @relation(fields: [activiteId], references: [id], onDelete: Cascade)
+
+  @@unique([activiteId, annee])
+  @@map("croissance_activite")
+}
+
+model AutreProduit {
+  id          String   @id @default(cuid())
+  libelle     String
+  montant     Decimal  @db.Decimal(15, 2)
+  annee       Int
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  scenarioId  String
+  scenario    Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("autre_produit")
+}
+
+model ActiviteCommission {
+  id                    String   @id @default(cuid())
+  libelle               String
+  hypothese             String   @default("normal")
+  montantN              Decimal  @default(0) @db.Decimal(15, 2)
+  evolutionN1           Decimal  @default(0) @db.Decimal(8, 4)
+  montantN1             Decimal  @default(0) @db.Decimal(15, 2)
+  evolutionN2           Decimal  @default(0) @db.Decimal(8, 4)
+  montantN2             Decimal  @default(0) @db.Decimal(15, 2)
+  calculCommission      String   @default("HT")
+  tauxCommission        Decimal  @default(0) @db.Decimal(6, 4)
+  tvaCommission         Decimal  @default(20) @db.Decimal(5, 2)
+  stocks                Int?
+  reglementFournisseurs Int?
+  actif                 Boolean  @default(true)
+  ordre                 Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  scenarioId            String
+  scenario              Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("activite_commission")
+}
+
+model ProductionImmobilisee {
+  id            String   @id @default(cuid())
+  libelle       String
+  nature        String   @default("CORPOREL")
+  hypothese     String   @default("normal")
+  date          String   @default("")
+  montant       Decimal  @default(0) @db.Decimal(15, 2)
+  amortissement String   @default("LINEAIRE")
+  differe       Int?
+  duree         Int?
+  actif         Boolean  @default(true)
+  ordre         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  scenarioId    String
+  scenario      Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("production_immobilisee")
+}
+
+model SubventionExploitation {
+  id         String   @id @default(cuid())
+  libelle    String
+  hypothese  String   @default("normal")
+  dateN      String?
+  montantN   Decimal? @db.Decimal(15, 2)
+  dateN1     String?
+  montantN1  Decimal? @db.Decimal(15, 2)
+  dateN2     String?
+  montantN2  Decimal? @db.Decimal(15, 2)
+  tva        Decimal  @default(0) @db.Decimal(5, 2)
+  typeTva    String   @default("RECUPERABLE")
+  actif      Boolean  @default(true)
+  ordre      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  scenarioId String
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("subvention_exploitation")
+}
+
+enum FrequenceCA {
+  JOURNALIER
+  HEBDOMADAIRE
+  MENSUEL
+  TRIMESTRIEL
+  ANNUEL
+  PONCTUEL
+}
+
+enum TypeActivite {
+  VENTE_MARCHANDISES
+  PRODUCTION_VENDUE
+  PRESTATION_SERVICES
+  AUTRE
+}

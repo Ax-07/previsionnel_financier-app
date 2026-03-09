@@ -1,0 +1,178 @@
+model Dossier {
+  id                  String           @id @default(cuid())
+  nom                 String
+  reference           String?          @unique
+  typeDossier         TypeDossier      @default(CREATION)
+  dureeProjection     Int              @default(3)
+  dateDemarrage       DateTime
+  statut              StatutDossier    @default(ACTIF)
+  description         String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  cabinetId           String
+  activiteSociete     String?
+  adresse1            String?
+  adresse2            String?
+  codePostal          String?
+  email               String?
+  pays                String?          @default("France")
+  portable            String?
+  raisonSociale       String?
+  responsableCivilite String?
+  responsableFonction String?
+  responsableNom      String?
+  responsablePrenom   String?
+  siret               String?
+  telecopie           String?
+  telephone           String?
+  ville               String?
+  auditLogs           AuditLog[]
+  checklistPieces     ChecklistPiece[]
+  commentaires        Commentaire[]
+  cabinet             Cabinet          @relation(fields: [cabinetId], references: [id], onDelete: Cascade)
+  invitations         Invitation[]
+  rapports            RapportExporte[]
+  scenarios           Scenario[]
+  accesUtilisateurs   UserDossier[]
+
+  @@map("dossier")
+}
+
+model UserDossier {
+  id        String          @id @default(cuid())
+  role      RoleUtilisateur @default(COLLABORATEUR)
+  createdAt DateTime        @default(now())
+  userId    String
+  dossierId String
+  dossier   Dossier         @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dossierId])
+  @@map("user_dossier")
+}
+
+model Scenario {
+  id                      String                   @id @default(cuid())
+  nom                     String                   @default("Scénario réaliste")
+  description             String?
+  isDefault               Boolean                  @default(false)
+  statut                  StatutValidation         @default(BROUILLON)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  dossierId               String
+  activites               Activite[]
+  activitesCommission     ActiviteCommission[]
+  apports                 Apport[]
+  autresCharges           AutreCharge[]
+  autresChargesProvisions AutreChargeProvision[]
+  autresChargesDatees     AutreChargeDatee[]
+  autresChargesBilan      AutreChargeBilan[]
+  autresProduits          AutreProduit[]
+  autreProduitReprises    AutreProduitReprise[]
+  autreProduitDates       AutreProduitDate[]
+  autreProduitConstates   AutreProduitConstate[]
+  bilansAnnuels           BilanAnnuel[]
+  cessions                CessionImmobilisation[]
+  chargesExploitation     ChargeExploitation[]
+  chargesFixes            ChargeFixe[]
+  chargesVariables        ChargeVariable[]
+  creditsBaux             CreditBail[]
+  dirigeants              Dirigeant[]
+  emprunts                Emprunt[]
+  immobilisations         Immobilisation[]
+  impotsTaxes             ImpotTaxe[]
+  lignesCotisationsTNS    LigneCotisationTNS[]
+  lignesChargesPersonnel  LigneChargePersonnel[]
+  lignesDirigeants        LigneDirigeant[]
+  lignesSalaries          LigneSalarie[]
+  lignesTaxesSalaires     LigneTaxeSalaire[]
+  parametres              ParametresEntreprise?
+  productionsImmobilisees ProductionImmobilisee[]
+  resultatsAnnuels        ResultatAnnuel[]
+  salaries                Salarie[]
+  dossier                 Dossier                  @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  seuilsRentabilite       SeuilRentabilite[]
+  subventions             Subvention[]
+  subventionsExploitation SubventionExploitation[]
+  tresoreriesMensuelles   TresorerieMensuelle[]
+  unitesDOeuvre           UniteDOeuvre[]
+  ajustementsFiscaux      AjustementFiscal[]
+  parametresIS            ParametresIS?
+  diversFluxDates         DiversFluxDate[]
+  diversOperationsCapital DiversOperationCapital[]
+  diversPrets             DiversPret[]
+  tableauxLibres          TableauLibre[]
+
+  @@map("scenario")
+}
+
+model ParametresEntreprise {
+  id                        String       @id @default(cuid())
+  regimeFiscal              RegimeFiscal @default(IS)
+  regimeTVA                 RegimeTVA    @default(REEL_NORMAL)
+  tauxIs                    Decimal      @default(25.00) @db.Decimal(5, 2)
+  tauxIsReduit              Decimal?     @db.Decimal(5, 2)
+  plafondIsReduit           Decimal?     @db.Decimal(15, 2)
+  tauxTvaStandard           Decimal      @default(20.00) @db.Decimal(5, 2)
+  tauxTvaReduit             Decimal?     @db.Decimal(5, 2)
+  periodiciteDeclarationTVA String?      @default("mensuel")
+  delaiPaiementClients      Int          @default(30)
+  delaiPaiementFournisseurs Int          @default(30)
+  joursStockMoyen           Int?         @default(0)
+  repartitionResultat       Decimal?     @db.Decimal(5, 2)
+  activite                  String?
+  codeNAF                   String?
+  // ── Période & exercices prévisionnels ─────────────────────────────────────
+  dateDebutExerciceN        DateTime?
+  dureePrevisionnelle       Int          @default(3)
+  exercices                 ExercicePrevisionnel[]
+  createdAt                 DateTime     @default(now())
+  updatedAt                 DateTime     @updatedAt
+  scenarioId                String       @unique
+  formeJuridique            String       @default("SAS")
+  scenario                  Scenario     @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("parametres_entreprise")
+}
+
+/// Définition des exercices comptables prévisionnels (date de clôture, durée, année)
+model ExercicePrevisionnel {
+  id           String               @id @default(cuid())
+  ordre        Int                  // 1 = exercice N, 2 = N+1, etc.
+  dateCloture  DateTime
+  duree        Int                  // durée en mois
+  annee        Int                  // année de clôture
+  parametresId String
+  parametres   ParametresEntreprise @relation(fields: [parametresId], references: [id], onDelete: Cascade)
+
+  @@unique([parametresId, ordre])
+  @@map("exercice_previsionnel")
+}
+
+enum TypeDossier {
+  CREATION
+  REPRISE
+}
+
+enum RegimeFiscal {
+  IS
+  IR
+}
+
+enum RegimeTVA {
+  FRANCHISE
+  REEL_SIMPLIFIE
+  REEL_NORMAL
+}
+
+enum StatutDossier {
+  ACTIF
+  ARCHIVE
+  SUPPRIME
+}
+
+enum StatutValidation {
+  BROUILLON
+  A_VALIDER
+  VALIDE
+}
