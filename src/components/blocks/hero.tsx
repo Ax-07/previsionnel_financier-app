@@ -38,13 +38,13 @@ const Hero = () => {
           {/* Image 1 — far left */}
           <div className="absolute bottom-0 left-0 z-10 w-[27%] overflow-hidden">
             <div style={wrapperStyle("108.202%")}>
-              <div data-slot="aspect-ratio" style={absoluteInsetStyle}>
-                <Image
+              <div data-slot="aspect-ratio" style={absoluteInsetStyle} className="bg-muted-foreground">
+                {/* <Image
                   alt=""
                   fill
                   className="block size-full object-cover object-top-left"
                   src="https://deifkwefumgah.cloudfront.net/shadcnblocks/block/placeholder-5.svg"
-                />
+                /> */}
               </div>
             </div>
           </div>
@@ -52,13 +52,13 @@ const Hero = () => {
           {/* Image 2 — left-center */}
           <div className="absolute bottom-0 left-[14%] z-20 w-[32%] overflow-hidden shadow-xl">
             <div style={wrapperStyle("108.202%")}>
-              <div data-slot="aspect-ratio" style={absoluteInsetStyle}>
-                <Image
+              <div data-slot="aspect-ratio" style={absoluteInsetStyle} className="bg-muted-foreground">
+                {/* <Image
                   alt=""
                   fill
                   className="block size-full object-cover object-top-left"
                   src="https://deifkwefumgah.cloudfront.net/shadcnblocks/block/placeholder-4.svg"
-                />
+                /> */}
               </div>
             </div>
           </div>
@@ -66,13 +66,13 @@ const Hero = () => {
           {/* Image 3 — center */}
           <div className="absolute bottom-0 left-1/2 z-30 w-[37%] -translate-x-1/2 overflow-hidden shadow-xl">
             <div style={wrapperStyle("108.202%")}>
-              <div data-slot="aspect-ratio" style={absoluteInsetStyle}>
-                <Image
+              <div data-slot="aspect-ratio" style={absoluteInsetStyle} className="bg-muted-foreground">
+                {/* <Image
                   alt=""
                   fill
                   className="block size-full object-cover object-top-left"
                   src="https://deifkwefumgah.cloudfront.net/shadcnblocks/block/placeholder-3.svg"
-                />
+                /> */}
               </div>
             </div>
           </div>
@@ -80,13 +80,13 @@ const Hero = () => {
           {/* Image 4 — right-center */}
           <div className="absolute right-[14%] bottom-0 z-20 w-[32%] overflow-hidden shadow-xl">
             <div style={wrapperStyle("108.202%")}>
-              <div data-slot="aspect-ratio" style={absoluteInsetStyle}>
-                <Image
+              <div data-slot="aspect-ratio" style={absoluteInsetStyle} className="bg-muted-foreground">
+                {/* <Image
                   alt=""
                   fill
                   className="block size-full object-cover object-top-left"
                   src="https://deifkwefumgah.cloudfront.net/shadcnblocks/block/placeholder-2.svg"
-                />
+                /> */}
               </div>
             </div>
           </div>
@@ -94,13 +94,13 @@ const Hero = () => {
           {/* Image 5 — far right */}
           <div className="absolute right-0 bottom-0 z-10 w-[27%] overflow-hidden">
             <div style={wrapperStyle("108.202%")}>
-              <div data-slot="aspect-ratio" style={absoluteInsetStyle}>
-                <Image
+              <div data-slot="aspect-ratio" style={absoluteInsetStyle} className="bg-muted-foreground">
+                {/* <Image
                   alt=""
                   fill
                   className="block size-full object-cover object-top-left"
                   src="https://deifkwefumgah.cloudfront.net/shadcnblocks/block/placeholder-1.svg"
-                />
+                /> */}
               </div>
             </div>
           </div>
