@@ -191,4 +191,4 @@ export function calcAutresChargesGestion(
   };
 }
 
-export { zero, n, sumBy };
+export { n, sumBy };

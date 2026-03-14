@@ -14,6 +14,7 @@
 // Définis dans types/series.ts (feuille du graphe de dépendances).
 
 export type { YearKey, YearKey4, YearAcc } from "@/lib/finance/types/series";
+import type { YearAcc } from "@/lib/finance/types/series";
 
 // ── Conversion Decimal Prisma → number ────────────────────────────────────────
 
