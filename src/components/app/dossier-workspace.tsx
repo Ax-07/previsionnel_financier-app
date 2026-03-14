@@ -224,7 +224,7 @@ export default function DossierWorkspace({
       </TabsContent>
 
       <TabsContent value="rapports" className="flex-1 overflow-hidden">
-        <RapportsTab />
+        <RapportsTab dossierId={dossierId} />
       </TabsContent>
 
       <TabsContent value="diaporama" className="flex-1 overflow-hidden">
