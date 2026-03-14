@@ -11,12 +11,9 @@
  */
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+// Définis dans types/series.ts (feuille du graphe de dépendances).
 
-/** Clé des 3 exercices prévisionnels (N, N+1, N+2) */
-export type YearKey = "y1" | "y2" | "y3";
-/** Clé d'exercice étendue incluant l'année 0 (initial / pré-création) */
-export type YearKey4 = "y0" | "y1" | "y2" | "y3";
-export type YearAcc = Record<YearKey, number>;
+export type { YearKey, YearKey4, YearAcc } from "@/lib/finance/types/series";
 
 // ── Conversion Decimal Prisma → number ────────────────────────────────────────
 
@@ -52,77 +49,15 @@ export function calcIS(
   return Math.max(0, t1 * (tauxReduit / 100) + t2 * (tauxNormal / 100) + contrib - credit);
 }
 
-// ── Labels d'exercice fiscal ─────────────────────────────────────────────────���
 
-/**
- * Formate le label d'un exercice fiscal.
- * - Si le démarrage est en janvier (moisDebut = 0) → "2026"
- * - Sinon → "2026–2027" (exercice à cheval sur deux années civiles)
- */
-export const fmtExercice = (start: number, moisDebut: number): string =>
-  moisDebut === 0 ? `${start}` : `${start}\u2013${start + 1}`;
+// ── Labels d'exercice fiscal & Mappeur date → exercice fiscal ─────────────────
+// Source unique : pipeline/calendar.ts (exception §3.5.8)
 
-// ── Mappeur date → exercice fiscal ────────────────────────────────────────────
-
-export interface ExerciceHelpers {
-  /** Borne de fin de l'exercice N (= début exercice N+1) */
-  exBorne1: Date;
-  /** Borne de fin de l'exercice N+1 */
-  exBorne2: Date;
-  /** Borne de fin de l'exercice N+2 */
-  exBorne3: Date;
-  /**
-   * Mappe une date vers sa clé d'exercice fiscal (y1 | y2 | y3).
-   * Retourne null si la date est hors des 3 exercices projetés.
-   */
-  toExerciceKey: (date: Date | string) => YearKey | null;
-  /**
-   * Prorata de l'exercice appartenant à l'année civile de fin
-   * (pFin = moisDebut / 12 ; pDeb = 1 − pFin).
-   * Utile pour ventiler les dotations aux amortissements par exercice.
-   */
-  pFin: number;
-  pDeb: number;
-}
-
-/**
- * Crée les helpers de mapping date → exercice fiscal à partir de la date de démarrage.
- *
- * @example
- * const { toExerciceKey, exBorne1 } = makeExerciceHelpers(new Date("2026-04-01"));
- * toExerciceKey(new Date("2026-10-15")) // → "y1"
- */
-export function makeExerciceHelpers(dateDemarrage: Date): ExerciceHelpers {
-  const exBorne1 = new Date(
-    dateDemarrage.getFullYear() + 1,
-    dateDemarrage.getMonth(),
-    dateDemarrage.getDate(),
-  );
-  const exBorne2 = new Date(
-    dateDemarrage.getFullYear() + 2,
-    dateDemarrage.getMonth(),
-    dateDemarrage.getDate(),
-  );
-  const exBorne3 = new Date(
-    dateDemarrage.getFullYear() + 3,
-    dateDemarrage.getMonth(),
-    dateDemarrage.getDate(),
-  );
-
-  const moisDebut = dateDemarrage.getMonth();
-  const pFin = moisDebut === 0 ? 0 : moisDebut / 12;
-  const pDeb = 1 - pFin;
-
-  function toExerciceKey(date: Date | string): YearKey | null {
-    const d = date instanceof Date ? date : new Date(String(date));
-    if (d >= dateDemarrage && d < exBorne1) return "y1";
-    if (d >= exBorne1 && d < exBorne2) return "y2";
-    if (d >= exBorne2 && d < exBorne3) return "y3";
-    return null;
-  }
-
-  return { exBorne1, exBorne2, exBorne3, toExerciceKey, pFin, pDeb };
-}
+export {
+  fmtExercice,
+  makeExerciceHelpers,
+  type ExerciceHelpers,
+} from "@/lib/finance/pipeline/calendar";
 
 // ── Helpers d'accumulation ────────────────────────────────────────────────────
 

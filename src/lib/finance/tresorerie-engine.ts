@@ -169,3 +169,28 @@ export function isQuarterly(isTotal: number): MonthlySeries {
   s[11] = q;
   return s;
 }
+
+/**
+ * IS mensuel pour le tableau de trésorerie — 3 acomptes dans l'exercice courant
+ * (M3, M6, M9 = indices 2, 5, 8) + solde de l'exercice précédent (M12 = index 11).
+ *
+ * Cohérent avec dettesIS = IS/4 dans le BFR : la dette fin d'exercice correspond
+ * au 4ème acompte décaissé en M12 de l'exercice suivant (solde de régularisation).
+ *
+ * Formule cash IS : IS_charge + dette_début − dette_fin
+ *   = IS_Y + (IS_{Y-1}/4) − (IS_Y/4) = 3/4 IS_Y + IS_{Y-1}/4
+ *
+ * @param isCurrent  IS de l'exercice en cours (3 acomptes dans l'année)
+ * @param isPrevious IS de l'exercice précédent (solde ← 4ème acompte en M12)
+ */
+export function isQuarterlyDecaissement(isCurrent: number, isPrevious: number): MonthlySeries {
+  const s = zeroSeries();
+  if (isCurrent > 0) {
+    const q = isCurrent / 4;
+    s[2] = q;
+    s[5] = q;
+    s[8] = q;
+  }
+  if (isPrevious > 0) s[11] = isPrevious / 4;
+  return s;
+}
