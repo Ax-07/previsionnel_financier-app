@@ -32,6 +32,7 @@ model Dossier {
   cabinet             Cabinet          @relation(fields: [cabinetId], references: [id], onDelete: Cascade)
   invitations         Invitation[]
   rapports            RapportExporte[]
+  reportSections      ReportSection[]
   scenarios           Scenario[]
   accesUtilisateurs   UserDossier[]
 
