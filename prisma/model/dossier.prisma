@@ -119,9 +119,18 @@ model ParametresEntreprise {
   delaiPaiementClients      Int          @default(30)
   delaiPaiementFournisseurs Int          @default(30)
   joursStockMoyen           Int?         @default(0)
+  /// Décalage de paiement des salaires : 0 = mois courant, 1 = M+1, 2 = M+2, 3 = M+3
+  moisPaiementSalaires      Int          @default(1)
   repartitionResultat       Decimal?     @db.Decimal(5, 2)
   activite                  String?
   codeNAF                   String?
+  // ── Paramètres TNS ────────────────────────────────────────────────────────
+  /// Régime social TNS : "commerce" | "artisan" | "liberal"
+  tnsRegimeSocial           String       @default("commerce")
+  /// Mode de calcul cotisations TNS : "DEFINITIF" | "DEBUT_ACTIVITE_FORFAIT"
+  tnsModeCalcul             String       @default("DEFINITIF")
+  /// Décaler la régularisation URSSAF de N+1 vers N+2
+  tnsDecalerN2              Boolean      @default(false)
   // ── Période & exercices prévisionnels ─────────────────────────────────────
   dateDebutExerciceN        DateTime?
   dureePrevisionnelle       Int          @default(3)
