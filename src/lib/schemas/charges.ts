@@ -18,7 +18,7 @@ export const FREQUENCES_CHARGE = [
   { value: "TRIMESTRIELLE", label: "Trimestrielle" },
   { value: "SEMESTRIELLE", label: "Semestrielle" },
   { value: "ANNUELLE", label: "Annuelle" },
-  { value: "PERSONNALISEE", label: "/.../  Personnalisée" },
+  { value: "PERSONNALISEE", label: "../.." },
 ] as const;
 
 export const DELAIS_REGLEMENT_CHARGE = [

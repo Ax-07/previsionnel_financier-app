@@ -17,8 +17,8 @@ export const PERIODICITES_EMPRUNT = [
 
 export const TYPES_DIFFERE = [
   { value: "AUCUN",   label: "Aucun" },
-  { value: "PARTIEL", label: "Partiel (intérêts seulement)" },
-  { value: "TOTAL",   label: "Total (aucun remboursement)" },
+  { value: "PARTIEL", label: "Partiel (capital seulement)" },
+  { value: "TOTAL",   label: "Total (capital + intérêts)" },
 ] as const;
 
 export const TYPES_EMPRUNT = [
@@ -60,7 +60,7 @@ export const empruntSchema = z.object({
 
   // Conditions
   tauxAnnuel:    z.number().min(0).max(100),
-  tauxAssurance: z.number().min(0).max(100),
+  tauxAssurance: z.number().min(0).max(5, "Le taux d'assurance dépasse 5 % — vérifiez la saisie (ex : 0.3)"),
   dureeEnMois:   z.number().int().min(1, "≥ 1 mois"),
   periodicite:   z.enum(["MENSUEL", "TRIMESTRIEL", "SEMESTRIEL", "ANNUEL"]),
 
