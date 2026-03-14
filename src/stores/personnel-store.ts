@@ -223,9 +223,11 @@ export const usePersonnelStore = create<PersonnelState>()(
 
         updateParamsGlobauxTNS: (dossierId, data) => {
           const current = get().getDraft(dossierId).paramsGlobauxTNS;
+          const modeChanged = "modeCalculTNS" in data && data.modeCalculTNS !== current.modeCalculTNS;
           set((s) => ({
             drafts: patchDraft(s.drafts, dossierId, {
               paramsGlobauxTNS: { ...current, ...data },
+              ...(modeChanged ? { hasUnsavedCotisationsTNS: true } : {}),
             }),
           }));
         },
