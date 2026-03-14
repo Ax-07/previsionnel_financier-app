@@ -21,8 +21,8 @@ import type { YearKey } from "@/lib/finance/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type MonthlySeries = number[]; // longueur 12
-export type MonthlyAcc = Record<YearKey, MonthlySeries>;
+// Définis dans types/series.ts et re-exportés ici pour compatibilité.
+export type { MonthlySeries, MonthlyAcc } from "@/lib/finance/types/series";
 
 // ── Helpers de séries mensuelles (source unique de vérité) ───────────────────
 
@@ -362,8 +362,18 @@ export function buildMonthlyCalc(
   }
 
   // ── Achats & stocks ───────────────────────────────────────────────────────
+  //
+  // Logique RCA (sens comptable correct) :
+  //   1. achatsConsommés = CA × (1 − tauxMarge)    ← PRIMAL, distribué selon saisonnaliteAchats
+  //   2. stockFinal      = achatsConsommés_annuel × joursStock / 360  (convention 360 jours)
+  //   3. achatsEffectués = achatsConsommés + (SF − SI) + ponctuels     ← DÉRIVÉ
+  //
+  // Les achats ponctuels (stock initial, réassorts) vont directement dans
+  // achatsEffectués et augmentent le stock (bilan actif) sans toucher au
+  // compte de résultat (achatsConsommés inchangé).
 
-  const achatsEffectuesAcc = emptyAcc();
+  const achatsConsommesAcc = emptyAcc();  // PRIMAL
+  const ponctuelAcc = emptyAcc();          // séparé, ne touche pas les consommés
   const achatsByActivity: { libelle: string; series: MonthlyAcc }[] = [];
   const stockByActivity: { libelle: string; sfY1: number; sfY2: number; sfY3: number }[] = [];
 
@@ -375,29 +385,15 @@ export function buildMonthlyCalc(
     const aN = n(a.montantN) * taux;
     const aN1 = n(a.montantN1) * taux;
     const aN2 = n(a.montantN2) * taux;
-    const actSfY1 = (aN * stocks) / 365;
-    const actSfY2 = (aN1 * stocks) / 365;
-    const actSfY3 = (aN2 * stocks) / 365;
+
+    // Stock final de fin d'exercice — convention commerciale 360 jours (comme RCA)
+    const actSfY1 = (aN * stocks) / 360;
+    const actSfY2 = (aN1 * stocks) / 360;
+    const actSfY3 = (aN2 * stocks) / 360;
     sfY1 += actSfY1;
     sfY2 += actSfY2;
     sfY3 += actSfY3;
-    if (actSfY1 !== 0 || actSfY2 !== 0 || actSfY3 !== 0) {
-      stockByActivity.push({ libelle: a.libelle, sfY1: actSfY1, sfY2: actSfY2, sfY3: actSfY3 });
-    }
-    const actSeries: MonthlyAcc = {
-      y1: withSaisonnalite(aN, a.saisonnaliteAchats, "N"),
-      y2: withSaisonnalite(aN1, a.saisonnaliteAchats, "N1"),
-      y3: withSaisonnalite(aN2, a.saisonnaliteAchats, "N2"),
-    };
-    addSeries(achatsEffectuesAcc, "y1", actSeries.y1);
-    addSeries(achatsEffectuesAcc, "y2", actSeries.y2);
-    addSeries(achatsEffectuesAcc, "y3", actSeries.y3);
-    achatsByActivity.push({
-      libelle: `Achats – ${a.libelle}`,
-      series: actSeries,
-    });
-
-    // Achats de stock ponctuels (stock initial, réassorts) : montants bruts mensuels
+    // Achats ponctuels : montants HT d'achat par mois (convention cash réel).
     const ponctuelSeries: MonthlyAcc = {
       y1: ponctuelMonthly(a.achatsStockPonctuel, "N"),
       y2: ponctuelMonthly(a.achatsStockPonctuel, "N1"),
@@ -405,12 +401,38 @@ export function buildMonthlyCalc(
     };
     const ponctuelTotal = totalOf(ponctuelSeries.y1) + totalOf(ponctuelSeries.y2) + totalOf(ponctuelSeries.y3);
     if (ponctuelTotal !== 0) {
-      addSeries(achatsEffectuesAcc, "y1", ponctuelSeries.y1);
-      addSeries(achatsEffectuesAcc, "y2", ponctuelSeries.y2);
-      addSeries(achatsEffectuesAcc, "y3", ponctuelSeries.y3);
+      addSeries(ponctuelAcc, "y1", ponctuelSeries.y1);
+      addSeries(ponctuelAcc, "y2", ponctuelSeries.y2);
+      addSeries(ponctuelAcc, "y3", ponctuelSeries.y3);
+    }
+
+    if (actSfY1 !== 0 || actSfY2 !== 0 || actSfY3 !== 0) {
+      stockByActivity.push({ libelle: a.libelle, sfY1: actSfY1, sfY2: actSfY2, sfY3: actSfY3 });
+    }
+
+    // Achats consommés (primal) : CA × coef distribué selon saisonnaliteAchats
+    const consommesSeries: MonthlyAcc = {
+      y1: withSaisonnalite(aN, a.saisonnaliteAchats, "N"),
+      y2: withSaisonnalite(aN1, a.saisonnaliteAchats, "N1"),
+      y3: withSaisonnalite(aN2, a.saisonnaliteAchats, "N2"),
+    };
+    addSeries(achatsConsommesAcc, "y1", consommesSeries.y1);
+    addSeries(achatsConsommesAcc, "y2", consommesSeries.y2);
+    addSeries(achatsConsommesAcc, "y3", consommesSeries.y3);
+
+    // Drill-down achatsEffectués par activité :
+    //   achatsEff = consommés + (sfY − siY) / 12 + ponctuels
+    const varActY1 = actSfY1;            // SI y1 = 0 (pas de stock avant démarrage)
+    const varActY2 = actSfY2 - actSfY1;
+    const varActY3 = actSfY3 - actSfY2;
+    if (aN !== 0 || aN1 !== 0 || aN2 !== 0 || ponctuelTotal !== 0) {
       achatsByActivity.push({
-        libelle: `Achats ponctuels – ${a.libelle}`,
-        series: ponctuelSeries,
+        libelle: `Achats – ${a.libelle}`,
+        series: {
+          y1: consommesSeries.y1.map((v, i) => v + varActY1 / 12 + (ponctuelSeries.y1[i] ?? 0)),
+          y2: consommesSeries.y2.map((v, i) => v + varActY2 / 12 + (ponctuelSeries.y2[i] ?? 0)),
+          y3: consommesSeries.y3.map((v, i) => v + varActY3 / 12 + (ponctuelSeries.y3[i] ?? 0)),
+        },
       });
     }
   }
@@ -418,7 +440,7 @@ export function buildMonthlyCalc(
   const stockInitialByActivity = stockByActivity.map((s) => ({
     libelle: s.libelle,
     series: {
-      y1: uniform(0),
+      y1: uniform(0), // stock initial = 0 (pas de stock avant démarrage)
       y2: uniform(s.sfY1),
       y3: uniform(s.sfY2),
     } as MonthlyAcc,
@@ -434,14 +456,14 @@ export function buildMonthlyCalc(
   const varStockByActivity = stockByActivity.map((s) => ({
     libelle: s.libelle,
     series: {
-      y1: uniform(s.sfY1 - 0),
+      y1: uniform(s.sfY1), // variation = SF − SI (SI = 0)
       y2: uniform(s.sfY2 - s.sfY1),
       y3: uniform(s.sfY3 - s.sfY2),
     } as MonthlyAcc,
   }));
 
   const stockInitialAcc: MonthlyAcc = {
-    y1: uniform(0),
+    y1: uniform(0), // stock initial = 0 (pas de stock avant démarrage)
     y2: uniform(sfY1),
     y3: uniform(sfY2),
   };
@@ -455,12 +477,19 @@ export function buildMonthlyCalc(
     y2: stockFinalAcc.y2.map((v, i) => v - (stockInitialAcc.y2[i] ?? 0)),
     y3: stockFinalAcc.y3.map((v, i) => v - (stockInitialAcc.y3[i] ?? 0)),
   };
-  // achatsConsommés = achatsEffectués + SI − SF (sur l'exercice complet)
-  const totalAchatsEff = monthlyToYearAcc(achatsEffectuesAcc);
-  const achatsConsommesAcc: MonthlyAcc = {
-    y1: uniform(totalAchatsEff.y1 + 0 - sfY1),
-    y2: uniform(totalAchatsEff.y2 + sfY1 - sfY2),
-    y3: uniform(totalAchatsEff.y3 + sfY2 - sfY3),
+
+  // achatsEffectués (DÉRIVÉ) = achatsConsommés + (SF − SI) / 12 + ponctuels
+  // SI = 0 (convention cash réel : pas de stock avant démarrage)
+  const achatsEffectuesAcc: MonthlyAcc = {
+    y1: achatsConsommesAcc.y1.map(
+      (v, i) => v + sfY1 / 12 + (ponctuelAcc.y1[i] ?? 0),
+    ),
+    y2: achatsConsommesAcc.y2.map(
+      (v, i) => v + (sfY2 - sfY1) / 12 + (ponctuelAcc.y2[i] ?? 0),
+    ),
+    y3: achatsConsommesAcc.y3.map(
+      (v, i) => v + (sfY3 - sfY2) / 12 + (ponctuelAcc.y3[i] ?? 0),
+    ),
   };
 
   // ── Marges ────────────────────────────────────────────────────────────────
@@ -616,27 +645,23 @@ export function buildMonthlyCalc(
 
     const immoSeries = emptyAcc();
 
-    /** Ajoute dotMois au mois absolu dans les séries mensuelles. */
-    function addMois(absMonth: number, dotMois: number) {
-      for (let e = 0; e < 3; e++) {
-        const exStart = (anneeDebut + e) * 12 + moisDebut;
-        if (absMonth >= exStart && absMonth < exStart + 12) {
-          const yk  = (["y1", "y2", "y3"] as YearKey[])[e]!;
-          const idx = absMonth - exStart;
-          immoSeries[yk][idx]!        += dotMois;
-          dotationsAmortAcc[yk][idx]! += dotMois;
-          break;
-        }
-      }
-    }
-
     if (immo.modeAmortissement !== "DEGRESSIF") {
-      // ── LINEAIRE : taux mensuel constant ────────────────────────────────
+      // ── LINEAIRE : intersection par exercice ─ O(3×12) au lieu de O(durée×12)
       const acqAbsMonth = acqYear * 12 + acqMois;
       const totalMonths = Math.round(dur * 12);
       const dotMois     = montant / totalMonths;
-      for (let k = 0; k < totalMonths; k++) {
-        addMois(acqAbsMonth + k, dotMois);
+      for (let e = 0; e < 3; e++) {
+        const exStart = (anneeDebut + e) * 12 + moisDebut;
+        const exEnd   = exStart + 12;
+        const ovStart = Math.max(acqAbsMonth, exStart);
+        const ovEnd   = Math.min(acqAbsMonth + totalMonths, exEnd);
+        if (ovStart >= ovEnd) continue;
+        const yk = (["y1", "y2", "y3"] as YearKey[])[e]!;
+        for (let absMonth = ovStart; absMonth < ovEnd; absMonth++) {
+          const idx = absMonth - exStart;
+          immoSeries[yk][idx]!        += dotMois;
+          dotationsAmortAcc[yk][idx]! += dotMois;
+        }
       }
     } else {
       // ── DEGRESSIF : distribuer depuis lignesAmortissement ────────────────
@@ -662,7 +687,17 @@ export function buildMonthlyCalc(
         if (nbMois <= 0) continue;
         const dotMois = D / nbMois;
         for (let m = moisCivilDebut; m < moisCivilDebut + nbMois; m++) {
-          addMois(ligne.annee * 12 + m, dotMois);
+          const absMonth = ligne.annee * 12 + m;
+          for (let e = 0; e < 3; e++) {
+            const exStart = (anneeDebut + e) * 12 + moisDebut;
+            if (absMonth >= exStart && absMonth < exStart + 12) {
+              const yk  = (["y1", "y2", "y3"] as YearKey[])[e]!;
+              const idx = absMonth - exStart;
+              immoSeries[yk][idx]!        += dotMois;
+              dotationsAmortAcc[yk][idx]! += dotMois;
+              break;
+            }
+          }
         }
       }
     }
@@ -741,11 +776,11 @@ export function buildMonthlyCalc(
     }
   }
 
-  // Frais de dossier : charge ponctuelle à la date de déblocage (moisNumero = 0)
+  // Frais de dossier : charge ponctuelle à la date de déblocage (moisNumero = -1)
   const fraisDossierAcc = emptyAcc();
   for (const emprunt of data.emprunts) {
     for (const ligne of emprunt.lignesEcheancier) {
-      if (ligne.moisNumero !== 0) continue;
+      if (ligne.moisNumero !== -1) continue;
       const dateStr =
         ligne.dateEcheance instanceof Date
           ? ligne.dateEcheance.toISOString()

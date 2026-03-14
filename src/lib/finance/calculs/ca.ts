@@ -1,18 +1,7 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
-import type { YearKey } from "@/lib/finance/utils";
+import { n, sumBy, type YearAcc } from "@/lib/finance/utils";
 
-export type YAcc = Record<YearKey, number>;
-
-const n = (v: unknown): number =>
-  typeof v === "object" && v !== null && "toNumber" in v
-    ? (v as { toNumber: () => number }).toNumber()
-    : Number(v ?? 0);
-
-const zero: YAcc = { y1: 0, y2: 0, y3: 0 };
-
-function sumBy<T>(arr: T[], fn: (item: T) => number) {
-  return arr.reduce((s, x) => s + fn(x), 0);
-}
+type YAcc = YearAcc;
 
 // ── CA par type ──────────────────────────────────────────────────────────────
 
@@ -58,15 +47,17 @@ export function calcStocks(data: Pick<ScenarioFinData, "activites">): {
       stocks: a.stocks ?? 0,
     }));
 
-  const achatsEffectues: YAcc = {
+  // achatsConsommés = CA × (1 − tauxMarge) — primal, indépendant de la variation de stock
+  const achatsConsommes: YAcc = {
     y1: sumBy(achatsRows, (r) => r.montantN * Math.max(0, 1 - r.tauxMarge / 100)),
     y2: sumBy(achatsRows, (r) => r.montantN1 * Math.max(0, 1 - r.tauxMarge / 100)),
     y3: sumBy(achatsRows, (r) => r.montantN2 * Math.max(0, 1 - r.tauxMarge / 100)),
   };
 
-  const sfY1 = sumBy(achatsRows, (r) => (r.montantN * Math.max(0, 1 - r.tauxMarge / 100) * r.stocks) / 365);
-  const sfY2 = sumBy(achatsRows, (r) => (r.montantN1 * Math.max(0, 1 - r.tauxMarge / 100) * r.stocks) / 365);
-  const sfY3 = sumBy(achatsRows, (r) => (r.montantN2 * Math.max(0, 1 - r.tauxMarge / 100) * r.stocks) / 365);
+  // Convention commerciale 360 jours (RCA)
+  const sfY1 = sumBy(achatsRows, (r) => (r.montantN * Math.max(0, 1 - r.tauxMarge / 100) * r.stocks) / 360);
+  const sfY2 = sumBy(achatsRows, (r) => (r.montantN1 * Math.max(0, 1 - r.tauxMarge / 100) * r.stocks) / 360);
+  const sfY3 = sumBy(achatsRows, (r) => (r.montantN2 * Math.max(0, 1 - r.tauxMarge / 100) * r.stocks) / 360);
 
   const stockFinal: YAcc = { y1: sfY1, y2: sfY2, y3: sfY3 };
   const stockInitial: YAcc = { y1: 0, y2: sfY1, y3: sfY2 };
@@ -75,10 +66,11 @@ export function calcStocks(data: Pick<ScenarioFinData, "activites">): {
     y2: sfY2 - sfY1,
     y3: sfY3 - sfY2,
   };
-  const achatsConsommes: YAcc = {
-    y1: achatsEffectues.y1 + stockInitial.y1 - stockFinal.y1,
-    y2: achatsEffectues.y2 + stockInitial.y2 - stockFinal.y2,
-    y3: achatsEffectues.y3 + stockInitial.y3 - stockFinal.y3,
+  // achatsEffectués (avec variation de stock) = achatsConsommés + SF − SI
+  const achatsEffectues: YAcc = {
+    y1: achatsConsommes.y1 + stockFinal.y1 - stockInitial.y1,
+    y2: achatsConsommes.y2 + stockFinal.y2 - stockInitial.y2,
+    y3: achatsConsommes.y3 + stockFinal.y3 - stockInitial.y3,
   };
 
   return { achatsEffectues, stockInitial, stockFinal, varStock, achatsConsommes };
