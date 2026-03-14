@@ -16,7 +16,7 @@ import {
   type DetailMensuelExercice,
   type ParamsGlobauxTNS,
 } from "@/lib/schemas/personnel";
-import { calculerMontantsTNS, detecterACRE, remuTNSBase } from "@/lib/calcul/taux-tns";
+import { calculerMontantsTNS, detecterACRE, remuTNSBase, trouverBrutPourNet } from "@/lib/calcul/taux-tns";
 
 export type ActionResult =
   | { success: true; message: string }
@@ -286,7 +286,7 @@ export async function fetchLignesCotisationsTNS(dossierId: string): Promise<Lign
 export async function saveLignesCotisationsTNS(
   dossierId: string,
   rows: LigneCotisationTNSRow[],
-  paramsGlobauxTNS?: Pick<ParamsGlobauxTNS, "regimeSocial" | "modeCalculTNS">,
+  paramsGlobauxTNSInput?: Pick<ParamsGlobauxTNS, "regimeSocial" | "modeCalculTNS">,
 ): Promise<ActionResult & { ids?: string[] }> {
   try {
     const err = validateRows(rows, ligneCotisationTNSSchema);
@@ -294,9 +294,27 @@ export async function saveLignesCotisationsTNS(
 
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
+    // Résolution des params TNS : client > BDD > défaut
+    // Garantit que le recalcul serveur utilise toujours des params cohérents,
+    // même si le client n'en fournit pas (autre device, appel API direct).
+    let resolvedParams: Pick<ParamsGlobauxTNS, "regimeSocial" | "modeCalculTNS">;
+    if (paramsGlobauxTNSInput) {
+      resolvedParams = paramsGlobauxTNSInput;
+    } else {
+      const dbParams = await prisma.parametresEntreprise.findUnique({
+        where: { scenarioId },
+        select: { tnsRegimeSocial: true, tnsModeCalcul: true },
+      });
+      resolvedParams = {
+        regimeSocial: (dbParams?.tnsRegimeSocial ?? "commerce") as ParamsGlobauxTNS["regimeSocial"],
+        modeCalculTNS: (dbParams?.tnsModeCalcul ?? "DEFINITIF") as ParamsGlobauxTNS["modeCalculTNS"],
+      };
+    }
+    const paramsGlobauxTNS = resolvedParams;
+
     // Recalcul côté serveur pour les lignes calcAuto = true (P3-10)
     let finalRows: LigneCotisationTNSRow[] = rows;
-    if (paramsGlobauxTNS && rows.some((r) => r.calcAuto)) {
+    if (rows.some((r) => r.calcAuto)) {
       const dbDirigeants = await prisma.ligneDirigeant.findMany({
         where: { scenarioId },
         select: { actif: true, montantN: true, montantN1: true, montantN2: true, tauxFixe: true, exonerationTNS: true },
@@ -311,20 +329,33 @@ export async function saveLignesCotisationsTNS(
       }));
       const { remuN, remuN1, remuN2 } = remuTNSBase(dirigeants);
       const acreN = detecterACRE(dirigeants);
+      const regime = paramsGlobauxTNS.regimeSocial;
+      // net → brut (dichotomie) : même logique que le formulaire client
+      const brutN  = trouverBrutPourNet(remuN,  regime, acreN,  { mode: "DEFINITIF" }).brut;
+      const brutN1 = trouverBrutPourNet(remuN1, regime, false, { mode: "DEFINITIF" }).brut;
+      const brutN2 = trouverBrutPourNet(remuN2, regime, false, { mode: "DEFINITIF" }).brut;
       const computed = calculerMontantsTNS(
-        remuN, remuN1, remuN2,
-        paramsGlobauxTNS.regimeSocial,
+        brutN, brutN1, brutN2,
+        regime,
         acreN,
-        365, 365, 365,
-        paramsGlobauxTNS.modeCalculTNS,
+        360, 360, 360,
+        // Toujours DEFINITIF pour la BDD : le CR/bilan utilise ces montants.
+        // Le calendrier trésorerie URSSAF est recalculé séparément dans decaissements.ts.
+        "DEFINITIF",
       );
+
+      // La ligne "Régularisation URSSAF" n'est jamais persistée (trésorerie uniquement).
+      // Filtrer les éventuelles lignes héritées d'une version précédente.
+      const REG_LABEL = "Régularisation URSSAF";
       let autoIdx = 0;
-      finalRows = rows.map((row) => {
-        if (!row.calcAuto) return row;
-        const line = computed[autoIdx++];
-        if (!line) return row;
-        return { ...row, montantN: line.montantN, montantN1: line.montantN1, montantN2: line.montantN2 };
-      });
+      finalRows = rows
+        .filter((row) => row.libelle !== REG_LABEL)
+        .map((row) => {
+          if (!row.calcAuto) return row;
+          const line = computed[autoIdx++];
+          if (!line) return row;
+          return { ...row, montantN: line.montantN, montantN1: line.montantN1, montantN2: line.montantN2 };
+        });
     }
 
     const incomingIds = finalRows.filter((r) => r.id && !r.id.startsWith("__new__")).map((r) => r.id!);
@@ -502,4 +533,110 @@ export async function fetchDossierDebutExercice(
   });
   const date = dossier?.dateDemarrage ? new Date(dossier.dateDemarrage) : new Date();
   return { anneeDebut: date.getFullYear(), moisDebut: date.getMonth() };
+}
+
+// ── Paramètre global : mois de paiement des salaires ──────────────────────────
+
+/**
+ * Lit le moisPaiementSalaires persisté dans ParametresEntreprise du scénario.
+ * Retourne 1 (M+1) si la valeur n'est pas encore configurée.
+ */
+export async function fetchMoisPaiementSalaires(dossierId: string): Promise<number> {
+  try {
+    const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    const params = await prisma.parametresEntreprise.findUnique({
+      where: { scenarioId },
+      select: { moisPaiementSalaires: true },
+    });
+    return params?.moisPaiementSalaires ?? 1;
+  } catch {
+    return 1;
+  }
+}
+
+/**
+ * Persiste le moisPaiementSalaires dans ParametresEntreprise du scénario.
+ * Crée l'enregistrement si absent (upsert).
+ */
+export async function saveMoisPaiementSalaires(
+  dossierId: string,
+  moisPaiement: number,
+): Promise<ActionResult> {
+  try {
+    if (moisPaiement < 0 || moisPaiement > 3) {
+      return { success: false, error: "Valeur invalide (0–3 attendu)" };
+    }
+    const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    await prisma.parametresEntreprise.upsert({
+      where: { scenarioId },
+      update: { moisPaiementSalaires: moisPaiement },
+      create: { scenarioId, moisPaiementSalaires: moisPaiement },
+    });
+    return { success: true, message: "Mois de paiement enregistré" };
+  } catch (error) {
+    console.error("[saveMoisPaiementSalaires] Erreur :", error);
+    return { success: false, error: "Erreur lors de la sauvegarde" };
+  }
+}
+
+// ── Paramètres globaux TNS ────────────────────────────────────────────────────
+
+/**
+ * Lit les paramètres globaux TNS persistés dans ParametresEntreprise du scénario.
+ */
+export async function fetchParamsGlobauxTNS(
+  dossierId: string,
+): Promise<Pick<ParamsGlobauxTNS, "regimeSocial" | "modeCalculTNS" | "decalerEcheancierN2">> {
+  try {
+    const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    const params = await prisma.parametresEntreprise.findUnique({
+      where: { scenarioId },
+      select: { tnsRegimeSocial: true, tnsModeCalcul: true, tnsDecalerN2: true },
+    });
+    return {
+      regimeSocial: (params?.tnsRegimeSocial ?? "commerce") as ParamsGlobauxTNS["regimeSocial"],
+      modeCalculTNS: (params?.tnsModeCalcul ?? "DEFINITIF") as ParamsGlobauxTNS["modeCalculTNS"],
+      decalerEcheancierN2: params?.tnsDecalerN2 ?? false,
+    };
+  } catch {
+    return { regimeSocial: "commerce", modeCalculTNS: "DEFINITIF", decalerEcheancierN2: false };
+  }
+}
+
+/**
+ * Persiste les paramètres globaux TNS dans ParametresEntreprise du scénario.
+ */
+export async function saveParamsGlobauxTNS(
+  dossierId: string,
+  params: Pick<ParamsGlobauxTNS, "regimeSocial" | "modeCalculTNS" | "decalerEcheancierN2">,
+): Promise<ActionResult> {
+  try {
+    const validRegimes = ["commerce", "artisan", "liberal"];
+    const validModes = ["DEFINITIF", "DEBUT_ACTIVITE_FORFAIT"];
+    if (!validRegimes.includes(params.regimeSocial)) {
+      return { success: false, error: "Régime social invalide" };
+    }
+    if (!validModes.includes(params.modeCalculTNS)) {
+      return { success: false, error: "Mode de calcul TNS invalide" };
+    }
+    const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    await prisma.parametresEntreprise.upsert({
+      where: { scenarioId },
+      update: {
+        tnsRegimeSocial: params.regimeSocial,
+        tnsModeCalcul: params.modeCalculTNS,
+        tnsDecalerN2: params.decalerEcheancierN2,
+      },
+      create: {
+        scenarioId,
+        tnsRegimeSocial: params.regimeSocial,
+        tnsModeCalcul: params.modeCalculTNS,
+        tnsDecalerN2: params.decalerEcheancierN2,
+      },
+    });
+    return { success: true, message: "Paramètres TNS enregistrés" };
+  } catch (error) {
+    console.error("[saveParamsGlobauxTNS] Erreur :", error);
+    return { success: false, error: "Erreur lors de la sauvegarde" };
+  }
 }

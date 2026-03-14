@@ -27,10 +27,7 @@ function isPrismaError(err: unknown, code: string): boolean {
   );
 }
 
-async function recalculerEcheancierDB(
-  empruntId: string,
-  data: EmpruntRow
-): Promise<void> {
+function buildLignesEcheancier(empruntId: string, data: EmpruntRow) {
   const lignes: LigneEcheancier[] = calculerEcheancier({
     montant:               data.montant,
     tauxAnnuel:            data.tauxAnnuel,
@@ -46,23 +43,17 @@ async function recalculerEcheancierDB(
     modeAssurance:         data.modeAssurance,
   });
 
-  await prisma.ligneEcheancier.deleteMany({ where: { empruntId } });
-
-  if (lignes.length > 0) {
-    await prisma.ligneEcheancier.createMany({
-      data: lignes.map((l) => ({
-        empruntId,
-        moisNumero:           l.moisNumero,
-        dateEcheance:         new Date(l.dateEcheance),
-        capitalRestantDebut:  l.capitalRestantDebut,
-        interesMois:          l.interesMois,
-        assuranceMois:        l.assuranceMois,
-        capitalRembourse:     l.capitalRembourse,
-        mensualiteTotale:     l.mensualiteTotale,
-        capitalRestantFin:    l.capitalRestantFin,
-      })),
-    });
-  }
+  return lignes.map((l) => ({
+    empruntId,
+    moisNumero:           l.moisNumero,
+    dateEcheance:         new Date(l.dateEcheance),
+    capitalRestantDebut:  l.capitalRestantDebut,
+    interesMois:          l.interesMois,
+    assuranceMois:        l.assuranceMois,
+    capitalRembourse:     l.capitalRembourse,
+    mensualiteTotale:     l.mensualiteTotale,
+    capitalRestantFin:    l.capitalRestantFin,
+  }));
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -227,18 +218,27 @@ export async function upsertEmprunt(
       scenarioId,
     };
 
-    let id = data.id;
-    if (id) {
-      await prisma.emprunt.update({ where: { id }, data: payload });
-    } else {
-      const created = await prisma.emprunt.create({ data: payload });
-      id = created.id;
-    }
+    const isUpdate = !!data.id;
 
-    // Recalcul de l'échéancier
-    await recalculerEcheancierDB(id, data);
+    const id = await prisma.$transaction(async (tx) => {
+      let empruntId = data.id;
+      if (empruntId) {
+        await tx.emprunt.update({ where: { id: empruntId }, data: payload });
+      } else {
+        const created = await tx.emprunt.create({ data: payload });
+        empruntId = created.id;
+      }
 
-    return { success: true, message: data.id ? "Emprunt mis à jour." : "Emprunt créé.", id };
+      const lignes = buildLignesEcheancier(empruntId, data);
+      await tx.ligneEcheancier.deleteMany({ where: { empruntId } });
+      if (lignes.length > 0) {
+        await tx.ligneEcheancier.createMany({ data: lignes });
+      }
+
+      return empruntId;
+    });
+
+    return { success: true, message: isUpdate ? "Emprunt mis à jour." : "Emprunt créé.", id };
   } catch (err) {
     console.error("[upsertEmprunt]", err);
     if (isPrismaError(err, "P2025")) return { success: false, error: "Emprunt introuvable." };
