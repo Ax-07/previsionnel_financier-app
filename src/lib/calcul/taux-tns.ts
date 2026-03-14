@@ -95,7 +95,7 @@ function assietteUnique(revenuBrut: number): number {
 function prorataTemporis(joursActivite: number): number {
   if (!Number.isFinite(joursActivite)) return 1;
   if (joursActivite <= 0) return 0;
-  return Math.min(1, Math.max(0, joursActivite / 365));
+  return Math.min(1, Math.max(0, joursActivite / 360));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -454,9 +454,9 @@ export function calculerMontantsTNS(
   remuN2: number,
   regime: RegimeSocial,
   acreN = false,
-  joursActiviteN = 365,
-  joursActiviteN1 = 365,
-  joursActiviteN2 = 365,
+  joursActiviteN = 360,
+  joursActiviteN1 = 360,
+  joursActiviteN2 = 360,
   mode: ModeCalculTNS = "DEFINITIF",
 ): MontantsTNSLigne[] {
   const calc = (modeLocal: ModeCalculTNS, revenu: number, acreActif: boolean, jours: number) => {
@@ -511,7 +511,7 @@ function netPourBrut(
   joursActivite: number,
   mode: ModeCalculTNS,
 ): { net: number; totalCotisations: number; lignes: MontantsTNSLigne[] } {
-  const lignes3 = calculerMontantsTNS(brut, 0, 0, regime, acreActif, joursActivite, 365, 365, mode);
+  const lignes3 = calculerMontantsTNS(brut, 0, 0, regime, acreActif, joursActivite, 360, 360, mode);
   const lignesN = extraireLignesPourAnnee(lignes3, 0);
   const total = totalCotisationsLignesN(lignesN);
   return { net: rd(brut - total), totalCotisations: total, lignes: lignes3 };
@@ -532,11 +532,11 @@ export function trouverBrutPourNet(
   const precision = options?.precisionEuro ?? 0.01;
   const maxIt = options?.maxIterations ?? 80;
   const brutMax = options?.brutMax ?? 1_000_000;
-  const jours = options?.joursActivite ?? 365;
+  const jours = options?.joursActivite ?? 360;
   const mode = options?.mode ?? "DEFINITIF";
 
   if (netCible <= 0) {
-    const zero = calculerMontantsTNS(0, 0, 0, regime, false, jours, 365, 365, mode);
+    const zero = calculerMontantsTNS(0, 0, 0, regime, false, jours, 360, 360, mode);
     return { brut: 0, net: 0, totalCotisations: 0, lignes: zero, iterations: 0, mode };
   }
 
@@ -606,23 +606,23 @@ export function simulerTresorerieUrssafSur3Ans(params: {
     brutN, brutN1, brutN2,
     regime,
     acreN = false,
-    joursN = 365,
-    joursN1 = 365,
-    joursN2 = 365,
+    joursN = 360,
+    joursN1 = 360,
+    joursN2 = 360,
   } = params;
 
   // Définifits (dû réel)
-  const defN3 = calculerMontantsTNS(brutN, 0, 0, regime, acreN, joursN, 365, 365, "DEFINITIF");
-  const defN13 = calculerMontantsTNS(brutN1, 0, 0, regime, false, joursN1, 365, 365, "DEFINITIF");
-  const defN23 = calculerMontantsTNS(brutN2, 0, 0, regime, false, joursN2, 365, 365, "DEFINITIF");
+  const defN3 = calculerMontantsTNS(brutN, 0, 0, regime, acreN, joursN, 360, 360, "DEFINITIF");
+  const defN13 = calculerMontantsTNS(brutN1, 0, 0, regime, false, joursN1, 360, 360, "DEFINITIF");
+  const defN23 = calculerMontantsTNS(brutN2, 0, 0, regime, false, joursN2, 360, 360, "DEFINITIF");
 
   const defN = totalCotisationsLignesN(extraireLignesPourAnnee(defN3, 0));
   const defN1 = totalCotisationsLignesN(extraireLignesPourAnnee(defN13, 0));
   const defN2 = totalCotisationsLignesN(extraireLignesPourAnnee(defN23, 0));
 
   // Provisionnels (forfait début d’activité)
-  const forfN3 = calculerMontantsTNS(brutN, 0, 0, regime, acreN, joursN, 365, 365, "DEBUT_ACTIVITE_FORFAIT");
-  const forfN13 = calculerMontantsTNS(brutN1, 0, 0, regime, false, joursN1, 365, 365, "DEBUT_ACTIVITE_FORFAIT");
+  const forfN3 = calculerMontantsTNS(brutN, 0, 0, regime, acreN, joursN, 360, 360, "DEBUT_ACTIVITE_FORFAIT");
+  const forfN13 = calculerMontantsTNS(brutN1, 0, 0, regime, false, joursN1, 360, 360, "DEBUT_ACTIVITE_FORFAIT");
 
   const forfN = totalCotisationsLignesN(extraireLignesPourAnnee(forfN3, 0));
   const forfN1 = totalCotisationsLignesN(extraireLignesPourAnnee(forfN13, 0));

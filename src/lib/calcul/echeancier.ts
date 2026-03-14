@@ -49,7 +49,9 @@ const MOIS_PAR_PERIODICITE: Record<EmpruntRow["periodicite"], number> = {
  * Ajoute `nbMois` mois à une date (format YYYY-MM-DD) et retourne la nouvelle date.
  */
 function addMois(dateStr: string, nbMois: number): string {
+  if (!dateStr) return "";
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
   d.setMonth(d.getMonth() + nbMois);
   return d.toISOString().slice(0, 10);
 }
@@ -84,18 +86,24 @@ export function calculerEcheancier(params: ParamsEcheancier): LigneEcheancier[] 
   const nbPeDiffere     = nbPeriodesFromMois(dureeDiffereEnMois, periodicite);
   const nbPeRembours    = nbPeriodesTotal - nbPeDiffere;
 
+  // Pour différé TOTAL : les intérêts non versés s'accumulent sur le capital (capitalisation).
+  // Le capital effectif en début de phase de remboursement = montant × (1+tPeriode)^Nd.
+  const capitalApresDiffere = (typeDiffere === "TOTAL" && nbPeDiffere > 0)
+    ? montant * Math.pow(1 + tPeriode, nbPeDiffere)
+    : montant;
+
   // ── Précalcul selon modalité ────────────────────────────────────────────────
   let echeanceCapital = 0; // annuité cible (ECHEANCE_CONSTANTE)
   let capitalParPe    = 0; // amortissement fixe par période (CAPITAL_CONSTANT)
 
   if (typeEmprunt !== "IN_FINE") {
     if (modaliteRemboursement === "CAPITAL_CONSTANT") {
-      capitalParPe = nbPeRembours > 0 ? montant / nbPeRembours : 0;
+      capitalParPe = nbPeRembours > 0 ? capitalApresDiffere / nbPeRembours : 0;
     } else {
       if (nbPeRembours > 0) {
         echeanceCapital = tPeriode === 0
-          ? montant / nbPeRembours
-          : (montant * tPeriode) / (1 - Math.pow(1 + tPeriode, -nbPeRembours));
+          ? capitalApresDiffere / nbPeRembours
+          : (capitalApresDiffere * tPeriode) / (1 - Math.pow(1 + tPeriode, -nbPeRembours));
       }
     }
   }
@@ -103,7 +111,7 @@ export function calculerEcheancier(params: ParamsEcheancier): LigneEcheancier[] 
   const lignes: LigneEcheancier[] = [];
   let capitalRestant = montant;
 
-  for (let i = 1; i <= nbPeriodesTotal; i++) {
+  for (let i = 0; i <= nbPeriodesTotal; i++) {
     const dateEcheance        = addMois(dateDéblocage, i * moisParPeriode);
     const capitalRestantDebut = capitalRestant;
     const interesMois         = capitalRestant * tPeriode;
@@ -118,7 +126,13 @@ export function calculerEcheancier(params: ParamsEcheancier): LigneEcheancier[] 
 
     if (estEnDiffere) {
       capitalRembourse = 0;
-      mensualiteTotale = typeDiffere === "TOTAL" ? 0 : interesMois + assuranceMois;
+      // i=0 = jour de déblocage : jamais de paiement, quelle que soit la modalité de différé.
+      // Pour PARTIEL, les intérêts commencent à i=1 (première période après déblocage).
+      mensualiteTotale = (typeDiffere === "TOTAL" || i === 0) ? 0 : interesMois + assuranceMois;
+      // Différé TOTAL : les intérêts non payés sont capitalisés (ajoutés au capital restant dû)
+      if (typeDiffere === "TOTAL" && i > 0) {
+        capitalRestant += round2(interesMois);
+      }
     } else if (typeEmprunt === "IN_FINE") {
       // Capital intégralement à la dernière période
       if (i === nbPeriodesTotal) {
@@ -157,10 +171,11 @@ export function calculerEcheancier(params: ParamsEcheancier): LigneEcheancier[] 
     });
   }
 
-  // Frais de dossier : flux sortant dès le déblocage (mécanique transparente pour les calculs)
+  // Frais de dossier : flux sortant dès le déblocage.
+  // moisNumero = -1 pour éviter la collision avec la ligne i=0 (déblocage) qui existe toujours.
   if (fraisDossier > 0) {
     lignes.unshift({
-      moisNumero:          0,
+      moisNumero:          -1,
       dateEcheance:        dateDéblocage,
       capitalRestantDebut: montant,
       interesMois:         0,
@@ -194,6 +209,10 @@ export function resumeEmprunt(params: ParamsEcheancier) {
     modeAssurance         = "CAPITAL_RESTANT",
   } = params;
 
+  const dateDeblocageEffective = dateDéblocage && !isNaN(new Date(dateDéblocage).getTime())
+    ? dateDéblocage
+    : new Date().toISOString().slice(0, 10);
+
   const moisParPeriode  = MOIS_PAR_PERIODICITE[periodicite];
   const tP              = tauxPeriodique(tauxAnnuel, periodicite);
   const tA              = tauxPeriodique(tauxAssurance, periodicite);
@@ -201,73 +220,85 @@ export function resumeEmprunt(params: ParamsEcheancier) {
   const Nd              = nbPeriodesFromMois(dureeDiffereEnMois, periodicite);
   const Nr              = N - Nd;
 
+  // Pour différé TOTAL : les intérêts sont capitalisés → capital effectif en début de remboursement.
+  const capitalApresDiffere = (typeDiffere === "TOTAL" && Nd > 0)
+    ? round2(montant * Math.pow(1 + tP, Nd))
+    : montant;
+
   let echeanceMoyenne = 0;
   let coutTotalCredit = 0;
 
   if (typeEmprunt === "IN_FINE") {
-    // Capital constant → intérêts fixes toute la durée
-    // En différé TOTAL, aucun versement pendant Nd périodes
-    const periodesPayees = typeDiffere === "TOTAL" ? Nr : N;
-    const intParPe   = montant * tP;
-    const assParPe   = montant * tA; // CRD = montant en permanence
-    const totalInt   = round2(intParPe * periodesPayees);
-    const totalAssur = round2(assParPe * periodesPayees);
-    coutTotalCredit  = round2(totalInt + totalAssur + fraisDossier);
-    // Display : intérêts + assurance hors remboursement final du capital
-    echeanceMoyenne  = round2(intParPe + assParPe);
+    // IN_FINE : seuls les intérêts sont versés périodiquement, le capital intégralement à la fin.
+    if (typeDiffere === "TOTAL") {
+      // Différé total : intérêts capitalisés pendant Nd périodes, puis remboursement sur capitalApresDiffere.
+      const intCapitalises = capitalApresDiffere - montant;
+      const intParPe  = capitalApresDiffere * tP;
+      const assBase   = modeAssurance === "CAPITAL_INITIAL" ? montant : capitalApresDiffere;
+      const assParPe  = assBase * tA;
+      coutTotalCredit  = round2(intCapitalises + intParPe * Nr + assParPe * Nr + fraisDossier);
+      echeanceMoyenne  = round2(intParPe + assParPe);
+    } else {
+      // PARTIEL ou AUCUN : CRD = montant constant, aucune capitalisation.
+      const intParPe   = montant * tP;
+      const assParPe   = montant * tA;
+      coutTotalCredit  = round2(intParPe * N + assParPe * N + fraisDossier);
+      echeanceMoyenne  = round2(intParPe + assParPe);
+    }
   } else if (modaliteRemboursement === "CAPITAL_CONSTANT") {
-    const pk              = Nr > 0 ? montant / Nr : 0;
-    // Somme des CRD période par période (differe + remboursement)
-    const sumCRD_differe  = Nd * montant;
-    const sumCRD_rembours = Nr > 0 ? Nr * montant - pk * Nr * (Nr - 1) / 2 : 0;
-    // Intérêts : pendant le différé seulement si PARTIEL (CRD = montant, pas de capital remboursé)
-    const intDiffere      = typeDiffere === "PARTIEL" ? tP * sumCRD_differe : 0;
-    const totalInt        = round2(intDiffere + tP * sumCRD_rembours);
-    // Assurance : exclure la période de différé si TOTAL
-    const crdDiffereAssur = typeDiffere !== "TOTAL" ? sumCRD_differe : 0;
-    const totalAssur      = modeAssurance === "CAPITAL_INITIAL"
+    // Amortissement constant sur capitalApresDiffere (= montant pour PARTIEL/AUCUN).
+    const pk              = Nr > 0 ? capitalApresDiffere / Nr : 0;
+    const sumCRD_rembours = Nr > 0 ? Nr * capitalApresDiffere - pk * Nr * (Nr - 1) / 2 : 0;
+    // Intérêts pendant le différé
+    const intDiffere = typeDiffere === "PARTIEL"
+      ? round2(tP * Nd * montant)              // PARTIEL : payés sur le montant initial
+      : round2(capitalApresDiffere - montant); // TOTAL   : capitalisés (= différence de capital)
+    const totalInt = round2(intDiffere + tP * sumCRD_rembours);
+    // Assurance : pas de versement pendant le différé TOTAL
+    const sumCRD_differeAssur = typeDiffere !== "TOTAL" ? Nd * montant : 0;
+    const totalAssur = modeAssurance === "CAPITAL_INITIAL"
       ? round2(tA * montant * (typeDiffere === "TOTAL" ? Nr : N))
-      : round2(tA * (crdDiffereAssur + sumCRD_rembours));
-    coutTotalCredit       = round2(totalInt + totalAssur + fraisDossier);
+      : round2(tA * (sumCRD_differeAssur + sumCRD_rembours));
+    coutTotalCredit = round2(totalInt + totalAssur + fraisDossier);
     // Échéance moyenne = (première + dernière) / 2
-    const assFirst = modeAssurance === "CAPITAL_INITIAL" ? montant * tA : montant * tA;
+    const assFirst = modeAssurance === "CAPITAL_INITIAL" ? montant * tA : capitalApresDiffere * tA;
     const assLast  = modeAssurance === "CAPITAL_INITIAL" ? montant * tA : pk * tA;
-    const first    = pk + montant * tP + assFirst;
-    const last     = pk + pk * tP + assLast;
-    echeanceMoyenne = round2((first + last) / 2);
+    echeanceMoyenne = round2(((pk + capitalApresDiffere * tP + assFirst) + (pk + pk * tP + assLast)) / 2);
   } else {
-    // ECHEANCE_CONSTANTE + AMORTISSABLE (cas par défaut — logique d'origine)
+    // ECHEANCE_CONSTANTE + AMORTISSABLE — annuité calculée sur capitalApresDiffere.
     let echeanceCapital = 0;
     if (Nr > 0) {
       echeanceCapital = tP === 0
-        ? montant / Nr
-        : (montant * tP) / (1 - Math.pow(1 + tP, -Nr));
+        ? capitalApresDiffere / Nr
+        : (capitalApresDiffere * tP) / (1 - Math.pow(1 + tP, -Nr));
     }
-    // Intérêts : pendant le différé seulement si PARTIEL (CRD = montant, pas de capital remboursé)
-    const intDiffere  = typeDiffere === "PARTIEL" ? tP * montant * Nd : 0;
-    const totalInt    = round2(intDiffere + echeanceCapital * Nr - montant);
-    // Assurance : exclure la période de différé si TOTAL
-    // Approx CRD décroissant en remboursement : Nr*montant/2
+    // Intérêts pendant le différé
+    const intDiffere = typeDiffere === "PARTIEL"
+      ? round2(tP * montant * Nd)              // PARTIEL : payés sur le montant initial
+      : round2(capitalApresDiffere - montant); // TOTAL   : capitalisés
+    const totalInt = round2(intDiffere + echeanceCapital * Nr - capitalApresDiffere);
+    // Assurance CAPITAL_RESTANT : sum(CRD_k) = totalIntérêts / tP
+    // (car intérêts_k = CRD_k × tP → sum(CRD_k) = sum(intérêts_k) / tP)
+    const interetRemboursement = echeanceCapital * Nr - capitalApresDiffere;
+    const sumCRDRemboursement  = tP > 0 && Nr > 0 ? interetRemboursement / tP : Nr * capitalApresDiffere / 2;
     const crdDiffereAssur = typeDiffere !== "TOTAL" ? Nd * montant : 0;
     const totalAssur = modeAssurance === "CAPITAL_INITIAL"
       ? round2(tA * montant * (typeDiffere === "TOTAL" ? Nr : N))
-      : round2(tA * (crdDiffereAssur + (Nr > 0 ? Nr * montant / 2 : 0)));
+      : round2(tA * (crdDiffereAssur + sumCRDRemboursement));
     coutTotalCredit = round2(totalInt + totalAssur + fraisDossier);
-    // CAPITAL_INITIAL : assurance constante sur montant initial.
-    // CAPITAL_RESTANT : assurance décroissante → utiliser la moyenne (≈ montant/2 × tA)
-    // pour rester cohérent avec coutTotalCredit et éviter echeanceMoyenne × Nr ≠ total remboursé.
     const assurMoyenne = modeAssurance === "CAPITAL_INITIAL"
       ? montant * tA
-      : Nr > 0 ? tA * montant / 2 : 0;
+      : Nr > 0 ? tA * capitalApresDiffere / 2 : 0;
     echeanceMoyenne = round2(echeanceCapital + assurMoyenne);
   }
 
-  const premierRembourement = addMois(dateDéblocage, (Nd + 1) * moisParPeriode);
+  // Premier remboursement = 1 période après la fin du différé (i = Nd + 1 dans l'échéancier).
+  const premierRemboursement = addMois(dateDeblocageEffective, (Nd + 1) * moisParPeriode);
 
   return {
     echeanceMoyenne,
     coutTotalCredit,
-    premierRembourement,
+    premierRembourement: premierRemboursement,
     nbPeriodesTotal:  N,
     nbPeriodesDiffere: Nd,
   };
