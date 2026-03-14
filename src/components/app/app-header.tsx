@@ -48,7 +48,7 @@ export default function AppHeader({ dossier }: AppHeaderProps) {
         /* ── Mode dossier : affiche le dossier courant + lien retour ── */
         <>
           <Link
-            href="/app"
+            href="/previsionnel"
             className={cn(
               buttonVariants({ variant: "ghost", size: "sm" }),
               "gap-1.5 text-muted-foreground"

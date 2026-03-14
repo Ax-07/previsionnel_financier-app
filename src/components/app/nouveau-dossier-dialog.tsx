@@ -75,7 +75,7 @@ export function NouveauDossierDialog() {
     reset();
     // Rafraîchit les données serveur puis redirige vers le nouveau dossier
     router.refresh();
-    router.push(`/app/dossier/${result.dossierId}`);
+    router.push(`/previsionnel/dossier/${result.dossierId}`);
   }
 
   return (
