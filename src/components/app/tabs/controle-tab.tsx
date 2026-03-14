@@ -108,6 +108,7 @@ export default function ControleTab({ dossierId }: ControleTabProps) {
             <TabsContent
               key={tab.value}
               value={tab.value}
+              forceMount
               className={isFullHeight ? "h-full data-[state=inactive]:hidden" : "h-full p-6 data-[state=inactive]:hidden"}
             >
               {tab.value === "synthese" ? (
