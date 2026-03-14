@@ -48,7 +48,7 @@ export default async function AppDashboardPage() {
               {dossiers.map((d) => (
                 <li key={d.id}>
                   <Link
-                    href={`/app/dossier/${d.id}`}
+                    href={`/previsionnel/dossier/${d.id}`}
                     className="group block h-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
                   >
                     <Card className="h-full transition-shadow group-hover:shadow-md">
