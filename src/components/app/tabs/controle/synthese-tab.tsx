@@ -1,13 +1,14 @@
 "use client";
 
-import { Fragment, useCallback, useEffect } from "react";
+import { Fragment, useCallback } from "react";
 import { RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { type SyntheseData, type SynthRow } from "@/app/actions/controle/synthese";
 import type { YearKey } from "@/lib/finance/utils";
-import { useSyntheseStore } from "@/stores/synthese-store";
+import { useSyntheseData } from "@/hooks/controle/use-synthese-data";
+import type { SyntheseData, SynthRow } from "@/hooks/controle/use-synthese-data";
+import { useScenarioDataStore } from "@/stores/scenario-data-store";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -15,12 +16,11 @@ const YEAR_KEYS: YearKey[] = ["y1", "y2", "y3"];
 
 // ── Helpers de formatage ──────────────────────────────────────────────────────
 
+const frFmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
 function formatAmount(amount: number): string {
   if (amount === 0) return "—";
-  return new Intl.NumberFormat("fr-FR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.round(amount));
+  return frFmt.format(Math.round(amount));
 }
 
 function formatPct(pct: number | null): string {
@@ -150,22 +150,12 @@ interface SyntheseTabProps {
 }
 
 export default function SyntheseTab({ dossierId }: SyntheseTabProps) {
-  const { fetch, invalidate, getData, getStatus, getError } = useSyntheseStore();
-
-  const data = getData(dossierId);
-  const status = getStatus(dossierId);
-  const error = getError(dossierId);
+  const { data, status, error } = useSyntheseData(dossierId);
   const isPending = status === "loading";
 
-  useEffect(() => {
-    fetch(dossierId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dossierId]);
-
   const handleRefresh = useCallback(() => {
-    invalidate(dossierId);
-    fetch(dossierId, true);
-  }, [dossierId, fetch, invalidate]);
+    useScenarioDataStore.getState().reload(dossierId);
+  }, [dossierId]);
 
   return (
     <div className="flex h-full flex-col">

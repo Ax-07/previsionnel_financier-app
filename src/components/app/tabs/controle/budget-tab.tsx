@@ -1,28 +1,24 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useState } from "react";
 import { ChevronDownIcon, ChevronRightIcon, RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import {
-  type BudgetData,
-  type BudgetNode,
-  type BudgetNodeStyle,
-} from "@/app/actions/controle/budget";
 import type { YearKey } from "@/lib/finance/utils";
-import { useBudgetStore } from "@/stores/budget-store";
+import { useBudgetData } from "@/hooks/controle/use-budget-data";
+import type { BudgetData, BudgetNode, BudgetNodeStyle } from "@/hooks/controle/use-budget-data";
+import { useScenarioDataStore } from "@/stores/scenario-data-store";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const YEAR_KEYS: YearKey[] = ["y1", "y2", "y3"];
 
+const frFmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
 function formatAmount(amount: number): string {
   if (amount === 0) return "—";
-  return new Intl.NumberFormat("fr-FR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.round(amount));
+  return frFmt.format(Math.round(amount));
 }
 
 function isAllZeroNode(node: BudgetNode): boolean {
@@ -244,26 +240,15 @@ interface BudgetTabProps {
 }
 
 export default function BudgetTab({ dossierId }: BudgetTabProps) {
-  const { fetch, invalidate, getData, getStatus, getError } = useBudgetStore();
-
-  const data = getData(dossierId);
-  const status = getStatus(dossierId);
-  const error = getError(dossierId);
+  const { data, status, error } = useBudgetData(dossierId);
   const isPending = status === "loading";
 
   const [activeYear, setActiveYear] = useState<YearKey>("y1");
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
-  // Chargement initial
-  useEffect(() => {
-    fetch(dossierId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dossierId]);
-
   const handleRefresh = useCallback(() => {
-    invalidate(dossierId);
-    fetch(dossierId, true);
-  }, [dossierId, fetch, invalidate]);
+    useScenarioDataStore.getState().reload(dossierId);
+  }, [dossierId]);
 
   const handleToggle = useCallback((key: string) => {
     setExpandedKeys((prev) => {

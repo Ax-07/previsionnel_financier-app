@@ -1,24 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ChevronDownIcon, ChevronRightIcon, RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { type BfrData, type BfrRow } from "@/app/actions/controle/bfr";
+import { type BfrData, type BfrRow } from "@/lib/finance/aggregations/bfr";
 import type { YearKey4 as YearKey } from "@/lib/finance/utils";
-import { useBfrStore } from "@/stores/bfr-store";
+import { useBfrData } from "@/hooks/controle/use-bfr-data";
+import { useScenarioDataStore } from "@/stores/scenario-data-store";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const YEAR_KEYS: YearKey[] = ["y0", "y1", "y2", "y3"];
 
+const frFmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
 function formatAmount(amount: number): string {
   if (amount === 0) return "—";
-  return new Intl.NumberFormat("fr-FR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.round(amount));
+  return frFmt.format(Math.round(amount));
 }
 
 // ── En-tête ───────────────────────────────────────────────────────────────────
@@ -163,22 +163,12 @@ interface BfrTabProps {
 }
 
 export default function BfrTab({ dossierId }: BfrTabProps) {
-  const { fetch, invalidate, getData, getStatus, getError } = useBfrStore();
-
-  const data = getData(dossierId);
-  const status = getStatus(dossierId);
-  const error = getError(dossierId);
+  const { data, status, error } = useBfrData(dossierId);
   const isPending = status === "loading";
 
-  useEffect(() => {
-    fetch(dossierId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dossierId]);
-
   const handleRefresh = useCallback(() => {
-    invalidate(dossierId);
-    fetch(dossierId, true);
-  }, [dossierId, fetch, invalidate]);
+    useScenarioDataStore.getState().reload(dossierId);
+  }, [dossierId]);
 
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 

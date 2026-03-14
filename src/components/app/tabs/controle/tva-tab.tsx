@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ChevronDownIcon, ChevronRightIcon, RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { type VATData, type VATRow } from "@/app/actions/controle/tva";
 import type { YearKey } from "@/lib/finance/utils";
-import { useVATStore } from "@/stores/tva-store";
+import { useTvaData } from "@/hooks/controle/use-tva-data";
+import type { VATData, VATRow } from "@/hooks/controle/use-tva-data";
+import { useScenarioDataStore } from "@/stores/scenario-data-store";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -22,12 +23,11 @@ const TOTAL_COL_WIDTH = 96;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
+const frFmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
 function formatAmount(amount: number): string {
   if (amount === 0) return "—";
-  return new Intl.NumberFormat("fr-FR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.round(amount));
+  return frFmt.format(Math.round(amount));
 }
 
 function rowStyleClass(style: VATRow["style"]): string {
@@ -211,11 +211,7 @@ interface TVATabProps {
 }
 
 export default function TVATab({ dossierId }: TVATabProps) {
-  const { fetch, invalidate, getData, getStatus, getError } = useVATStore();
-
-  const data = getData(dossierId);
-  const status = getStatus(dossierId);
-  const error = getError(dossierId);
+  const { data, status, error } = useTvaData(dossierId);
   const isPending = status === "loading";
 
   const [activeYear, setActiveYear] = useState<YearKey>("y1");
@@ -230,15 +226,9 @@ export default function TVATab({ dossierId }: TVATabProps) {
     });
   }, []);
 
-  useEffect(() => {
-    fetch(dossierId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dossierId]);
-
   const handleRefresh = useCallback(() => {
-    invalidate(dossierId);
-    fetch(dossierId, true);
-  }, [dossierId, fetch, invalidate]);
+    useScenarioDataStore.getState().reload(dossierId);
+  }, [dossierId]);
 
   const totalWidth = LABEL_COL_WIDTH + MONTH_COL_WIDTH * 12 + TOTAL_COL_WIDTH;
 

@@ -1,24 +1,24 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useState } from "react";
 import { ChevronDownIcon, ChevronRightIcon, RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { type CompteResultatData, type CRNode } from "@/app/actions/controle/compte-resultat";
+import { type CompteResultatData, type CRNode } from "@/lib/finance/aggregations/compte-resultat";
 import type { YearKey } from "@/lib/finance/utils";
-import { useCompteResultatStore } from "@/stores/compte-resultat-store";
+import { useCompteResultatData } from "@/hooks/controle/use-compte-resultat-data";
+import { useScenarioDataStore } from "@/stores/scenario-data-store";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const YEAR_KEYS: YearKey[] = ["y1", "y2", "y3"];
 
+const frFmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
 function formatAmount(amount: number): string {
   if (amount === 0) return "—";
-  return new Intl.NumberFormat("fr-FR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.round(amount));
+  return frFmt.format(Math.round(amount));
 }
 
 function formatPct(pct: number | null): string {
@@ -166,26 +166,15 @@ interface CompteResultatTabProps {
 }
 
 export default function CompteResultatTab({ dossierId }: CompteResultatTabProps) {
-  const { fetch, invalidate, getData, getStatus, getError } = useCompteResultatStore();
-
-  const data = getData(dossierId);
-  const status = getStatus(dossierId);
-  const error = getError(dossierId);
+  const { data, status, error } = useCompteResultatData(dossierId);
   const isPending = status === "loading";
 
   // Clés des nœuds dépliés
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
-  // Chargement initial (depuis cache si disponible)
-  useEffect(() => {
-    fetch(dossierId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dossierId]);
-
   const handleRefresh = useCallback(() => {
-    invalidate(dossierId);
-    fetch(dossierId, true);
-  }, [dossierId, fetch, invalidate]);
+    useScenarioDataStore.getState().reload(dossierId);
+  }, [dossierId]);
 
   const handleToggle = useCallback((key: string) => {
     setExpandedKeys((prev) => {

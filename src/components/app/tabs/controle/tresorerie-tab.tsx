@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { ChevronDown, ChevronRight, RefreshCwIcon } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useTresorerieStore } from "@/stores/tresorerie-store";
-import type { TresorerieRow } from "@/app/actions/controle/tresorerie";
 import type { YearKey } from "@/lib/finance/utils";
+import { useTresorerieData } from "@/hooks/controle/use-tresorerie-data";
+import type { TresorerieRow } from "@/hooks/controle/use-tresorerie-data";
+import { useScenarioDataStore } from "@/stores/scenario-data-store";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -24,22 +25,16 @@ const YEAR_LABELS: Record<YearKey, string> = {
 
 // ── Formatage ─────────────────────────────────────────────────────────────────
 
+const frFmt = new Intl.NumberFormat("fr-FR", { style: "decimal", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
 function formatAmount(v: number): string {
   if (v === 0) return "–";
-  return new Intl.NumberFormat("fr-FR", {
-    style: "decimal",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.round(v));
+  return frFmt.format(Math.round(v));
 }
 
 function formatAmountColored(v: number): { text: string; cls: string } {
   if (v === 0) return { text: "–", cls: "text-muted-foreground" };
-  const text = new Intl.NumberFormat("fr-FR", {
-    style: "decimal",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.round(v));
+  const text = frFmt.format(Math.round(v));
   return { text, cls: v < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400" };
 }
 
@@ -303,20 +298,11 @@ interface TresorerieTabProps {
 }
 
 export function TresorerieTab({ dossierId }: TresorerieTabProps) {
-  const { getData, getStatus, getError, fetch, invalidate } = useTresorerieStore();
-
-  const data = getData(dossierId);
-  const status = getStatus(dossierId);
-  const error = getError(dossierId);
-
-  useEffect(() => {
-    fetch(dossierId);
-  }, [dossierId]);
+  const { data, status, error } = useTresorerieData(dossierId);
 
   const handleRefresh = useCallback(() => {
-    invalidate(dossierId);
-    fetch(dossierId, true);
-  }, [dossierId, fetch, invalidate]);
+    useScenarioDataStore.getState().reload(dossierId);
+  }, [dossierId]);
 
   // ── Sélection d'exercice ─────────────────────────────────────────────────
   const [yearKey, setYearKey] = useState<YearKey>("y1");

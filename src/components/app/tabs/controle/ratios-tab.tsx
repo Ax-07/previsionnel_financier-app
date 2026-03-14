@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { type RatiosData, type RatioRow } from "@/app/actions/controle/ratios";
+import { type RatiosData, type RatioRow } from "@/lib/finance/aggregations/ratios";
 import type { YearKey } from "@/lib/finance/utils";
-import { useRatiosStore } from "@/stores/ratios-store";
+import { useRatiosData } from "@/hooks/controle/use-ratios-data";
+import { useScenarioDataStore } from "@/stores/scenario-data-store";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -29,12 +30,20 @@ const SECTIONS: Array<{ label: string; keys: string[] }> = [
   },
 ];
 
+const frFmtCache = new Map<number, Intl.NumberFormat>();
+
+function getFormatter(decimals: number): Intl.NumberFormat {
+  let fmt = frFmtCache.get(decimals);
+  if (!fmt) {
+    fmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    frFmtCache.set(decimals, fmt);
+  }
+  return fmt;
+}
+
 function formatValue(value: number | null, decimals: number, unit: string): string {
   if (value === null) return "n/a";
-  const formatted = new Intl.NumberFormat("fr-FR", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(value);
+  const formatted = getFormatter(decimals).format(value);
   return `${formatted} ${unit}`;
 }
 
@@ -103,22 +112,12 @@ interface RatiosTabProps {
 }
 
 export default function RatiosTab({ dossierId }: RatiosTabProps) {
-  const { fetch, invalidate, getData, getStatus, getError } = useRatiosStore();
-
-  const data = getData(dossierId);
-  const status = getStatus(dossierId);
-  const error = getError(dossierId);
+  const { data, status, error } = useRatiosData(dossierId);
   const isPending = status === "loading";
 
-  useEffect(() => {
-    fetch(dossierId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dossierId]);
-
   const handleRefresh = useCallback(() => {
-    invalidate(dossierId);
-    fetch(dossierId, true);
-  }, [dossierId, fetch, invalidate]);
+    useScenarioDataStore.getState().reload(dossierId);
+  }, [dossierId]);
 
   /** Construit les lignes ordonnées avec bandeaux de section */
   function renderRows(rows: RatioRow[]) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect } from "react";
+import { Fragment, useCallback } from "react";
 import { RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,13 +8,16 @@ import { cn } from "@/lib/utils";
 import {
   type BreakEvenData,
   type BreakEvenRow,
-} from "@/app/actions/controle/seuil-rentabilite";
+} from "@/lib/finance/calculs/seuil";
 import type { YearKey } from "@/lib/finance/utils";
-import { useSeuilRentabiliteStore } from "@/stores/seuil-rentabilite-store";
+import { useSeuilRentabiliteData } from "@/hooks/controle/use-seuil-rentabilite-data";
+import { useScenarioDataStore } from "@/stores/scenario-data-store";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const YEAR_KEYS: YearKey[] = ["y1", "y2", "y3"];
+
+const frFmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 /** Clés de lignes dont la valeur est en jours (entiers) */
 const JOURS_KEYS = new Set(["point_mort_eco", "point_mort_fin"]);
@@ -32,10 +35,7 @@ function formatAmount(amount: number, isJours: boolean, isTaux: boolean): string
     return `${amount.toFixed(1)} %`;
   }
   if (amount === 0) return "—";
-  return new Intl.NumberFormat("fr-FR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.round(amount));
+  return frFmt.format(Math.round(amount));
 }
 
 function formatPct(pct: number | null): string {
@@ -164,22 +164,12 @@ interface SeuilRentabiliteTabProps {
 }
 
 export default function SeuilRentabiliteTab({ dossierId }: SeuilRentabiliteTabProps) {
-  const { fetch, invalidate, getData, getStatus, getError } = useSeuilRentabiliteStore();
-
-  const data    = getData(dossierId);
-  const status  = getStatus(dossierId);
-  const error   = getError(dossierId);
+  const { data, status, error } = useSeuilRentabiliteData(dossierId);
   const isPending = status === "loading";
 
-  useEffect(() => {
-    fetch(dossierId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dossierId]);
-
   const handleRefresh = useCallback(() => {
-    invalidate(dossierId);
-    fetch(dossierId, true);
-  }, [dossierId, fetch, invalidate]);
+    useScenarioDataStore.getState().reload(dossierId);
+  }, [dossierId]);
 
   return (
     <div className="flex h-full flex-col">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,20 +8,20 @@ import { cn } from "@/lib/utils";
 import {
   type TfData,
   type TfRow,
-} from "@/app/actions/controle/tableau-financement";
+} from "@/lib/finance/aggregations/tableau-financement";
 import type { YearKey4 as TfYearKey } from "@/lib/finance/utils";
-import { useTableauFinancementStore } from "@/stores/tableau-financement-store";
+import { useTableauFinancementData } from "@/hooks/controle/use-tableau-financement-data";
+import { useScenarioDataStore } from "@/stores/scenario-data-store";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const YEAR_KEYS: TfYearKey[] = ["y0", "y1", "y2", "y3"];
 
+const frFmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
 function formatAmount(amount: number): string {
   if (amount === 0) return "—";
-  return new Intl.NumberFormat("fr-FR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.round(amount));
+  return frFmt.format(Math.round(amount));
 }
 
 // ── En-tête ───────────────────────────────────────────────────────────────────
@@ -120,23 +120,12 @@ interface TableauFinancementTabProps {
 export default function TableauFinancementTab({
   dossierId,
 }: TableauFinancementTabProps) {
-  const { fetch, invalidate, getData, getStatus, getError } =
-    useTableauFinancementStore();
-
-  const data = getData(dossierId);
-  const status = getStatus(dossierId);
-  const error = getError(dossierId);
+  const { data, status, error } = useTableauFinancementData(dossierId);
   const isPending = status === "loading";
 
-  useEffect(() => {
-    fetch(dossierId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dossierId]);
-
   const handleRefresh = useCallback(() => {
-    invalidate(dossierId);
-    fetch(dossierId, true);
-  }, [dossierId, fetch, invalidate]);
+    useScenarioDataStore.getState().reload(dossierId);
+  }, [dossierId]);
 
   return (
     <div className="flex h-full flex-col">

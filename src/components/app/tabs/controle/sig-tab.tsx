@@ -1,24 +1,24 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useState } from "react";
 import { ChevronDownIcon, ChevronRightIcon, RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { type SigData, type SigNode } from "@/app/actions/controle/sig";
+import { type SigData, type SigNode } from "@/lib/finance/aggregations/sig";
 import type { YearKey } from "@/lib/finance/utils";
-import { useSigStore } from "@/stores/sig-store";
+import { useSigData } from "@/hooks/controle/use-sig-data";
+import { useScenarioDataStore } from "@/stores/scenario-data-store";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const YEAR_KEYS: YearKey[] = ["y1", "y2", "y3"];
 
+const frFmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
 function formatAmount(amount: number): string {
   if (amount === 0) return "—";
-  return new Intl.NumberFormat("fr-FR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.round(amount));
+  return frFmt.format(Math.round(amount));
 }
 
 function formatPct(pct: number | null): string {
@@ -169,24 +169,14 @@ interface SigTabProps {
 }
 
 export default function SigTab({ dossierId }: SigTabProps) {
-  const { fetch, invalidate, getData, getStatus, getError } = useSigStore();
-
-  const data = getData(dossierId);
-  const status = getStatus(dossierId);
-  const error = getError(dossierId);
+  const { data, status, error } = useSigData(dossierId);
   const isPending = status === "loading";
 
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    fetch(dossierId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dossierId]);
-
   const handleRefresh = useCallback(() => {
-    invalidate(dossierId);
-    fetch(dossierId, true);
-  }, [dossierId, fetch, invalidate]);
+    useScenarioDataStore.getState().reload(dossierId);
+  }, [dossierId]);
 
   const handleToggle = useCallback((key: string) => {
     setExpandedKeys((prev) => {
