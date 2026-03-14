@@ -395,11 +395,18 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
     setSaisonnalite((prev) => {
       const updated = [...prev[ex]];
       updated[idx] = numVal(val);
+      // Auto-switch à PERSONNALISEE dès que la répartition devient non-uniforme
+      const isUniform = updated.every((v) => Math.abs(v - updated[0]!) < 0.01);
+      if (!isUniform) {
+        updateCharge(dossierId, currentIndex, { frequence: "PERSONNALISEE" });
+      }
       return { ...prev, [ex]: updated };
     });
   }
 
   function handleRepartir(ex: ExerciceKey) {
+    // Répartition équitable → revenir en MENSUELLE
+    updateCharge(dossierId, currentIndex, { frequence: "MENSUELLE" });
     setSaisonnalite((prev) => ({ ...prev, [ex]: buildEvenSaisonnalite(exercicesConfig[ex].duree) }));
   }
 
@@ -417,6 +424,19 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
     }
   }
 
+  // ── Changement de mode : synchronise aussi la fréquence dans le store ──
+  function handleSetModeCalc(mode: ModeCalc) {
+    setModeCalc(mode);
+    if (mode === "POURCENTAGE_CA") {
+      // Distribution saisonnière pilotée par le CA → fréquence Personnalisée
+      updateCharge(dossierId, currentIndex, { frequence: "PERSONNALISEE" });
+    } else {
+      // Retour en FIXE → réinitialiser à Mensuelle (l'utilisateur peut repasser en
+      // Personnalisée via handleSaison s'il modifie la répartition manuellement)
+      updateCharge(dossierId, currentIndex, { frequence: "MENSUELLE" });
+    }
+  }
+
   // ── Rendu ────────────────────────────────────────────
 
   return (
@@ -426,7 +446,7 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
       <div className="flex items-center gap-2 p-1 rounded-lg bg-muted/50 border border-border w-fit">
         <button
           type="button"
-          onClick={() => setModeCalc("FIXE")}
+          onClick={() => handleSetModeCalc("FIXE")}
           className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
             modeCalc === "FIXE"
@@ -439,7 +459,7 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
         </button>
         <button
           type="button"
-          onClick={() => setModeCalc("POURCENTAGE_CA")}
+          onClick={() => handleSetModeCalc("POURCENTAGE_CA")}
           className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
             modeCalc === "POURCENTAGE_CA"

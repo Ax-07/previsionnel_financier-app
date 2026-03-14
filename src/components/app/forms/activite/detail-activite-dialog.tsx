@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -9,17 +9,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useActiviteStore } from "@/stores/activite-store";
 import { MODES_CA, MODES_MARGE, MODES_EXIGIBILITE_TVA, TAUX_TVA_OPTIONS } from "@/lib/schemas/activite";
+import {
+  type ExerciceKey,
+  type ExerciceCalendrierEntry,
+  type ExercicesConfig,
+  buildExercicesConfig,
+  useActiviteCalculs,
+} from "@/hooks/use-activite-calculs";
 
 // ── Types locaux ─────────────────────────────────────────────────────────────
 
-type ExerciceKey = "N" | "N1" | "N2";
 
-/** Entrée calendaire d'un exercice — isomorphe à ExerciceFormValues */
-interface ExerciceCalendrierEntry {
-  dateCloture: string;
-  duree: number;
-  annee: number;
-}
 
 interface DetailActiviteDialogProps {
   open: boolean;
@@ -32,121 +32,12 @@ interface DetailActiviteDialogProps {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-const TOUS_MOIS = [
-  "Jan.",
-  "Fév.",
-  "Mar.",
-  "Avr.",
-  "Mai",
-  "Juin",
-  "Juil.",
-  "Aoû.",
-  "Sep.",
-  "Oct.",
-  "Nov.",
-  "Déc.",
-] as const;
-
-/** Parse une string "YYYY-MM-DD" en Date locale (sans décalage UTC). */
-function parseLocalDate(str: string): Date {
-  const [y, m, d] = str.split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-
-interface ExerciceConfig {
-  startMonth: number; // 0–11 (0 = Jan)
-  startYear: number; // ex. 2026
-  duree: number; // nombre de mois réels (1–24)
-}
-
-type ExercicesConfig = Record<ExerciceKey, ExerciceConfig>;
-
-/** Génère les étiquettes de mois « Mar. 26 » à partir du mois/année de départ et de la durée. */
-function buildMoisLabels(startMonth: number, startYear: number, duree: number): readonly string[] {
-  return Array.from({ length: duree }, (_, i) => {
-    const moisIdx = (startMonth + i) % 12;
-    const yearOffset = Math.floor((startMonth + i) / 12);
-    const yy = String((startYear + yearOffset) % 100).padStart(2, "0");
-    return `${TOUS_MOIS[moisIdx]} ${yy}`;
-  });
-}
-
-/** Répartition équitable sur `duree` mois (dernier mois absorbe l'arrondi). */
-function buildEvenSaisonnalite(duree: number): number[] {
-  const val = +(100 / duree).toFixed(2);
-  const last = +(100 - val * (duree - 1)).toFixed(2);
-  return [...Array(duree - 1).fill(val), last];
-}
-
-/** Calcule startMonth, startYear et duree pour chaque exercice depuis les données entreprise. */
-function buildExercicesConfig(
-  dateDebutN: string | undefined,
-  exercices: ExerciceCalendrierEntry[] | undefined,
-): ExercicesConfig {
-  const currentYear = new Date().getFullYear();
-  const DEFAULT: ExerciceConfig = { startMonth: 0, startYear: currentYear, duree: 12 };
-  if (!dateDebutN) return { N: DEFAULT, N1: DEFAULT, N2: DEFAULT };
-
-  const [yearNStr, monthNStr] = dateDebutN.split("-");
-  const startN = parseInt(monthNStr, 10) - 1;
-  const startYearN = parseInt(yearNStr, 10);
-  const dureeN = exercices?.[0]?.duree ?? 12;
-
-  let startN1 = 0,
-    startYearN1 = startYearN;
-  const dureeN1 = exercices?.[1]?.duree ?? 12;
-  if (exercices?.[0]?.dateCloture) {
-    const clot = parseLocalDate(exercices[0].dateCloture);
-    clot.setDate(clot.getDate() + 1);
-    startN1 = clot.getMonth();
-    startYearN1 = clot.getFullYear();
-  }
-
-  let startN2 = 0,
-    startYearN2 = startYearN1;
-  const dureeN2 = exercices?.[2]?.duree ?? 12;
-  if (exercices?.[1]?.dateCloture) {
-    const clot = parseLocalDate(exercices[1].dateCloture);
-    clot.setDate(clot.getDate() + 1);
-    startN2 = clot.getMonth();
-    startYearN2 = clot.getFullYear();
-  }
-
-  return {
-    N: { startMonth: startN, startYear: startYearN, duree: dureeN },
-    N1: { startMonth: startN1, startYear: startYearN1, duree: dureeN1 },
-    N2: { startMonth: startN2, startYear: startYearN2, duree: dureeN2 },
-  };
-}
-
-/**
- * Rééchantillonne un tableau de saisonnalité vers une nouvelle longueur cible
- * en répartissant proportionnellement, puis renormalise à 100 %.
- */
-function resampleSaisonnalite(source: number[], targetLen: number): number[] {
-  if (targetLen === source.length) return [...source];
-  const result: number[] = [];
-  const srcLen = source.length;
-  for (let i = 0; i < targetLen; i++) {
-    // position proportionnelle dans la source
-    const ratio = (i / targetLen) * srcLen;
-    const lo = Math.floor(ratio);
-    const hi = Math.min(lo + 1, srcLen - 1);
-    const frac = ratio - lo;
-    result.push(source[lo]! * (1 - frac) + source[hi]! * frac);
-  }
-  // Renormalise à 100 %
-  const total = result.reduce((s, v) => s + v, 0);
-  if (total === 0) return Array(targetLen).fill(+(100 / targetLen).toFixed(4));
-  return result.map((v) => +((v / total) * 100).toFixed(4));
-}
-
-function numVal(v: string) {
+function numVal(v: string): number {
   const n = parseFloat(v.replace(",", "."));
   return isNaN(n) ? 0 : n;
 }
 
-function intVal(v: string) {
+function intVal(v: string): number {
   const n = parseInt(v, 10);
   return isNaN(n) ? 0 : n;
 }
@@ -203,8 +94,8 @@ function fmtTotal(v: number, format: LigneMensuelle["format"]): string {
   return v.toFixed(0);
 }
 
-function TableauMensuel({ lignes, moisLabels }: { lignes: LigneMensuelle[]; moisLabels?: readonly string[] }) {
-  const mois = moisLabels ?? TOUS_MOIS;
+function TableauMensuel({ lignes, moisLabels }: { lignes: LigneMensuelle[]; moisLabels: readonly string[] }) {
+  const mois = moisLabels;
   return (
     <div className="rounded border border-border overflow-x-auto">
       <table className="text-sm border-collapse" style={{ minWidth: "960px", width: "100%" }}>
@@ -300,121 +191,30 @@ function DialogBody({ dossierId, currentIndex, exercicesConfig }: DialogBodyProp
   const draft = getDraft(dossierId);
   const activite = draft.activites[currentIndex];
 
-  // Paramètres locaux (pas encore dans le schéma)
+  // État local UI uniquement (non persisté)
   const [modeCA, setModeCA] = useState<string>("CA_GLOBAL");
   const [encours, setEncours] = useState(false);
   const [exigibiliteTVAVentes, setExigibiliteTVAVentes] = useState("FACTURATION");
   const [modeMarge, setModeMarge] = useState("TAUX_MARGE");
   const [exigibiliteTVAAchats, setExigibiliteTVAAchats] = useState("FACTURATION");
-
-  // Saisonnalité CA — par exercice (doit sommer à 100 %)
-  // La longueur du tableau suit la durée réelle de l'exercice
-  const [saisonnalite, setSaisonnalite] = useState<Record<ExerciceKey, number[]>>(() => {
-    const stored = activite?.saisonnaliteCA as Record<string, number[]> | undefined;
-    return {
-      N: stored?.N ?? buildEvenSaisonnalite(exercicesConfig.N.duree),
-      N1: stored?.N1 ?? buildEvenSaisonnalite(exercicesConfig.N1.duree),
-      N2: stored?.N2 ?? buildEvenSaisonnalite(exercicesConfig.N2.duree),
-    };
-  });
-
-  // Synchronisation saisonnalité CA ↔ Achats
-  const [syncSaisonnalite, setSyncSaisonnalite] = useState(true);
-
-  // Saisonnalité Achats — indépendante quand syncSaisonnalite = false
-  const [saisonnaliteAchats, setSaisonnaliteAchats] = useState<Record<ExerciceKey, number[]>>(() => {
-    const storedAchats = activite?.saisonnaliteAchats as Record<string, number[]> | undefined;
-    if (storedAchats)
-      return {
-        N: storedAchats.N ?? buildEvenSaisonnalite(exercicesConfig.N.duree),
-        N1: storedAchats.N1 ?? buildEvenSaisonnalite(exercicesConfig.N1.duree),
-        N2: storedAchats.N2 ?? buildEvenSaisonnalite(exercicesConfig.N2.duree),
-      };
-    const storedCA = activite?.saisonnaliteCA as Record<string, number[]> | undefined;
-    return {
-      N: storedCA?.N ?? buildEvenSaisonnalite(exercicesConfig.N.duree),
-      N1: storedCA?.N1 ?? buildEvenSaisonnalite(exercicesConfig.N1.duree),
-      N2: storedCA?.N2 ?? buildEvenSaisonnalite(exercicesConfig.N2.duree),
-    };
-  });
-
-  // Achats de stock ponctuel par exercice (éditables par mois) — chargés depuis les données persistées
-  const [achatsStockPonctuel, setAchatsStockPonctuel] = useState<Record<ExerciceKey, number[]>>(() => {
-    const stored = activite?.achatsStockPonctuel as Record<string, number[]> | undefined;
-    return {
-      N:  stored?.N  ?? Array(exercicesConfig.N.duree).fill(0),
-      N1: stored?.N1 ?? Array(exercicesConfig.N1.duree).fill(0),
-      N2: stored?.N2 ?? Array(exercicesConfig.N2.duree).fill(0),
-    };
-  });
-
-  // Import saisonnalité depuis une autre ligne
   const [importPopoverOpen, setImportPopoverOpen] = useState(false);
+
+  // Hook dédié : toute la logique de calcul et la gestion de la saisonnalité
+  const {
+    calculs,
+    syncSaisonnalite,
+    handleSaisonnalite,
+    handleSaisonnaliteAchats,
+    handleAchatPonctuel,
+    handleImportFrom,
+    toggleSyncSaisonnalite,
+    reporterSaisonnaliteCA,
+    reporterSaisonnaliteAchats,
+  } = useActiviteCalculs({ dossierId, currentIndex, exercicesConfig });
 
   if (!activite) return null;
 
-  const getMontant = (ex: ExerciceKey) =>
-    ex === "N" ? activite.montantN : ex === "N1" ? activite.montantN1 : activite.montantN2;
-
-  function handleSaisonnalite(ex: ExerciceKey, idx: number, val: string) {
-    setSaisonnalite((prev) => {
-      const updated = [...prev[ex]];
-      updated[idx] = numVal(val);
-      const next = { ...prev, [ex]: updated };
-      // Persist dans le store
-      if (syncSaisonnalite) {
-        setSaisonnaliteAchats(next);
-        updateActivite(dossierId, currentIndex, { saisonnaliteCA: next, saisonnaliteAchats: next });
-      } else {
-        updateActivite(dossierId, currentIndex, { saisonnaliteCA: next });
-      }
-      return next;
-    });
-  }
-
-  function handleSaisonnaliteAchats(ex: ExerciceKey, idx: number, val: string) {
-    setSaisonnaliteAchats((prev) => {
-      const updated = [...prev[ex]];
-      updated[idx] = numVal(val);
-      const next = { ...prev, [ex]: updated };
-      updateActivite(dossierId, currentIndex, { saisonnaliteAchats: next });
-      return next;
-    });
-  }
-
-  function handleAchatPonctuel(ex: ExerciceKey, idx: number, val: string) {
-    setAchatsStockPonctuel((prev) => {
-      const updated = [...prev[ex]];
-      updated[idx] = numVal(val);
-      const next = { ...prev, [ex]: updated };
-      // Persiste dans le store → marque la section comme modifiée (isDirty)
-      updateActivite(dossierId, currentIndex, { achatsStockPonctuel: next });
-      return next;
-    });
-  }
-
-  function handleImportFrom(sourceIdx: number) {
-    const source = draft.activites[sourceIdx];
-    if (!source) return;
-    const srcCA = source.saisonnaliteCA as Record<string, number[]> | undefined | null;
-    const srcAchats = source.saisonnaliteAchats as Record<string, number[]> | undefined | null;
-    const nextCA: Record<ExerciceKey, number[]> = {
-      N: resampleSaisonnalite(srcCA?.N ?? buildEvenSaisonnalite(exercicesConfig.N.duree), exercicesConfig.N.duree),
-      N1: resampleSaisonnalite(srcCA?.N1 ?? buildEvenSaisonnalite(exercicesConfig.N1.duree), exercicesConfig.N1.duree),
-      N2: resampleSaisonnalite(srcCA?.N2 ?? buildEvenSaisonnalite(exercicesConfig.N2.duree), exercicesConfig.N2.duree),
-    };
-    const nextAchats: Record<ExerciceKey, number[]> = syncSaisonnalite
-      ? nextCA
-      : {
-          N: resampleSaisonnalite(srcAchats?.N ?? nextCA.N, exercicesConfig.N.duree),
-          N1: resampleSaisonnalite(srcAchats?.N1 ?? nextCA.N1, exercicesConfig.N1.duree),
-          N2: resampleSaisonnalite(srcAchats?.N2 ?? nextCA.N2, exercicesConfig.N2.duree),
-        };
-    setSaisonnalite(nextCA);
-    setSaisonnaliteAchats(nextAchats);
-    updateActivite(dossierId, currentIndex, { saisonnaliteCA: nextCA, saisonnaliteAchats: nextAchats });
-    setImportPopoverOpen(false);
-  }
+  const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
 
   return (
     <Tabs defaultValue="N" className="w-full space-y-4">
@@ -431,39 +231,28 @@ function DialogBody({ dossierId, currentIndex, exercicesConfig }: DialogBodyProp
       </TabsList>
 
       {(["N", "N1", "N2"] as ExerciceKey[]).map((ex) => {
-        const saison = saisonnalite[ex];
-        const totalSaison = saison.reduce((s, v) => s + v, 0);
-        const montant = getMontant(ex);
+        const {
+          moisLabels,
+          productions,
+          marges,
+          consommes,
+          consommesAchats,
+          stocksInitAch,
+          stocksFauxAch,
+          stocksJours,
+          achatsEff,
+          saisonnalite: saison,
+          saisonnaliteAchats: saisonAchats,
+          ponctuel,
+          duree: dureeEx,
+          totalSaison,
+          totalSaisonAchats,
+          montant,
+        } = calculs[ex];
+
         const tauxMarge = activite.tauxMarge ?? 0;
-        const stocksJours = activite.stocks ?? 0;
-        const ponctuel = achatsStockPonctuel[ex];
-
-        // ── Calculs mensuels ───────────────────────────────────────
-        const productions = saison.map((p) => montant * (p / 100));
-        const marges = productions.map((p) => p * (tauxMarge / 100));
-        const consommes = productions.map((p, i) => p - marges[i]);
-        const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
         const saisonOk = Math.abs(totalSaison - 100) < 0.01;
-
-        // ── Calculs Achats (saisonnalité indépendante si désynchronisée) ─
-        const saisonAchats = syncSaisonnalite ? saison : saisonnaliteAchats[ex];
-        const totalSaisonAchats = saisonAchats.reduce((s, v) => s + v, 0);
         const saisonAchatsOk = Math.abs(totalSaisonAchats - 100) < 0.1;
-        const totalConsommes = sum(consommes);
-        const consommesAchats = saisonAchats.map((p) => totalConsommes * (p / 100));
-        const dureeEx = exercicesConfig[ex].duree;
-        const stocksFauxAch: number[] = [];
-        const stocksInitAch: number[] = [];
-        const achatsEff: number[] = [];
-        for (let j = 0; j < dureeEx; j++) {
-          const si = j === 0 ? 0 : stocksFauxAch[j - 1];
-          stocksInitAch[j] = si;
-          const sf = consommesAchats[j] * (stocksJours / 30);
-          stocksFauxAch[j] = sf;
-          achatsEff[j] = consommesAchats[j] + ponctuel[j] + sf - si;
-        }
-
-        const moisLabels = buildMoisLabels(exercicesConfig[ex].startMonth, exercicesConfig[ex].startYear, dureeEx);
 
         return (
           <TabsContent key={ex} value={ex} className="space-y-5 mt-0">
@@ -554,7 +343,7 @@ function DialogBody({ dossierId, currentIndex, exercicesConfig }: DialogBodyProp
                         <input
                           type="number"
                           className={cn(cellInput, "text-right")}
-                          value={stocksJours === 0 ? "" : stocksJours}
+                          value={activite.stocks === 0 ? "" : (activite.stocks ?? "")}
                           placeholder="0"
                           onChange={(e) => updateActivite(dossierId, currentIndex, { stocks: intVal(e.target.value) })}
                         />
@@ -681,7 +470,7 @@ function DialogBody({ dossierId, currentIndex, exercicesConfig }: DialogBodyProp
                               <button
                                 key={i}
                                 type="button"
-                                onClick={() => handleImportFrom(i)}
+                                onClick={() => { handleImportFrom(i); setImportPopoverOpen(false); }}
                                 className="w-full text-left rounded px-2 py-1.5 text-sm hover:bg-muted transition-colors truncate"
                               >
                                 {a.libelle || `Ligne ${i + 1}`}
@@ -694,60 +483,25 @@ function DialogBody({ dossierId, currentIndex, exercicesConfig }: DialogBodyProp
                   )}
                   {(["N", "N1", "N2"] as ExerciceKey[])
                     .filter((target) => target !== ex)
-                    .map((target) => {
-                      const targetLen = exercicesConfig[target].duree;
-                      return (
-                        <button
-                          key={target}
-                          type="button"
-                          title={`Reporter cette saisonnalité sur l'exercice ${target}`}
-                          onClick={() => {
-                            const resampled = resampleSaisonnalite(saisonnalite[ex], targetLen);
-                            const nextCA = { ...saisonnalite, [target]: resampled };
-                            setSaisonnalite(nextCA);
-                            const nextAchats = syncSaisonnalite
-                              ? nextCA
-                              : {
-                                  ...saisonnaliteAchats,
-                                  [target]: resampleSaisonnalite(saisonnaliteAchats[ex], targetLen),
-                                };
-                            setSaisonnaliteAchats(nextAchats);
-                            updateActivite(dossierId, currentIndex, {
-                              saisonnaliteCA: nextCA,
-                              saisonnaliteAchats: nextAchats,
-                            });
-                          }}
-                          className="flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium border border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
-                        >
-                          <CopyCheck className="h-3 w-3" />
-                          {`→ ${target}`}
-                        </button>
-                      );
-                    })}
+                    .map((target) => (
+                      <button
+                        key={target}
+                        type="button"
+                        title={`Reporter cette saisonnalité sur l'exercice ${target}`}
+                        onClick={() => reporterSaisonnaliteCA(ex, [target])}
+                        className="flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium border border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                      >
+                        <CopyCheck className="h-3 w-3" />
+                        {`→ ${target}`}
+                      </button>
+                    ))}
                   {/* Reporter sur TOUS les autres exercices d'un coup */}
                   <button
                     type="button"
                     title="Reporter cette saisonnalité sur tous les exercices"
                     onClick={() => {
                       const others = (["N", "N1", "N2"] as ExerciceKey[]).filter((t) => t !== ex);
-                      let nextCA = { ...saisonnalite };
-                      let nextAchats = { ...saisonnaliteAchats };
-                      for (const target of others) {
-                        const resampled = resampleSaisonnalite(saisonnalite[ex], exercicesConfig[target].duree);
-                        nextCA = { ...nextCA, [target]: resampled };
-                        nextAchats = syncSaisonnalite
-                          ? { ...nextAchats, [target]: resampled }
-                          : {
-                              ...nextAchats,
-                              [target]: resampleSaisonnalite(saisonnaliteAchats[ex], exercicesConfig[target].duree),
-                            };
-                      }
-                      setSaisonnalite(nextCA);
-                      setSaisonnaliteAchats(nextAchats);
-                      updateActivite(dossierId, currentIndex, {
-                        saisonnaliteCA: nextCA,
-                        saisonnaliteAchats: nextAchats,
-                      });
+                      reporterSaisonnaliteCA(ex, others);
                     }}
                     className="flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium border border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 transition-colors"
                   >
@@ -816,41 +570,25 @@ function DialogBody({ dossierId, currentIndex, exercicesConfig }: DialogBodyProp
                     <div className="flex items-center gap-1">
                       {(["N", "N1", "N2"] as ExerciceKey[])
                         .filter((target) => target !== ex)
-                        .map((target) => {
-                          const targetLen = exercicesConfig[target].duree;
-                          return (
-                            <button
-                              key={target}
-                              type="button"
-                              title={`Reporter la saisonnalité achats sur l'exercice ${target}`}
-                              onClick={() => {
-                                const resampled = resampleSaisonnalite(saisonnaliteAchats[ex], targetLen);
-                                const next = { ...saisonnaliteAchats, [target]: resampled };
-                                setSaisonnaliteAchats(next);
-                                updateActivite(dossierId, currentIndex, { saisonnaliteAchats: next });
-                              }}
-                              className="flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium border border-amber-400/60 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/30 dark:text-amber-400 transition-colors"
-                            >
-                              <CopyCheck className="h-3 w-3" />
-                              {`→ ${target}`}
-                            </button>
-                          );
-                        })}
+                        .map((target) => (
+                          <button
+                            key={target}
+                            type="button"
+                            title={`Reporter la saisonnalité achats sur l'exercice ${target}`}
+                            onClick={() => reporterSaisonnaliteAchats(ex, [target])}
+                            className="flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium border border-amber-400/60 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/30 dark:text-amber-400 transition-colors"
+                          >
+                            <CopyCheck className="h-3 w-3" />
+                            {`→ ${target}`}
+                          </button>
+                        ))}
                       {/* Reporter achats sur TOUS les autres exercices d'un coup */}
                       <button
                         type="button"
                         title="Reporter la saisonnalité achats sur tous les exercices"
                         onClick={() => {
                           const others = (["N", "N1", "N2"] as ExerciceKey[]).filter((t) => t !== ex);
-                          let next = { ...saisonnaliteAchats };
-                          for (const target of others) {
-                            next = {
-                              ...next,
-                              [target]: resampleSaisonnalite(saisonnaliteAchats[ex], exercicesConfig[target].duree),
-                            };
-                          }
-                          setSaisonnaliteAchats(next);
-                          updateActivite(dossierId, currentIndex, { saisonnaliteAchats: next });
+                          reporterSaisonnaliteAchats(ex, others);
                         }}
                         className="flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium border border-amber-400/60 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/30 dark:text-amber-400 transition-colors"
                       >
@@ -860,14 +598,7 @@ function DialogBody({ dossierId, currentIndex, exercicesConfig }: DialogBodyProp
                   )}
                   <button
                     type="button"
-                    onClick={() => {
-                      const next = !syncSaisonnalite;
-                      setSyncSaisonnalite(next);
-                      if (next) {
-                        setSaisonnaliteAchats(saisonnalite);
-                        updateActivite(dossierId, currentIndex, { saisonnaliteAchats: saisonnalite });
-                      }
-                    }}
+                    onClick={toggleSyncSaisonnalite}
                     className={cn(
                       "flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-medium border transition-colors",
                       syncSaisonnalite
@@ -902,8 +633,8 @@ function DialogBody({ dossierId, currentIndex, exercicesConfig }: DialogBodyProp
                   { label: "Stock initial", values: stocksInitAch, total: stocksInitAch[0], format: "euro" },
                   {
                     label: "Stocks (jours)",
-                    values: Array(dureeEx).fill(stocksJours),
-                    total: stocksJours,
+                    values: stocksJours,
+                    total: activite.stocks ?? 0,
                     format: "decimal",
                   },
                   {

@@ -81,9 +81,6 @@ export default function PorteurForm({
   const { getDraft, setDraft, clearDraft } = usePorteurStore();
   const invalidateControleStores = useInvalidateControleStores();
 
-  // Brouillon localStorage (priorité : draft > serveur > vide)
-  const draft = getDraft(dossierId);
-
   const form = useForm<PorteurFormValues>({
     resolver: standardSchemaResolver(porteurSchema),
     defaultValues: {
@@ -106,7 +103,6 @@ export default function PorteurForm({
       telecopie: "",
       email: "",
       ...defaultValues,
-      ...draft, // Le brouillon écrase les valeurs serveur
     },
   });
 
@@ -114,6 +110,15 @@ export default function PorteurForm({
     formState: { isDirty, isSubmitSuccessful },
     control,
   } = form;
+
+  // Appliquer le brouillon après le montage (client uniquement) pour éviter le mismatch d'hydratation SSR
+  useEffect(() => {
+    const draft = getDraft(dossierId);
+    if (draft && Object.keys(draft).length > 0) {
+      form.reset({ ...form.getValues(), ...draft }, { keepDirty: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync store à chaque modification du formulaire
   // On ne sauvegarde que les champs réellement modifiés (dirtyFields),

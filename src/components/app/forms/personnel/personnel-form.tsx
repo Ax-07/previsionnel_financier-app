@@ -40,6 +40,10 @@ import {
   saveLignesTaxesSalaires,
   saveLignesChargesPersonnel,
   fetchDossierDebutExercice,
+  fetchMoisPaiementSalaires,
+  saveMoisPaiementSalaires,
+  fetchParamsGlobauxTNS,
+  saveParamsGlobauxTNS,
 } from "@/app/actions/personnel";
 import { ModalDetailDirigeant } from "./modal-detail-dirigeant";
 import { useInvalidateControleStores } from "@/hooks/use-invalidate-controle-stores";
@@ -262,7 +266,25 @@ function ParamsGlobauxSection({
 }) {
   const store = usePersonnelStore();
   const params: ParamsGlobauxSalaries = store.getDraft(dossierId).paramsGlobaux;
-  const set = (data: Partial<ParamsGlobauxSalaries>) => store.updateParamsGlobaux(dossierId, data);
+  const invalidateControleStores = useInvalidateControleStores();
+
+  // Initialisation depuis la DB au montage
+  useEffect(() => {
+    fetchMoisPaiementSalaires(dossierId).then((v) => {
+      store.updateParamsGlobaux(dossierId, { moisPaiement: v });
+    }).catch(() => null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dossierId]);
+
+  const set = (data: Partial<ParamsGlobauxSalaries>) => {
+    store.updateParamsGlobaux(dossierId, data);
+    // Auto-save du moisPaiement en DB et invalidation du cache trésorerie
+    if (data.moisPaiement !== undefined) {
+      saveMoisPaiementSalaires(dossierId, data.moisPaiement).then((res) => {
+        if (res.success) invalidateControleStores(dossierId);
+      }).catch(() => null);
+    }
+  };
 
   return (
     <section className="flex flex-col gap-3">
@@ -1041,7 +1063,28 @@ function TableauDirigeant({
 function ParamsTNSSection({ dossierId }: { dossierId: string }) {
   const store = usePersonnelStore();
   const params: ParamsGlobauxTNS = store.getDraft(dossierId).paramsGlobauxTNS;
-  const set = (data: Partial<ParamsGlobauxTNS>) => store.updateParamsGlobauxTNS(dossierId, data);
+  const invalidateControleStores = useInvalidateControleStores();
+
+  // Chargement depuis la BDD au montage (priorité BDD > localStorage)
+  useEffect(() => {
+    fetchParamsGlobauxTNS(dossierId).then((dbParams) => {
+      store.updateParamsGlobauxTNS(dossierId, dbParams);
+    }).catch(() => null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dossierId]);
+
+  const set = (data: Partial<ParamsGlobauxTNS>) => {
+    store.updateParamsGlobauxTNS(dossierId, data);
+    // Auto-save en BDD dès le changement (comme moisPaiement)
+    const updated = { ...params, ...data };
+    saveParamsGlobauxTNS(dossierId, {
+      regimeSocial: updated.regimeSocial,
+      modeCalculTNS: updated.modeCalculTNS,
+      decalerEcheancierN2: updated.decalerEcheancierN2,
+    }).then((res) => {
+      if (res.success) invalidateControleStores(dossierId);
+    }).catch(() => null);
+  };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3 rounded-md bg-muted/30 border">
@@ -1141,66 +1184,57 @@ function TableauCotisationsTNS({
 
 // ...
 
-const { cotisations: montantsAuto, bruts: brutsCalcules, regUrssaf } = useMemo(() => {
+const {
+  cotisations: montantsAuto,
+  bruts: brutsCalcules,
+  tresorieTNS,
+} = useMemo(() => {
   const { remuN, remuN1, remuN2 } = remuTNSBase(draft.dirigeants);
   const acreN = detecterACRE(draft.dirigeants);
   const regime = draft.paramsGlobauxTNS.regimeSocial;
-  const mode = draft.paramsGlobauxTNS.modeCalculTNS; // "DEFINITIF" | "DEBUT_ACTIVITE_FORFAIT" | "TRESORERIE_URSSAF"
+  const mode = draft.paramsGlobauxTNS.modeCalculTNS;
 
-  // 1) Toujours résoudre les BRUTS sur le mode DEFINITIF (revenu réel)
-  // car le "revenu brut" de référence doit rester le revenu réel.
+  // Bruts sur le revenu réel (DEFINITIF) — référence stable quel que soit le mode
   const simN  = trouverBrutPourNet(remuN,  regime, acreN,  { mode: "DEFINITIF" });
   const simN1 = trouverBrutPourNet(remuN1, regime, false,  { mode: "DEFINITIF" });
   const simN2 = trouverBrutPourNet(remuN2, regime, false,  { mode: "DEFINITIF" });
 
   const bruts = { brutN: simN.brut, brutN1: simN1.brut, brutN2: simN2.brut };
 
-  // 2) Si on est en mode “trésorerie”, on calcule les appels réels + régularisations
-  if (mode === "DEBUT_ACTIVITE_FORFAIT") {
-    const treso = simulerTresorerieUrssafSur3Ans({
-      brutN: bruts.brutN,
-      brutN1: bruts.brutN1,
-      brutN2: bruts.brutN2,
-      regime,
-      acreN,
-      joursN: 365,
-      joursN1: 365,
-      joursN2: 365,
-    });
-
-    // On veut afficher les 6 lignes "provisionnel" (les appels de l'année)
-    // + une ligne dédiée "Régularisation URSSAF" (à ajouter au tableau)
-    const lignesN  = treso[0].lignesProvisionnel;
-    const lignesN1 = treso[1].lignesProvisionnel;
-    const lignesN2 = treso[2].lignesProvisionnel;
-
-    // On reconstruit un tableau MontantsTNSLigne[] (6 lignes) attendu par ton mapping
-    // en prenant montantN de chaque année.
-    const cotisations6 = lignesN.map((_, i) => ({
-      montantN:  lignesN[i].montantN,
-      montantN1: lignesN1[i].montantN,
-      montantN2: lignesN2[i].montantN,
-      // ACRE ne s’affiche que sur N (comme déjà)
-      acreApplique: lignesN[i].acreApplique,
-    }));
-
-    // Régularisation : une seule ligne (à afficher séparément)
-    const regUrssaf = {
-      montantN:  0,
-      montantN1: treso[1].regularisation,
-      montantN2: treso[2].regularisation,
-    };
-
-    return { cotisations: cotisations6, bruts, regUrssaf };
-  }
-
-  // 3) Sinon : ton comportement existant (définitif ou forfait)
+  // Les 6 lignes sauvegardées en BDD = TOUJOURS DEFINITIF (charges comptables du CR/bilan).
+  // Le mode "début d'activité" n'affecte que la trésorerie, pas la charge de l'exercice.
   const cotisations = calculerMontantsTNS(
     bruts.brutN, bruts.brutN1, bruts.brutN2,
-    regime, acreN, 365, 365, 365, mode,
+    regime, acreN, 360, 360, 360, "DEFINITIF",
   );
 
-  return { cotisations, bruts, regUrssaf: null as null | { montantN: number; montantN1: number; montantN2: number } };
+  // En mode "Début d'activité forfait" : calendrier URSSAF informatif (jamais sauvegardé en BDD)
+  if (mode === "DEBUT_ACTIVITE_FORFAIT") {
+    const treso = simulerTresorerieUrssafSur3Ans({
+      brutN: bruts.brutN, brutN1: bruts.brutN1, brutN2: bruts.brutN2,
+      regime, acreN, joursN: 360, joursN1: 360, joursN2: 360,
+    });
+    return {
+      cotisations,
+      bruts,
+      tresorieTNS: {
+        forfaitN:    treso[0].totalPaye,
+        forfaitN1:   treso[1].totalPaye - treso[1].regularisation,
+        forfaitN2:   treso[2].totalPaye - treso[2].regularisation,
+        regN1:       treso[1].regularisation,
+        regN2:       treso[2].regularisation,
+        totalPayeN:  treso[0].totalPaye,
+        totalPayeN1: treso[1].totalPaye,
+        totalPayeN2: treso[2].totalPaye,
+      },
+    };
+  }
+
+  return { cotisations, bruts, tresorieTNS: null as null | {
+    forfaitN: number; forfaitN1: number; forfaitN2: number;
+    regN1: number; regN2: number;
+    totalPayeN: number; totalPayeN1: number; totalPayeN2: number;
+  } };
 }, [draft.dirigeants, draft.paramsGlobauxTNS.regimeSocial, draft.paramsGlobauxTNS.modeCalculTNS]);
 
   // Rows avec montants calculés injectés + flags ACRE pour l'affichage.
@@ -1238,10 +1272,11 @@ const { cotisations: montantsAuto, bruts: brutsCalcules, regUrssaf } = useMemo((
 
   const handleSave = useCallback(() => {
     startTransition(async () => {
-      // On sauvegarde les montants avec les valeurs calculées injectées
+      // rowsWithAuto contient toujours les montants DEFINITIFS (charges comptables).
+      // La ligne "Régularisation URSSAF" n'est jamais persistée en BDD (trésorerie uniquement).
       const result = await saveLignesCotisationsTNS(dossierId, rowsWithAuto, {
         regimeSocial: draft.paramsGlobauxTNS.regimeSocial,
-        modeCalculTNS: draft.paramsGlobauxTNS.modeCalculTNS,
+        modeCalculTNS: "DEFINITIF",
       });
       if (result.success) {
         toast.success(result.message);
@@ -1254,7 +1289,7 @@ const { cotisations: montantsAuto, bruts: brutsCalcules, regUrssaf } = useMemo((
         toast.error(result.error);
       }
     });
-  }, [dossierId, rowsWithAuto, store]);
+  }, [dossierId, rowsWithAuto, draft.paramsGlobauxTNS.regimeSocial, store, invalidateControleStores]);
 
   
   return (
@@ -1388,28 +1423,32 @@ const { cotisations: montantsAuto, bruts: brutsCalcules, regUrssaf } = useMemo((
               <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(rowsWithAuto.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN1, 0))}</td>
               <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(rowsWithAuto.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN2, 0))}</td>
             </tr>
-            {regUrssaf && (
+            {tresorieTNS && (
               <tr className="border-t border-dashed border-amber-400/50 bg-amber-50/40 dark:bg-amber-950/20">
                 <td colSpan={3} className="px-2 py-1.5 text-xs font-medium text-right text-amber-700 dark:text-amber-400">
-                  Régularisation URSSAF
+                  Appels URSSAF provisionnels
                 </td>
-                <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-700 dark:text-amber-400">{fmt(regUrssaf.montantN)}</td>
-                <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-700 dark:text-amber-400">{fmt(regUrssaf.montantN1)}</td>
-                <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-700 dark:text-amber-400">{fmt(regUrssaf.montantN2)}</td>
+                <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-700 dark:text-amber-400">{fmt(tresorieTNS.forfaitN)}</td>
+                <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-700 dark:text-amber-400">{fmt(tresorieTNS.forfaitN1)}</td>
+                <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-700 dark:text-amber-400">{fmt(tresorieTNS.forfaitN2)}</td>
               </tr>
             )}
-            {regUrssaf && (
+            {tresorieTNS && (
+              <tr className="border-t border-dashed border-amber-400/50 bg-amber-50/40 dark:bg-amber-950/20">
+                <td colSpan={3} className="px-2 py-1.5 text-xs font-medium text-right text-amber-700 dark:text-amber-400">
+                  + Régularisation URSSAF
+                </td>
+                <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-700 dark:text-amber-400">{fmt(0)}</td>
+                <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-700 dark:text-amber-400">{fmt(tresorieTNS.regN1)}</td>
+                <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-700 dark:text-amber-400">{fmt(tresorieTNS.regN2)}</td>
+              </tr>
+            )}
+            {tresorieTNS && (
               <tr className="border-t border-border bg-muted/50">
-                <td colSpan={3} className="px-2 py-1.5 text-xs font-bold text-right text-muted-foreground">Total décaissé URSSAF</td>
-                <td className="px-2 py-1.5 text-xs font-bold text-right tabular-nums">
-                  {fmt(rowsWithAuto.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN, 0) + regUrssaf.montantN)}
-                </td>
-                <td className="px-2 py-1.5 text-xs font-bold text-right tabular-nums">
-                  {fmt(rowsWithAuto.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN1, 0) + regUrssaf.montantN1)}
-                </td>
-                <td className="px-2 py-1.5 text-xs font-bold text-right tabular-nums">
-                  {fmt(rowsWithAuto.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN2, 0) + regUrssaf.montantN2)}
-                </td>
+                <td colSpan={3} className="px-2 py-1.5 text-xs font-bold text-right text-muted-foreground">= Total décaissé URSSAF</td>
+                <td className="px-2 py-1.5 text-xs font-bold text-right tabular-nums">{fmt(tresorieTNS.totalPayeN)}</td>
+                <td className="px-2 py-1.5 text-xs font-bold text-right tabular-nums">{fmt(tresorieTNS.totalPayeN1)}</td>
+                <td className="px-2 py-1.5 text-xs font-bold text-right tabular-nums">{fmt(tresorieTNS.totalPayeN2)}</td>
               </tr>
             )}
           </tfoot>

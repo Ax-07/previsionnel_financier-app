@@ -294,8 +294,6 @@ export default function EntrepriseForm({
   const { getDraft, setDraft, clearDraft } = useEntrepriseStore();
   const invalidateControleStores = useInvalidateControleStores();
 
-  const draft = getDraft(dossierId);
-
   const form = useForm<EntrepriseFormValues>({
     resolver: standardSchemaResolver(entrepriseSchema),
     defaultValues: {
@@ -318,7 +316,6 @@ export default function EntrepriseForm({
       dureePrevisionnelle: 3,
       exercices: [],
       ...defaultValues,
-      ...draft,
     },
   });
 
@@ -357,6 +354,15 @@ export default function EntrepriseForm({
     },
     [form, setValue]
   );
+
+  // Appliquer le brouillon après le montage (client uniquement) pour éviter le mismatch d'hydratation SSR
+  useEffect(() => {
+    const draft = getDraft(dossierId);
+    if (draft && Object.keys(draft).length > 0) {
+      form.reset({ ...form.getValues(), ...draft }, { keepDirty: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync store à chaque modification (uniquement les champs modifiés)
   const watchedValues = useWatch({ control });

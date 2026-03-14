@@ -215,8 +215,8 @@ function ProvisionsSection({
           <thead className="bg-muted/50">
             <tr>
               <Th className="w-8">Actif</Th>
-              <Th className="min-w-[180px]">Libellé</Th>
-              <Th className="min-w-[160px]">Nature</Th>
+              <Th className="min-w-45">Libellé</Th>
+              <Th className="min-w-40">Nature</Th>
               <Th className="w-28 text-right">N</Th>
               <Th className="w-28 text-right">N+1</Th>
               <Th className="w-28 text-right">N+2</Th>
@@ -426,7 +426,7 @@ function ChargeDateeSection({
           <thead className="bg-muted/50">
             <tr>
               <Th className="w-8">Actif</Th>
-              <Th className="min-w-[160px]">Libellé</Th>
+              <Th className="min-w-40">Libellé</Th>
               <Th className="w-28">Date N</Th>
               <Th className="w-28 text-right">N</Th>
               <Th className="w-28">Date N+1</Th>
@@ -661,8 +661,8 @@ function ChargeBilanSection({
           <thead className="bg-muted/50">
             <tr>
               <Th className="w-8">Actif</Th>
-              <Th className="min-w-[180px]">Libellé</Th>
-              <Th className="min-w-[150px]">Nature</Th>
+              <Th className="min-w-45">Libellé</Th>
+              <Th className="min-w-37.5">Nature</Th>
               <Th className="w-28 text-right">N</Th>
               <Th className="w-28 text-right">N+1</Th>
               <Th className="w-28 text-right">N+2</Th>

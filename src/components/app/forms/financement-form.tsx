@@ -395,9 +395,9 @@ function ModalDetailsEmprunt({
             </ModalField>
 
             {/* Champ exclusif modal : taux assurance */}
-            <ModalField label="Taux annuel (%)">
+            <ModalField label="Taux annuel (%)" hint="Ex. 0.3 % standard — max 5 %">
               <Input
-                type="number" min={0} max={100} step={0.001}
+                type="number" min={0} max={5} step={0.001}
                 value={draft.tauxAssurance === 0 ? "" : draft.tauxAssurance}
                 placeholder="0.3"
                 onChange={(e) => set("tauxAssurance", numVal(e.target.value))}
@@ -471,10 +471,13 @@ function ModalSection({ title, children }: { title: string; children: React.Reac
   );
 }
 
-function ModalField({ label, children }: { label: string; children: React.ReactNode }) {
+function ModalField({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-[1fr_auto] items-center gap-3">
-      <Label className="text-sm text-muted-foreground font-normal leading-tight">{label}</Label>
+      <div>
+        <Label className="text-sm text-muted-foreground font-normal leading-tight">{label}</Label>
+        {hint && <p className="text-xs text-muted-foreground/60 leading-none mt-0.5">{hint}</p>}
+      </div>
       <div className="w-44">{children}</div>
     </div>
   );
