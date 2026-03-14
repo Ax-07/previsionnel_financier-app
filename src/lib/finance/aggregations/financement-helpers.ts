@@ -1,0 +1,201 @@
+/**
+ * Helpers partagés pour la construction des lignes du Plan de Financement
+ * et du Tableau de Financement.
+ *
+ * Ce module contient :
+ * - Les types `FinRow`, `FinRowValue`, `FinKey`
+ * - Le helper `mkFinRow` pour construire les lignes
+ * - `buildToKeyY0` pour le mapping date → exercice (avec colonne Initial)
+ * - Les helpers de données : `buildApportsData`, `buildEmpruntsData`,
+ *   `buildImmoData`, `buildSubventionsInvestData`
+ *
+ * @module aggregations/financement-helpers
+ * @moved-from app/actions/controle/financement/helpers.ts
+ */
+
+import { n } from "@/lib/finance/utils";
+import type { YearKey4 } from "@/lib/finance/utils";
+
+// ── Alias local ───────────────────────────────────────────────────────────────
+
+/** Clé d'exercice avec la colonne "Initial" (y0). */
+export type FinKey = YearKey4;
+
+// ── Helpers de construction des lignes ───────────────────────────────────────
+
+export interface FinRowValue {
+  amount: number;
+}
+
+export interface FinRow {
+  key: string;
+  label: string;
+  sign: "+" | "−" | "=" | "";
+  style: "normal" | "subtotal" | "highlight" | "section";
+  hideIfZero?: boolean;
+  values: Record<FinKey, FinRowValue>;
+}
+
+export function mkFinRow(
+  key: string,
+  label: string,
+  sign: FinRow["sign"],
+  style: FinRow["style"],
+  vals: Record<FinKey, number>,
+  hideIfZero?: boolean,
+): FinRow {
+  return {
+    key,
+    label,
+    sign,
+    style,
+    hideIfZero,
+    values: {
+      y0: { amount: vals.y0 },
+      y1: { amount: vals.y1 },
+      y2: { amount: vals.y2 },
+      y3: { amount: vals.y3 },
+    },
+  };
+}
+
+// ── Mapping date → clé d'exercice ────────────────────────────────────────────
+
+/**
+ * Construit une fonction toKey à partir des bornes d'exercices.
+ * Les dates ≤ dateDemarrage donnent "y0" (Initial).
+ */
+export function buildToKeyY0(
+  dateDemarrage: Date,
+  exBorne1: Date,
+  exBorne2: Date,
+  exBorne3: Date,
+): (date: Date | string) => FinKey | null {
+  return (date: Date | string): FinKey | null => {
+    const d = date instanceof Date ? date : new Date(date);
+    if (d <= dateDemarrage) return "y0";
+    if (d < exBorne1) return "y1";
+    if (d < exBorne2) return "y2";
+    if (d < exBorne3) return "y3";
+    return null;
+  };
+}
+
+// ── Calculs partagés apports / emprunts / immo ────────────────────────────────
+
+export interface ApportsResult {
+  apportsCapital: Record<FinKey, number>;
+  apportsCC: Record<FinKey, number>;
+}
+
+export function buildApportsData(
+  apports: { type: string; montant: unknown; dateApport: Date | string }[],
+  subventions: { type: string; montant: unknown; dateEncaissement?: Date | string | null; dateObtention?: Date | string | null }[],
+  toKey: (date: Date | string) => FinKey | null,
+): ApportsResult {
+  const apportsCapital: Record<FinKey, number> = { y0: 0, y1: 0, y2: 0, y3: 0 };
+  const apportsCC: Record<FinKey, number> = { y0: 0, y1: 0, y2: 0, y3: 0 };
+
+  for (const apport of apports) {
+    const k = toKey(apport.dateApport);
+    if (!k) continue;
+    const montant = n(apport.montant);
+    if (apport.type === "CAPITAL" || apport.type === "APPORT_NATURE") {
+      apportsCapital[k] += montant;
+    } else if (apport.type === "COMPTE_COURANT") {
+      apportsCC[k] += montant;
+    }
+  }
+
+  for (const subv of subventions) {
+    if (subv.type !== "PRET_HONNEUR") continue;
+    const dateRef = subv.dateEncaissement ?? subv.dateObtention;
+    if (!dateRef) continue;
+    const k = toKey(dateRef);
+    if (!k) continue;
+    apportsCC[k] += n(subv.montant);
+  }
+
+  return { apportsCapital, apportsCC };
+}
+
+export interface EmpruntsResult {
+  nouveauxEmprunts: Record<FinKey, number>;
+  remboursementCapital: Record<FinKey, number>;
+}
+
+export function buildEmpruntsData(
+  emprunts: { montant: unknown; dateDéblocage: Date | string; lignesEcheancier: { dateEcheance: Date | string; capitalRembourse: unknown }[] }[],
+  toKey: (date: Date | string) => FinKey | null,
+): EmpruntsResult {
+  const nouveauxEmprunts: Record<FinKey, number> = { y0: 0, y1: 0, y2: 0, y3: 0 };
+  const remboursementCapital: Record<FinKey, number> = { y0: 0, y1: 0, y2: 0, y3: 0 };
+
+  for (const emprunt of emprunts) {
+    const k = toKey(emprunt.dateDéblocage);
+    if (k) nouveauxEmprunts[k] += n(emprunt.montant);
+    for (const ligne of emprunt.lignesEcheancier) {
+      const lk = toKey(ligne.dateEcheance);
+      if (lk) remboursementCapital[lk] += n(ligne.capitalRembourse);
+    }
+  }
+
+  return { nouveauxEmprunts, remboursementCapital };
+}
+
+export interface ImmoResult {
+  immoIncorporelles: Record<FinKey, number>;
+  immoCorporelles: Record<FinKey, number>;
+  totalImmo: Record<FinKey, number>;
+}
+
+export function buildImmoData(
+  immobilisations: { nature: string; montantHT: unknown; dateAcquisition: Date | string; actif?: boolean | null }[],
+  toKey: (date: Date | string) => FinKey | null,
+): ImmoResult {
+  const immoIncorporelles: Record<FinKey, number> = { y0: 0, y1: 0, y2: 0, y3: 0 };
+  const immoCorporelles: Record<FinKey, number> = { y0: 0, y1: 0, y2: 0, y3: 0 };
+
+  for (const immo of immobilisations) {
+    if (immo.actif === false) continue;
+    const k = toKey(immo.dateAcquisition);
+    if (!k) continue;
+    const montant = n(immo.montantHT);
+    if (immo.nature === "INCORPOREL") {
+      immoIncorporelles[k] += montant;
+    } else {
+      immoCorporelles[k] += montant;
+    }
+  }
+
+  const totalImmo: Record<FinKey, number> = {
+    y0: immoIncorporelles.y0 + immoCorporelles.y0,
+    y1: immoIncorporelles.y1 + immoCorporelles.y1,
+    y2: immoIncorporelles.y2 + immoCorporelles.y2,
+    y3: immoIncorporelles.y3 + immoCorporelles.y3,
+  };
+
+  return { immoIncorporelles, immoCorporelles, totalImmo };
+}
+
+/**
+ * Calcule les subventions d'investissement (hors prêts d'honneur) par exercice.
+ * Les prêts d'honneur sont traités dans buildApportsData (apportsCC).
+ * Les subventions SUBVENTION_INVESTISSEMENT, AIDE_DEMARRAGE, AUTRE sont
+ * des ressources du plan de financement, encaissées à leur date d'obtention/encaissement.
+ */
+export function buildSubventionsInvestData(
+  subventions: { type: string; montant: unknown; dateEncaissement?: Date | string | null; dateObtention?: Date | string | null }[],
+  toKey: (date: Date | string) => FinKey | null,
+): Record<FinKey, number> {
+  const result: Record<FinKey, number> = { y0: 0, y1: 0, y2: 0, y3: 0 };
+  for (const subv of subventions) {
+    if (subv.type === "PRET_HONNEUR") continue; // déjà dans apportsCC
+    const dateRef = subv.dateEncaissement ?? subv.dateObtention;
+    if (!dateRef) continue;
+    const k = toKey(dateRef);
+    if (!k) continue;
+    result[k] += n(subv.montant);
+  }
+  return result;
+}
