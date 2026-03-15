@@ -22,7 +22,8 @@ import type { YearKey } from "@/lib/finance/utils";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 // Définis dans types/series.ts et re-exportés ici pour compatibilité.
-export type { MonthlySeries, MonthlyAcc } from "@/lib/finance/types/series";
+import type { MonthlySeries, MonthlyAcc } from "@/lib/finance/types/series";
+export type { MonthlySeries, MonthlyAcc };
 
 // ── Helpers de séries mensuelles (source unique de vérité) ───────────────────
 
@@ -295,14 +296,6 @@ export function buildMonthlyCalc(
 
   function emptyAcc(): MonthlyAcc {
     return { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
-  }
-
-  /** Résout la YearKey d'une année civile en tenant compte du décalage fiscal. */
-  function ykOfCivilYear(yr: number): YearKey | null {
-    if (yr === anneeDebut) return "y1";
-    if (yr === anneeDebut + 1) return "y2";
-    if (yr === anneeDebut + 2) return "y3";
-    return null;
   }
 
   /** Résout la YearKey + index mois (0-11) d'une date ISO/Date. */
