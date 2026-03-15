@@ -179,9 +179,9 @@ export function calcAchatsRaw(
     result.y2 = sumSeries(result.y2, seasonalMonthly(n(a.montantN1) * coef * coefTVA, a.saisonnaliteAchats, "N1"));
     result.y3 = sumSeries(result.y3, seasonalMonthly(n(a.montantN2) * coef * coefTVA, a.saisonnaliteAchats, "N2"));
     // Achats ponctuels TTC (délai = 0, donc raw == paid → n'influencent pas l'encours)
-    result.y1 = sumSeries(result.y1, ponctuelMonthly(a.achatsStockPonctuel, "N").map((v) => v * coefTVA) as MonthlySeries);
-    result.y2 = sumSeries(result.y2, ponctuelMonthly(a.achatsStockPonctuel, "N1").map((v) => v * coefTVA) as MonthlySeries);
-    result.y3 = sumSeries(result.y3, ponctuelMonthly(a.achatsStockPonctuel, "N2").map((v) => v * coefTVA) as MonthlySeries);
+    result.y1 = sumSeries(result.y1, ponctuelMonthly(a.achatsStockPonctuel, "N").map((v: number) => v * coefTVA) as MonthlySeries);
+    result.y2 = sumSeries(result.y2, ponctuelMonthly(a.achatsStockPonctuel, "N1").map((v: number) => v * coefTVA) as MonthlySeries);
+    result.y3 = sumSeries(result.y3, ponctuelMonthly(a.achatsStockPonctuel, "N2").map((v: number) => v * coefTVA) as MonthlySeries);
   }
   return result;
 }
