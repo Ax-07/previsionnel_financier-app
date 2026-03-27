@@ -92,7 +92,7 @@ export function SimulateurForm({ initialInput }: SimulateurFormProps) {
     defaultValues: {
       statut: (initialInput?.salarié?.statut as "cadre" | "non_cadre") ?? "non_cadre",
       typeContrat: (initialInput?.salarié?.typeContrat as FormValues["typeContrat"]) ?? "CDI",
-      heuresContrat: initialInput?.salarié?.heuresContrat ?? 151.67,
+      heuresContrat: initialInput?.salarié?.heuresContrat ?? 151.66669,
       brutMensuel: initialInput?.salarié?.brutMensuel ?? defaultInput.salarié.brutMensuel,
       netCible: undefined,
       primesSoumises: 0,
@@ -136,7 +136,7 @@ export function SimulateurForm({ initialInput }: SimulateurFormProps) {
   // ── Gestion auto des heures supplémentaires ───────────────────────────────
   // Quand heuresContrat > 151,67h (ex. contrat 39h/sem = 169h), les heures
   // au-delà du légal sont automatiquement des heures supplémentaires.
-  const HEURES_LEGALES = 151.67;
+  const HEURES_LEGALES = 151.66669;
   const [hsAutoCalc, setHsAutoCalc] = useState(true);
 
   // Synchronise le champ heuresSupplementaires si l'auto-calcul est actif
@@ -146,7 +146,7 @@ export function SimulateurForm({ initialInput }: SimulateurFormProps) {
       if (name !== "heuresContrat") return;
       const h = values.heuresContrat ?? HEURES_LEGALES;
       if (h > HEURES_LEGALES) {
-        const hSup = Math.round((h - HEURES_LEGALES) * 100) / 100;
+        const hSup = Math.round((h - HEURES_LEGALES) * 100000) / 100000;
         form.setValue("heuresSupplementaires", hSup, { shouldDirty: false });
       } else {
         form.setValue("heuresSupplementaires", 0, { shouldDirty: false });
@@ -162,7 +162,7 @@ export function SimulateurForm({ initialInput }: SimulateurFormProps) {
    * En mode net→brut, simule d'abord pour obtenir le net SMIC.
    */
   function appliquerSmic() {
-    const heures = form.getValues("heuresContrat") || 151.67;
+    const heures = form.getValues("heuresContrat") || 151.66669;
     // brutMensuel = salaire de base (heures normales uniquement)
     // Les HS sont calculées séparément par le moteur
     const smicBrut = Math.round(PARAMS_2026.smicHoraire * Math.min(heures, HEURES_LEGALES) * 100) / 100;
@@ -292,7 +292,7 @@ export function SimulateurForm({ initialInput }: SimulateurFormProps) {
               control={form.control}
               name="brutMensuel"
               render={({ field }) => {
-                const heures = form.watch("heuresContrat") || 151.67;
+                const heures = form.watch("heuresContrat") || 151.66669;
                 const smicBase = Math.round(PARAMS_2026.smicHoraire * Math.min(heures, HEURES_LEGALES) * 100) / 100;
                 return (
                   <FormItem>
@@ -328,7 +328,7 @@ export function SimulateurForm({ initialInput }: SimulateurFormProps) {
               control={form.control}
               name="netCible"
               render={({ field }) => {
-                const heures = form.watch("heuresContrat") || 151.67;
+                const heures = form.watch("heuresContrat") || 151.66669;
                 const smicBrut = Math.round(PARAMS_2026.smicHoraire * heures * 100) / 100;
                 return (
                   <FormItem>
@@ -411,7 +411,7 @@ export function SimulateurForm({ initialInput }: SimulateurFormProps) {
               render={({ field }) => {
                 const heures = form.watch("heuresContrat") ?? HEURES_LEGALES;
                 const hsAuto = hsAutoCalc && heures > HEURES_LEGALES;
-                const hsCalculees = Math.round((heures - HEURES_LEGALES) * 100) / 100;
+                const hsCalculees = Math.round((heures - HEURES_LEGALES) * 100000) / 100000;
                 return (
                   <FormItem>
                     <div className="flex items-center justify-between gap-1">
@@ -419,7 +419,7 @@ export function SimulateurForm({ initialInput }: SimulateurFormProps) {
                       {hsAuto ? (
                         <span className="flex items-center gap-1 rounded border border-green-300 bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:border-green-700 dark:bg-green-950/30 dark:text-green-400">
                           <WandSparklesIcon className="size-3" />
-                          Auto · {hsCalculees.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} h
+                          Auto · {hsCalculees.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} h
                         </span>
                       ) : (
                         <button
@@ -439,7 +439,7 @@ export function SimulateurForm({ initialInput }: SimulateurFormProps) {
                     <FormControl>
                       <Input
                         type="number"
-                        step="0.01"
+                        step="any"
                         min="0"
                         placeholder="0"
                         className={hsAuto ? "bg-muted/40" : ""}
@@ -553,7 +553,7 @@ export function SimulateurForm({ initialInput }: SimulateurFormProps) {
                     max="300"
                     {...field}
                     onChange={(e) => {
-                      const val = parseFloat(e.target.value) || 151.67;
+                      const val = parseFloat(e.target.value) || 151.66669;
                       field.onChange(val);
                       // Réactiver l'auto-calcul dès que l'utilisateur change les heures
                       setHsAutoCalc(true);

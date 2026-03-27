@@ -10,6 +10,7 @@
  */
 
 import type { SimulationInput, SimulationResultat, LigneCotisation } from "@/lib/paie/types";
+import { CONVENTION_CATALOG } from "@/lib/paie/conventions/catalog";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -54,8 +55,8 @@ const FAMILLE_LABELS: Record<string, string> = {
   retraite_complementaire: "Retraite complémentaire (Agirc-Arrco)",
   ceg: "Contribution équilibre général (CEG)",
   cet: "Contribution temporaire (CET)",
-  apec: "APEC",
-  exoneration: "Exonérations",
+  apec: "APEC",  prevoyance_prevoyance: "Prévoyance (Convention collective)",
+  prevoyance_mutuelle: "Mutuelle (Convention collective)",  exoneration: "Exonérations",
   rgdu: "Réduction générale (RGDU)",
 };
 
@@ -108,6 +109,13 @@ export function BulletinPdfTemplate({ input, resultat }: BulletinPdfTemplateProp
     day: "numeric",
   });
 
+  // Convention collective
+  const convMeta = salarié.conventionCode ? CONVENTION_CATALOG.get(salarié.conventionCode) : undefined;
+
+  // Taux horaire pour le détail HS
+  const heuresNormales = Math.min(salarié.heuresContrat, 151.66669);
+  const tauxHoraire = salarié.brutMensuel > 0 ? salarié.brutMensuel / heuresNormales : 0;
+
   // Exclure les lignes "exoneration" / "rgdu" des cotisations principales
   const lignesNormales = resultat.lignes.filter(
     (l) => l.famille !== "exoneration" && l.famille !== "rgdu",
@@ -134,6 +142,13 @@ export function BulletinPdfTemplate({ input, resultat }: BulletinPdfTemplateProp
               <div className="header-meta" style={{ textAlign: "left", marginTop: 4 }}>
                 Millésime {input.millesime ?? "2026"} — Régime général
                 {salarié.alsaceMoselle ? " + Alsace-Moselle" : ""}
+                {convMeta && (
+                  <> — <strong>CCN IDCC {salarié.conventionCode} — {convMeta.label}</strong>
+                    {convMeta.statut === "partial" && (
+                      <span style={{ color: "#d97706", marginLeft: 4 }}>(impl. partielle)</span>
+                    )}
+                  </>
+                )}
               </div>
             </div>
             <div className="header-meta">
@@ -179,6 +194,17 @@ export function BulletinPdfTemplate({ input, resultat }: BulletinPdfTemplateProp
                     </>
                   )}
                 </tr>
+                {convMeta && (
+                  <tr>
+                    <td>Convention collective</td>
+                    <td colSpan={3}>
+                      IDCC {salarié.conventionCode} — {convMeta.label}
+                      {convMeta.statut === "partial" && (
+                        <span style={{ color: "#d97706", marginLeft: 4 }}>(impl. partielle)</span>
+                      )}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -194,18 +220,43 @@ export function BulletinPdfTemplate({ input, resultat }: BulletinPdfTemplateProp
                   <td>Brut soumis</td>
                   <td>{eur(resultat.brutSoumis)}</td>
                 </tr>
-                {(salarié.heuresSupplementaires ?? 0) > 0 && (
-                  <tr>
-                    <td>Heures supplémentaires</td>
-                    <td>{salarié.heuresSupplementaires} h</td>
-                    <td></td>
-                    <td></td>
-                  </tr>
-                )}
+                {resultat.heuresSupLignes && resultat.heuresSupLignes.length > 0
+                  ? resultat.heuresSupLignes.map((l) => (
+                      <tr key={l.label}>
+                        <td>
+                          {l.label}<br/>
+                          <span style={{ fontSize: "9px", color: "#888" }}>
+                            {l.heures.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} h
+                            {" × "}{(100 + l.tauxMajoration * 100).toFixed(0)} %
+                            {" × "}{eur(tauxHoraire)}/h
+                          </span>
+                        </td>
+                        <td>{eur(l.montant)}</td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                    ))
+                  : (salarié.heuresSupplementaires ?? 0) > 0 && (
+                      <tr>
+                        <td>Heures supplémentaires</td>
+                        <td>{eur(resultat.heuresSup ?? 0)}</td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                    )
+                }
                 {(salarié.primesSoumises ?? 0) > 0 && (
                   <tr>
                     <td>Primes soumises</td>
                     <td>{eur(salarié.primesSoumises ?? 0)}</td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                )}
+                {(salarié.avantagesEnNature ?? 0) > 0 && (
+                  <tr>
+                    <td>Avantages en nature</td>
+                    <td>{eur(salarié.avantagesEnNature ?? 0)}</td>
                     <td></td>
                     <td></td>
                   </tr>
@@ -284,24 +335,55 @@ export function BulletinPdfTemplate({ input, resultat }: BulletinPdfTemplateProp
             </table>
           </div>
 
-          {/* ── PAS ── */}
-          {resultat.pas !== 0 && (
-            <div className="section">
-              <div className="section-title">Prélèvement à la source</div>
-              <table>
-                <tbody>
+          {/* ── Net et fiscalité ── */}
+          <div className="section">
+            <div className="section-title">Net et fiscalité</div>
+            <table>
+              <tbody>
+                <tr>
+                  <td>Net social</td>
+                  <td style={{ fontWeight: 600 }}>{eur(resultat.netSocial)}</td>
+                  <td></td><td></td>
+                </tr>
+                {(salarié.avantagesEnNature ?? 0) > 0 && (
                   <tr>
-                    <td>Net imposable</td>
-                    <td>{eur(resultat.netImposable)}</td>
-                    <td>Taux PAS</td>
-                    <td>{salarié.tauxPAS != null ? pct(salarié.tauxPAS) : "Neutre"}</td>
-                    <td>PAS déduit</td>
-                    <td>{eur(resultat.pas)}</td>
+                    <td style={{ color: "#dc2626" }}>Avantages en nature</td>
+                    <td style={{ color: "#dc2626" }}>&minus;{eur(salarié.avantagesEnNature ?? 0)}</td>
+                    <td></td><td></td>
                   </tr>
-                </tbody>
-              </table>
-            </div>
-          )}
+                )}
+                {resultat.exonerationHSIR > 0 && (
+                  <tr>
+                    <td style={{ color: "#dc2626" }}>
+                      Exonération HS / IR
+                      <span style={{ fontSize: "9px", color: "#d97706", marginLeft: 4 }}>(art. 81q CGI)</span>
+                    </td>
+                    <td style={{ color: "#dc2626" }}>&minus;{eur(resultat.exonerationHSIR)}</td>
+                    <td></td><td></td>
+                  </tr>
+                )}
+                <tr>
+                  <td style={{ color: "#555" }}>Net imposable</td>
+                  <td style={{ color: "#555" }}>{eur(resultat.netImposable)}</td>
+                  <td></td><td></td>
+                </tr>
+                {resultat.pas > 0 && (
+                  <tr>
+                    <td style={{ color: "#dc2626" }}>
+                      Prélèvement à la source{salarié.tauxPAS != null ? ` (${pct(salarié.tauxPAS)})` : ""}
+                    </td>
+                    <td style={{ color: "#dc2626" }}>&minus;{eur(resultat.pas)}</td>
+                    <td></td><td></td>
+                  </tr>
+                )}
+                <tr style={{ borderTop: "2px solid #111", background: "#f0f4ff" }}>
+                  <td style={{ fontWeight: 700 }}>Net à payer</td>
+                  <td style={{ fontWeight: 700, color: "#1a56d5" }}>{eur(resultat.netAPayer)}</td>
+                  <td></td><td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
           {/* ── Récapitulatif ── */}
           <div className="section">

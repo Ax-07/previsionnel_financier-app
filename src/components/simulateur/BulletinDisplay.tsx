@@ -97,7 +97,9 @@ export function BulletinDisplay({ resultat, input }: BulletinDisplayProps) {
 
   // ── Totaux ────────────────────────────────────────────────────────────────
   const totalSal = resultat.totalCotisationsSalariales;
-  const totalPat = resultat.totalCotisationsPatronales;
+  // totalCotisationsPatronales exclut le RGDU — on retranche la réduction pour
+  // afficher le coût patronal net effectif.
+  const totalPatNet = resultat.totalCotisationsPatronales - resultat.montantRGDU;
 
   return (
     <div className="flex flex-col gap-0 text-sm">
@@ -130,18 +132,29 @@ export function BulletinDisplay({ resultat, input }: BulletinDisplayProps) {
 
         <BrutRow
           label="Salaire de base"
-          detail={`${heuresNormales.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} h × ${formatEur(tauxHoraire)}/h`}
+          detail={`${heuresNormales.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} h × ${formatEur(tauxHoraire)}/h`}
           montant={salaireBase}
         />
 
-        {nbHeuresSup > 0 && (
-          <BrutRow
-            label="Heures supplémentaires"
-            detail={`${nbHeuresSup.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} h × ${(100 + tauxMajoration * 100).toFixed(1)} % × ${formatEur(tauxHoraire)}/h`}
-            montant={montantHS}
-            extra
-          />
-        )}
+        {resultat.heuresSupLignes && resultat.heuresSupLignes.length > 0
+          ? resultat.heuresSupLignes.map((ligne) => (
+              <BrutRow
+                key={ligne.label}
+                label={ligne.label}
+                detail={`${ligne.heures.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} h × ${(100 + ligne.tauxMajoration * 100).toFixed(0)} % × ${formatEur(tauxHoraire)}/h`}
+                montant={ligne.montant}
+                extra
+              />
+            ))
+          : nbHeuresSup > 0 && (
+              <BrutRow
+                label="Heures supplémentaires"
+                detail={`${nbHeuresSup.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} h × ${(100 + tauxMajoration * 100).toFixed(1)} % × ${formatEur(tauxHoraire)}/h`}
+                montant={montantHS}
+                extra
+              />
+            )
+        }
 
         {primes > 0 && (
           <BrutRow label="Primes soumises" montant={primes} extra />
@@ -211,13 +224,18 @@ export function BulletinDisplay({ resultat, input }: BulletinDisplayProps) {
 
       {/* Total des cotisations */}
       <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4 border-t mt-1 px-3 py-2 font-semibold bg-muted/30 text-sm">
-        <span>Total cotisations</span>
+        <span>
+          Total cotisations
+          {resultat.montantRGDU > 0 && (
+            <span className="ml-1 text-[11px] font-normal text-muted-foreground">(net RGDU)</span>
+          )}
+        </span>
         <span className="hidden md:block" />
         <span className="w-20 text-right font-mono text-destructive">
           -{formatEur(totalSal)}
         </span>
         <span className="w-20 text-right font-mono text-muted-foreground">
-          {formatEur(totalPat)}
+          {formatEur(totalPatNet)}
         </span>
       </div>
 
@@ -226,9 +244,30 @@ export function BulletinDisplay({ resultat, input }: BulletinDisplayProps) {
       {/* ── SECTION 4 : Net et fiscalité ── */}
       <div className="flex flex-col gap-0.5 px-3">
         <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
-          <span className="text-muted-foreground">Net avant PAS</span>
-          <span className="w-28 text-right font-mono">{formatEur(resultat.netAvantPAS)}</span>
+          <span className="text-muted-foreground">Net social</span>
+          <span className="w-28 text-right font-mono">{formatEur(resultat.netSocial)}</span>
         </div>
+
+        {avantages > 0 && (
+          <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
+            <span className="text-muted-foreground">Avantages en nature</span>
+            <span className="w-28 text-right font-mono text-destructive">
+              -{formatEur(avantages)}
+            </span>
+          </div>
+        )}
+
+        {resultat.exonerationHSIR > 0 && (
+          <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
+            <span className="text-muted-foreground">
+              Exonération HS / IR
+              <span className="ml-1 text-[10px] text-amber-600 dark:text-amber-400" title="Art. 81 quater CGI — plafond 7 500 €/an">▸ art. 81q CGI</span>
+            </span>
+            <span className="w-28 text-right font-mono text-destructive">
+              -{formatEur(resultat.exonerationHSIR)}
+            </span>
+          </div>
+        )}
 
         <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
           <span className="text-muted-foreground">Net imposable</span>
@@ -265,7 +304,7 @@ export function BulletinDisplay({ resultat, input }: BulletinDisplayProps) {
           <>
             <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
               <span className="text-muted-foreground">Cotisations patronales brutes</span>
-              <span className="w-28 text-right font-mono">{formatEur(totalPat)}</span>
+              <span className="w-28 text-right font-mono">{formatEur(resultat.totalCotisationsPatronales)}</span>
             </div>
             <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
               <span className="text-green-700 dark:text-green-400">Réduction générale (RGDU)</span>
