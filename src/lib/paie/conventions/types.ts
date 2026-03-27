@@ -117,7 +117,7 @@ export interface NiveauClassification {
   code: string;
   /** Libellé du niveau */
   libelle: string;
-  /** Salaire minimum mensuel brut (en euros) = tauxHoraire × 151.67 si horaire */
+  /** Salaire minimum mensuel brut (en euros) = tauxHoraire × 151.66669 si horaire */
   salaireMinimumMensuel: number;
   /** Coefficient ou indice (informatif) */
   coefficient?: number;

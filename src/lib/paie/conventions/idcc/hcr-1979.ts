@@ -1,4 +1,4 @@
-﻿/**
+/**
  * CCN HCR — Convention collective nationale des hôtels, cafés, restaurants
  * IDCC 1979
  *
@@ -38,7 +38,7 @@ const HCR_1979: ConventionRuleSet = {
     ],
 
     // ── Classifications (5 niveaux × 3 échelons — taux horaires conventionnels)
-    // Salaire mensuel = tauxHoraire × 151.67 h (35h/sem × 52/12)
+    // Salaire mensuel = tauxHoraire × 151.66669 h (35h/sem × 52/12)
     // ─────────────────────────────────────────────────────────────────────────
     niveauxClassification: [
         // Niveau I

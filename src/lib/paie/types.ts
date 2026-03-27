@@ -113,6 +113,13 @@ export interface SalarieInput {
    * Incompatible avec `absencesNonRemunerees` simple (ce champ est alors ignoré).
    */
   absenceEvent?: import("@/lib/paie/absence/types").AbsenceEvent;
+
+  /**
+   * Cumul annuel de rémunération heures supplémentaires / complémentaires
+   * avant ce mois (pour calcul exonération IR — art. 81 quater CGI).
+   * Défaut : 0 (début d'année, plafond 7 500 € plein disponible).
+   */
+  cumulHeuresSup?: number;
 }
 
 /** Informations sur l'entreprise pour la simulation */
@@ -195,6 +202,18 @@ export interface LigneCotisation {
   regleCode: string;
 }
 
+/** Détail d'une tranche d'heures supplémentaires pour l'affichage du bulletin */
+export interface HeuresSupLigne {
+  /** Libellé affiché (ex. "HS 25 % (h36–h43)") */
+  label: string;
+  /** Nombre d'heures mensuelles dans cette tranche */
+  heures: number;
+  /** Taux de majoration (ex. 0.25) */
+  tauxMajoration: number;
+  /** Montant € de cette tranche */
+  montant: number;
+}
+
 /** Résumé global d'une simulation */
 export interface SimulationResultat {
   /** Brut soumis à cotisations sociales */
@@ -203,6 +222,18 @@ export interface SimulationResultat {
   brutFiscal: number;
   /** Montant heures supplémentaires effectivement appliqué (après surcharge conventionnelle) */
   heuresSup: number;
+  /** Détail par tranche des heures supplémentaires (pour affichage bulletin) */
+  heuresSupLignes?: HeuresSupLigne[];
+  /**
+   * Exonération fiscale IR des HS ce mois (art. 81 quater CGI).
+   * Déduite du net imposable ; les HS restent dans le brut et les cotisations.
+   */
+  exonerationHSIR: number;
+  /**
+   * Réduction de cotisations salariales sur HS ce mois (art. L241-17 CSS).
+   * Injectée comme ligne négative dans le bulletin ; augmente le net social.
+   */
+  reductionHSCotSal: number;
   /** Assiette CSG/CRDS (brutSoumis × 98,25 %) */
   assietteCsg: number;
   /** PMSS proratisé utilisé */
@@ -222,8 +253,8 @@ export interface SimulationResultat {
   totalCotisationsPatronales: number;
   /** Montant RGDU (réduction employeur) */
   montantRGDU: number;
-  /** Net avant prélèvement à la source */
-  netAvantPAS: number;
+  /** Net social (net avant prélèvement à la source) */
+  netSocial: number;
   /** Net imposable */
   netImposable: number;
   /** Prélèvement à la source */

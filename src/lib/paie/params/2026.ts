@@ -6,6 +6,7 @@
  */
 
 import type { ParamsReglementaires } from "@/lib/paie/types";
+import type { TrancheHeuresSup } from "@/lib/paie/conventions/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Paramètres généraux
@@ -18,9 +19,23 @@ export const PARAMS_2026: ParamsReglementaires = {
   smicAnnuel: 21876.4,
   passAnnuel: 48060,
   passMensuel: 4005,
-  heuresLegalesMensuelles: 151.67,
+  heuresLegalesMensuelles: 151.66669,
   gratifStageHoraire: 4.5,
 };
+
+/**
+ * Tranches légales de majoration des heures supplémentaires (régime général, art. L.3121-36 Code du travail).
+ *
+ * - h36–h43 : majoration 25 %
+ * - h44+    : majoration 50 %
+ *
+ * Les heures sont exprimées en heures hebdomadaires absolues (36 = 1re heure sup).
+ * Ces tranches s'appliquent par défaut en l'absence de convention collective dérogatoire.
+ */
+export const TRANCHES_HS_LEGALES: TrancheHeuresSup[] = [
+  { heureDebut: 36, heureFin: 43, taux: 0.25 },
+  { heureDebut: 44, heureFin: null, taux: 0.50 },
+];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Taux de cotisations Urssaf — régime général secteur privé 2026

@@ -9,7 +9,7 @@
  */
 
 import { ABATTEMENT_CSG, PARAMS_2026 } from "@/lib/paie/params/2026";
-import type { SalarieInput, EntrepriseInput } from "@/lib/paie/types";
+import type { SalarieInput, EntrepriseInput, HeuresSupLigne } from "@/lib/paie/types";
 import type { TrancheHeuresSup } from "@/lib/paie/conventions/types";
 import { roundAssiette } from "@/lib/paie/engine/arrondi";
 
@@ -162,7 +162,53 @@ export function calcHeuresSupMultiTranches(
 }
 
 /**
- * Calcule le brut soumis à cotisations sociales.
+ * Calcule le détail des heures supplémentaires par tranche pour l'affichage du bulletin.
+ *
+ * Retourne une ligne par tranche effectivement travaillée, avec le nombre d'heures mensuelles,
+ * le taux de majoration et le montant €. Le total des montants est cohérent avec
+ * `calcHeuresSupMultiTranches(salarié, tranches)`.
+ *
+ * @param salarié  - Données salarié
+ * @param tranches - Grille de tranches (légales ou conventionnelles), ordonnée par heureDebut croissant
+ */
+export function calcHeuresSupLignesDetail(
+  salarié: SalarieInput,
+  tranches: TrancheHeuresSup[],
+): HeuresSupLigne[] {
+  const { heuresContrat, heuresSupplementaires = 0, brutMensuel } = salarié;
+  if (heuresSupplementaires <= 0 || tranches.length === 0) return [];
+
+  const heuresNormales = Math.min(heuresContrat, PARAMS_2026.heuresLegalesMensuelles);
+  const tauxHoraire = brutMensuel / heuresNormales;
+
+  const SEMAINES_PAR_MOIS = 52 / 12;
+  const hsParSemaine = heuresSupplementaires / SEMAINES_PAR_MOIS;
+  const heuresLegalesHeb = PARAMS_2026.heuresLegalesMensuelles / SEMAINES_PAR_MOIS;
+  const totalHebdo = heuresLegalesHeb + hsParSemaine;
+
+  const lignes: HeuresSupLigne[] = [];
+
+  for (const tranche of tranches) {
+    const fin = tranche.heureFin ?? Infinity;
+    const hsHebDansTranche = Math.max(
+      0,
+      Math.min(totalHebdo, fin) - (tranche.heureDebut - 1),
+    );
+    if (hsHebDansTranche <= 0) continue;
+
+    const heuresMois = hsHebDansTranche * SEMAINES_PAR_MOIS;
+    const montant = heuresMois * tauxHoraire * (1 + tranche.taux);
+
+    const finLabel = tranche.heureFin !== null ? `h${tranche.heureFin}` : "+";
+    const label = `HS ${(tranche.taux * 100).toFixed(0)} % (h${tranche.heureDebut}–${finLabel})`;
+
+    lignes.push({ label, heures: heuresMois, tauxMajoration: tranche.taux, montant });
+  }
+
+  return lignes;
+}
+
+/**
  *
  * brut_soumis = salaire_de_base + primes_soumises + heures_sup + avantages_en_nature - absences
  */

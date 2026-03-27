@@ -43,7 +43,7 @@ function nonCadre(brutMensuel: number, extra?: Partial<SimulationInput["salarié
     salarié: {
       statut: "non_cadre",
       typeContrat: "CDI",
-      heuresContrat: 151.67,
+      heuresContrat: 151.66669,
       brutMensuel,
       ...extra,
     },
@@ -151,7 +151,7 @@ describe("CAS-05 — Cadre à 8 × PASS (32 040 €)", () => {
     salarié: {
       statut: "cadre",
       typeContrat: "CDI",
-      heuresContrat: 151.67,
+      heuresContrat: 151.66669,
       brutMensuel: 32040,
     },
     entreprise: ENTREPRISE_GRANDE,
@@ -190,7 +190,7 @@ describe("CAS-06 — Temps partiel 80 % (121,34 h)", () => {
   const res = simulate(nonCadre(brutTP, { heuresContrat: 121.34 }));
 
   it("PMSS proratisé ≈ 0.8 × 4 005 = 3 204 €", () => {
-    // Le prorata est calculé sur heuresContrat / 151.67
+    // Le prorata est calculé sur heuresContrat / 151.66669
     expect(res.pmssProratise).toBeGreaterThan(3000);
     expect(res.pmssProratise).toBeLessThan(3250);
   });
@@ -237,7 +237,7 @@ describe("CAS-08 — Apprenti 18-20 ans 1re an. (depuis mars 2025)", () => {
     salarié: {
       statut: "non_cadre",
       typeContrat: "apprentissage",
-      heuresContrat: 151.67,
+      heuresContrat: 151.66669,
       brutMensuel: brutApprenti,
       apprentissage: { generation: "depuis_mars_2025", annee: 1, ageApprenti: 19 },
     },
@@ -265,7 +265,7 @@ describe("CAS-09 — Apprenti 21-25 ans 3e an. (avant mars 2025)", () => {
     salarié: {
       statut: "non_cadre",
       typeContrat: "apprentissage",
-      heuresContrat: 151.67,
+      heuresContrat: 151.66669,
       brutMensuel: brutApprenti,
       apprentissage: { generation: "avant_mars_2025", annee: 3, ageApprenti: 23 },
     },
@@ -291,7 +291,7 @@ describe("CAS-10 — Contrat pro < 21 ans", () => {
     salarié: {
       statut: "non_cadre",
       typeContrat: "contrat_pro",
-      heuresContrat: 151.67,
+      heuresContrat: 151.66669,
       brutMensuel: 1823.03,
     },
     entreprise: ENTREPRISE_PETITE,
@@ -316,7 +316,7 @@ describe("CAS-11 — Stage en-dessous du seuil (gratification 500 €)", () => {
     salarié: {
       statut: "non_cadre",
       typeContrat: "stage",
-      heuresContrat: 151.67,
+      heuresContrat: 151.66669,
       brutMensuel: 500,
     },
     entreprise: ENTREPRISE_PETITE,
@@ -342,7 +342,7 @@ describe("CAS-12 — Stage au-dessus du seuil (900 €)", () => {
     salarié: {
       statut: "non_cadre",
       typeContrat: "stage",
-      heuresContrat: 151.67,
+      heuresContrat: 151.66669,
       brutMensuel: 900,
     },
     entreprise: ENTREPRISE_PETITE,
@@ -366,7 +366,7 @@ describe("CAS-13 — Entreprise < 50 : FNAL 0,1 % plafonné PASS", () => {
     salarié: {
       statut: "non_cadre",
       typeContrat: "CDI",
-      heuresContrat: 151.67,
+      heuresContrat: 151.66669,
       brutMensuel: 2500,
     },
     entreprise: { effectif: 10, tauxATMP: 0.021, tauxMobilite: 0 },
@@ -392,7 +392,7 @@ describe("CAS-14 — Entreprise ≥ 50 : FNAL 0,5 % sur totalité", () => {
     salarié: {
       statut: "non_cadre",
       typeContrat: "CDI",
-      heuresContrat: 151.67,
+      heuresContrat: 151.66669,
       brutMensuel: 2500,
     },
     entreprise: { effectif: 60, tauxATMP: 0.021, tauxMobilite: 0 },
@@ -415,12 +415,12 @@ describe("CAS-14 — Entreprise ≥ 50 : FNAL 0,5 % sur totalité", () => {
 
 describe("CAS-15 — Versement mobilité 0 % vs 2,95 %", () => {
   const resNul = simulate({
-    salarié: { statut: "non_cadre", typeContrat: "CDI", heuresContrat: 151.67, brutMensuel: 2500 },
+    salarié: { statut: "non_cadre", typeContrat: "CDI", heuresContrat: 151.66669, brutMensuel: 2500 },
     entreprise: { effectif: 10, tauxATMP: 0.021, tauxMobilite: 0 },
   });
 
   const resActif = simulate({
-    salarié: { statut: "non_cadre", typeContrat: "CDI", heuresContrat: 151.67, brutMensuel: 2500 },
+    salarié: { statut: "non_cadre", typeContrat: "CDI", heuresContrat: 151.66669, brutMensuel: 2500 },
     entreprise: { effectif: 10, tauxATMP: 0.021, tauxMobilite: 0.0295 },
   });
 
@@ -450,12 +450,12 @@ describe("CAS-15 — Versement mobilité 0 % vs 2,95 %", () => {
 
 describe("CAS-16 — AT/MP 0,5 % vs 8 %", () => {
   const resFaible = simulate({
-    salarié: { statut: "non_cadre", typeContrat: "CDI", heuresContrat: 151.67, brutMensuel: 2500 },
+    salarié: { statut: "non_cadre", typeContrat: "CDI", heuresContrat: 151.66669, brutMensuel: 2500 },
     entreprise: { effectif: 10, tauxATMP: 0.005 },
   });
 
   const resEleve = simulate({
-    salarié: { statut: "non_cadre", typeContrat: "CDI", heuresContrat: 151.67, brutMensuel: 2500 },
+    salarié: { statut: "non_cadre", typeContrat: "CDI", heuresContrat: 151.66669, brutMensuel: 2500 },
     entreprise: { effectif: 10, tauxATMP: 0.08 },
   });
 

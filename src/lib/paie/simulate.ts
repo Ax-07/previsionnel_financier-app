@@ -19,7 +19,7 @@ import type { SimulationInput, SimulationResultat } from "@/lib/paie/types";
 import type { LigneCotisation } from "@/lib/paie/types";
 import type { LigneConventionnelle } from "@/lib/paie/overrides/types";
 import type { AssiettesResult } from "@/lib/paie/engine/assiettes";
-import { buildAssiettes, calcAssietteCsg, calcTranchesArrco, calcHeuresSupMultiTranches } from "@/lib/paie/engine/assiettes";
+import { buildAssiettes, calcAssietteCsg, calcTranchesArrco, calcHeuresSupMultiTranches, calcHeuresSupLignesDetail } from "@/lib/paie/engine/assiettes";
 import { calcCotisations } from "@/lib/paie/engine/cotisations";
 import { calcRGDU } from "@/lib/paie/engine/rgdu";
 import { buildTotaux } from "@/lib/paie/engine/fiscal";
@@ -32,7 +32,12 @@ import { RuleOverrideEngine } from "@/lib/paie/overrides/rule-override-engine";
 import { ConventionRuleResolver } from "@/lib/paie/overrides/convention-rule-resolver";
 import { createPipelineContext } from "@/lib/paie/engine/pipeline-context";
 import { LeaveAndBenefitsEngine } from "@/lib/paie/absence/leave-benefits-engine";
-import { PARAMS_2026 } from "@/lib/paie/params/2026";
+import { PARAMS_2026, TRANCHES_HS_LEGALES } from "@/lib/paie/params/2026";
+import {
+  calcExonerationHSIR,
+  calcReductionHSCotSal,
+  buildLigneReductionHSCotSal,
+} from "@/lib/paie/engine/exoneration-hs";
 
 /**
  * Simule un bulletin de paie complet à partir des paramètres d'entrée.
@@ -93,6 +98,17 @@ export function simulate(input: SimulationInput): SimulationResultat {
     ctx.assiettes = assiettes;
   }
 
+  // ── Détail HS par tranche (pour affichage bulletin) ────────────────────────
+  // Utilise les mêmes tranches que le calcul effectif : conventionnelles si présentes,
+  // sinon les tranches légales standard (25 % h36-43, 50 % h44+).
+  const tranchesEffectives =
+    ctx.ruleSetEffectif.majorationsHeuresSup?.length
+      ? ctx.ruleSetEffectif.majorationsHeuresSup
+      : TRANCHES_HS_LEGALES;
+  const heuresSupLignes = salarié.heuresSupplementaires
+    ? calcHeuresSupLignesDetail(salarié, tranchesEffectives)
+    : undefined;
+
   // ── Étape 6 : Cumuls / plafonds ────────────────────────────────────────────
   // Placeholder Lot 3 (cumuls inter-périodes, proratisation PMSS, etc.)
 
@@ -140,7 +156,20 @@ export function simulate(input: SimulationInput): SimulationResultat {
       ctx.lignes = [...ctx.lignes, rgdu];
     }
   }
-
+  // Exonérations HS : réduction cotisations salariales (art. L241-17 CSS)
+  // et exonération IR (art. 81 quater CGI) — calculées après RGDU (indépendant)
+  const remHS = assiettes.heuresSup;
+  const exonerationHSIR =
+    remHS > 0
+      ? calcExonerationHSIR(remHS, salarié.cumulHeuresSup ?? 0)
+      : 0;
+  const reductionHSCotSal =
+    remHS > 0
+      ? calcReductionHSCotSal(remHS, assiettes.brutSoumis, assiettes.pmssProratise)
+      : 0;
+  if (reductionHSCotSal > 0) {
+    ctx.lignes = [...ctx.lignes, buildLigneReductionHSCotSal(reductionHSCotSal, remHS)];
+  }
   // ── Étape 9 : Absences / indemnisations spécialisées ───────────────────────
   // Lot 5 : si un absencement avancé est fourni, le moteur d'absence complète le calcul
   let absenceDetail: import("@/lib/paie/absence/types").ResultatAbsence | undefined;
@@ -155,13 +184,16 @@ export function simulate(input: SimulationInput): SimulationResultat {
   }
 
   // ── Étape 10 : Calcul fiscal ────────────────────────────────────────────────
-  const totaux = buildTotaux(assiettes.brutSoumis, ctx.lignes, salarié);
+  const totaux = buildTotaux(assiettes.brutSoumis, ctx.lignes, salarié, exonerationHSIR);
 
-  // ── Étape 11 : Assemblage du résultat ──────────────────────────────────────
+  // ── Étape 11 : Assemblage du résultat ────────────────────────────────────────
   return {
     brutSoumis: assiettes.brutSoumis,
     brutFiscal: assiettes.brutSoumis,
     heuresSup: assiettes.heuresSup,
+    heuresSupLignes,
+    exonerationHSIR,
+    reductionHSCotSal,
     assietteCsg: assiettes.assietteCsg,
     pmssProratise: assiettes.pmssProratise,
     baseT1: assiettes.baseT1,

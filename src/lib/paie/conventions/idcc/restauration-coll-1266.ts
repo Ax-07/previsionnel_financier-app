@@ -1,4 +1,4 @@
-﻿/**
+/**
  * CCN Restauration collective — Convention collective nationale de la
  * restauration collective
  * IDCC 1266
@@ -33,19 +33,19 @@ const RESTAURATION_COLLECTIVE_1266: ConventionRuleSet = {
   ],
 
   // ── Classifications (9 niveaux) — Avenant n° 65 du 15/04/2024 ──────────
-  // salaireMinimumMensuel = tauxHoraire × 151.67 h (valeur officielle fournie)
+  // salaireMinimumMensuel = tauxHoraire × 151.66669 h (valeur officielle fournie)
   // revenuMinimumAnnuel : exigé après 1 an d'ancienneté continue et révolue
   // ─────────────────────────────────────────────────────────────────────────
   niveauxClassification: [
-    { code: "N1", libelle: "Niveau I",   tauxHoraire: 11.66, salaireMinimumMensuel: 1768.43, revenuMinimumAnnuel: 22989.59 },
-    { code: "N2", libelle: "Niveau II",  tauxHoraire: 11.72, salaireMinimumMensuel: 1777.53, revenuMinimumAnnuel: 23107.89 },
-    { code: "N3", libelle: "Niveau III", tauxHoraire: 11.86, salaireMinimumMensuel: 1798.77, revenuMinimumAnnuel: 23384.01 },
-    { code: "N4", libelle: "Niveau IV",  tauxHoraire: 12.06, salaireMinimumMensuel: 1829.10, revenuMinimumAnnuel: 23778.30 },
-    { code: "N5", libelle: "Niveau V",   tauxHoraire: 12.72, salaireMinimumMensuel: 1929.20, revenuMinimumAnnuel: 25079.60 },
-    { code: "N6", libelle: "Niveau VI",  tauxHoraire: 13.23, salaireMinimumMensuel: 2006.55, revenuMinimumAnnuel: 26085.15 },
-    { code: "N7", libelle: "Niveau VII", tauxHoraire: 14.06, salaireMinimumMensuel: 2132.43, revenuMinimumAnnuel: 27721.59 },
-    { code: "N8", libelle: "Niveau VIII",tauxHoraire: 14.78, salaireMinimumMensuel: 2241.63, revenuMinimumAnnuel: 29141.19 },
-    { code: "N9", libelle: "Niveau IX",  tauxHoraire: 19.07, salaireMinimumMensuel: 2892.28, revenuMinimumAnnuel: 37599.64 },
+    { code: "N1", libelle: "Niveau I",   tauxHoraire: 12.02, salaireMinimumMensuel: 1823.03, revenuMinimumAnnuel: 23443.16 },
+    { code: "N2", libelle: "Niveau II",  tauxHoraire: 12.02, salaireMinimumMensuel: 1823.03, revenuMinimumAnnuel: 23561.46 },
+    { code: "N3", libelle: "Niveau III", tauxHoraire: 12.10, salaireMinimumMensuel: 1835.17, revenuMinimumAnnuel: 23857.21 },
+    { code: "N4", libelle: "Niveau IV",  tauxHoraire: 1230, salaireMinimumMensuel: 1865.50, revenuMinimumAnnuel: 24251.50 },
+    { code: "N5", libelle: "Niveau V",   tauxHoraire: 12.96, salaireMinimumMensuel: 1965.60, revenuMinimumAnnuel: 25552.80 },
+    { code: "N6", libelle: "Niveau VI",  tauxHoraire: 13.46, salaireMinimumMensuel: 2041.43, revenuMinimumAnnuel: 26538.59 },
+    { code: "N7", libelle: "Niveau VII", tauxHoraire: 14.30, salaireMinimumMensuel: 2168.83, revenuMinimumAnnuel: 28194.79 },
+    { code: "N8", libelle: "Niveau VIII",tauxHoraire: 15.02, salaireMinimumMensuel: 2278.03, revenuMinimumAnnuel: 29614.79 },
+    { code: "N9", libelle: "Niveau IX",  tauxHoraire: 19.31, salaireMinimumMensuel: 2928.68, revenuMinimumAnnuel: 38072.84 },
   ],
 
   // ── Prévoyance Klésia ───────────────────────────────────────────────

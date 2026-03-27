@@ -8,6 +8,7 @@
  */
 
 import type { SimulationInput, SimulationResultat, LigneCotisation } from "@/lib/paie/types";
+import { CONVENTION_CATALOG } from "@/lib/paie/conventions/catalog";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -46,8 +47,8 @@ const FAMILLE_LABELS: Record<string, string> = {
   retraite_complementaire: "Retraite complémentaire (Agirc-Arrco)",
   ceg: "Contribution équilibre général (CEG)",
   cet: "Contribution temporaire (CET)",
-  apec: "APEC",
-  exoneration: "Exonérations",
+  apec: "APEC",  prevoyance_prevoyance: "Prévoyance (Convention collective)",
+  prevoyance_mutuelle: "Mutuelle (Convention collective)",  exoneration: "Exonérations",
   rgdu: "Réduction générale (RGDU)",
 };
 
@@ -163,31 +164,61 @@ export function buildBulletinHtml(
       <td>${eur(resultat.totalCotisationsPatronales)}</td>
     </tr>`;
 
-  // ── Section PAS (optionnelle) ────────────────────────────────────────────
-  const pasSection =
-    resultat.pas !== 0
-      ? `<div class="section">
-          <div class="section-title">Prélèvement à la source</div>
-          <table><tbody>
-            <tr>
-              <td>Net imposable</td><td>${eur(resultat.netImposable)}</td>
-              <td>Taux PAS</td><td>${salarié.tauxPAS != null ? pct(salarié.tauxPAS) : "Neutre"}</td>
-              <td>PAS déduit</td><td>${eur(resultat.pas)}</td>
-            </tr>
-          </tbody></table>
-        </div>`
-      : "";
+  // ── Section Net et fiscalité ─────────────────────────────────────────────
+  const avantagesEnNatureVal = salarié.avantagesEnNature ?? 0;
+  const avantagesDeductRow = avantagesEnNatureVal > 0
+    ? `<tr><td style="color:#dc2626">Avantages en nature</td><td style="color:#dc2626">&minus;${eur(avantagesEnNatureVal)}</td><td></td><td></td></tr>`
+    : "";
+  const exoHSIRRow = resultat.exonerationHSIR > 0
+    ? `<tr><td style="color:#dc2626">Exonération HS / IR <span style="font-size:9px;color:#d97706">(art. 81q CGI)</span></td><td style="color:#dc2626">&minus;${eur(resultat.exonerationHSIR)}</td><td></td><td></td></tr>`
+    : "";
+  const pasRow = resultat.pas > 0
+    ? `<tr><td style="color:#dc2626">Prélèvement à la source${salarié.tauxPAS != null ? ` (${pct(salarié.tauxPAS)})` : ""}</td><td style="color:#dc2626">&minus;${eur(resultat.pas)}</td><td></td><td></td></tr>`
+    : "";
+  const netSection = `<div class="section">
+    <div class="section-title">Net et fiscalité</div>
+    <table><tbody>
+      <tr><td>Net social</td><td style="font-weight:600">${eur(resultat.netSocial)}</td><td></td><td></td></tr>
+      ${avantagesDeductRow}
+      ${exoHSIRRow}
+      <tr><td style="color:#555">Net imposable</td><td style="color:#555">${eur(resultat.netImposable)}</td><td></td><td></td></tr>
+      ${pasRow}
+      <tr style="border-top:2px solid #111;background:#f0f4ff"><td style="font-weight:700">Net à payer</td><td style="font-weight:700;color:#1a56d5">${eur(resultat.netAPayer)}</td><td></td><td></td></tr>
+    </tbody></table>
+  </div>`;
 
   // ── Lignes rémunération optionnelles ────────────────────────────────────
-  const hsSup =
-    (salarié.heuresSupplementaires ?? 0) > 0
-      ? `<tr><td>Heures supplémentaires</td><td>${salarié.heuresSupplementaires} h</td><td></td><td></td></tr>`
-      : "";
+  const hsSupVal = salarié.heuresSupplementaires ?? 0;
+  const heuresNormales = Math.min(salarié.heuresContrat, 151.66669);
+  const tauxHoraire = salarié.brutMensuel > 0 ? salarié.brutMensuel / heuresNormales : 0;
+  let hsSup = "";
+  if (hsSupVal > 0) {
+    if (resultat.heuresSupLignes && resultat.heuresSupLignes.length > 0) {
+      hsSup = resultat.heuresSupLignes
+        .map(l => `<tr><td>${escHtml(l.label)}<br/><span style="font-size:9px;color:#888">${l.heures.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})} h &times; ${(100 + l.tauxMajoration * 100).toFixed(0)} % &times; ${eur(tauxHoraire)}/h</span></td><td>${eur(l.montant)}</td><td></td><td></td></tr>`)
+        .join("");
+    } else {
+      hsSup = `<tr><td>Heures supplémentaires</td><td>${eur(resultat.heuresSup ?? 0)}</td><td></td><td></td></tr>`;
+    }
+  }
   const primes =
     (salarié.primesSoumises ?? 0) > 0
       ? `<tr><td>Primes soumises</td><td>${eur(salarié.primesSoumises ?? 0)}</td><td></td><td></td></tr>`
       : "";
-
+  const avantages =
+    (salarié.avantagesEnNature ?? 0) > 0
+      ? `<tr><td>Avantages en nature</td><td>${eur(salarié.avantagesEnNature ?? 0)}</td><td></td><td></td></tr>`
+      : "";
+  // ── Convention collective ───────────────────────────────────────────
+  const convMeta = salarié.conventionCode ? CONVENTION_CATALOG.get(salarié.conventionCode) : undefined;
+  const convRow = convMeta
+    ? `<tr><td>Convention collective</td><td colspan="3">IDCC ${escHtml(salarié.conventionCode ?? "")} — ${escHtml(convMeta.label)}${
+        convMeta.statut === "partial" ? " <span style='color:#d97706'>(impl. partielle)</span>" : ""
+      }</td></tr>`
+    : "";
+  const convHeader = convMeta
+    ? ` — <strong>CCN IDCC ${escHtml(salarié.conventionCode ?? "")} — ${escHtml(convMeta.label)}</strong>`
+    : "";
   // ── Prorata ──────────────────────────────────────────────────────────────
   const prorataLine =
     resultat.facteurProrata < 1
@@ -215,7 +246,7 @@ export function buildBulletinHtml(
     <div>
       <div class="header-title">Bulletin de paie simulé</div>
       <div class="header-meta" style="text-align:left;margin-top:4px">
-        Millésime ${millesime} — Régime général${salarié.alsaceMoselle ? " + Alsace-Moselle" : ""}
+        Millésime ${millesime} — Régime général${salarié.alsaceMoselle ? " + Alsace-Moselle" : ""}${convHeader}
       </div>
     </div>
     <div class="header-meta">
@@ -240,6 +271,7 @@ export function buildBulletinHtml(
         <td>Taux AT/MP</td><td>${(entreprise.tauxATMP * 100).toFixed(3)} %</td>
         ${mobilite}
       </tr>
+      ${convRow}
     </tbody></table>
   </div>
 
@@ -252,6 +284,7 @@ export function buildBulletinHtml(
       </tr>
       ${hsSup}
       ${primes}
+      ${avantages}
     </tbody></table>
   </div>
 
@@ -273,7 +306,7 @@ export function buildBulletinHtml(
     </table>
   </div>
 
-  ${pasSection}
+  ${netSection}
 
   <div class="section">
     <div class="section-title">Récapitulatif</div>

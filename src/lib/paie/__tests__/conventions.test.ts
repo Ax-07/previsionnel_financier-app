@@ -322,7 +322,7 @@ describe("CAS-C11 — HCR IDCC 1979 : majorations heures sup dérogatoires", () 
     expect(rs.majorationsHeuresSup?.[2]).toMatchObject({ heureDebut: 44, heureFin: null, taux: 0.50 });
   });
 
-  // Salarié temps plein 151.67 h — brut 2000 € — taux horaire ≈ 13.188 €/h
+  // Salarié temps plein 151.66669 h — brut 2000 € — taux horaire ≈ 13.188 €/h
   // 52/12 ≈ 4.3333 sem/mois
 
   it("tranche 10 % : 4 HS hebdo (17.33 h/mois) → montant ≈ 252 €", () => {
@@ -330,7 +330,7 @@ describe("CAS-C11 — HCR IDCC 1979 : majorations heures sup dérogatoires", () 
     const salarié = {
       statut: "non_cadre" as const,
       typeContrat: "CDI" as const,
-      heuresContrat: 151.67,
+      heuresContrat: 151.66669,
       brutMensuel: 2000,
       heuresSupplementaires: 4 * (52 / 12), // ≈ 17.33 h/mois = 4 h/sem
     };
@@ -340,7 +340,7 @@ describe("CAS-C11 — HCR IDCC 1979 : majorations heures sup dérogatoires", () 
       { heureDebut: 44, heureFin: null, taux: 0.50 },
     ];
     const result = calcHeuresSupMultiTranches(salarié, tranches);
-    // Valeur attendue : 17.33 × (2000/151.67) × 1.10 ≈ 251.5 €
+    // Valeur attendue : 17.33 × (2000/151.66669) × 1.10 ≈ 251.5 €
     expect(result).toBeGreaterThan(248);
     expect(result).toBeLessThan(255);
   });
@@ -351,7 +351,7 @@ describe("CAS-C11 — HCR IDCC 1979 : majorations heures sup dérogatoires", () 
     const salarié = {
       statut: "non_cadre" as const,
       typeContrat: "CDI" as const,
-      heuresContrat: 151.67,
+      heuresContrat: 151.66669,
       brutMensuel: 2000,
       heuresSupplementaires: hsMois,
     };
@@ -362,7 +362,7 @@ describe("CAS-C11 — HCR IDCC 1979 : majorations heures sup dérogatoires", () 
     ];
     const conventionResult = calcHeuresSupMultiTranches(salarié, tranches);
     // Taux légal : 25 % sur toutes les HS
-    const tauxHoraire = 2000 / 151.67;
+    const tauxHoraire = 2000 / 151.66669;
     const legalResult = hsMois * tauxHoraire * 1.25;
     // HCR (10+20 %) < légal (25+25 %) pour ces heures
     expect(conventionResult).toBeLessThan(legalResult);
@@ -374,7 +374,7 @@ describe("CAS-C11 — HCR IDCC 1979 : majorations heures sup dérogatoires", () 
     const salarié = {
       statut: "non_cadre" as const,
       typeContrat: "CDI" as const,
-      heuresContrat: 151.67,
+      heuresContrat: 151.66669,
       brutMensuel: 2000,
       heuresSupplementaires: hsMois,
     };
@@ -384,7 +384,7 @@ describe("CAS-C11 — HCR IDCC 1979 : majorations heures sup dérogatoires", () 
       { heureDebut: 44, heureFin: null, taux: 0.50 },
     ];
     const result = calcHeuresSupMultiTranches(salarié, tranches);
-    const tauxHoraire = 2000 / 151.67;
+    const tauxHoraire = 2000 / 151.66669;
     const semsParMois = 52 / 12;
     const expected =
       4 * semsParMois * tauxHoraire * 1.10 +
@@ -401,7 +401,7 @@ describe("CAS-C11 — HCR IDCC 1979 : majorations heures sup dérogatoires", () 
       salarié: {
         statut: "non_cadre",
         typeContrat: "CDI",
-        heuresContrat: 151.67,
+        heuresContrat: 151.66669,
         brutMensuel: 2000,
         heuresSupplementaires: hs,
         tauxPAS: 0.075,
@@ -414,7 +414,7 @@ describe("CAS-C11 — HCR IDCC 1979 : majorations heures sup dérogatoires", () 
       salarié: {
         statut: "non_cadre",
         typeContrat: "CDI",
-        heuresContrat: 151.67,
+        heuresContrat: 151.66669,
         brutMensuel: 2000,
         heuresSupplementaires: hs,
         tauxMajorationHeuresSup: 0.25,

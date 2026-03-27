@@ -75,7 +75,7 @@ export interface PipelineContext {
   lignes: LigneCotisation[];
 
   // ── Étape 10 : fiscal ──────────────────────────────────────────────────────
-  netAvantPAS: number;
+  netSocial: number;
   netImposable: number;
   pas: number;
   netAPayer: number;
@@ -101,7 +101,7 @@ export function createPipelineContext(input: SimulationInput): PipelineContext {
     ruleSetEffectif: {},
     assiettes: null,
     lignes: [],
-    netAvantPAS: 0,
+    netSocial: 0,
     netImposable: 0,
     pas: 0,
     netAPayer: 0,

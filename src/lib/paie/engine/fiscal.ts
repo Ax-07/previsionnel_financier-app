@@ -9,15 +9,15 @@ function round2(v: number): number {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Net avant PAS
+// Net social
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Net avant prélèvement à la source.
+ * Net social (net avant prélèvement à la source).
  *
- * net_avant_PAS = brut_soumis - total_cotisations_salariales
+ * net_social = brut_soumis - total_cotisations_salariales
  */
-export function calcNetAvantPAS(
+export function calcNetSocial(
   brutSoumis: number,
   lignes: LigneCotisation[],
 ): number {
@@ -36,10 +36,12 @@ export function calcNetAvantPAS(
  *               - cotisations_salariales_déductibles
  *               + CSG_non_déductible
  *               + CRDS (non déductible)
+ *               - exonération_HS_IR      (art. 81 quater CGI)
  */
 export function calcNetImposable(
   brutSoumis: number,
   lignes: LigneCotisation[],
+  exonerationHSIR = 0,
 ): number {
   let deductible = 0;
   let nonDeductibleSal = 0;
@@ -53,7 +55,7 @@ export function calcNetImposable(
     }
   }
 
-  return round2(brutSoumis - deductible + nonDeductibleSal);
+  return round2(brutSoumis - deductible + nonDeductibleSal - exonerationHSIR);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -77,8 +79,20 @@ export function calcPAS(
 // Net à payer
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function calcNetAPayer(netAvantPAS: number, pas: number): number {
-  return round2(netAvantPAS - pas);
+/**
+ * Net à payer en espèces.
+ *
+ * Les avantages en nature sont inclus dans le brut soumis (donc dans le net social)
+ * mais ne sont pas versés en cash — ils doivent être déduits.
+ *
+ * net_à_payer = net_social - avantages_en_nature - PAS
+ */
+export function calcNetAPayer(
+  netSocial: number,
+  avantagesEnNature: number,
+  pas: number,
+): number {
+  return round2(netSocial - avantagesEnNature - pas);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -107,7 +121,7 @@ export interface TotauxFiscaux {
   totalCotisationsSalariales: number;
   totalCotisationsPatronales: number;
   montantRGDU: number;
-  netAvantPAS: number;
+  netSocial: number;
   netImposable: number;
   pas: number;
   netAPayer: number;
@@ -119,6 +133,7 @@ export function buildTotaux(
   brutSoumis: number,
   lignes: LigneCotisation[],
   salarié: SalarieInput,
+  exonerationHSIR = 0,
 ): TotauxFiscaux {
   const totalCotisationsSalariales = round2(
     lignes.reduce((s, l) => s + l.montantSalarie, 0),
@@ -131,10 +146,11 @@ export function buildTotaux(
     cotisationsHorsRgdu.reduce((s, l) => s + l.montantEmployeur, 0),
   );
 
-  const netAvantPAS_ = calcNetAvantPAS(brutSoumis, lignes);
-  const netImposable_ = calcNetImposable(brutSoumis, lignes);
+  const netSocial_ = calcNetSocial(brutSoumis, lignes);
+  const netImposable_ = calcNetImposable(brutSoumis, lignes, exonerationHSIR);
   const pas_ = calcPAS(netImposable_, salarié);
-  const netAPayer_ = calcNetAPayer(netAvantPAS_, pas_);
+  const avantagesEnNature_ = salarié.avantagesEnNature ?? 0;
+  const netAPayer_ = calcNetAPayer(netSocial_, avantagesEnNature_, pas_);
   const coutEmployeur_ = calcCoutEmployeur(brutSoumis, lignes);
 
   const tauxCotisationsPatronalesEffectif =
@@ -146,7 +162,7 @@ export function buildTotaux(
     totalCotisationsSalariales,
     totalCotisationsPatronales,
     montantRGDU,
-    netAvantPAS: netAvantPAS_,
+    netSocial: netSocial_,
     netImposable: netImposable_,
     pas: pas_,
     netAPayer: netAPayer_,
