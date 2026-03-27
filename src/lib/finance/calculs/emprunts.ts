@@ -68,8 +68,8 @@ export function calcFraisDossier(
   const acc: YAcc = { y1: 0, y2: 0, y3: 0 };
   for (const emprunt of data.emprunts) {
     for (const ligne of emprunt.lignesEcheancier) {
-      // moisNumero === 0 identifie la ligne de frais de dossier (unique dans l'échéancier)
-      if (ligne.moisNumero !== 0) continue;
+      // moisNumero === -1 identifie la ligne de frais de dossier (convention echeancier.ts)
+      if (ligne.moisNumero !== -1) continue;
       const dateStr =
         ligne.dateEcheance instanceof Date
           ? ligne.dateEcheance.toISOString()

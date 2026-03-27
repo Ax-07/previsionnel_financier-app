@@ -15,11 +15,17 @@ import type { TresorerieValue, TresorerieRow, TresorerieRowStyle, Yk3 } from "@/
 
 // ── Helpers de présentation ────────────────────────────────────────────────────
 
-export function tresoValue(months: MonthlySeries, endValue?: boolean): TresorerieValue {
-  return {
-    months,
-    total: endValue ? (months[11] ?? 0) : months.reduce((a, b) => a + b, 0),
-  };
+export function tresoValue(
+  months: MonthlySeries,
+  endValue?: boolean,
+  firstValue?: boolean,
+): TresorerieValue {
+  const total = firstValue
+    ? (months[0] ?? 0)
+    : endValue
+      ? (months[11] ?? 0)
+      : months.reduce((a, b) => a + b, 0);
+  return { months, total };
 }
 
 export function mkRow(
@@ -30,10 +36,14 @@ export function mkRow(
   options?: {
     hideIfZero?: boolean;
     totalIsEndValue?: boolean;
+    /** Pour les soldes d'ouverture : le total annuel = valeur du mois 0 (début d'exercice). */
+    totalIsFirstValue?: boolean;
     children?: TresorerieRow[];
     defaultCollapsed?: boolean;
   },
 ): TresorerieRow {
+  const endV = options?.totalIsEndValue;
+  const firstV = options?.totalIsFirstValue;
   return {
     key,
     label,
@@ -43,9 +53,9 @@ export function mkRow(
     children: options?.children,
     defaultCollapsed: options?.defaultCollapsed,
     values: {
-      y1: tresoValue(vals.y1, options?.totalIsEndValue),
-      y2: tresoValue(vals.y2, options?.totalIsEndValue),
-      y3: tresoValue(vals.y3, options?.totalIsEndValue),
+      y1: tresoValue(vals.y1, endV, firstV),
+      y2: tresoValue(vals.y2, endV, firstV),
+      y3: tresoValue(vals.y3, endV, firstV),
     },
   };
 }
@@ -192,7 +202,7 @@ export function buildTresorerieRows(input: TresorerieRowsInput): TresorerieRow[]
 
     // ──── SOLDE ─────────────────────────────────────────────────────────────
     sectionRow("tres-section", "SOLDE DE TRÉSORERIE"),
-    mkRow("tres-solde-prec", "Solde précédent", "result", soldePrecedent),
+    mkRow("tres-solde-prec", "Solde précédent", "result", soldePrecedent, { totalIsFirstValue: true }),
     mkRow("tres-variation", "Variation de trésorerie", "result", variation),
     mkRow("tres-solde-final", "Solde de trésorerie", "highlight", soldeFinal, { totalIsEndValue: true }),
     mkRow("tres-encours", "Encours fournisseurs", "normal", encoursFournisseurs, { totalIsEndValue: true }),

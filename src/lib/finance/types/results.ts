@@ -2,7 +2,7 @@
  * Type du résultat global du moteur de calcul financier.
  * Source unique de vérité — importé par pipeline/build.ts, calculs/index.ts et tous les consommateurs.
  */
-import type { YearAcc } from "./series";
+import type { YearAcc, MonthlyAcc } from "./series";
 
 export interface FinCalcResult {
   // ── Labels ────────────────────────────────────────────────────────────────
@@ -21,10 +21,17 @@ export interface FinCalcResult {
   // ── CA & stocks ───────────────────────────────────────────────────────────
   ca: YearAcc;
   achatsEffectues: YearAcc;
+  /** Niveau de stock fin d'exercice (= dernier mois de la série cumulative RCA). */
   stockInitial: YearAcc;
   stockFinal: YearAcc;
   varStock: YearAcc;
   achatsConsommes: YearAcc;
+  /**
+   * Séries mensuelles des stocks finaux par exercice.
+   * À utiliser pour les calculs de BFR/dettes qui nécessitent la variation du dernier mois.
+   */
+  stockFinalSeries: MonthlyAcc;
+  stockInitialSeries: MonthlyAcc;
 
   // ── Charges & SIG ─────────────────────────────────────────────────────────
   chargesExternes: YearAcc;

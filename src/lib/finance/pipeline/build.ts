@@ -20,6 +20,7 @@ import { calcAjustementNet, calcISParAnnee } from "@/lib/finance/calculs/is";
 import {
   buildMonthlyCalc,
   monthlyToYearAcc,
+  lastMonthToYearAcc,
   type MonthlyCalcResult,
 } from "@/lib/finance/calculs/monthly";
 
@@ -68,10 +69,19 @@ export function buildFinCalc(
 
   const ca = sum(mc.ca);
   const achatsEffectues = sum(mc.achatsEffectues);
-  const stockInitial = sum(mc.stockInitial);
-  const stockFinal = sum(mc.stockFinal);
-  const varStock = sum(mc.varStock);
+  // Stocks : niveaux de fin d'exercice → dernier mois (index 11), pas la somme
+  const stockInitial = lastMonthToYearAcc(mc.stockInitial);
+  const stockFinal = lastMonthToYearAcc(mc.stockFinal);
+  const stockFinalSeries = mc.stockFinal;
+  const stockInitialSeries = mc.stockInitial;
   const achatsConsommes = sum(mc.achatsConsommes);
+  // Variation de stocks annuelle (pour CR/SIG) = achatsEffectués − achatsConsommés
+  // ≠ lastMonthToYearAcc(mc.varStock) qui ne donne que le delta du dernier mois (≈ 0 en régime permanent)
+  const varStock: YearAcc = {
+    y1: achatsEffectues.y1 - achatsConsommes.y1,
+    y2: achatsEffectues.y2 - achatsConsommes.y2,
+    y3: achatsEffectues.y3 - achatsConsommes.y3,
+  };
   const fournitures = sum(mc.fournitures);
   const services = sum(mc.services);
   const chargesExternes = sum(mc.chargesExternes);
@@ -160,6 +170,8 @@ export function buildFinCalc(
     stockInitial,
     stockFinal,
     varStock,
+    stockFinalSeries,
+    stockInitialSeries,
     achatsConsommes,
     chargesExternes,
     fournitures,

@@ -20,6 +20,7 @@ import {
   seasonalMonthly,
   ponctuelMonthly,
   chargeExplMonthly,
+  computeStocksAchatsSeries,
 } from "@/lib/finance/calculs/monthly";
 import {
   salarieMonthlyBrut,
@@ -275,35 +276,36 @@ export function calcDecaissements(
       const coef = Math.max(0, 1 - n(act.tauxMarge) / 100);
       const coefTVA = isFranchise ? 1 : 1 + n(act.tvaAchats ?? 20) / 100;
       const delaiMois = n(act.reglementFournisseurs ?? defaultDelaiFourn) / 30;
-      // Achats consommés récurrents (base saisonnalisée)
+      // Achats consommés récurrents (base saisonnalisée, HT)
       const base1 = seasonalMonthly(n(act.montantN) * coef, act.saisonnaliteAchats, "N");
       const base2 = seasonalMonthly(n(act.montantN1) * coef, act.saisonnaliteAchats, "N1");
       const base3 = seasonalMonthly(n(act.montantN2) * coef, act.saisonnaliteAchats, "N2");
-      // Variation de stock TTC : ΔStock = SF_y − SF_{y-1} ; SF = montantN × coef × joursStock / 360
-      // Cohérent avec monthly.ts (varStockAcc) et bfr.ts (stocksMatieres).
-      // Répartition uniforme sur l'année (idem monthly.ts ligne achatsEffectués).
+
+      // ── Formule RCA cumulative (identique à monthly.ts et bfr.ts) ──────────
+      // achatsEff[j] = conso[j] + sf[j] − si[j]
+      // La cohérence avec bfr.ts est garantie : même fonction, mêmes paramètres.
+      // → les dettes fournisseurs BFR (achatsEff[11] × coefTTC × délai) correspondent
+      //   exactement aux encours implicites du tableau de trésorerie.
       const joursStock = n(act.stocks ?? 0);
-      const sfY1 = (n(act.montantN) * coef * joursStock) / 360;
-      const sfY2 = (n(act.montantN1) * coef * joursStock) / 360;
-      const sfY3 = (n(act.montantN2) * coef * joursStock) / 360;
-      const varY1 = sfY1;           // SI = 0 au démarrage
-      const varY2 = sfY2 - sfY1;
-      const varY3 = sfY3 - sfY2;
-      // Achats effectués TTC = (consommés + ΔStock/12) × coefTVA, mois par mois
-      const r1 = base1.map((v: number) => (v + varY1 / 12) * coefTVA) as MonthlySeries;
-      const r2 = base2.map((v: number) => (v + varY2 / 12) * coefTVA) as MonthlySeries;
-      const r3 = base3.map((v: number) => (v + varY3 / 12) * coefTVA) as MonthlySeries;
-      // Achats de stock ponctuels : délai fournisseur = 0 (paiement immédiat)
-      // Règle : ponctuelN[0] (mois de démarrage) est traité comme BFR initial (y0) —
-      // il ne doit PAS apparaître dans le flux de trésorerie Y1.
-      // Les mois 1..11 de N et tous les mois de N1/N2 restent dans le flux normal.
-      const p1Raw = ponctuelMonthly(act.achatsStockPonctuel, "N");
-      const p1NoBFR = [...p1Raw] as MonthlySeries;
-      p1NoBFR[0] = 0; // M1 de N → BFR initial, exclu du flux Y1
-      const p1 = p1NoBFR.map((v) => v * coefTVA) as MonthlySeries;
-      const p2 = ponctuelMonthly(act.achatsStockPonctuel, "N1").map((v: number) => v * coefTVA) as MonthlySeries;
-      const p3 = ponctuelMonthly(act.achatsStockPonctuel, "N2").map((v: number) => v * coefTVA) as MonthlySeries;
-      // Achats récurrents : application du délai fournisseur
+      const ponctuelY1 = ponctuelMonthly(act.achatsStockPonctuel, "N");
+      const ponctuelY2 = ponctuelMonthly(act.achatsStockPonctuel, "N1");
+      const ponctuelY3 = ponctuelMonthly(act.achatsStockPonctuel, "N2");
+      const rY1 = computeStocksAchatsSeries(base1, ponctuelY1, joursStock, 0);
+      const rY2 = computeStocksAchatsSeries(base2, ponctuelY2, joursStock, rY1.sfFinal);
+      const rY3 = computeStocksAchatsSeries(base3, ponctuelY3, joursStock, rY2.sfFinal);
+
+      // Conversion HT → TTC.
+      // Note : ponctuelY1[0] est le stock initial pré-financé (BFR initial).
+      // Dans la formule RCA (si=0, ponc[0]=stockInit), son effet est distribué
+      // sur les achatsEff de l'exercice via la courbe cumulative — la somme
+      // annuelle reste identique à l'ancienne formule (consoHT + sfFinal) × coefTTC.
+      // Cela garantit que l'overflow implicite de décembre = dettes fournisseurs
+      // bfr.ts (achatsEff[11] × coefTTC × délai), éliminant l'écart tréso/bilan.
+      const r1 = rY1.achatsEffSeries.map((v) => v * coefTVA) as MonthlySeries;
+      const r2 = rY2.achatsEffSeries.map((v) => v * coefTVA) as MonthlySeries;
+      const r3 = rY3.achatsEffSeries.map((v) => v * coefTVA) as MonthlySeries;
+
+      // Application du délai fournisseur
       let s1: MonthlySeries, s2: MonthlySeries, s3: MonthlySeries;
       if (delaiMois <= 0) {
         s1 = r1; s2 = r2; s3 = r3;
@@ -313,7 +315,7 @@ export function calcDecaissements(
         const { shifted: _s3 } = shiftSeriesWeighted(r3, delaiMois, ov2);
         s1 = _s1; s2 = _s2; s3 = _s3;
       }
-      return { act, yk3: { y1: sumSeries(s1, p1), y2: sumSeries(s2, p2), y3: sumSeries(s3, p3) } as Yk3 };
+      return { act, yk3: { y1: s1, y2: s2, y3: s3 } as Yk3 };
     });
 
   const decAchats: Yk3 = {
@@ -384,7 +386,7 @@ export function calcDecaissements(
   let cotPatSeriesY2 = zeroSeries();
   let cotPatSeriesY3 = zeroSeries();
 
-  for (const sal of salaries) {
+  for (const sal of salaries.filter((s) => s.actif !== false)) {
     const tCotSal = n(sal.tauxCotSal ?? 22) / 100;
     const tCotPat = n(sal.tauxCotPat) / 100;
     const b1 = salarieMonthlyBrut(n(sal.montantN), sal.detailMensuelN, moisDebut);
@@ -415,7 +417,7 @@ export function calcDecaissements(
   let remuDirigeantY1 = zeroSeries();
   let remuDirigeantY2 = zeroSeries();
   let remuDirigeantY3 = zeroSeries();
-  for (const d of dirigeants) {
+  for (const d of dirigeants.filter((d) => d.actif !== false)) {
     remuDirigeantY1 = sumSeries(remuDirigeantY1, salarieMonthlyBrut(n(d.montantN), d.detailMensuelN, moisDebut));
     remuDirigeantY2 = sumSeries(remuDirigeantY2, salarieMonthlyBrut(n(d.montantN1), d.detailMensuelN1, moisDebut));
     remuDirigeantY3 = sumSeries(remuDirigeantY3, salarieMonthlyBrut(n(d.montantN2), d.detailMensuelN2, moisDebut));
@@ -496,7 +498,7 @@ export function calcDecaissements(
   const decTaxesSalairesY1 = zeroSeries();
   const decTaxesSalairesY2 = zeroSeries();
   const decTaxesSalairesY3 = zeroSeries();
-  for (const taxe of taxesSalaires) {
+  for (const taxe of taxesSalaires.filter((t) => t.actif !== false)) {
     const amt1 = n(taxe.montantN);
     const amt2 = n(taxe.montantN1);
     const amt3 = n(taxe.montantN2);
@@ -646,9 +648,14 @@ export function calcDecaissements(
     const { tvaAPayerMonthly: t1, finalCredit: c1 } = computeTVAMonthly(tvaCollY1, sumAll(tvaAchatsY1, tvaChargesY1, tvaImmoY1), periodicite, tvaImmoY0);
     const { tvaAPayerMonthly: t2, finalCredit: c2 } = computeTVAMonthly(tvaCollY2, sumAll(tvaAchatsY2, tvaChargesY2, tvaImmoY2), periodicite, c1);
     const { tvaAPayerMonthly: t3 } = computeTVAMonthly(tvaCollY3, sumAll(tvaAchatsY3, tvaChargesY3, tvaImmoY3), periodicite, c2);
-    decTVA.y1 = t1;
-    decTVA.y2 = t2;
-    decTVA.y3 = t3;
+    // En France, la TVA du mois M est déclarée et payée le 19 du mois M+1.
+    // La TVA de décembre (M12) est donc payée en janvier de l'exercice suivant.
+    // Ce décalage de 1 mois est cohérent avec tvaAPayer dans le BFR (§12.2),
+    // qui modélise la TVA de M12 comme une dette non encore soldée au 31/12.
+    const { y1: s1, y2: s2, y3: s3 } = shiftYk3({ y1: t1, y2: t2, y3: t3 }, 1);
+    decTVA.y1 = s1;
+    decTVA.y2 = s2;
+    decTVA.y3 = s3;
   }
 
   // ── IS ─────────────────────────────────────────────────────────────────────

@@ -39,8 +39,9 @@ export function buildSigRows(data: ScenarioFinData, fc: FinCalcResult) {
   const prestationsRows = caRows.filter((r) => r.typeActivite === "PRESTATION_SERVICES");
   const ventesMarchandisesRows = caRows.filter((r) => r.typeActivite === "VENTE_MARCHANDISES");
 
-  // achatsRows = achats effectués par activité = consommés + varStock + ponctuels
-  // Cohérent avec fc.achatsEffectues (agrégat parent dans le SIG).
+  // achatsRows = achats effectués par activité = consommés + varStock annuelle
+  // Formule : cN + (sfY1 - 0) pour Y1 ; cN1 + (sfY2 - sfY1) pour Y2, etc.
+  // Les ponctuels NE sont PAS ajoutés : absorbés par la dynamique stock.
   const achatsRows = caRows
     .filter((r) => r.typeActivite !== "PRESTATION_SERVICES")
     .map((r) => {
@@ -52,13 +53,11 @@ export function buildSigRows(data: ScenarioFinData, fc: FinCalcResult) {
       const sfY1 = (cN  * jours) / 360;
       const sfY2 = (cN1 * jours) / 360;
       const sfY3 = (cN2 * jours) / 360;
-      const ponc = r.achatsStockPonctuel as Record<string, number[]> | null | undefined;
-      const sumArr = (arr: number[] | undefined) => (arr ?? []).reduce((s: number, v: number) => s + v, 0);
       return {
         libelle: `Achats – ${r.libelle}`,
-        montantN:  cN  + sfY1          + sumArr(ponc?.N),
-        montantN1: cN1 + (sfY2 - sfY1) + sumArr(ponc?.N1),
-        montantN2: cN2 + (sfY3 - sfY2) + sumArr(ponc?.N2),
+        montantN:  cN  + sfY1,
+        montantN1: cN1 + (sfY2 - sfY1),
+        montantN2: cN2 + (sfY3 - sfY2),
       };
     });
 

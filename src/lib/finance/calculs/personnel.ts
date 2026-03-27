@@ -54,10 +54,11 @@ export function calcCotisationsTNS(
 export function calcTaxesSalaires(
   data: Pick<ScenarioFinData, "taxesSalaires">,
 ): YAcc {
+  const rows = data.taxesSalaires.filter((t) => t.actif !== false);
   return {
-    y1: data.taxesSalaires.reduce((s, t) => s + n(t.montantN), 0),
-    y2: data.taxesSalaires.reduce((s, t) => s + n(t.montantN1), 0),
-    y3: data.taxesSalaires.reduce((s, t) => s + n(t.montantN2), 0),
+    y1: rows.reduce((s, t) => s + n(t.montantN), 0),
+    y2: rows.reduce((s, t) => s + n(t.montantN1), 0),
+    y3: rows.reduce((s, t) => s + n(t.montantN2), 0),
   };
 }
 

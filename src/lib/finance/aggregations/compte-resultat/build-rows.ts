@@ -63,8 +63,10 @@ export function buildDrilldownRows(data: ScenarioFinData, fc: FinCalcResult) {
     }));
 
   // ── Achats de matières / marchandises ──────────────────────────────────────
-  // achatsRows = achats effectués par activité = consommés + varStock + ponctuels
-  // Cohérent avec fc.achatsEffectues (agrégat parent dans le CR).
+  // achatsRows = achats effectués par activité = consommés + varStock annuelle
+  // Formule : cN + (sfY1 - 0) pour Y1 ; cN1 + (sfY2 - sfY1) pour Y2, etc.
+  // Les ponctuels NE sont PAS ajoutés ici : ils sont absorbés par la dynamique
+  // stock (sfBase = cumulConsommes×jours/360) et n'affectent pas le total annuel.
   const achatsRows = caRows
     .filter((r) => r.typeActivite !== "PRESTATION_SERVICES")
     .map((r) => {
@@ -76,14 +78,12 @@ export function buildDrilldownRows(data: ScenarioFinData, fc: FinCalcResult) {
       const sfY1 = (cN  * jours) / 360;
       const sfY2 = (cN1 * jours) / 360;
       const sfY3 = (cN2 * jours) / 360;
-      const ponc = r.achatsStockPonctuel as Record<string, number[]> | null | undefined;
-      const sumArr = (arr: number[] | undefined) => (arr ?? []).reduce((s: number, v: number) => s + v, 0);
       return {
         libelle: `Achats – ${r.libelle}`,
         actif: r.actif,
-        montantN:  cN  + sfY1          + sumArr(ponc?.N),
-        montantN1: cN1 + (sfY2 - sfY1) + sumArr(ponc?.N1),
-        montantN2: cN2 + (sfY3 - sfY2) + sumArr(ponc?.N2),
+        montantN:  cN  + sfY1,
+        montantN1: cN1 + (sfY2 - sfY1),
+        montantN2: cN2 + (sfY3 - sfY2),
       };
     });
 
@@ -139,6 +139,7 @@ export function buildDrilldownRows(data: ScenarioFinData, fc: FinCalcResult) {
     .map((c) => ({ libelle: c.libelle, actif: c.actif, montantN: n(c.montantN), montantN1: n(c.montantN1), montantN2: n(c.montantN2) }));
 
   const taxesSalairesRows = taxesSalaires
+    .filter((t) => t.actif !== false)
     .map((t) => ({ libelle: t.libelle, montantN: n(t.montantN), montantN1: n(t.montantN1), montantN2: n(t.montantN2) }));
 
   // ── Amortissements ────────────────────────────────────────────────────────
@@ -165,7 +166,7 @@ export function buildDrilldownRows(data: ScenarioFinData, fc: FinCalcResult) {
     .map((emprunt) => {
       const vals = { y1: 0, y2: 0, y3: 0 };
       for (const ligne of emprunt.lignesEcheancier) {
-        if (ligne.moisNumero === 0) continue;
+        if (ligne.moisNumero === -1) continue; // -1 = frais de dossier, pas un intérêt
         const dateStr =
           ligne.dateEcheance instanceof Date
             ? ligne.dateEcheance.toISOString()
@@ -182,7 +183,7 @@ export function buildDrilldownRows(data: ScenarioFinData, fc: FinCalcResult) {
     .map((emprunt) => {
       const vals = { y1: 0, y2: 0, y3: 0 };
       for (const ligne of emprunt.lignesEcheancier) {
-        if (ligne.moisNumero !== 0) continue;
+        if (ligne.moisNumero !== -1) continue; // -1 = identifiant frais de dossier (convention echeancier.ts)
         const dateStr =
           ligne.dateEcheance instanceof Date
             ? ligne.dateEcheance.toISOString()

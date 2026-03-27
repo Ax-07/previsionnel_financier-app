@@ -9,6 +9,7 @@ import {
   uniformMonthly,
   zeroSeries,
   sumSeries,
+  computeStocksAchatsSeries,
   type MonthlySeries,
 } from "@/lib/finance/calculs/monthly";
 import { computeTVAMonthly } from "@/lib/finance/tva-engine";
@@ -139,15 +140,18 @@ export function calcBfr(data: ScenarioFinData, fc: FinCalcResult): BfrCalcResult
       const joursStock = n(a.stocks ?? 0);
       const joursFournisseur = n(a.reglementFournisseurs ?? 30);
       const delaiFournMois = joursFournisseur / 30;
-      // Séries mensuelles saisonnalisées (achats HT) — pour dettes fournisseurs (dernier mois réel)
+      // Séries mensuelles saisonnalisées (achats consommés HT)
       const sm1 = seasonalMonthly(n(a.montantN) * coef, a.saisonnaliteAchats, "N");
       const sm2 = seasonalMonthly(n(a.montantN1) * coef, a.saisonnaliteAchats, "N1");
       const sm3 = seasonalMonthly(n(a.montantN2) * coef, a.saisonnaliteAchats, "N2");
-      // Stock par activité — formule cumulative annuelle cohérente avec monthly.ts et fc.stockFinal
-      // ✅ achatsConsommés_annuel × joursStock/360 (jamais sm[11] × joursStock/30 — formule flux ≠ niveau)
-      const sfY1 = (n(a.montantN) * coef * joursStock) / 360;
-      const sfY2 = (n(a.montantN1) * coef * joursStock) / 360;
-      const sfY3 = (n(a.montantN2) * coef * joursStock) / 360;
+      // Achats ponctuels par mois
+      const p1 = ponctuelMonthly(a.achatsStockPonctuel, "N");
+      const p2 = ponctuelMonthly(a.achatsStockPonctuel, "N1");
+      const p3 = ponctuelMonthly(a.achatsStockPonctuel, "N2");
+      // Séries mensuelles cumulatives RCA (cohérentes avec monthly.ts)
+      const rY1 = computeStocksAchatsSeries(sm1, p1, joursStock, 0);
+      const rY2 = computeStocksAchatsSeries(sm2, p2, joursStock, rY1.sfFinal);
+      const rY3 = computeStocksAchatsSeries(sm3, p3, joursStock, rY2.sfFinal);
       // coefTTC : identique à decaissements.ts (coefTVA = isFranchise ? 1 : 1 + tauxTVA)
       const coefTTC = isFranchise ? 1 : 1 + n(a.tvaAchats ?? 20) / 100;
       return {
@@ -163,30 +167,25 @@ export function calcBfr(data: ScenarioFinData, fc: FinCalcResult): BfrCalcResult
         ponctuelSommeY1: sumArr(ponctuelN),
         ponctuelSommeY2: sumArr(ponctuelN1),
         ponctuelSommeY3: sumArr(ponctuelN2),
-        // Stock par activité : formule annuelle (cohérente avec fc.stockFinal — Σ sfYx = fc.stockFinal.yx)
-        m11StockY1: sfY1,
-        m11StockY2: sfY2,
-        m11StockY3: sfY3,
-        // Dettes fournisseurs TTC par activité : (M12 achatsHT + ΔStock mensuel) × coefTTC × délai
-        // Règle §12.3 : M12 de la série de clôture réelle — TTC pour cohérence avec decaissements.ts
-        // achatsTTC[m] = (achatsHT[m] + varY/12) × coefTTC (decaissements.ts ligne ~280)
-        m11FournY1: ((sm1[11] ?? 0) + sfY1 / 12) * coefTTC * delaiFournMois,
-        m11FournY2: ((sm2[11] ?? 0) + (sfY2 - sfY1) / 12) * coefTTC * delaiFournMois,
-        m11FournY3: ((sm3[11] ?? 0) + (sfY3 - sfY2) / 12) * coefTTC * delaiFournMois,
+        // Stock fin d'exercice = dernier mois de la série cumulative RCA (= sfSeries[11])
+        m11StockY1: rY1.sfFinal,
+        m11StockY2: rY2.sfFinal,
+        m11StockY3: rY3.sfFinal,
+        // Dettes fournisseurs TTC : achatsEffectués_mois11 × coefTTC × délai
+        // achatsEff[11] = conso[11] + sf[11] - si[11]  (= rYx.achatsEffSeries[11])
+        m11FournY1: (rY1.achatsEffSeries[11] ?? 0) * coefTTC * delaiFournMois,
+        m11FournY2: (rY2.achatsEffSeries[11] ?? 0) * coefTTC * delaiFournMois,
+        m11FournY3: (rY3.achatsEffSeries[11] ?? 0) * coefTTC * delaiFournMois,
       };
     });
 
   // ── Stocks de matières en fin d'exercice ────────────────────────────────
   // Règle §4.6 + §12.2 : stockFin[y] = achatsConsommés_annuel[y] × joursStock / 360
   // Source : fc.stockFinal pré-calculé dans monthly.ts via la formule cumulative.
-  // ❌ Interdit : m[11] × joursStock/30 — per-mois incorrect pour les activités
-  //    saisonnalisées (le stock est un niveau cumulatif, pas un flux mensuel).
-  // ✅ Correct : achatsConsommes_annuel × joursStock/360 = fc.stockFinal[y].
+  // ✅ fc.stockFinal = dernier mois de la série cumulative RCA (sfSeries[11]) par exercice
+  //    → niveau exact en clôture, cohérent avec monthly.ts et le bilan.
   //
-  // Règle BFR initial : ponctuelN[0] (mois de démarrage) est le stock initial.
-  // Il est exclu du flux de trésorerie Y1 dans decaissements.ts (p1[0] = 0).
-  // Les mois 1..11 de N et tous les mois de N1/N2 restent dans le flux normal.
-  // → Pas de double-comptage : chaque ponctuel est traité soit comme BFR initial, soit comme flux.
+  // Règle BFR initial : ponctuelN[0] est le stock initial ponctuel (mois de démarrage).
   const stockInitialPonctuel = actifsActifs
     .filter((a) => a.typeActivite !== "PRESTATION_SERVICES")
     .reduce((s, a) => {
@@ -201,27 +200,28 @@ export function calcBfr(data: ScenarioFinData, fc: FinCalcResult): BfrCalcResult
   };
 
   // ── Dettes fournisseurs (achats matières) ────────────────────────────────
-  // Règle §12.3 : M12 de la série TTC (HT saisonnalisé + ΔStock mensuel) × délai.
-  // TTC pour cohérence avec decaissements.ts où achatsTTC[m] = (achatsHT[m] + varY/12) × coefTTC.
-  // Le creditTVA (besoins BFR) représente déjà le solde net TVA avec le Trésor ;
-  // les dettes fournisseurs doivent inclure la composante TVA récupérable en transit.
+  // Règle §12.3 : achatsEffectués_mois11 TTC × délai.
+  // achatsEff[11] = conso[11] + sf[11] − si[11] (formule RCA cumulative, via computeStocksAchatsSeries)
   let dfY1 = 0, dfY2 = 0, dfY3 = 0;
   for (const a of achatsActifsMois) {
     const coef = Math.max(0, 1 - n(a.tauxMarge) / 100);
     const delaiMois = n(a.reglementFournisseurs ?? 30) / 30;
     const coefTTC = isFranchise ? 1 : 1 + n(a.tvaAchats ?? 20) / 100;
     const jours = n(a.stocks ?? 0);
-    // Stocks finals pour calculer le ΔStock mensuel uniforme par exercice
-    const sfY1 = (n(a.montantN)  * coef * jours) / 360;
-    const sfY2 = (n(a.montantN1) * coef * jours) / 360;
-    const sfY3 = (n(a.montantN2) * coef * jours) / 360;
     const m1 = seasonalMonthly(n(a.montantN) * coef, a.saisonnaliteAchats, "N");
     const m2 = seasonalMonthly(n(a.montantN1) * coef, a.saisonnaliteAchats, "N1");
     const m3 = seasonalMonthly(n(a.montantN2) * coef, a.saisonnaliteAchats, "N2");
-    // TTC : (m12_HT + ΔStock_mensuel) × coefTTC × délai
-    dfY1 += ((m1[11] ?? 0) + sfY1 / 12) * coefTTC * delaiMois;
-    dfY2 += ((m2[11] ?? 0) + (sfY2 - sfY1) / 12) * coefTTC * delaiMois;
-    dfY3 += ((m3[11] ?? 0) + (sfY3 - sfY2) / 12) * coefTTC * delaiMois;
+    const p1 = ponctuelMonthly(a.achatsStockPonctuel, "N");
+    const p2 = ponctuelMonthly(a.achatsStockPonctuel, "N1");
+    const p3 = ponctuelMonthly(a.achatsStockPonctuel, "N2");
+    // Série cumulative RCA — pour avoir achatsEff[11] exact
+    const rY1 = computeStocksAchatsSeries(m1, p1, jours, 0);
+    const rY2 = computeStocksAchatsSeries(m2, p2, jours, rY1.sfFinal);
+    const rY3 = computeStocksAchatsSeries(m3, p3, jours, rY2.sfFinal);
+    // Dette fournisseur = achatsEffectués_mois11 TTC × délai
+    dfY1 += (rY1.achatsEffSeries[11] ?? 0) * coefTTC * delaiMois;
+    dfY2 += (rY2.achatsEffSeries[11] ?? 0) * coefTTC * delaiMois;
+    dfY3 += (rY3.achatsEffSeries[11] ?? 0) * coefTTC * delaiMois;
   }
   const dettesFournisseurs: YearAcc4 = { y0: 0, y1: dfY1, y2: dfY2, y3: dfY3 };
 

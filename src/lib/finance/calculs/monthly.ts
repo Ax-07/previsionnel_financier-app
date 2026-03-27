@@ -76,6 +76,15 @@ export function monthlyToYearAcc(m: MonthlyAcc): Record<YearKey, number> {
 }
 
 /**
+ * Retourne la valeur du **dernier mois** (index 11) pour chaque exercice.
+ * À utiliser pour les **niveaux** (stocks, créances, dettes) qui sont des
+ * instantanés de fin d'exercice — jamais une somme.
+ */
+export function lastMonthToYearAcc(m: MonthlyAcc): Record<YearKey, number> {
+  return { y1: m.y1[11] ?? 0, y2: m.y2[11] ?? 0, y3: m.y3[11] ?? 0 };
+}
+
+/**
  * Répartit un total annuel selon la saisonnalité JSON { N: number[], N1: number[], N2: number[] }
  * (pourcentages mensuels), ou uniformément si absente/incomplète.
  */
@@ -274,6 +283,39 @@ export interface MonthlyCalcResult {
   caf: MonthlyAcc;
 }
 
+// ── Formule RCA : séries mensuelles stock/achats ──────────────────────────────
+//
+// Utilisée par buildMonthlyCalc ET par calcBfr (bfr.ts) pour garantir
+// la cohérence des ΔStock par activité dans le calcul des dettes fournisseurs.
+//
+// achatsEff[j] = consommes[j] + sf[j] − si[j]  (ponctuel implicite dans sf−si)
+
+export function computeStocksAchatsSeries(
+  consommesMonthly: MonthlySeries,
+  ponctuelM: MonthlySeries,
+  stocksJoursCible: number,
+  stockInitial: number,
+): { siSeries: MonthlySeries; sfSeries: MonthlySeries; achatsEffSeries: MonthlySeries; sfFinal: number } {
+  const totalConsommes = totalOf(consommesMonthly);
+  const siSeries = zeroSeries();
+  const sfSeries = zeroSeries();
+  const achatsEffSeries = zeroSeries();
+  let cumulConsommes = 0;
+  for (let j = 0; j < 12; j++) {
+    const si = j === 0 ? stockInitial : (sfSeries[j - 1] ?? 0);
+    siSeries[j] = si;
+    const conso = consommesMonthly[j] ?? 0;
+    const ponc = ponctuelM[j] ?? 0;
+    cumulConsommes += conso;
+    const sfBase = totalConsommes > 0 ? (cumulConsommes * stocksJoursCible) / 360 : 0;
+    const ratioCumul = (totalConsommes + ponc) > 0 ? cumulConsommes / (totalConsommes + ponc) : 0;
+    const sf = sfBase + (ponc + si) * (1 - ratioCumul);
+    sfSeries[j] = sf;
+    achatsEffSeries[j] = conso + sf - si;
+  }
+  return { siSeries, sfSeries, achatsEffSeries, sfFinal: sfSeries[11] ?? 0 };
+}
+
 // ── Fonction principale ───────────────────────────────────────────────────────
 
 /**
@@ -356,21 +398,33 @@ export function buildMonthlyCalc(
 
   // ── Achats & stocks ───────────────────────────────────────────────────────
   //
-  // Logique RCA (sens comptable correct) :
-  //   1. achatsConsommés = CA × (1 − tauxMarge)    ← PRIMAL, distribué selon saisonnaliteAchats
-  //   2. stockFinal      = achatsConsommés_annuel × joursStock / 360  (convention 360 jours)
-  //   3. achatsEffectués = achatsConsommés + (SF − SI) + ponctuels     ← DÉRIVÉ
+  // Formule RCA cumulative mensuelle (identique à computeStocksAchats dans use-activite-calculs.ts) :
+  //   sfBase[j]    = cumulConsommes[j] × joursStock / 360
+  //   ratioCumul[j] = cumulConsommes[j] / (totalConsommes + ponctuel[j])
+  //   sf[j]        = sfBase[j] + (ponctuel[j] + si[j]) × (1 − ratioCumul[j])
+  //   achatsEff[j] = consommes[j] + sf[j] − si[j]
+  //      (ponctuel implicite dans sf − si, pas de double comptage)
   //
-  // Les achats ponctuels (stock initial, réassorts) vont directement dans
-  // achatsEffectués et augmentent le stock (bilan actif) sans toucher au
-  // compte de résultat (achatsConsommés inchangé).
+  // Tout repose sur les séries mensuelles réelles — aucun raccourci annuel.
 
   const achatsConsommesAcc = emptyAcc();  // PRIMAL
-  const ponctuelAcc = emptyAcc();          // séparé, ne touche pas les consommés
   const achatsByActivity: { libelle: string; series: MonthlyAcc }[] = [];
-  const stockByActivity: { libelle: string; sfY1: number; sfY2: number; sfY3: number }[] = [];
 
-  let sfY1 = 0, sfY2 = 0, sfY3 = 0;
+  // Séries mensuelles globales accumulées (somme de toutes les activités)
+  const stockInitialAccSeries: MonthlyAcc = emptyAcc();
+  const stockFinalAccSeries: MonthlyAcc = emptyAcc();
+  const achatsEffectuesAccSeries: MonthlyAcc = emptyAcc();
+
+  // Drill-down par activité (séries mensuelles)
+  type ActivityStockData = {
+    libelle: string;
+    sfFinalY1: number; sfFinalY2: number; sfFinalY3: number;
+    siSeriesY1: MonthlySeries; sfSeriesY1: MonthlySeries;
+    siSeriesY2: MonthlySeries; sfSeriesY2: MonthlySeries;
+    siSeriesY3: MonthlySeries; sfSeriesY3: MonthlySeries;
+  };
+  const activityStocks: ActivityStockData[] = [];
+
   for (const a of data.activites) {
     if (a.actif === false || a.typeActivite === "PRESTATION_SERVICES") continue;
     const taux = Math.max(0, 1 - n(a.tauxMarge) / 100);
@@ -379,29 +433,13 @@ export function buildMonthlyCalc(
     const aN1 = n(a.montantN1) * taux;
     const aN2 = n(a.montantN2) * taux;
 
-    // Stock final de fin d'exercice — convention commerciale 360 jours (comme RCA)
-    const actSfY1 = (aN * stocks) / 360;
-    const actSfY2 = (aN1 * stocks) / 360;
-    const actSfY3 = (aN2 * stocks) / 360;
-    sfY1 += actSfY1;
-    sfY2 += actSfY2;
-    sfY3 += actSfY3;
-    // Achats ponctuels : montants HT d'achat par mois (convention cash réel).
+    // Achats ponctuels HT par mois
     const ponctuelSeries: MonthlyAcc = {
       y1: ponctuelMonthly(a.achatsStockPonctuel, "N"),
       y2: ponctuelMonthly(a.achatsStockPonctuel, "N1"),
       y3: ponctuelMonthly(a.achatsStockPonctuel, "N2"),
     };
     const ponctuelTotal = totalOf(ponctuelSeries.y1) + totalOf(ponctuelSeries.y2) + totalOf(ponctuelSeries.y3);
-    if (ponctuelTotal !== 0) {
-      addSeries(ponctuelAcc, "y1", ponctuelSeries.y1);
-      addSeries(ponctuelAcc, "y2", ponctuelSeries.y2);
-      addSeries(ponctuelAcc, "y3", ponctuelSeries.y3);
-    }
-
-    if (actSfY1 !== 0 || actSfY2 !== 0 || actSfY3 !== 0) {
-      stockByActivity.push({ libelle: a.libelle, sfY1: actSfY1, sfY2: actSfY2, sfY3: actSfY3 });
-    }
 
     // Achats consommés (primal) : CA × coef distribué selon saisonnaliteAchats
     const consommesSeries: MonthlyAcc = {
@@ -413,77 +451,77 @@ export function buildMonthlyCalc(
     addSeries(achatsConsommesAcc, "y2", consommesSeries.y2);
     addSeries(achatsConsommesAcc, "y3", consommesSeries.y3);
 
-    // Drill-down achatsEffectués par activité :
-    //   achatsEff = consommés + (sfY − siY) / 12 + ponctuels
-    const varActY1 = actSfY1;            // SI y1 = 0 (pas de stock avant démarrage)
-    const varActY2 = actSfY2 - actSfY1;
-    const varActY3 = actSfY3 - actSfY2;
+    // ── Formule RCA cumulative — N → N+1 → N+2 (continuité inter-exercices) ──
+    const rY1 = computeStocksAchatsSeries(consommesSeries.y1, ponctuelSeries.y1, stocks, 0);
+    const rY2 = computeStocksAchatsSeries(consommesSeries.y2, ponctuelSeries.y2, stocks, rY1.sfFinal);
+    const rY3 = computeStocksAchatsSeries(consommesSeries.y3, ponctuelSeries.y3, stocks, rY2.sfFinal);
+
+    // Accumulation dans les séries globales
+    for (let j = 0; j < 12; j++) {
+      stockInitialAccSeries.y1[j] = (stockInitialAccSeries.y1[j] ?? 0) + (rY1.siSeries[j] ?? 0);
+      stockInitialAccSeries.y2[j] = (stockInitialAccSeries.y2[j] ?? 0) + (rY2.siSeries[j] ?? 0);
+      stockInitialAccSeries.y3[j] = (stockInitialAccSeries.y3[j] ?? 0) + (rY3.siSeries[j] ?? 0);
+      stockFinalAccSeries.y1[j] = (stockFinalAccSeries.y1[j] ?? 0) + (rY1.sfSeries[j] ?? 0);
+      stockFinalAccSeries.y2[j] = (stockFinalAccSeries.y2[j] ?? 0) + (rY2.sfSeries[j] ?? 0);
+      stockFinalAccSeries.y3[j] = (stockFinalAccSeries.y3[j] ?? 0) + (rY3.sfSeries[j] ?? 0);
+      achatsEffectuesAccSeries.y1[j] = (achatsEffectuesAccSeries.y1[j] ?? 0) + (rY1.achatsEffSeries[j] ?? 0);
+      achatsEffectuesAccSeries.y2[j] = (achatsEffectuesAccSeries.y2[j] ?? 0) + (rY2.achatsEffSeries[j] ?? 0);
+      achatsEffectuesAccSeries.y3[j] = (achatsEffectuesAccSeries.y3[j] ?? 0) + (rY3.achatsEffSeries[j] ?? 0);
+    }
+
+    // Drill-down par activité (séries mensuelles)
     if (aN !== 0 || aN1 !== 0 || aN2 !== 0 || ponctuelTotal !== 0) {
+      activityStocks.push({
+        libelle: a.libelle,
+        sfFinalY1: rY1.sfFinal, sfFinalY2: rY2.sfFinal, sfFinalY3: rY3.sfFinal,
+        siSeriesY1: rY1.siSeries, sfSeriesY1: rY1.sfSeries,
+        siSeriesY2: rY2.siSeries, sfSeriesY2: rY2.sfSeries,
+        siSeriesY3: rY3.siSeries, sfSeriesY3: rY3.sfSeries,
+      });
       achatsByActivity.push({
         libelle: `Achats – ${a.libelle}`,
-        series: {
-          y1: consommesSeries.y1.map((v, i) => v + varActY1 / 12 + (ponctuelSeries.y1[i] ?? 0)),
-          y2: consommesSeries.y2.map((v, i) => v + varActY2 / 12 + (ponctuelSeries.y2[i] ?? 0)),
-          y3: consommesSeries.y3.map((v, i) => v + varActY3 / 12 + (ponctuelSeries.y3[i] ?? 0)),
-        },
+        series: { y1: rY1.achatsEffSeries, y2: rY2.achatsEffSeries, y3: rY3.achatsEffSeries },
       });
     }
   }
 
-  const stockInitialByActivity = stockByActivity.map((s) => ({
+  // ── Drill-down stock par activité (séries mensuelles réelles) ─────────────
+  const stockInitialByActivity = activityStocks.map((s) => ({
     libelle: s.libelle,
     series: {
-      y1: uniform(0), // stock initial = 0 (pas de stock avant démarrage)
-      y2: uniform(s.sfY1),
-      y3: uniform(s.sfY2),
+      y1: s.siSeriesY1,
+      y2: s.siSeriesY2,
+      y3: s.siSeriesY3,
     } as MonthlyAcc,
   }));
-  const stockFinalByActivity = stockByActivity.map((s) => ({
+  const stockFinalByActivity = activityStocks.map((s) => ({
     libelle: s.libelle,
     series: {
-      y1: uniform(s.sfY1),
-      y2: uniform(s.sfY2),
-      y3: uniform(s.sfY3),
+      y1: s.sfSeriesY1,
+      y2: s.sfSeriesY2,
+      y3: s.sfSeriesY3,
     } as MonthlyAcc,
   }));
-  const varStockByActivity = stockByActivity.map((s) => ({
+  const varStockByActivity = activityStocks.map((s) => ({
     libelle: s.libelle,
     series: {
-      y1: uniform(s.sfY1), // variation = SF − SI (SI = 0)
-      y2: uniform(s.sfY2 - s.sfY1),
-      y3: uniform(s.sfY3 - s.sfY2),
+      y1: s.sfSeriesY1.map((sf, j) => sf - (s.siSeriesY1[j] ?? 0)) as MonthlySeries,
+      y2: s.sfSeriesY2.map((sf, j) => sf - (s.siSeriesY2[j] ?? 0)) as MonthlySeries,
+      y3: s.sfSeriesY3.map((sf, j) => sf - (s.siSeriesY3[j] ?? 0)) as MonthlySeries,
     } as MonthlyAcc,
   }));
-
-  const stockInitialAcc: MonthlyAcc = {
-    y1: uniform(0), // stock initial = 0 (pas de stock avant démarrage)
-    y2: uniform(sfY1),
-    y3: uniform(sfY2),
-  };
-  const stockFinalAcc: MonthlyAcc = {
-    y1: uniform(sfY1),
-    y2: uniform(sfY2),
-    y3: uniform(sfY3),
-  };
+  // ── Agrégats mensuels globaux ─────────────────────────────────────────────
+  // Séries mensuelles réelles — pas de `uniform()` / raccourci annuel.
+  const stockInitialAcc: MonthlyAcc = stockInitialAccSeries;
+  const stockFinalAcc: MonthlyAcc = stockFinalAccSeries;
   const varStockAcc: MonthlyAcc = {
-    y1: stockFinalAcc.y1.map((v, i) => v - (stockInitialAcc.y1[i] ?? 0)),
-    y2: stockFinalAcc.y2.map((v, i) => v - (stockInitialAcc.y2[i] ?? 0)),
-    y3: stockFinalAcc.y3.map((v, i) => v - (stockInitialAcc.y3[i] ?? 0)),
+    y1: stockFinalAccSeries.y1.map((sf, j) => sf - (stockInitialAccSeries.y1[j] ?? 0)) as MonthlySeries,
+    y2: stockFinalAccSeries.y2.map((sf, j) => sf - (stockInitialAccSeries.y2[j] ?? 0)) as MonthlySeries,
+    y3: stockFinalAccSeries.y3.map((sf, j) => sf - (stockInitialAccSeries.y3[j] ?? 0)) as MonthlySeries,
   };
 
-  // achatsEffectués (DÉRIVÉ) = achatsConsommés + (SF − SI) / 12 + ponctuels
-  // SI = 0 (convention cash réel : pas de stock avant démarrage)
-  const achatsEffectuesAcc: MonthlyAcc = {
-    y1: achatsConsommesAcc.y1.map(
-      (v, i) => v + sfY1 / 12 + (ponctuelAcc.y1[i] ?? 0),
-    ),
-    y2: achatsConsommesAcc.y2.map(
-      (v, i) => v + (sfY2 - sfY1) / 12 + (ponctuelAcc.y2[i] ?? 0),
-    ),
-    y3: achatsConsommesAcc.y3.map(
-      (v, i) => v + (sfY3 - sfY2) / 12 + (ponctuelAcc.y3[i] ?? 0),
-    ),
-  };
+  // achatsEffectués : séries cumulatives RCA (cohérentes avec l'onglet saisie)
+  const achatsEffectuesAcc = achatsEffectuesAccSeries;
 
   // ── Marges ────────────────────────────────────────────────────────────────
 

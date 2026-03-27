@@ -14,9 +14,18 @@ import type { YearKey } from "@/lib/finance/utils";
 import { vatValue, vatRow, dateToExercise } from "./helpers";
 import type { VATRow, VATRowStyle } from "./types";
 
+/**
+ * Construit les lignes du tableau TVA.
+ *
+ * Le tableau affiche toujours les colonnes mois par mois (résolution mensuelle),
+ * indépendamment du régime de déclaration. Le paramètre `periodiciteDecaissement`
+ * contrôle uniquement le calendrier de paiement de la TVA à payer (trimestriel
+ * = paiement en fin de trimestre), ce qui affecte la ligne « TVA à payer » et
+ * « Crédit TVA reporté » mais PAS les colonnes mensuelles du tableau.
+ */
 export function buildTVARows(
   data: ScenarioFinData,
-  periodicite: "mensuel" | "trimestriel",
+  periodiciteDecaissement: "mensuel" | "trimestriel",
 ): VATRow[] {
   const { dateDemarrage, activites, fournitures, services, immobilisations } = data;
 
@@ -244,9 +253,12 @@ export function buildTVARows(
     if (yk === null) tvaImmoY0 += tva;
   }
 
-  const y1Calc = computeTVAMonthly(tvaCollecteeSeries.y1, tvaDeductibleSeries.y1, periodicite, tvaImmoY0);
-  const y2Calc = computeTVAMonthly(tvaCollecteeSeries.y2, tvaDeductibleSeries.y2, periodicite, y1Calc.finalCredit);
-  const y3Calc = computeTVAMonthly(tvaCollecteeSeries.y3, tvaDeductibleSeries.y3, periodicite, y2Calc.finalCredit);
+  // Le tableau affiche les montants mensuels (résolution = mensuel).
+  // periodiciteDecaissement n'affecte que les lignes TVA à payer / Crédit reporté
+  // dans la colonne Total et la logique de paiement groupé (trimestriel).
+  const y1Calc = computeTVAMonthly(tvaCollecteeSeries.y1, tvaDeductibleSeries.y1, periodiciteDecaissement, tvaImmoY0);
+  const y2Calc = computeTVAMonthly(tvaCollecteeSeries.y2, tvaDeductibleSeries.y2, periodiciteDecaissement, y1Calc.finalCredit);
+  const y3Calc = computeTVAMonthly(tvaCollecteeSeries.y3, tvaDeductibleSeries.y3, periodiciteDecaissement, y2Calc.finalCredit);
 
   return [
     // ── Section TVA collectée ─────────────────────────────────────────────
@@ -268,11 +280,21 @@ export function buildTVARows(
       y3: y3Calc.tvaNetteMonthly,
     }, "result"),
 
-    vatRow("credit-tva", "Crédit TVA reporté", {
-      y1: y1Calc.creditReporteMonthly,
-      y2: y2Calc.creditReporteMonthly,
-      y3: y3Calc.creditReporteMonthly,
-    }, "normal", true),
+    // Crédit TVA reporté : le total est le crédit RÉSIDUEL en fin d'exercice
+    // (= finalCredit), pas la somme des mois. En régime trimestriel, la série
+    // mensuelle répète le stock de crédit sur les mois intermédiaires du
+    // trimestre, donc Σmois serait artificiellement gonflé (ex. ×3 par trimestre).
+    {
+      key: "credit-tva",
+      label: "Crédit TVA reporté",
+      values: {
+        y1: { months: y1Calc.creditReporteMonthly, total: y1Calc.finalCredit },
+        y2: { months: y2Calc.creditReporteMonthly, total: y2Calc.finalCredit },
+        y3: { months: y3Calc.creditReporteMonthly, total: y3Calc.finalCredit },
+      },
+      style: "normal",
+      hideIfZero: true,
+    } satisfies VATRow,
 
     vatRow("tva-payer", "TVA à payer", {
       y1: y1Calc.tvaAPayerMonthly,

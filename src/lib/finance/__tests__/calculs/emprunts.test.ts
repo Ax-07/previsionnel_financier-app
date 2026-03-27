@@ -53,9 +53,9 @@ const EMPRUNT_STANDARD = mkEmprunt("emp-1", [
   { moisNumero: 13, dateEcheance: "2027-02-15", interesMois: 350, assuranceMois: 13.33, capitalRembourse: 952.38, mensualiteTotale: 1315.71 },
 ]);
 
-// Un emprunt avec frais de dossier (moisNumero === 0)
+// Un emprunt avec frais de dossier (moisNumero === -1, convention echeancier.ts)
 const EMPRUNT_AVEC_FRAIS = mkEmprunt("emp-2", [
-  { moisNumero: 0, dateEcheance: "2026-01-01", interesMois: 0, assuranceMois: 0, capitalRembourse: 0, mensualiteTotale: 500 }, // frais dossier
+  { moisNumero: -1, dateEcheance: "2026-01-01", interesMois: 0, assuranceMois: 0, capitalRembourse: 0, mensualiteTotale: 500 }, // frais dossier
   { moisNumero: 1, dateEcheance: "2026-02-15", interesMois: 200, assuranceMois: 5, capitalRembourse: 500, mensualiteTotale: 705 },
 ]);
 
@@ -111,8 +111,8 @@ describe("calcCapitalRembourse", () => {
     expect(res.y3).toBe(0);
   });
 
-  it("inclut le capital de la ligne de frais dossier (moisNumero=0) → 0", () => {
-    // La ligne moisNumero=0 a capitalRembourse=0 → n'affecte pas le total
+  it("inclut le capital de la ligne de frais dossier (moisNumero=-1) → 0", () => {
+    // La ligne moisNumero=-1 a capitalRembourse=0 → n'affecte pas le total
     const res = calcCapitalRembourse(mkData([EMPRUNT_AVEC_FRAIS]), toExerciceKey);
     expect(res.y1).toBeCloseTo(500, 2); // seule ligne M1
   });
@@ -121,14 +121,14 @@ describe("calcCapitalRembourse", () => {
 // ── calcFraisDossier ──────────────────────────────────────────────────────────
 
 describe("calcFraisDossier", () => {
-  it("frais dossier = mensualiteTotale de la ligne moisNumero === 0", () => {
+  it("frais dossier = mensualiteTotale de la ligne moisNumero === -1", () => {
     const res = calcFraisDossier(mkData([EMPRUNT_AVEC_FRAIS]), toExerciceKey);
     expect(res.y1).toBeCloseTo(500, 2);
   });
 
-  it("ignore les lignes moisNumero > 0 (ce ne sont pas des frais dossier)", () => {
+  it("ignore les lignes moisNumero >= 0 (ce ne sont pas des frais dossier)", () => {
     const res = calcFraisDossier(mkData([EMPRUNT_STANDARD]), toExerciceKey);
-    // EMPRUNT_STANDARD n'a pas de ligne moisNumero=0
+    // EMPRUNT_STANDARD n'a pas de ligne moisNumero=-1
     expect(res).toEqual({ y1: 0, y2: 0, y3: 0 });
   });
 
@@ -139,7 +139,7 @@ describe("calcFraisDossier", () => {
 
   it("agrège les frais dossier de plusieurs emprunts", () => {
     const emp2 = mkEmprunt("emp-frais2", [
-      { moisNumero: 0, dateEcheance: "2026-01-15", interesMois: 0, assuranceMois: 0, capitalRembourse: 0, mensualiteTotale: 300 },
+      { moisNumero: -1, dateEcheance: "2026-01-15", interesMois: 0, assuranceMois: 0, capitalRembourse: 0, mensualiteTotale: 300 },
     ]);
     const res = calcFraisDossier(mkData([EMPRUNT_AVEC_FRAIS, emp2]), toExerciceKey);
     expect(res.y1).toBeCloseTo(800, 2); // 500 + 300

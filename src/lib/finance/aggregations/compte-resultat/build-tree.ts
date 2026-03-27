@@ -13,10 +13,14 @@ function nonZero(vals: Record<YearKey, number>): boolean {
 function deriveAggregates(fc: FinCalcResult, rows: DrilldownRows) {
   return {
     varStockDisplay: { y1: -fc.varStock.y1, y2: -fc.varStock.y2, y3: -fc.varStock.y3 },
+    // Charges externes (Total) = somme exacte des lignes affichées :
+    //   Achats effectués + Variation de stocks (affichée −) + Fournitures + Services
+    // = achatsEffectues − varStock + fournitures + services
+    // = achatsConsommes + achatsPonctuels + fournitures + services
     chargesExternes: {
-      y1: fc.achatsConsommes.y1 + fc.fournitures.y1 + fc.services.y1,
-      y2: fc.achatsConsommes.y2 + fc.fournitures.y2 + fc.services.y2,
-      y3: fc.achatsConsommes.y3 + fc.fournitures.y3 + fc.services.y3,
+      y1: fc.achatsEffectues.y1 - fc.varStock.y1 + fc.fournitures.y1 + fc.services.y1,
+      y2: fc.achatsEffectues.y2 - fc.varStock.y2 + fc.fournitures.y2 + fc.services.y2,
+      y3: fc.achatsEffectues.y3 - fc.varStock.y3 + fc.fournitures.y3 + fc.services.y3,
     },
     totalChargesExpl: {
       y1: fc.totalProduitsExpl.y1 - fc.resExpl.y1,
