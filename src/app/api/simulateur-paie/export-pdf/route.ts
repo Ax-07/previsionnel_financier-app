@@ -9,6 +9,7 @@
  */
 
 import { NextResponse } from "next/server";
+import "@/lib/paie/conventions"; // enregistre tous les IDCC côté serveur (side-effect obligatoire)
 import { simulate } from "@/lib/paie/simulate";
 import { buildBulletinHtml } from "@/lib/paie/export/html";
 import type { SimulationInput } from "@/lib/paie/types";

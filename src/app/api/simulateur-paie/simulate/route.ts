@@ -14,12 +14,13 @@
  * Content-Type: application/json
  *
  * {
- *   "salarié": { "statut": "non_cadre", "typeContrat": "CDI", "heuresContrat": 151.67, "brutMensuel": 1802 },
+ *   "salarié": { "statut": "non_cadre", "typeContrat": "CDI", "heuresContrat": 151.66669, "brutMensuel": 1802 },
  *   "entreprise": { "effectif": 10, "tauxATMP": 0.021 }
  * }
  */
 
 import { NextResponse } from "next/server";
+import "@/lib/paie/conventions"; // enregistre tous les IDCC côté serveur (side-effect obligatoire)
 import { simulate } from "@/lib/paie/simulate";
 import type { SimulationInput } from "@/lib/paie/types";
 

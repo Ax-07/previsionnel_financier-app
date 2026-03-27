@@ -51,7 +51,7 @@ function SimulateurPageContent() {
         salarié: {
           statut,
           typeContrat: "CDI",
-          heuresContrat: 151.67,
+          heuresContrat: 151.66669,
           brutMensuel,
         },
       }
