@@ -16,6 +16,7 @@ model Immobilisation {
   nature                NatureImmobilisation @default(CORPOREL)
   typeTva               TypeTVA              @default(RECUPERABLE)
   actif                 Boolean              @default(true)
+  groupe                String?
   scenario              Scenario             @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
   lignesAmortissement   LigneAmortissement[]
 
@@ -51,6 +52,7 @@ model CessionImmobilisation {
   updatedAt   DateTime             @updatedAt
   scenarioId  String
   actif       Boolean              @default(true)
+  groupe      String?
   scenario    Scenario             @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
 
   @@map("cession_immobilisation")
@@ -74,6 +76,7 @@ model CreditBail {
   updatedAt        DateTime          @updatedAt
   scenarioId       String
   actif            Boolean           @default(true)
+  groupe           String?
   scenario         Scenario          @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
 
   @@map("credit_bail")
