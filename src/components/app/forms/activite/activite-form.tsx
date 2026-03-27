@@ -1217,22 +1217,36 @@ export function ActiviteForm({
     markSubventionsSaved,
   } = useActiviteStore();
 
-  // Hydratation du store avec les données initiales (venant du serveur)
-  // On n'écrase une section QUE si elle n'a pas de modifications non sauvegardées.
-  // Ainsi, si l'utilisateur change d'onglet puis revient, ses modifications sont préservées.
+  // Hydratation du store avec les données initiales (venant du serveur).
+  // On n'écrase une section QUE si :
+  //   1. elle n'a pas de modifications non sauvegardées, ET
+  //   2. le store ne contient pas de lignes sauvegardées absentes du initialData
+  //      (ce qui indiquerait que le store est en avance sur le server component stale).
   useEffect(() => {
     const currentDraft = getDraft(dossierId);
+
     if (!currentDraft.hasUnsavedActivites) {
-      setActivites(dossierId, activites);
+      const serverIds = new Set(activites.map((r) => r.id).filter(Boolean));
+      const storeIsAhead = currentDraft.activites.some((r) => r.id && !serverIds.has(r.id));
+      if (!storeIsAhead) setActivites(dossierId, activites);
     }
+
     if (!currentDraft.hasUnsavedCommissions) {
-      setActivitesCommissionnees(dossierId, activitesCommissionnees);
+      const serverIds = new Set(activitesCommissionnees.map((r) => r.id).filter(Boolean));
+      const storeIsAhead = currentDraft.activitesCommissionnees.some((r) => r.id && !serverIds.has(r.id));
+      if (!storeIsAhead) setActivitesCommissionnees(dossierId, activitesCommissionnees);
     }
+
     if (!currentDraft.hasUnsavedProductions) {
-      setProductionsImmobilisees(dossierId, productionsImmobilisees);
+      const serverIds = new Set(productionsImmobilisees.map((r) => r.id).filter(Boolean));
+      const storeIsAhead = currentDraft.productionsImmobilisees.some((r) => r.id && !serverIds.has(r.id));
+      if (!storeIsAhead) setProductionsImmobilisees(dossierId, productionsImmobilisees);
     }
+
     if (!currentDraft.hasUnsavedSubventions) {
-      setSubventionsExploitation(dossierId, subventionsExploitation);
+      const serverIds = new Set(subventionsExploitation.map((r) => r.id).filter(Boolean));
+      const storeIsAhead = currentDraft.subventionsExploitation.some((r) => r.id && !serverIds.has(r.id));
+      if (!storeIsAhead) setSubventionsExploitation(dossierId, subventionsExploitation);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dossierId]);

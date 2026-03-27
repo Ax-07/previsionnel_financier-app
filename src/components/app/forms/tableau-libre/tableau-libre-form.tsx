@@ -613,11 +613,16 @@ export function TableauxLibresForm({ dossierId, initialData }: TableauxLibresFor
   const invalidateControleStores = useInvalidateControleStores();
 
 
-  // Hydratation depuis le serveur
+  // Hydratation depuis le serveur.
+  // Guard double : première fois ET vérif que le store n'est pas en avance
+  // (cas où le remount se produit après un save — initialData est périmé).
   useEffect(() => {
     if (!hydrated.current) {
       hydrated.current = true;
-      store.setTableaux(dossierId, initialData);
+      const serverIds = new Set(initialData.map((t) => t.id).filter(Boolean));
+      const current = store.getDraft(dossierId).tableaux;
+      const storeIsAhead = current.some((r) => r.id && !serverIds.has(r.id));
+      if (!storeIsAhead) store.setTableaux(dossierId, initialData);
     }
   }, [dossierId, initialData, store]);
 

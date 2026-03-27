@@ -64,10 +64,10 @@ import { resumeEmprunt } from "@/lib/calcul/echeancier";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const cellInput =
-  "h-7 w-full border-0 bg-transparent px-1 text-sm focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none min-w-0";
+  "h-7 w-full border-0 bg-transparent px-1 text-xs focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none min-w-0";
 
 const cellSelect =
-  "h-7 w-full border-0 bg-transparent px-1 text-sm focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none cursor-pointer";
+  "h-7 w-full border-0 bg-transparent px-1 text-xs focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none cursor-pointer";
 
 function numVal(v: string): number {
   const n = parseFloat(v.replace(",", "."));
@@ -582,7 +582,7 @@ function TableauApports({
         return;
       }
       startTransition(async () => {
-        const res = await deleteApport(row.id!);
+        const res = await deleteApport(row.id!, dossierId);
         if (res.success) {
           setRows((prev) => prev.filter((_, i) => i !== idx));
           toast.success("Apport supprimé.");
@@ -592,7 +592,7 @@ function TableauApports({
         }
       });
     },
-    [rows, setRows]
+    [rows, setRows, dossierId, invalidateControleStores]
   );
 
   const saveAll = useCallback(() => {
@@ -623,7 +623,7 @@ function TableauApports({
       if (!hasError) toast.success("Apports enregistrés.");
       if (!hasError) invalidateControleStores(dossierId);
     });
-  }, [rows, dossierId, setRows]);
+  }, [rows, dossierId, setRows, invalidateControleStores]);
 
   const totalApports = rows.reduce((sum, r) => sum + (r.actif !== false ? r.montant : 0), 0);
 
@@ -850,7 +850,7 @@ function TableauEmprunts({
         return;
       }
       startTransition(async () => {
-        const res = await deleteEmprunt(row.id!);
+        const res = await deleteEmprunt(row.id!, dossierId);
         if (res.success) {
           setRows((prev) => prev.filter((_, i) => i !== idx));
           toast.success("Emprunt supprimé.");
@@ -860,7 +860,7 @@ function TableauEmprunts({
         }
       });
     },
-    [rows, setRows]
+    [rows, setRows, dossierId, invalidateControleStores]
   );
 
   const saveAll = useCallback(() => {
@@ -908,7 +908,7 @@ function TableauEmprunts({
       if (!hasError) toast.success("Emprunts enregistrés.");
       if (!hasError) invalidateControleStores(dossierId);
     });
-  }, [rows, dossierId, setRows]);
+  }, [rows, dossierId, setRows, invalidateControleStores]);
 
   const totalEmprunts = rows.reduce((sum, r) => sum + (r.actif !== false ? r.montant : 0), 0);
 
