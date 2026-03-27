@@ -99,7 +99,7 @@ function GroupHeader({
     <tr
       ref={setNodeRef}
       style={style}
-      className={cn("bg-primary/5", collapsed ? "border-b-2 border-primary/20" : "border-b border-border")}
+      className={cn("bg-primary/15 border-l-2 border-primary/15", collapsed ? "border-b-2 border-primary/20" : "border-b border-primary/20")}
     >
       <td className="w-7 py-1.5 cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
         <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50 mx-auto" />
