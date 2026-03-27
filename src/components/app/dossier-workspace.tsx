@@ -9,7 +9,6 @@ import {
 import SaisieTab from "@/components/app/tabs/saisie-tab";
 import ControleTab from "@/components/app/tabs/controle-tab";
 import ImportsTab from "@/components/app/tabs/imports-tab";
-import RapportsTab from "@/components/app/tabs/rapports-tab";
 import DiaporamaTab from "@/components/app/tabs/diaporama-tab";
 import type { PorteurFormValues } from "@/lib/schemas/porteur";
 import type { EntrepriseFormValues } from "@/lib/schemas/entreprise";
@@ -89,7 +88,6 @@ const mainTabs = [
   { value: "saisie",    label: "Saisie" },
   { value: "controle",  label: "Contrôle" },
   { value: "imports",   label: "Imports" },
-  { value: "rapports",  label: "Rapports" },
   { value: "diaporama", label: "Diaporama" },
 ] as const;
 
@@ -221,10 +219,6 @@ export default function DossierWorkspace({
 
       <TabsContent value="imports" className="flex-1 overflow-hidden">
         <ImportsTab />
-      </TabsContent>
-
-      <TabsContent value="rapports" className="flex-1 overflow-hidden">
-        <RapportsTab dossierId={dossierId} />
       </TabsContent>
 
       <TabsContent value="diaporama" className="flex-1 overflow-hidden">
