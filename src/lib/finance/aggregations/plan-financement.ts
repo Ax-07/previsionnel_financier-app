@@ -46,7 +46,13 @@ export function buildPlanFinancementRows(
 
   const { apportsCapital, apportsCC } = buildApportsData(apports, subventions, toKey);
   const { nouveauxEmprunts, remboursementCapital } = buildEmpruntsData(emprunts, toKey);
-  const { immoIncorporelles, immoCorporelles, totalImmo } = buildImmoData(immobilisations, toKey);
+  const {
+    immoIncorporelles,
+    immoCorporelles,
+    totalImmo,
+    immoIncorporellesChildren,
+    immoCorporellesChildren,
+  } = buildImmoData(immobilisations, toKey);
   const subventionsInvest = buildSubventionsInvestData(subventions, toKey);
 
   const caf: Record<FinKey, number> = { y0: 0, y1: fc.caf.y1, y2: fc.caf.y2, y3: fc.caf.y3 };
@@ -82,8 +88,8 @@ export function buildPlanFinancementRows(
 
   const rows: FinRow[] = [
     mkFinRow("section_besoins", "BESOINS", "", "section", { y0: 0, y1: 0, y2: 0, y3: 0 }),
-    mkFinRow("immo_incorporelles", "Immobilisations incorporelles", "+", "normal", immoIncorporelles, true),
-    mkFinRow("immo_corporelles", "Immobilisations corporelles", "+", "normal", immoCorporelles, true),
+    mkFinRow("immo_incorporelles", "Immobilisations incorporelles", "+", "normal", immoIncorporelles, true, immoIncorporellesChildren),
+    mkFinRow("immo_corporelles", "Immobilisations corporelles", "+", "normal", immoCorporelles, true, immoCorporellesChildren),
     mkFinRow("total_immo", "Total immobilisations", "=", "subtotal", totalImmo, true),
     mkFinRow("variation_bfr", "Variation du BFR", "+", "normal", variationBFR, true),
     mkFinRow("remboursement_capital", "Remboursement des emprunts", "+", "normal", remboursementCapital, true),

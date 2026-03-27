@@ -34,6 +34,7 @@ export interface FinRow {
   style: "normal" | "subtotal" | "highlight" | "section";
   hideIfZero?: boolean;
   values: Record<FinKey, FinRowValue>;
+  children?: FinRow[];
 }
 
 export function mkFinRow(
@@ -43,6 +44,7 @@ export function mkFinRow(
   style: FinRow["style"],
   vals: Record<FinKey, number>,
   hideIfZero?: boolean,
+  children?: FinRow[],
 ): FinRow {
   return {
     key,
@@ -56,6 +58,7 @@ export function mkFinRow(
       y2: { amount: vals.y2 },
       y3: { amount: vals.y3 },
     },
+    ...(children && children.length > 0 ? { children } : {}),
   };
 }
 
@@ -147,24 +150,42 @@ export interface ImmoResult {
   immoIncorporelles: Record<FinKey, number>;
   immoCorporelles: Record<FinKey, number>;
   totalImmo: Record<FinKey, number>;
+  /** Lignes de détail de chaque immobilisation incorporelle (pour expand/collapse). */
+  immoIncorporellesChildren: FinRow[];
+  /** Lignes de détail de chaque immobilisation corporelle (pour expand/collapse). */
+  immoCorporellesChildren: FinRow[];
 }
 
 export function buildImmoData(
-  immobilisations: { nature: string; montantHT: unknown; dateAcquisition: Date | string; actif?: boolean | null }[],
+  immobilisations: { id: string; libelle?: string | null; nature: string; montantHT: unknown; dateAcquisition: Date | string; actif?: boolean | null }[],
   toKey: (date: Date | string) => FinKey | null,
 ): ImmoResult {
   const immoIncorporelles: Record<FinKey, number> = { y0: 0, y1: 0, y2: 0, y3: 0 };
   const immoCorporelles: Record<FinKey, number> = { y0: 0, y1: 0, y2: 0, y3: 0 };
+  const incorporelItems: FinRow[] = [];
+  const corporelItems: FinRow[] = [];
 
   for (const immo of immobilisations) {
     if (immo.actif === false) continue;
     const k = toKey(immo.dateAcquisition);
     if (!k) continue;
     const montant = n(immo.montantHT);
+    const itemVals: Record<FinKey, number> = { y0: 0, y1: 0, y2: 0, y3: 0 };
+    itemVals[k] = montant;
+    const itemRow = mkFinRow(
+      `immo_item_${immo.id}`,
+      immo.libelle ?? "Immobilisation",
+      "",
+      "normal",
+      itemVals,
+      true,
+    );
     if (immo.nature === "INCORPOREL") {
       immoIncorporelles[k] += montant;
+      incorporelItems.push(itemRow);
     } else {
       immoCorporelles[k] += montant;
+      corporelItems.push(itemRow);
     }
   }
 
@@ -175,7 +196,13 @@ export function buildImmoData(
     y3: immoIncorporelles.y3 + immoCorporelles.y3,
   };
 
-  return { immoIncorporelles, immoCorporelles, totalImmo };
+  return {
+    immoIncorporelles,
+    immoCorporelles,
+    totalImmo,
+    immoIncorporellesChildren: incorporelItems,
+    immoCorporellesChildren: corporelItems,
+  };
 }
 
 /**
