@@ -49,6 +49,7 @@ export const immobilisationSchema = z.object({
   typeTva: z.enum(["RECUPERABLE", "NON_RECUPERABLE", "EXONEREE"]),
   actif: z.boolean().optional(),
   ordre: z.number().int().min(0).optional(),
+  groupe: z.string().max(100).nullish(),
 });
 
 export type ImmobilisationRow = z.infer<typeof immobilisationSchema>;
@@ -66,6 +67,7 @@ export const cessionSchema = z.object({
   tauxTVA: z.number().min(0).max(100),
   actif: z.boolean().optional(),
   ordre: z.number().int().min(0).optional(),
+  groupe: z.string().max(100).nullish(),
 });
 
 export type CessionRow = z.infer<typeof cessionSchema>;
@@ -87,6 +89,7 @@ export const creditBailSchema = z.object({
   tauxTVA: z.number().min(0).max(100),
   actif: z.boolean().optional(),
   ordre: z.number().int().min(0).optional(),
+  groupe: z.string().max(100).nullish(),
 });
 
 export type CreditBailRow = z.infer<typeof creditBailSchema>;
