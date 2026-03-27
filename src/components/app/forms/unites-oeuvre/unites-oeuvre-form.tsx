@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, numVal } from "@/lib/utils";
 
 import {
   TYPES_UNITE,
@@ -46,10 +46,7 @@ const cellSelect =
 const cellReadonly =
   "h-7 w-full px-1 text-sm font-medium text-muted-foreground bg-muted/40 flex items-center";
 
-function numVal(v: string): number {
-  const n = parseFloat(v.replace(",", "."));
-  return isNaN(n) ? 0 : n;
-}
+
 
 function fmt(v: number, decimals = 2): string {
   if (v === 0) return "—";

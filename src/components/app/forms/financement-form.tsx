@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { cn, numVal } from "@/lib/utils";
 
 import {
   TYPES_APPORT,
@@ -68,11 +68,6 @@ const cellInput =
 
 const cellSelect =
   "h-7 w-full border-0 bg-transparent px-1 text-xs focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none cursor-pointer";
-
-function numVal(v: string): number {
-  const n = parseFloat(v.replace(",", "."));
-  return isNaN(n) ? 0 : n;
-}
 
 function intVal(v: string): number {
   const n = parseInt(v, 10);

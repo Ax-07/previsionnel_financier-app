@@ -14,7 +14,7 @@ import { Trash2, Plus, Save, Loader2, Scale, BadgeDollarSign, FlaskConical, Tren
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { cn, numVal } from "@/lib/utils";
 
 import {
   MODALITES_ACOMPTES,
@@ -41,11 +41,6 @@ const cellInput =
 
 const cellSelect =
   "h-7 w-full border-0 bg-transparent px-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none cursor-pointer";
-
-function numVal(v: string): number {
-  const n = parseFloat(v.replace(",", "."));
-  return isNaN(n) ? 0 : n;
-}
 
 function fmt(v: number) {
   return v.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });

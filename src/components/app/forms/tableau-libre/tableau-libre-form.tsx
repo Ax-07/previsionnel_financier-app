@@ -34,7 +34,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { cn, numVal } from "@/lib/utils";
 
 import {
   FORMAT_OPTIONS,
@@ -60,11 +60,6 @@ const cellNum =
   "h-7 w-full border-0 bg-transparent px-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none min-w-0";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function numVal(v: string): number {
-  const n = parseFloat(v.replace(",", ".").replace(/\s/g, ""));
-  return isNaN(n) ? 0 : n;
-}
 
 function fmt(v: number): string {
   if (v === 0) return "—";

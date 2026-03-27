@@ -26,6 +26,7 @@ import {
   type LigneDirigeantRow,
   type DetailMensuelExercice,
 } from "@/lib/schemas/personnel";
+import { numVal } from "@/lib/utils";
 
 // ── Types & helpers calendrier ───────────────────────────────────────────────
 
@@ -145,11 +146,6 @@ function initDetailFromMontant(
 
 function fmt(v: number) {
   return v.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-}
-
-function numVal(v: string): number {
-  const n = parseFloat(v.replace(",", "."));
-  return isNaN(n) ? 0 : n;
 }
 
 /** Somme des montants mensuels d'un exercice (effectif × brut ou montant direct). */

@@ -14,7 +14,7 @@ import { GroupedDndTable } from "@/components/ui/grouped-dnd-table";
 import { useGroupedDnd } from "@/hooks/use-grouped-dnd";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, numVal } from "@/lib/utils";
 
 import {
   NATURES_IMMOBILISATION,
@@ -54,11 +54,6 @@ const cellInput =
 
 const cellSelect =
   "h-7 w-full border-0 bg-transparent px-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none cursor-pointer";
-
-function numVal(v: string): number {
-  const n = parseFloat(v.replace(",", "."));
-  return isNaN(n) ? 0 : n;
-}
 
 function intVal(v: string): number {
   const n = parseInt(v, 10);

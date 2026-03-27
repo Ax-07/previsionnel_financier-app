@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowBigDown, ArrowBigUp, RefreshCw, DollarSign, Percent } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, numVal } from "@/lib/utils";
 import { useChargesStore } from "@/stores/charges-store";
 import { useActiviteStore } from "@/stores/activite-store";
 import type { ChargeExploitationRow } from "@/lib/schemas/charges";
@@ -115,11 +115,6 @@ function buildExercicesConfig(
   };
 }
 
-function numVal(v: string) {
-  const n = parseFloat(v.replace(",", "."));
-  return isNaN(n) ? 0 : n;
-}
-
 function fmt(v: number, dec = 0) {
   return v === 0 ? "—" : v.toLocaleString("fr-FR", { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
@@ -148,7 +143,7 @@ interface LigneMensuelle {
   total: number;
   format: "euro" | "percent";
   editable?: boolean;
-  onChange?: (idx: number, val: string) => void;
+  onChange?: (idx: number, val: number) => void;
   highlight?: boolean;
   totalClass?: string;
 }
@@ -206,8 +201,9 @@ function TableauMensuel({ lignes, moisLabels }: { lignes: LigneMensuelle[]; mois
                       className={cn(cellInput, "text-right")}
                       value={val === 0 ? "" : val}
                       placeholder="0"
+                      inputMode="decimal"
                       step={ligne.format === "percent" ? "0.01" : "1"}
-                      onChange={(e) => ligne.onChange?.(idx, e.target.value)}
+                      onChange={(e) => ligne.onChange?.(idx, numVal(e.target.value))}
                     />
                   ) : (
                     <span className={cn(
@@ -386,17 +382,17 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modeCalc, tauxParActivite, activitesSel]);
 
-  function handleTaux(ex: ExerciceKey, activiteIdx: number, val: string) {
+  function handleTaux(ex: ExerciceKey, activiteIdx: number, val: number) {
     setTauxParActivite((prev) => ({
       ...prev,
-      [ex]: { ...prev[ex], [activiteIdx]: numVal(val) },
+      [ex]: { ...prev[ex], [activiteIdx]: val },
     }));
   }
 
-  function handleSaison(ex: ExerciceKey, idx: number, val: string) {
+  function handleSaison(ex: ExerciceKey, idx: number, val: number) {
     setSaisonnalite((prev) => {
       const updated = [...prev[ex]];
-      updated[idx] = numVal(val);
+      updated[idx] = val;
       // Auto-switch à PERSONNALISEE dès que la répartition devient non-uniforme
       const isUniform = updated.every((v) => Math.abs(v - updated[0]!) < 0.01);
       if (!isUniform) {
@@ -412,17 +408,16 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
     setSaisonnalite((prev) => ({ ...prev, [ex]: buildEvenSaisonnalite(exercicesConfig[ex].duree) }));
   }
 
-  function handleMontantFixe(ex: ExerciceKey, val: string) {
-    const v = numVal(val);
+  function handleMontantFixe(ex: ExerciceKey, val: number) {
     if (ex === "N") {
-      const n1 = +(v * (1 + charge.evolutionN1 / 100)).toFixed(2);
+      const n1 = +(val * (1 + charge.evolutionN1 / 100)).toFixed(2);
       const n2 = +(n1 * (1 + charge.evolutionN2 / 100)).toFixed(2);
-      updateCharge(dossierId, currentIndex, { montantN: v, montantN1: n1, montantN2: n2 });
+      updateCharge(dossierId, currentIndex, { montantN: val, montantN1: n1, montantN2: n2 });
     } else if (ex === "N1") {
-      const n2 = +(v * (1 + charge.evolutionN2 / 100)).toFixed(2);
-      updateCharge(dossierId, currentIndex, { montantN1: v, montantN2: n2 });
+      const n2 = +(val * (1 + charge.evolutionN2 / 100)).toFixed(2);
+      updateCharge(dossierId, currentIndex, { montantN1: val, montantN2: n2 });
     } else {
-      updateCharge(dossierId, currentIndex, { montantN2: v });
+      updateCharge(dossierId, currentIndex, { montantN2: val });
     }
   }
 
@@ -491,7 +486,7 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
                   className="h-8 w-full rounded border border-border bg-background px-2 text-right text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                   value={getMontant(ex) || ""}
                   placeholder="0"
-                  onChange={(e) => handleMontantFixe(ex, e.target.value)}
+                  onChange={(e) => handleMontantFixe(ex, numVal(e.target.value))}
                 />
               </div>
             ))}
@@ -570,11 +565,12 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
                               <input
                                 type="number"
                                 className={cn(cellInput, "text-right")}
-                                value={tauxParActivite[ex][i] ?? ""}
+                                value={tauxParActivite[ex][i] || ""}
                                 placeholder="0"
                                 step={0.01}
+                                inputMode="decimal"
                                 disabled={!sel}
-                                onChange={(e) => handleTaux(ex, i, e.target.value)}
+                                onChange={(e) => handleTaux(ex, i, numVal(e.target.value))}
                               />
                             </td>
                             <td key={`${ex}-base`} className="px-2 py-1.5 text-xs text-right tabular-nums text-muted-foreground bg-muted/20">
@@ -683,7 +679,7 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
                       total: totalSaison,
                       format: "percent",
                       editable: true,
-                      onChange: (i, v) => handleSaison(ex, i, v),
+                      onChange: (i, v) => handleSaison(ex, i, v),  // v: number
                       totalClass: saisonOk
                         ? "text-green-600 dark:text-green-400"
                         : "text-destructive",
@@ -729,6 +725,7 @@ export function DetailChargeDialog({
   // Sync currentIndex quand le dialog s'ouvre sur une ligne différente.
   // DetailChargeDialog est toujours monté (jamais démonté) → useState n'init qu'une fois.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     if (open) setCurrentIndex(chargeIndex);
   }, [open, chargeIndex]);
 

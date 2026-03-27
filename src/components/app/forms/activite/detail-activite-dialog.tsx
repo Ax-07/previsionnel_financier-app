@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Link2, Link2Off, ArrowBigDown, ArrowBigUp, CopyCheck, ArrowDownToLine, ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { cn, numVal } from "@/lib/utils";
 import { useActiviteStore } from "@/stores/activite-store";
 import { MODES_CA, MODES_MARGE, MODES_EXIGIBILITE_TVA, TAUX_TVA_OPTIONS } from "@/lib/schemas/activite";
 import {
@@ -31,11 +31,6 @@ interface DetailActiviteDialogProps {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function numVal(v: string): number {
-  const n = parseFloat(v.replace(",", "."));
-  return isNaN(n) ? 0 : n;
-}
 
 function intVal(v: string): number {
   const n = parseInt(v, 10);
@@ -77,7 +72,7 @@ interface LigneMensuelle {
   total: number;
   format: "euro" | "percent" | "decimal";
   editable?: boolean;
-  onChange?: (idx: number, val: string) => void;
+  onChange?: (idx: number, val: number) => void;
   highlight?: boolean; // fond accentué + gras
   totalClass?: string; // classes CSS pour la cellule Total
 }
@@ -146,7 +141,7 @@ function TableauMensuel({ lignes, moisLabels }: { lignes: LigneMensuelle[]; mois
                       value={val === 0 ? "" : val}
                       placeholder="0"
                       step={ligne.format === "percent" ? "0.01" : "1"}
-                      onChange={(e) => ligne.onChange?.(idx, e.target.value)}
+                      onChange={(e) => ligne.onChange?.(idx, numVal(e.target.value))}
                     />
                   ) : (
                     <span

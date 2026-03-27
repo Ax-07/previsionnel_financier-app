@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useActiviteStore } from "@/stores/activite-store";
+import { numVal } from "@/lib/utils";
 
 // ── Types exportés ────────────────────────────────────────────────────────────
 
@@ -67,11 +68,11 @@ export interface UseActiviteCalculsReturn {
   /** La saisonnalité CA est-elle synchronisée avec les achats ? */
   syncSaisonnalite: boolean;
   /** Modifier une valeur de saisonnalité CA */
-  handleSaisonnalite: (ex: ExerciceKey, idx: number, val: string) => void;
+  handleSaisonnalite: (ex: ExerciceKey, idx: number, val: number) => void;
   /** Modifier une valeur de saisonnalité achats */
-  handleSaisonnaliteAchats: (ex: ExerciceKey, idx: number, val: string) => void;
+  handleSaisonnaliteAchats: (ex: ExerciceKey, idx: number, val: number) => void;
   /** Modifier un achat ponctuel */
-  handleAchatPonctuel: (ex: ExerciceKey, idx: number, val: string) => void;
+  handleAchatPonctuel: (ex: ExerciceKey, idx: number, val: number) => void;
   /** Importer la saisonnalité depuis une autre activité */
   handleImportFrom: (sourceIdx: number) => void;
   /** Basculer la synchronisation CA ↔ Achats */
@@ -213,11 +214,6 @@ function computeStocksAchats(
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
-
-function numVal(v: string): number {
-  const n = parseFloat(v.replace(",", "."));
-  return isNaN(n) ? 0 : n;
-}
 
 interface UseActiviteCalculsParams {
   dossierId: string;
@@ -377,9 +373,9 @@ export function useActiviteCalculs({
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
-  function handleSaisonnalite(ex: ExerciceKey, idx: number, val: string) {
+  function handleSaisonnalite(ex: ExerciceKey, idx: number, val: number) {
     const updated = [...saisonnalite[ex]];
-    updated[idx] = numVal(val);
+    updated[idx] = val;
     const next = { ...saisonnalite, [ex]: updated };
     setSaisonnalite(next);
     if (syncSaisonnalite) {
@@ -390,17 +386,17 @@ export function useActiviteCalculs({
     }
   }
 
-  function handleSaisonnaliteAchats(ex: ExerciceKey, idx: number, val: string) {
+  function handleSaisonnaliteAchats(ex: ExerciceKey, idx: number, val: number) {
     const updated = [...saisonnaliteAchats[ex]];
-    updated[idx] = numVal(val);
+    updated[idx] = val;
     const next = { ...saisonnaliteAchats, [ex]: updated };
     setSaisonnaliteAchats(next);
     updateActivite(dossierId, currentIndex, { saisonnaliteAchats: next });
   }
 
-  function handleAchatPonctuel(ex: ExerciceKey, idx: number, val: string) {
+  function handleAchatPonctuel(ex: ExerciceKey, idx: number, val: number) {
     const updated = [...achatsStockPonctuel[ex]];
-    updated[idx] = numVal(val);
+    updated[idx] = val;
     const next = { ...achatsStockPonctuel, [ex]: updated };
     setAchatsStockPonctuel(next);
     updateActivite(dossierId, currentIndex, { achatsStockPonctuel: next });
