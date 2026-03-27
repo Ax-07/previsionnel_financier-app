@@ -20,9 +20,11 @@ import BilanTab from "@/components/app/tabs/controle/bilan-tab";
 import TVATab from "@/components/app/tabs/controle/tva-tab";
 import RatiosTab from "@/components/app/tabs/controle/ratios-tab";
 import { TresorerieTab } from "./controle/tresorerie-tab";
+import DashboardKpiTab from "./controle/dashboard-kpi-tab";
 import { usePrefetchControleStores } from "@/hooks/use-prefetch-controle-stores";
 
 const controleSubTabs = [
+  { value: "dashboard", label: "Dashboard KPI" },
   { value: "synthese", label: "Synthèse" },
   { value: "compte-resultat", label: "Compte de résultat" },
   { value: "sig", label: "SIG" },
@@ -66,7 +68,7 @@ export default function ControleTab({ dossierId }: ControleTabProps) {
 
   return (
     <Tabs
-      defaultValue="synthese"
+      defaultValue="dashboard"
       className="flex h-full flex-col gap-0"
     >
       {/* Barre des sous-onglets */}
@@ -91,6 +93,7 @@ export default function ControleTab({ dossierId }: ControleTabProps) {
       <div className="min-h-0 flex-1">
         {controleSubTabs.map((tab) => {
           const isFullHeight =
+            tab.value === "dashboard" ||
             tab.value === "compte-resultat" ||
             tab.value === "sig" ||
             tab.value === "budget" ||
@@ -111,7 +114,9 @@ export default function ControleTab({ dossierId }: ControleTabProps) {
               forceMount
               className={isFullHeight ? "h-full data-[state=inactive]:hidden" : "h-full p-6 data-[state=inactive]:hidden"}
             >
-              {tab.value === "synthese" ? (
+              {tab.value === "dashboard" ? (
+                <DashboardKpiTab dossierId={dossierId} />
+              ) : tab.value === "synthese" ? (
                 <SyntheseTab dossierId={dossierId} />
               ) : tab.value === "compte-resultat" ? (
                 <CompteResultatTab dossierId={dossierId} />
