@@ -306,7 +306,7 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
   /**
    * Calcule la saisonnalité pondérée depuis les activités sélectionnées.
    * Chaque activité contribue proportionnellement à son montant dans le total.
-   * Fallback : répartition équitable si total = 0 ou saisonnalité absente.
+   * Fallback : saisonnalité de l'année N si N1/N2 non renseignée, puis répartition équitable.
    */
   function computeSaisonnaliteFromActivites(ex: ExerciceKey): number[] {
     const duree = exercicesConfig[ex].duree;
@@ -320,7 +320,9 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
       const contribution = calcBaseActivite(i, ex);
       if (contribution === 0) continue;
       const weight = contribution / total;
-      const actSaisonRaw = (activites[i]?.saisonnaliteCA as Record<string, number[]> | undefined)?.[exKey];
+      const saisons = activites[i]?.saisonnaliteCA as Record<string, number[]> | undefined;
+      // Fallback : saisonnalité de l'année N si l'année cible n'est pas renseignée
+      const actSaisonRaw = saisons?.[exKey] ?? saisons?.["N"];
       const actSaison = Array.isArray(actSaisonRaw) && actSaisonRaw.length >= duree
         ? actSaisonRaw
         : buildEvenSaisonnalite(duree);
@@ -639,7 +641,10 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
             const saison = saisonnalite[ex];
             const totalSaison = +saison.reduce((s, v) => s + v, 0).toFixed(2);
             const saisonOk = Math.abs(totalSaison - 100) < 0.1;
-            const montant = getMontant(ex);
+            // En mode % CA, lire le montant calculé directement depuis l'état local
+            // (totalBaseCA) plutôt que depuis le store (charge.montantN1 etc.) qui
+            // n'est mis à jour qu'après le prochain cycle de rendu via useEffect.
+            const montant = modeCalc === "POURCENTAGE_CA" ? totalBaseCA(ex) : getMontant(ex);
             const montants = calcMontants(montant, saison);
             const totalMontants = montants.reduce((a, b) => a + b, 0);
             const moisLabels = buildMoisLabels(cfg.startMonth, cfg.startYear, cfg.duree);
