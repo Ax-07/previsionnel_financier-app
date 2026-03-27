@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useActiviteStore } from "@/stores/activite-store";
 
 // ── Types exportés ────────────────────────────────────────────────────────────
@@ -225,6 +225,52 @@ interface UseActiviteCalculsParams {
   exercicesConfig: ExercicesConfig;
 }
 
+/** Extrait les saisonnalités CA depuis une activité du store. */
+function extractSaisonnaliteCA(
+  activite: ReturnType<ReturnType<typeof useActiviteStore.getState>["getDraft"]>["activites"][number] | undefined,
+  exercicesConfig: ExercicesConfig,
+): Record<ExerciceKey, number[]> {
+  const stored = activite?.saisonnaliteCA as Record<string, number[]> | undefined;
+  return {
+    N:  stored?.N  ?? buildEvenSaisonnalite(exercicesConfig.N.duree),
+    N1: stored?.N1 ?? buildEvenSaisonnalite(exercicesConfig.N1.duree),
+    N2: stored?.N2 ?? buildEvenSaisonnalite(exercicesConfig.N2.duree),
+  };
+}
+
+/** Extrait les saisonnalités Achats depuis une activité du store. */
+function extractSaisonnaliteAchats(
+  activite: ReturnType<ReturnType<typeof useActiviteStore.getState>["getDraft"]>["activites"][number] | undefined,
+  exercicesConfig: ExercicesConfig,
+): Record<ExerciceKey, number[]> {
+  const storedAchats = activite?.saisonnaliteAchats as Record<string, number[]> | undefined;
+  if (storedAchats)
+    return {
+      N:  storedAchats.N  ?? buildEvenSaisonnalite(exercicesConfig.N.duree),
+      N1: storedAchats.N1 ?? buildEvenSaisonnalite(exercicesConfig.N1.duree),
+      N2: storedAchats.N2 ?? buildEvenSaisonnalite(exercicesConfig.N2.duree),
+    };
+  const storedCA = activite?.saisonnaliteCA as Record<string, number[]> | undefined;
+  return {
+    N:  storedCA?.N  ?? buildEvenSaisonnalite(exercicesConfig.N.duree),
+    N1: storedCA?.N1 ?? buildEvenSaisonnalite(exercicesConfig.N1.duree),
+    N2: storedCA?.N2 ?? buildEvenSaisonnalite(exercicesConfig.N2.duree),
+  };
+}
+
+/** Extrait les achats ponctuels depuis une activité du store. */
+function extractAchatsStockPonctuel(
+  activite: ReturnType<ReturnType<typeof useActiviteStore.getState>["getDraft"]>["activites"][number] | undefined,
+  exercicesConfig: ExercicesConfig,
+): Record<ExerciceKey, number[]> {
+  const stored = activite?.achatsStockPonctuel as Record<string, number[]> | undefined;
+  return {
+    N:  stored?.N  ?? Array(exercicesConfig.N.duree).fill(0),
+    N1: stored?.N1 ?? Array(exercicesConfig.N1.duree).fill(0),
+    N2: stored?.N2 ?? Array(exercicesConfig.N2.duree).fill(0),
+  };
+}
+
 export function useActiviteCalculs({
   dossierId,
   currentIndex,
@@ -235,44 +281,36 @@ export function useActiviteCalculs({
   const activite = draft.activites[currentIndex];
 
   // ── State : saisonnalité CA ───────────────────────────────────────────────
-  const [saisonnalite, setSaisonnalite] = useState<Record<ExerciceKey, number[]>>(() => {
-    const stored = activite?.saisonnaliteCA as Record<string, number[]> | undefined;
-    return {
-      N:  stored?.N  ?? buildEvenSaisonnalite(exercicesConfig.N.duree),
-      N1: stored?.N1 ?? buildEvenSaisonnalite(exercicesConfig.N1.duree),
-      N2: stored?.N2 ?? buildEvenSaisonnalite(exercicesConfig.N2.duree),
-    };
-  });
+  // Initialisé depuis le store ; resynchronisé si le store change (ex: hydratation
+  // serveur arrivant après le montage du composant).
+  const [saisonnalite, setSaisonnalite] = useState<Record<ExerciceKey, number[]>>(
+    () => extractSaisonnaliteCA(activite, exercicesConfig),
+  );
 
   // ── State : synchronisation saisonnalité CA ↔ Achats ─────────────────────
   const [syncSaisonnalite, setSyncSaisonnalite] = useState(true);
 
   // ── State : saisonnalité Achats (indépendante si désynchronisée) ──────────
-  const [saisonnaliteAchats, setSaisonnaliteAchats] = useState<Record<ExerciceKey, number[]>>(() => {
-    const storedAchats = activite?.saisonnaliteAchats as Record<string, number[]> | undefined;
-    if (storedAchats)
-      return {
-        N:  storedAchats.N  ?? buildEvenSaisonnalite(exercicesConfig.N.duree),
-        N1: storedAchats.N1 ?? buildEvenSaisonnalite(exercicesConfig.N1.duree),
-        N2: storedAchats.N2 ?? buildEvenSaisonnalite(exercicesConfig.N2.duree),
-      };
-    const storedCA = activite?.saisonnaliteCA as Record<string, number[]> | undefined;
-    return {
-      N:  storedCA?.N  ?? buildEvenSaisonnalite(exercicesConfig.N.duree),
-      N1: storedCA?.N1 ?? buildEvenSaisonnalite(exercicesConfig.N1.duree),
-      N2: storedCA?.N2 ?? buildEvenSaisonnalite(exercicesConfig.N2.duree),
-    };
-  });
+  const [saisonnaliteAchats, setSaisonnaliteAchats] = useState<Record<ExerciceKey, number[]>>(
+    () => extractSaisonnaliteAchats(activite, exercicesConfig),
+  );
 
   // ── State : achats de stock ponctuels ─────────────────────────────────────
-  const [achatsStockPonctuel, setAchatsStockPonctuel] = useState<Record<ExerciceKey, number[]>>(() => {
-    const stored = activite?.achatsStockPonctuel as Record<string, number[]> | undefined;
-    return {
-      N:  stored?.N  ?? Array(exercicesConfig.N.duree).fill(0),
-      N1: stored?.N1 ?? Array(exercicesConfig.N1.duree).fill(0),
-      N2: stored?.N2 ?? Array(exercicesConfig.N2.duree).fill(0),
-    };
-  });
+  const [achatsStockPonctuel, setAchatsStockPonctuel] = useState<Record<ExerciceKey, number[]>>(
+    () => extractAchatsStockPonctuel(activite, exercicesConfig),
+  );
+
+  // ── Resync depuis le store à chaque changement d'activité ou d'index ──────
+  // Corrige le cas où le store est mis à jour après le montage initial
+  // (hydratation serveur, changement de dossier, etc.).
+  useEffect(() => {
+    const freshActivite = getDraft(dossierId).activites[currentIndex];
+    setSaisonnalite(extractSaisonnaliteCA(freshActivite, exercicesConfig));
+    setSaisonnaliteAchats(extractSaisonnaliteAchats(freshActivite, exercicesConfig));
+    setAchatsStockPonctuel(extractAchatsStockPonctuel(freshActivite, exercicesConfig));
+  // On observe dossierId et currentIndex ; exercicesConfig est stable par construction.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dossierId, currentIndex]);
 
   // ── Calculs séquentiels N → N+1 → N+2 (continuité inter-exercices) ───────
   const calculs = (() => {
