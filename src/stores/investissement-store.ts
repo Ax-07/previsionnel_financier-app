@@ -76,26 +76,47 @@ export const useInvestissementStore = create<InvestissementStore>()(
 
         hydrateImmos(dossierId, rows) {
           const existing = get().immos[dossierId];
-          const hasDirty = existing?.some((r: LocalImmo) => r._dirty);
-          if (!existing || !hasDirty) {
+          if (!existing) {
             set((state) => ({ immos: { ...state.immos, [dossierId]: rows } }));
+            return;
           }
+          if (existing.some((r: LocalImmo) => r._dirty)) return;
+          const serverIds = new Set(rows.map((r) => r.id).filter((id): id is string => !!id));
+          const storeIsAhead = existing.some(
+            (r: LocalImmo) => r.id && !r.id.startsWith("__new__") && !serverIds.has(r.id)
+          );
+          if (storeIsAhead) return;
+          set((state) => ({ immos: { ...state.immos, [dossierId]: rows } }));
         },
 
         hydrateCessions(dossierId, rows) {
           const existing = get().cessions[dossierId];
-          const hasDirty = existing?.some((r: LocalCession) => r._dirty);
-          if (!existing || !hasDirty) {
+          if (!existing) {
             set((state) => ({ cessions: { ...state.cessions, [dossierId]: rows } }));
+            return;
           }
+          if (existing.some((r: LocalCession) => r._dirty)) return;
+          const serverIds = new Set(rows.map((r) => r.id).filter((id): id is string => !!id));
+          const storeIsAhead = existing.some(
+            (r: LocalCession) => r.id && !r.id.startsWith("__new__") && !serverIds.has(r.id)
+          );
+          if (storeIsAhead) return;
+          set((state) => ({ cessions: { ...state.cessions, [dossierId]: rows } }));
         },
 
         hydrateCredits(dossierId, rows) {
           const existing = get().credits[dossierId];
-          const hasDirty = existing?.some((r: LocalCredit) => r._dirty);
-          if (!existing || !hasDirty) {
+          if (!existing) {
             set((state) => ({ credits: { ...state.credits, [dossierId]: rows } }));
+            return;
           }
+          if (existing.some((r: LocalCredit) => r._dirty)) return;
+          const serverIds = new Set(rows.map((r) => r.id).filter((id): id is string => !!id));
+          const storeIsAhead = existing.some(
+            (r: LocalCredit) => r.id && !r.id.startsWith("__new__") && !serverIds.has(r.id)
+          );
+          if (storeIsAhead) return;
+          set((state) => ({ credits: { ...state.credits, [dossierId]: rows } }));
         },
 
         clearDossier(dossierId) {

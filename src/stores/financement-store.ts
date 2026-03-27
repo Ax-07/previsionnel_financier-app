@@ -51,18 +51,38 @@ export const useFinancementStore = create<FinancementStore>()(
 
         hydrateApports(dossierId, rows) {
           const existing = get().apports[dossierId];
-          const hasDirty = existing?.some((r) => r._dirty);
-          if (!existing || !hasDirty) {
+          if (!existing) {
             set((s) => ({ apports: { ...s.apports, [dossierId]: rows } }));
+            return;
           }
+          const hasDirty = existing.some((r) => r._dirty);
+          if (hasDirty) return;
+          // Ne pas écraser si le store contient des lignes sauvegardées absentes
+          // du initialData (store en avance sur le serveur après un save récent)
+          const serverIds = new Set(rows.map((r) => r.id).filter((id): id is string => !!id));
+          const storeIsAhead = existing.some(
+            (r) => r.id && !r.id.startsWith("__new__") && !serverIds.has(r.id)
+          );
+          if (storeIsAhead) return;
+          set((s) => ({ apports: { ...s.apports, [dossierId]: rows } }));
         },
 
         hydrateEmprunts(dossierId, rows) {
           const existing = get().emprunts[dossierId];
-          const hasDirty = existing?.some((r) => r._dirty);
-          if (!existing || !hasDirty) {
+          if (!existing) {
             set((s) => ({ emprunts: { ...s.emprunts, [dossierId]: rows } }));
+            return;
           }
+          const hasDirty = existing.some((r) => r._dirty);
+          if (hasDirty) return;
+          // Ne pas écraser si le store contient des lignes sauvegardées absentes
+          // du initialData (store en avance sur le serveur après un save récent)
+          const serverIds = new Set(rows.map((r) => r.id).filter((id): id is string => !!id));
+          const storeIsAhead = existing.some(
+            (r) => r.id && !r.id.startsWith("__new__") && !serverIds.has(r.id)
+          );
+          if (storeIsAhead) return;
+          set((s) => ({ emprunts: { ...s.emprunts, [dossierId]: rows } }));
         },
 
         clearDossier(dossierId) {
