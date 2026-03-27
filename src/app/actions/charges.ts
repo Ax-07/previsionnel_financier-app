@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma, Prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 import {
@@ -131,6 +132,7 @@ export async function saveFournitures(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Fournitures consommables enregistrées." };
   } catch (error) {
     console.error("[saveFournitures] Erreur :", error);
@@ -233,6 +235,7 @@ export async function saveServices(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Services extérieurs enregistrés." };
   } catch (error) {
     console.error("[saveServices] Erreur :", error);
@@ -334,6 +337,7 @@ export async function saveImpots(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Impôts et taxes enregistrés." };
   } catch (error) {
     console.error("[saveImpots] Erreur :", error);

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma, Prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 import {
@@ -166,6 +167,7 @@ export async function saveActivites(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Activités enregistrées avec succès" };
   } catch (error) {
     console.error("[saveActivites] Erreur :", error);
@@ -174,9 +176,10 @@ export async function saveActivites(
   }
 }
 
-export async function deleteActivite(activiteId: string): Promise<ActionResult> {
+export async function deleteActivite(activiteId: string, dossierId: string): Promise<ActionResult> {
   try {
     await prisma.activite.delete({ where: { id: activiteId } });
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Activité supprimée" };
   } catch (error) {
     console.error("[deleteActivite] Erreur :", error);
@@ -274,8 +277,7 @@ export async function saveActivitesCommission(
         }
       }
     });
-
-    return { success: true, message: "Activités commissionnées enregistrées avec succès" };
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);    return { success: true, message: "Activités commissionnées enregistrées avec succès" };
   } catch (error) {
     console.error("[saveActivitesCommission] Erreur :", error);
     if (isPrismaError(error, "P2025")) return { success: false, error: "Dossier introuvable" };
@@ -362,6 +364,7 @@ export async function saveProductionsImmobilisees(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Productions immobilisées enregistrées avec succès" };
   } catch (error) {
     console.error("[saveProductionsImmobilisees] Erreur :", error);
@@ -453,6 +456,7 @@ export async function saveSubventionsExploitation(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Subventions d'exploitation enregistrées avec succès" };
   } catch (error) {
     console.error("[saveSubventionsExploitation] Erreur :", error);

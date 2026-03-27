@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 import {
@@ -119,6 +120,7 @@ export async function saveFluxDates(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Enregistré avec succès" };
   } catch (error) {
     console.error("[saveFluxDates]", error);
@@ -203,6 +205,7 @@ export async function saveOperationsCapital(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Enregistré avec succès" };
   } catch (error) {
     console.error("[saveOperationsCapital]", error);
@@ -283,6 +286,7 @@ export async function savePrets(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Enregistré avec succès" };
   } catch (error) {
     console.error("[savePrets]", error);

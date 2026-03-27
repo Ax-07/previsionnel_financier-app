@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 import {
@@ -125,6 +126,7 @@ export async function saveReprises(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Reprises sur provisions enregistrées." };
   } catch (error) {
     console.error("[saveReprises]", error);
@@ -222,6 +224,7 @@ export async function saveProduitsDate(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Produits enregistrés." };
   } catch (error) {
     console.error("[saveProduitsDate]", error);
@@ -306,6 +309,7 @@ export async function saveConstates(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return {
       success: true,
       message: "Produits constatés d'avance enregistrés.",

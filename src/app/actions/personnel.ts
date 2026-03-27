@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 import {
@@ -144,6 +145,7 @@ export async function saveLignesSalaries(
       );
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return {
       success: true,
       message: "Salariés enregistrés",
@@ -240,6 +242,7 @@ export async function saveLignesDirigeants(
       );
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return {
       success: true,
       message: "Dirigeant enregistré",
@@ -373,6 +376,7 @@ export async function saveLignesCotisationsTNS(
       );
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Cotisations TNS enregistrées", ids: saved.map((s) => s.id) };
   } catch (error) {
     console.error("[saveLignesCotisationsTNS] Erreur :", error);
@@ -441,6 +445,7 @@ export async function saveLignesTaxesSalaires(
       );
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Taxes sur salaires enregistrées", ids: saved.map((s) => s.id) };
   } catch (error) {
     console.error("[saveLignesTaxesSalaires] Erreur :", error);
@@ -516,6 +521,7 @@ export async function saveLignesChargesPersonnel(
     });
 
     const labels: Record<TypeChargePersonnel, string> = { AUTRE: "Autres charges", REMBOURSEMENT: "Remboursements", PARTICIPATION: "Participation" };
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: `${labels[type]} enregistré(e)s`, ids: saved.map((s) => s.id) };
   } catch (error) {
     console.error(`[saveLignesChargesPersonnel:${type}] Erreur :`, error);
@@ -572,6 +578,7 @@ export async function saveMoisPaiementSalaires(
       update: { moisPaiementSalaires: moisPaiement },
       create: { scenarioId, moisPaiementSalaires: moisPaiement },
     });
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Mois de paiement enregistré" };
   } catch (error) {
     console.error("[saveMoisPaiementSalaires] Erreur :", error);
@@ -634,6 +641,7 @@ export async function saveParamsGlobauxTNS(
         tnsDecalerN2: params.decalerEcheancierN2,
       },
     });
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Paramètres TNS enregistrés" };
   } catch (error) {
     console.error("[saveParamsGlobauxTNS] Erreur :", error);

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 import {
@@ -110,6 +111,7 @@ export async function saveProvisions(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Dotations sur provisions enregistrées." };
   } catch (error) {
     console.error("[saveProvisions]", error);
@@ -209,6 +211,7 @@ export async function saveChargesDatees(
       FINANCIERE: "Charges financières",
       EXCEPTIONNELLE: "Charges exceptionnelles",
     };
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: `${labels[categorie] ?? "Charges"} enregistrées.` };
   } catch (error) {
     console.error("[saveChargesDatees]", error);
@@ -299,6 +302,7 @@ export async function saveChargesBilan(
       CHARGE_CONSTATEE_AVANCE: "Charges constatées d'avance",
       CHARGE_A_PAYER: "Charges à payer",
     };
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: `${labels[type] ?? "Charges"} enregistrées.` };
   } catch (error) {
     console.error("[saveChargesBilan]", error);

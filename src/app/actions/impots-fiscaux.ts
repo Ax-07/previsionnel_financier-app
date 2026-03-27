@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 import {
@@ -99,6 +100,7 @@ export async function saveReintegrations(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Réintégrations fiscales enregistrées." };
   } catch (error) {
     console.error("[saveReintegrations] Erreur :", error);
@@ -191,6 +193,7 @@ export async function saveDeductions(
       }
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Déductions fiscales enregistrées." };
   } catch (error) {
     console.error("[saveDeductions] Erreur :", error);
@@ -332,6 +335,7 @@ export async function saveParametresIS(
       update: upsertData,
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Paramètres fiscaux enregistrés." };
   } catch (error) {
     console.error("[saveParametresIS] Erreur :", error);

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 import {
@@ -118,6 +119,7 @@ export async function upsertApport(
       id = created.id;
     }
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: data.id ? "Apport mis à jour." : "Apport créé.", id };
   } catch (err) {
     console.error("[upsertApport]", err);
@@ -126,9 +128,10 @@ export async function upsertApport(
   }
 }
 
-export async function deleteApport(id: string): Promise<ActionResult> {
+export async function deleteApport(id: string, dossierId: string): Promise<ActionResult> {
   try {
     await prisma.apport.delete({ where: { id } });
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Apport supprimé." };
   } catch (err) {
     console.error("[deleteApport]", err);
@@ -238,6 +241,7 @@ export async function upsertEmprunt(
       return empruntId;
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: isUpdate ? "Emprunt mis à jour." : "Emprunt créé.", id };
   } catch (err) {
     console.error("[upsertEmprunt]", err);
@@ -246,9 +250,10 @@ export async function upsertEmprunt(
   }
 }
 
-export async function deleteEmprunt(id: string): Promise<ActionResult> {
+export async function deleteEmprunt(id: string, dossierId: string): Promise<ActionResult> {
   try {
     await prisma.emprunt.delete({ where: { id } });
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Emprunt supprimé." };
   } catch (err) {
     console.error("[deleteEmprunt]", err);

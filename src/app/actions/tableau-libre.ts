@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 import {
@@ -235,6 +236,7 @@ export async function saveTableauxLibres(
 
     // Refetch pour retourner les IDs frais
     const freshTableaux = await fetchTableauxLibres(dossierId);
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return {
       success: true,
       message: "Tableaux libres enregistrés.",

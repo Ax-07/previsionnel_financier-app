@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 import {
@@ -112,6 +113,7 @@ export async function fetchImmobilisations(
       dureeAmortissement: item.dureeAmortissement ?? undefined,
       actif: item.actif,
       ordre: item.ordre,
+      groupe: item.groupe ?? undefined,
       lignesAmortissement: item.lignesAmortissement.map((l) => ({
         annee: l.annee,
         valeurBruteDebut: Number(l.valeurBruteDebut),
@@ -155,6 +157,7 @@ export async function upsertImmobilisation(
       dureeAmortissement: data.dureeAmortissement ?? 5,
       actif: data.actif ?? true,
       ordre: data.ordre ?? 0,
+      groupe: data.groupe ?? null,
       scenarioId,
     };
 
@@ -179,6 +182,7 @@ export async function upsertImmobilisation(
       return immoId;
     });
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return {
       success: true,
       message: data.id ? "Immobilisation mise à jour." : "Immobilisation créée.",
@@ -191,9 +195,10 @@ export async function upsertImmobilisation(
   }
 }
 
-export async function deleteImmobilisation(id: string): Promise<ActionResult> {
+export async function deleteImmobilisation(id: string, dossierId: string): Promise<ActionResult> {
   try {
     await prisma.immobilisation.delete({ where: { id } });
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Immobilisation supprimée." };
   } catch (err) {
     console.error("[deleteImmobilisation]", err);
@@ -230,6 +235,7 @@ export async function fetchCessions(dossierId: string): Promise<CessionRow[]> {
       tauxTVA: Number(item.tauxTVA),
       actif: item.actif,
       ordre: item.ordre,
+      groupe: item.groupe ?? undefined,
     }));
   } catch (err) {
     console.error("[fetchCessions]", err);
@@ -271,6 +277,7 @@ export async function upsertCession(
       tauxTVA: data.tauxTVA,
       actif: data.actif ?? true,
       ordre: data.ordre ?? 0,
+      groupe: data.groupe ?? null,
       scenarioId,
     };
 
@@ -282,6 +289,7 @@ export async function upsertCession(
       id = created.id;
     }
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return {
       success: true,
       message: data.id ? "Cession mise à jour." : "Cession créée.",
@@ -294,9 +302,10 @@ export async function upsertCession(
   }
 }
 
-export async function deleteCession(id: string): Promise<ActionResult> {
+export async function deleteCession(id: string, dossierId: string): Promise<ActionResult> {
   try {
     await prisma.cessionImmobilisation.delete({ where: { id } });
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Cession supprimée." };
   } catch (err) {
     console.error("[deleteCession]", err);
@@ -337,6 +346,7 @@ export async function fetchCreditsBaux(dossierId: string): Promise<CreditBailRow
       tauxTVA: Number(item.tauxTVA),
       actif: item.actif,
       ordre: item.ordre,
+      groupe: item.groupe ?? undefined,
     }));
   } catch (err) {
     console.error("[fetchCreditsBaux]", err);
@@ -371,6 +381,7 @@ export async function upsertCreditBail(
       tauxTVA: data.tauxTVA,
       actif: data.actif ?? true,
       ordre: data.ordre ?? 0,
+      groupe: data.groupe ?? null,
       scenarioId,
     };
 
@@ -382,6 +393,7 @@ export async function upsertCreditBail(
       id = created.id;
     }
 
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return {
       success: true,
       message: data.id ? "Crédit-bail mis à jour." : "Crédit-bail créé.",
@@ -394,9 +406,10 @@ export async function upsertCreditBail(
   }
 }
 
-export async function deleteCreditBail(id: string): Promise<ActionResult> {
+export async function deleteCreditBail(id: string, dossierId: string): Promise<ActionResult> {
   try {
     await prisma.creditBail.delete({ where: { id } });
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Crédit-bail supprimé." };
   } catch (err) {
     console.error("[deleteCreditBail]", err);
