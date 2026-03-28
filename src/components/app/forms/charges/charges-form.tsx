@@ -319,26 +319,33 @@ function TableauChargeExploitation({
                 </Td>
 
                 {/* N */}
-                <Td>
-                  <input
-                    type="number"
-                    className={cn(cellInput, "text-right")}
-                    value={row.montantN || ""}
-                    placeholder="0"
-                    min={0}
-                    step={0.01}
-                    onChange={(e) => handleUpdate(i, { montantN: numVal(e.target.value) })}
-                  />
+                <Td className={cn(row.detailCalc?.modeCalc === "POURCENTAGE_CA" ? "bg-muted/20 text-muted-foreground" : "")}>
+                  {row.detailCalc?.modeCalc === "POURCENTAGE_CA" ? (
+                    <span className="block px-1.5 py-1 text-right text-sm tabular-nums text-muted-foreground">
+                      {row.montantN.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </span>
+                  ) : (
+                    <input
+                      type="number"
+                      className={cn(cellInput, "text-right")}
+                      value={row.montantN || ""}
+                      placeholder="0"
+                      min={0}
+                      step={0.01}
+                      onChange={(e) => handleUpdate(i, { montantN: numVal(e.target.value) })}
+                    />
+                  )}
                 </Td>
 
                 {/* % Évol N→N+1 */}
                 <Td>
                   <input
                     type="number"
-                    className={cn(cellInput, "text-center")}
+                    className={cn(cellInput, "text-center", row.detailCalc?.modeCalc === "POURCENTAGE_CA" ? "bg-muted/20 text-muted-foreground" : "")}
                     value={row.evolutionN1 || ""}
                     placeholder="0"
                     step={0.1}
+                    disabled={row.detailCalc?.modeCalc === "POURCENTAGE_CA"}
                     onChange={(e) => handleUpdate(i, { evolutionN1: numVal(e.target.value) })}
                   />
                 </Td>
@@ -346,7 +353,7 @@ function TableauChargeExploitation({
                 {/* N+1 (calculé) */}
                 <Td className="bg-muted/20">
                   <span className="block px-1.5 py-1 text-right text-sm tabular-nums text-muted-foreground">
-                    {row.montantN1.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                    {row.montantN1.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </span>
                 </Td>
 
@@ -354,10 +361,11 @@ function TableauChargeExploitation({
                 <Td>
                   <input
                     type="number"
-                    className={cn(cellInput, "text-center")}
+                    className={cn(cellInput, "text-center", row.detailCalc?.modeCalc === "POURCENTAGE_CA" ? "bg-muted/20 text-muted-foreground" : "")}
                     value={row.evolutionN2 || ""}
                     placeholder="0"
                     step={0.1}
+                    disabled={row.detailCalc?.modeCalc === "POURCENTAGE_CA"}
                     onChange={(e) => handleUpdate(i, { evolutionN2: numVal(e.target.value) })}
                   />
                 </Td>
@@ -365,7 +373,7 @@ function TableauChargeExploitation({
                 {/* N+2 (calculé) */}
                 <Td className="bg-muted/20">
                   <span className="block px-1.5 py-1 text-right text-sm tabular-nums text-muted-foreground">
-                    {row.montantN2.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                    {row.montantN2.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </span>
                 </Td>
 
@@ -485,7 +493,7 @@ function TableauChargeExploitation({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function calcCFE(base: number, taux: number) {
-  return +(base * taux / 100).toFixed(2);
+  return +((base * taux) / 100).toFixed(2);
 }
 
 type CfeMode = "VALEUR" | "CALCUL";
@@ -504,9 +512,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
   const cfeIdx = rows.findIndex((r) => r.isCFE);
   const cfeRow = cfeIdx >= 0 ? rows[cfeIdx] : null;
   // cfeModeCalc=true → "CALCUL" (base × taux) ; false/undefined → "VALEUR"
-  const [cfeMode, setCfeMode] = useState<CfeMode>(
-    cfeRow?.cfeModeCalc ? "CALCUL" : "VALEUR"
-  );
+  const [cfeMode, setCfeMode] = useState<CfeMode>(cfeRow?.cfeModeCalc ? "CALCUL" : "VALEUR");
 
   // Lignes "standard" (hors CFE)
   const otherRows = rows.map((r, i) => ({ row: r, idx: i })).filter(({ row }) => !row.isCFE);
@@ -531,7 +537,16 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
     if (!hasCfe) {
       // on insère en tête
       store.setImpots(dossierId, [
-        { libelle: "CFE", actif: true, hypothese: "normale", isCFE: true, cfeModeCalc: false, montantN: 0, montantN1: 0, montantN2: 0 },
+        {
+          libelle: "CFE",
+          actif: true,
+          hypothese: "normale",
+          isCFE: true,
+          cfeModeCalc: false,
+          montantN: 0,
+          montantN1: 0,
+          montantN2: 0,
+        },
         ...afterSync.impots,
       ]);
       // Marquer dirty : la CFE créée localement doit être persistée en base
@@ -654,10 +669,12 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
           </thead>
           <tbody>
             {/* ── Ligne CFE permanente ───────────────────────────────── */}
-            <tr className={cn(
-              "border-t border-border bg-blue-50/40 dark:bg-blue-950/20",
-              !(cfeRow?.actif ?? true) && "opacity-50",
-            )}>
+            <tr
+              className={cn(
+                "border-t border-border bg-blue-50/40 dark:bg-blue-950/20",
+                !(cfeRow?.actif ?? true) && "opacity-50",
+              )}
+            >
               {/* # */}
               <Td className="text-center text-xs text-muted-foreground px-1.5">—</Td>
 
@@ -674,9 +691,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
               {/* Libellé + mode toggle */}
               <Td>
                 <div className="flex items-center gap-2 px-1">
-                  <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 whitespace-nowrap">
-                    CFE
-                  </span>
+                  <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 whitespace-nowrap">CFE</span>
                   {/* Mini toggle */}
                   <div className="flex items-center gap-0.5 p-0.5 rounded bg-background/80 border border-blue-200 dark:border-blue-800">
                     <button
@@ -684,9 +699,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
                       onClick={() => handleCfeMode("VALEUR")}
                       className={cn(
                         "px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors",
-                        cfeMode === "VALEUR"
-                          ? "bg-blue-600 text-white"
-                          : "text-muted-foreground hover:text-foreground",
+                        cfeMode === "VALEUR" ? "bg-blue-600 text-white" : "text-muted-foreground hover:text-foreground",
                       )}
                     >
                       Valeur
@@ -696,9 +709,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
                       onClick={() => handleCfeMode("CALCUL")}
                       className={cn(
                         "px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors",
-                        cfeMode === "CALCUL"
-                          ? "bg-blue-600 text-white"
-                          : "text-muted-foreground hover:text-foreground",
+                        cfeMode === "CALCUL" ? "bg-blue-600 text-white" : "text-muted-foreground hover:text-foreground",
                       )}
                     >
                       Base × taux
@@ -715,7 +726,9 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
                   onChange={(e) => handleCfeUpdate({ hypothese: e.target.value })}
                 >
                   {HYPOTHESES_CHARGE.map((h) => (
-                    <option key={h.value} value={h.value}>{h.label}</option>
+                    <option key={h.value} value={h.value}>
+                      {h.label}
+                    </option>
                   ))}
                 </select>
               </Td>
@@ -913,7 +926,9 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
                     onChange={(e) => handleUpdate(idx, { hypothese: e.target.value })}
                   >
                     {HYPOTHESES_CHARGE.map((h) => (
-                      <option key={h.value} value={h.value}>{h.label}</option>
+                      <option key={h.value} value={h.value}>
+                        {h.label}
+                      </option>
                     ))}
                   </select>
                 </Td>
@@ -1012,7 +1027,14 @@ interface ChargesFormProps {
   exercices?: Array<{ dateCloture: string; duree: number; annee: number }>;
 }
 
-export function ChargesForm({ dossierId, fournitures = [], services = [], impots = [], dateDebutExerciceN, exercices }: ChargesFormProps) {
+export function ChargesForm({
+  dossierId,
+  fournitures = [],
+  services = [],
+  impots = [],
+  dateDebutExerciceN,
+  exercices,
+}: ChargesFormProps) {
   return (
     <div className="h-full space-y-10 overflow-y-auto">
       {/* Section 1 — Fournitures consommables */}

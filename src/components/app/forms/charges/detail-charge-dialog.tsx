@@ -362,6 +362,11 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
         },
         activitesSel: Object.fromEntries(Object.entries(activitesSel).map(([k, v]) => [k, v])),
       },
+      montantN: modeCalc === "FIXE" ? charge.montantN : totalBaseCA("N"),
+      montantN1: modeCalc === "FIXE" ? charge.montantN1 : totalBaseCA("N1"),
+      montantN2: modeCalc === "FIXE" ? charge.montantN2 : totalBaseCA("N2"),
+      evolutionN1: modeCalc === "FIXE" ? charge.evolutionN1 : getMontant("N") !== 0 ? +(((totalBaseCA("N1") - totalBaseCA("N")) / totalBaseCA("N")) * 100).toFixed(2) : 0,
+      evolutionN2: modeCalc === "FIXE" ? charge.evolutionN2 : getMontant("N1") !== 0 ? +(((totalBaseCA("N2") - totalBaseCA("N1")) / totalBaseCA("N1")) * 100).toFixed(2) : 0,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modeCalc, saisonnalite, tauxParActivite, activitesSel]);
@@ -611,9 +616,9 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
             <Percent className="h-3 w-3 shrink-0" />
             <span>
               Montants mis à jour automatiquement :
-              <span className="font-semibold text-foreground mx-1">N = {fmt(getMontant("N"))} €</span>·
-              <span className="font-semibold text-foreground mx-1">N+1 = {fmt(getMontant("N1"))} €</span>·
-              <span className="font-semibold text-foreground mx-1">N+2 = {fmt(getMontant("N2"))} €</span>
+              <span className="font-semibold text-foreground mx-1">N = {fmt(totalBaseCA("N"))} €</span>·
+              <span className="font-semibold text-foreground mx-1">N+1 = {fmt(totalBaseCA("N1"))} €</span>·
+              <span className="font-semibold text-foreground mx-1">N+2 = {fmt(totalBaseCA("N2"))} €</span>
             </span>
           </div>
         </div>

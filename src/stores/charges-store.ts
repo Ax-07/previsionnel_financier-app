@@ -178,18 +178,24 @@ export const useChargesStore = create<ChargesState>()(
           const draft = state.drafts[dossierId] ?? getEmptyDraft();
           const rows = [...draft.fournitures];
           const row = rows[index];
+
           if (!row) return state;
           // Auto-calcul N+1 et N+2 si montantN ou évolution change
           const merged = { ...row, ...data };
-          if ("montantN" in data || "evolutionN1" in data) {
-            merged.montantN1 = parseFloat(
-              (merged.montantN * (1 + merged.evolutionN1 / 100)).toFixed(2)
-            );
-          }
-          if ("montantN1" in data || "evolutionN2" in data || "montantN" in data || "evolutionN1" in data) {
-            merged.montantN2 = parseFloat(
-              (merged.montantN1 * (1 + merged.evolutionN2 / 100)).toFixed(2)
-            );
+          const isPourcentageCA = merged.detailCalc?.modeCalc === "POURCENTAGE_CA";
+
+          if (!isPourcentageCA) {
+            if ("montantN" in data || "evolutionN1" in data) {
+              merged.montantN1 = parseFloat(
+                (merged.montantN * (1 + merged.evolutionN1 / 100)).toFixed(2)
+              );
+            }
+
+            if ("montantN1" in data || "evolutionN2" in data || "montantN" in data || "evolutionN1" in data) {
+              merged.montantN2 = parseFloat(
+                (merged.montantN1 * (1 + merged.evolutionN2 / 100)).toFixed(2)
+              );
+            }
           }
           rows[index] = merged;
           return {
@@ -264,15 +270,19 @@ export const useChargesStore = create<ChargesState>()(
           const row = rows[index];
           if (!row) return state;
           const merged = { ...row, ...data };
-          if ("montantN" in data || "evolutionN1" in data) {
-            merged.montantN1 = parseFloat(
-              (merged.montantN * (1 + merged.evolutionN1 / 100)).toFixed(2)
-            );
-          }
-          if ("montantN1" in data || "evolutionN2" in data || "montantN" in data || "evolutionN1" in data) {
-            merged.montantN2 = parseFloat(
-              (merged.montantN1 * (1 + merged.evolutionN2 / 100)).toFixed(2)
-            );
+          const isPourcentageCA = merged.detailCalc?.modeCalc === "POURCENTAGE_CA";
+
+          if (!isPourcentageCA) {
+            if ("montantN" in data || "evolutionN1" in data) {
+              merged.montantN1 = parseFloat(
+                (merged.montantN * (1 + merged.evolutionN1 / 100)).toFixed(2)
+              );
+            }
+            if ("montantN1" in data || "evolutionN2" in data || "montantN" in data || "evolutionN1" in data) {
+              merged.montantN2 = parseFloat(
+                (merged.montantN1 * (1 + merged.evolutionN2 / 100)).toFixed(2)
+              );
+            }
           }
           rows[index] = merged;
           return {
