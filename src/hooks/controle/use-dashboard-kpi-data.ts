@@ -403,7 +403,7 @@ export function useDashboardKpiData(dossierId: string): DashboardKpiState {
           buildCard("caf", "CAF", "cash", "currency", "up", cafAmt, ca, true, "Capacité d'autofinancement"),
           buildCard("autofinancement", "Autofinancement net", "cash", "currency", "up", autofinAnce, ZERO, false, "CAF − remboursements"),
           buildCard("tresorerie_mensuelle", "Trésorerie fin d'exercice", "cash", "currency", "up", soldeMensuelAmt, ZERO, false, "Solde mensuel M12"),
-          buildCard("runway", "Runway", "cash", "months", "up", runwayAmt, ZERO, false, "Mois avant trésorerie nulle"),
+          buildCard("runway", "Autonomie de trésorerie", "cash", "months", "up", runwayAmt, ZERO, false, "Mois avant trésorerie nulle"),
         ],
       },
       {

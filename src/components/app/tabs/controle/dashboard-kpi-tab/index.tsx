@@ -3,12 +3,14 @@
 import { useCallback, useState } from "react";
 import {
   RefreshCwIcon,
-  ActivityIcon,
-  BarChart3Icon,
-  WalletIcon,
-  TargetIcon,
+  BarChart2Icon,
   TrendingUpIcon,
-  ClockIcon,
+  CircleDollarSignIcon,
+  TargetIcon,
+  CalendarCheckIcon,
+  WalletIcon,
+  GaugeIcon,
+  PiggyBankIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,10 +39,7 @@ interface DashboardKpiTabProps {
 export default function DashboardKpiTab({ dossierId }: DashboardKpiTabProps) {
   const { data, status, error } = useDashboardKpiData(dossierId);
   const [selectedYear, setSelectedYear] = useState<YearKey>("y1");
-  const reload = useCallback(
-    () => useScenarioDataStore.getState().reload(dossierId),
-    [dossierId],
-  );
+  const reload = useCallback(() => useScenarioDataStore.getState().reload(dossierId), [dossierId]);
 
   if (status === "loading" || status === "idle") {
     return <DashboardSkeleton />;
@@ -62,7 +61,6 @@ export default function DashboardKpiTab({ dossierId }: DashboardKpiTabProps) {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="flex shrink-0 items-center justify-between border-b bg-background px-4 py-2.5">
         <div>
@@ -100,50 +98,63 @@ export default function DashboardKpiTab({ dossierId }: DashboardKpiTabProps) {
       {/* ── Corps scrollable ──────────────────────────────────────────────── */}
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="space-y-4 p-4">
-
           {/* ── Ligne 1 — Hero KPIs ─────────────────────────────────────── */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
             <HeroKpiCard
               label="Chiffre d'affaires"
               card={findGroupCard(data.groups, "ca")}
               yk={selectedYear}
               accent="bg-blue-500/5 border-blue-500/20"
-              iconEl={<ActivityIcon className="size-3.5 text-blue-500" />}
-            />
-            <HeroKpiCard
-              label="Résultat net"
-              card={findGroupCard(data.groups, "res_net")}
-              yk={selectedYear}
-              accent="bg-purple-500/5 border-purple-500/20"
-              iconEl={<BarChart3Icon className="size-3.5 text-purple-500" />}
-            />
-            <HeroKpiCard
-              label="Trésorerie fin d'exercice"
-              card={findGroupCard(data.groups, "tresorerie_mensuelle")}
-              yk={selectedYear}
-              accent="bg-emerald-500/5 border-emerald-500/20"
-              iconEl={<WalletIcon className="size-3.5 text-emerald-500" />}
+              iconEl={<BarChart2Icon className="size-5 text-blue-500" />}
             />
             <HeroKpiCard
               label="Marge brute"
               card={findGroupCard(data.groups, "marge_globale")}
               yk={selectedYear}
               accent="bg-amber-500/5 border-amber-500/20"
-              iconEl={<TrendingUpIcon className="size-3.5 text-amber-500" />}
+              iconEl={<TrendingUpIcon className="size-5 text-amber-500" />}
+            />
+            <HeroKpiCard
+              label="Résultat net"
+              card={findGroupCard(data.groups, "res_net")}
+              yk={selectedYear}
+              accent="bg-green-500/5 border-green-500/20"
+              iconEl={<CircleDollarSignIcon className="size-5 text-green-500" />}
             />
             <HeroKpiCard
               label="Seuil d'équilibre"
               card={findGroupCard(data.groups, "seuil_eco")}
               yk={selectedYear}
               accent="bg-rose-500/5 border-rose-500/20"
-              iconEl={<TargetIcon className="size-3.5 text-rose-500" />}
+              iconEl={<TargetIcon className="size-5 text-rose-500" />}
             />
             <HeroKpiCard
-              label="Runway"
-              card={findGroupCard(data.groups, "runway")}
+              label="Point mort"
+              card={findGroupCard(data.groups, "point_mort")}
               yk={selectedYear}
               accent="bg-cyan-500/5 border-cyan-500/20"
-              iconEl={<ClockIcon className="size-3.5 text-cyan-500" />}
+              iconEl={<CalendarCheckIcon className="size-5 text-cyan-500" />}
+            />
+            <HeroKpiCard
+              label="Trésorerie fin d'exercice"
+              card={findGroupCard(data.groups, "tresorerie_mensuelle")}
+              yk={selectedYear}
+              accent="bg-emerald-500/5 border-emerald-500/20"
+              iconEl={<WalletIcon className="size-5 text-emerald-500" />}
+            />
+            <HeroKpiCard
+              label="Autonomie de trésorerie"
+              card={findGroupCard(data.groups, "runway")}
+              yk={selectedYear}
+              accent="bg-orange-500/5 border-orange-500/20"
+              iconEl={<GaugeIcon className="size-5 text-orange-500" />}
+            />
+            <HeroKpiCard
+              label="Capacité d'autofinancement"
+              card={findGroupCard(data.groups, "caf")}
+              yk={selectedYear}
+              accent="bg-violet-500/5 border-violet-500/20"
+              iconEl={<PiggyBankIcon className="size-5 text-violet-500" />}
             />
           </div>
 
@@ -168,7 +179,11 @@ export default function DashboardKpiTab({ dossierId }: DashboardKpiTabProps) {
               <AnnuelChart data={data.charts.annuel} monthly={data.charts.monthly} selectedYear={selectedYear} />
             </ChartPanel>
             <ChartPanel className="h-56">
-              <ChargesChart data={data.charts.chargesBreakdown} yearLabels={data.yearLabels} selectedYear={selectedYear} />
+              <ChargesChart
+                data={data.charts.chargesBreakdown}
+                yearLabels={data.yearLabels}
+                selectedYear={selectedYear}
+              />
             </ChartPanel>
           </div>
 
@@ -189,12 +204,7 @@ export default function DashboardKpiTab({ dossierId }: DashboardKpiTabProps) {
           </div>
 
           {/* ── Ligne 6 — Tableau mensuel ─────────────────────────────────── */}
-          <TableauMensuelPanel
-            data={data.charts}
-            yearLabels={data.yearLabels}
-            defaultYear={selectedYear}
-          />
-
+          <TableauMensuelPanel data={data.charts} yearLabels={data.yearLabels} defaultYear={selectedYear} />
         </div>
       </div>
     </div>

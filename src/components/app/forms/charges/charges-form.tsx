@@ -739,7 +739,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
                   <input
                     type="date"
                     className={cellInput}
-                    value={cfeRow?.dateN ?? ""}
+                    value={cfeRow?.dateN || ""}
                     onChange={(e) => handleCfeUpdate({ dateN: e.target.value })}
                   />
                 ) : (
@@ -772,7 +772,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
                   <input
                     type="date"
                     className={cellInput}
-                    value={cfeRow?.dateN1 ?? ""}
+                    value={cfeRow?.dateN1 || ""}
                     onChange={(e) => handleCfeUpdate({ dateN1: e.target.value })}
                   />
                 ) : (
@@ -805,7 +805,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
                   <input
                     type="date"
                     className={cellInput}
-                    value={cfeRow?.dateN2 ?? ""}
+                    value={cfeRow?.dateN2 || ""}
                     onChange={(e) => handleCfeUpdate({ dateN2: e.target.value })}
                   />
                 ) : (
@@ -851,7 +851,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
                       <input
                         type="number"
                         className="h-7 w-32 rounded border border-border bg-background px-2 text-right text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                        value={cfeRow?.baseImposableCFE ?? ""}
+                        value={cfeRow?.baseImposableCFE || ""}
                         placeholder="0"
                         min={0}
                         step={1}
@@ -863,7 +863,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
                       <input
                         type="number"
                         className="h-7 w-20 rounded border border-border bg-background px-2 text-right text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                        value={cfeRow?.tauxCFE ?? ""}
+                        value={cfeRow?.tauxCFE || ""}
                         placeholder="0"
                         min={0}
                         max={100}
