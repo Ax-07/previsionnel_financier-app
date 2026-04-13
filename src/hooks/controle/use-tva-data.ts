@@ -17,12 +17,12 @@ export interface TvaDataState {
 }
 
 export function useTvaData(dossierId: string): TvaDataState {
-  const { data, status, error } = useFinCalc(dossierId);
+  const { data, fc, status, error } = useFinCalc(dossierId);
 
   const result = useMemo<VATData | null>(() => {
-    if (!data) return null;
+    if (!data || !fc) return null;
 
-    const { dateDemarrage, scenario } = data;
+    const { dateDemarrage } = data;
     const anneeDebut = dateDemarrage.getFullYear();
     const moisDebut = dateDemarrage.getMonth();
 
@@ -41,23 +41,16 @@ export function useTvaData(dossierId: string): TvaDataState {
       y3: buildMonthLabels(moisDebut, anneeDebut + 2),
     };
 
-    const regimeTVA = scenario.parametres?.regimeTVA ?? "REEL_NORMAL";
-    const isFranchise = regimeTVA === "FRANCHISE";
+    const { isFranchise, periodicite } = fc.tva;
 
     if (isFranchise) {
       return { yearLabels, monthLabels, rows: [], periodicite: "mensuel", isFranchise: true };
     }
 
-    const periodicite = (
-      (scenario.parametres?.periodiciteDeclarationTVA ?? "mensuel") === "trimestriel"
-        ? "trimestriel"
-        : "mensuel"
-    ) as "mensuel" | "trimestriel";
-
-    const rows = buildTVARows(data, periodicite);
+    const rows = buildTVARows(data, fc);
 
     return { yearLabels, monthLabels, rows, periodicite, isFranchise };
-  }, [data]);
+  }, [data, fc]);
 
   return { data: result, status, error };
 }

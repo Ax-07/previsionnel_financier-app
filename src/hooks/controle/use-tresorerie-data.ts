@@ -58,10 +58,11 @@ export function useTresorerieData(
       y3: buildMonthLabels(moisDebut, anneeDebut + 2),
     };
 
-    const ctx = buildTemporelCtx(dateDemarrage, isFranchise);
+    const delaiClients = scenario.parametres?.delaiPaiementClients ?? 30;
+    const ctx = buildTemporelCtx(dateDemarrage, isFranchise, delaiClients);
 
     const enc = calcEncaissements(data, ctx);
-    const dec = calcDecaissements(data, ctx, effectiveMoisPaiement, fc.isParAnnee);
+    const dec = calcDecaissements(data, ctx, effectiveMoisPaiement, fc.isParAnnee, fc.tva);
 
     const variation = {
       y1: subSeries(enc.totalEnc.y1, dec.totalDec.y1),

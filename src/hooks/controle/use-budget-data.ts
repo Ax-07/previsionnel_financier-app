@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
-import { buildMonthlyCalc } from "@/lib/finance/calculs/monthly";
 import { buildBudgetTree } from "@/app/actions/controle/budget/build-tree";
 import { buildBudgetMonthLabels } from "@/app/actions/controle/budget/helpers";
 import type { BudgetData } from "@/app/actions/controle/budget/types";
@@ -23,7 +22,7 @@ export function useBudgetData(dossierId: string): BudgetDataState {
   const result = useMemo<BudgetData | null>(() => {
     if (!data || !fc) return null;
 
-    const mc = buildMonthlyCalc(data, data.dateDemarrage, fc.isParAnnee);
+    const mc = fc.monthlyCalc;
 
     const monthLabels: Record<YearKey, string[]> = {
       y1: buildBudgetMonthLabels(mc.moisDebut, mc.anneeDebut),

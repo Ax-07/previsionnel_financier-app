@@ -2,26 +2,19 @@
 
 import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
-import { buildSigData } from "@/lib/finance/aggregations/sig";
-import { calcSeuil } from "@/lib/finance/calculs/seuil";
-import { buildBfrRows } from "@/lib/finance/aggregations/bfr";
-import { buildBilanRows } from "@/lib/finance/aggregations/bilan";
-import { subSeries } from "@/lib/finance/calculs/monthly";
-import { computeSoldeMonthly } from "@/lib/finance/tresorerie-engine";
-import { buildTemporelCtx } from "@/lib/finance/pipeline/calendar";
-import {
-  calcEncaissements,
-  calcAchatsRaw,
-  calcEncoursFournisseurs,
-} from "@/lib/finance/calculs/encaissements";
-import { calcDecaissements } from "@/lib/finance/calculs/decaissements";
-import { buildTresorerieRows } from "@/lib/finance/aggregations/tresorerie";
-import { buildPlanFinancementRows, type PfRow } from "@/lib/finance/aggregations/plan-financement";
+import { useSigData } from "@/hooks/controle/use-sig-data";
+import { useSeuilRentabiliteData } from "@/hooks/controle/use-seuil-rentabilite-data";
+import { useBfrData } from "@/hooks/controle/use-bfr-data";
+import { useBilanData } from "@/hooks/controle/use-bilan-data";
+import { usePlanFinancementData } from "@/hooks/controle/use-plan-financement-data";
+import { useTresorerieData, type TresorerieRow } from "@/hooks/controle/use-tresorerie-data";
+import { useDashboardChartsData } from "@/hooks/controle/use-dashboard-charts-data";
+import type { DashboardChartData } from "@/hooks/controle/use-dashboard-charts-data";
+import type { PfRow } from "@/lib/finance/aggregations/plan-financement";
 import type { SigNode } from "@/lib/finance/aggregations/sig";
 import type { BreakEvenRow } from "@/lib/finance/calculs/seuil";
 import type { BfrRow } from "@/lib/finance/aggregations/bfr";
 import type { BilanRow } from "@/lib/finance/aggregations/bilan";
-import type { TresorerieRow } from "@/lib/finance/tresorerie-types";
 import type { YearKey } from "@/lib/finance/utils";
 import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
 
@@ -40,65 +33,16 @@ export interface KpiValue {
   trend?: number | null;
 }
 
-// ── Types charts ──────────────────────────────────────────────────────────────
-
-export interface TresoMonthPoint {
-  mois: string;
-  encaissements: number;
-  decaissements: number;
-  solde: number;
-  /** CA mensuel (encaissements prod vendue TTC) */
-  ca: number;
-  /** Charges d'exploitation mensuelles décaissées */
-  charges: number;
-}
-
-export interface AnnuelBarPoint {
-  exercice: string;
-  ca: number;
-  charges: number;
-  resNet: number;
-}
-
-export interface MonthlyBarPoint {
-  mois: string;
-  ca: number;
-  charges: number;
-  resNet: number;
-}
-
-export interface ChargesBreakdownPoint {
-  exercice: string;
-  achats: number;
-  chargesExternes: number;
-  personnel: number;
-  impotsTaxes: number;
-  amortissements: number;
-  interets: number;
-}
-
-export interface SeuilBarPoint {
-  exercice: string;
-  caRealise: number;
-  seuilEco: number;
-  excedent: number;
-}
-
-export interface PfChartPoint {
-  periode: string;
-  besoins: number;
-  ressources: number;
-  solde: number;
-}
-
-export interface DashboardChartData {
-  tresorerie: Record<YearKey, TresoMonthPoint[]>;
-  annuel: AnnuelBarPoint[];
-  monthly: Record<YearKey, MonthlyBarPoint[]>;
-  chargesBreakdown: ChargesBreakdownPoint[];
-  seuil: SeuilBarPoint[];
-  planFinancement: PfChartPoint[];
-}
+// ── Types charts (définis dans use-dashboard-charts-data) ────────────────────
+export type {
+  TresoMonthPoint,
+  AnnuelBarPoint,
+  MonthlyBarPoint,
+  ChargesBreakdownPoint,
+  SeuilBarPoint,
+  PfChartPoint,
+  DashboardChartData,
+} from "@/hooks/controle/use-dashboard-charts-data";
 
 export interface KpiCard {
   key: string;
@@ -110,6 +54,8 @@ export interface KpiCard {
   positive: KpiPositive;
   showPctOfCa: boolean;
   values: Record<YearKey, KpiValue>;
+  /** Valeur de la période initiale (y0 / démarrage), si pertinente */
+  y0value?: KpiValue;
 }
 
 export interface KpiGroup {
@@ -120,6 +66,7 @@ export interface KpiGroup {
 
 export interface DashboardKpiData {
   yearLabels: Record<YearKey, string>;
+  y0Label: string;
   groups: KpiGroup[];
   charts: DashboardChartData;
 }
@@ -141,7 +88,7 @@ function extractSigAmt(nodes: SigNode[], key: string): Record<YearKey, number> {
 function extractBreakEvenAmt(rows: BreakEvenRow[], key: string): Record<YearKey, number> {
   const row = rows.find((r) => r.key === key);
   if (!row) return { y1: 0, y2: 0, y3: 0 };
-  return { y1: row.values.y1.amount, y2: row.values.y2.amount, y3: row.values.y3.amount };
+  return { y1: row.values.y1.amount ?? 0, y2: row.values.y2.amount ?? 0, y3: row.values.y3.amount ?? 0 };
 }
 
 function extractBfrAmt(rows: BfrRow[], key: string): Record<YearKey, number> {
@@ -160,6 +107,17 @@ function extractTresoAmt(rows: TresorerieRow[], key: string): Record<YearKey, nu
   const row = rows.find((r) => r.key === key);
   if (!row) return { y1: 0, y2: 0, y3: 0 };
   return { y1: row.values.y1.total, y2: row.values.y2.total, y3: row.values.y3.total };
+}
+
+function extractTresoMonthly(rows: TresorerieRow[], key: string): Record<YearKey, number[]> {
+  const row = rows.find((r) => r.key === key);
+  const zero = new Array(12).fill(0) as number[];
+  if (!row) return { y1: zero, y2: zero, y3: zero };
+  return {
+    y1: Array.from(row.values.y1.months),
+    y2: Array.from(row.values.y2.months),
+    y3: Array.from(row.values.y3.months),
+  };
 }
 
 function extractPfAmt(rows: PfRow[], key: string): Record<"y0" | "y1" | "y2" | "y3", number> {
@@ -214,43 +172,23 @@ function buildCard(
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useDashboardKpiData(dossierId: string): DashboardKpiState {
+  // ── Sources de données (chaque build* est memoizé dans son hook dédié) ─────
   const { data, fc, status, error } = useFinCalc(dossierId);
+  const { data: sigData }   = useSigData(dossierId);
+  const { data: seuilData } = useSeuilRentabiliteData(dossierId);
+  const { data: bfrData }   = useBfrData(dossierId);
+  const { data: bilanData } = useBilanData(dossierId);
+  const { data: pfData }    = usePlanFinancementData(dossierId);
+  const { data: tresoData }  = useTresorerieData(dossierId);
+  const { data: chartsData } = useDashboardChartsData(dossierId);
 
   const result = useMemo<DashboardKpiData | null>(() => {
-    if (!data || !fc) return null;
+    if (!data || !fc || !sigData || !seuilData || !bfrData || !bilanData || !pfData || !tresoData || !chartsData) return null;
 
-    // ── Calculs dépendants ─────────────────────────────────────────────────────
-    const sigData = buildSigData(data, fc, data.isIS);
-    const seuilData = calcSeuil(data, fc);
-    const bfrData = buildBfrRows(data, fc);
-    const bilanData = buildBilanRows(data, fc);
-
-    const { dateDemarrage, scenario } = data;
-    const effectiveMoisPaiement = scenario.parametres?.moisPaiementSalaires ?? 1;
-    const regimeTVA = scenario.parametres?.regimeTVA ?? "REEL_NORMAL";
-    const isFranchise = regimeTVA === "FRANCHISE";
-
-    const ctx = buildTemporelCtx(dateDemarrage, isFranchise);
-    const enc = calcEncaissements(data, ctx);
-    const dec = calcDecaissements(data, ctx, effectiveMoisPaiement, fc.isParAnnee);
-
-    const variation = {
-      y1: subSeries(enc.totalEnc.y1, dec.totalDec.y1),
-      y2: subSeries(enc.totalEnc.y2, dec.totalDec.y2),
-      y3: subSeries(enc.totalEnc.y3, dec.totalDec.y3),
-    };
-    const y1Sol = computeSoldeMonthly(variation.y1, 0);
-    const y2Sol = computeSoldeMonthly(variation.y2, y1Sol.soldeFinal[11] ?? 0);
-    const y3Sol = computeSoldeMonthly(variation.y3, y2Sol.soldeFinal[11] ?? 0);
-
-    const soldePrecedent = { y1: y1Sol.soldePrecedent, y2: y2Sol.soldePrecedent, y3: y3Sol.soldePrecedent };
-    const soldeFinal = { y1: y1Sol.soldeFinal, y2: y2Sol.soldeFinal, y3: y3Sol.soldeFinal };
-    const decAchatsRaw = calcAchatsRaw(data.activites, isFranchise);
-    const encoursFournisseurs = calcEncoursFournisseurs(decAchatsRaw, dec.decAchats);
-    const tresoRows = buildTresorerieRows({
-      enc, dec, soldePrecedent, variation, soldeFinal, encoursFournisseurs,
-      immosParNature: dec.immosParNature,
-    });
+    // ── Séries mensuelles pour le calcul du runway ────────────────────────────
+    const totalEncMonthly = extractTresoMonthly(tresoData.rows, "enc-total");
+    const totalDecMonthly = extractTresoMonthly(tresoData.rows, "dec-total");
+    const soldeFinal      = extractTresoMonthly(tresoData.rows, "tres-solde-final");
 
     // ── Extractions ────────────────────────────────────────────────────────────
     const ca = extractSigAmt(sigData.nodes, "ca");
@@ -284,7 +222,7 @@ export function useDashboardKpiData(dossierId: string): DashboardKpiState {
       y3: frAmt.y3 - bfrAmt.y3,
     };
 
-    const soldeMensuelAmt = extractTresoAmt(tresoRows, "tres-solde-final");
+    const soldeMensuelAmt = extractTresoAmt(tresoData.rows, "tres-solde-final");
 
     // Autofinancement = CAF - remboursements emprunts
     const autofinAnce: Record<YearKey, number> = {
@@ -307,21 +245,22 @@ export function useDashboardKpiData(dossierId: string): DashboardKpiState {
       return lastSolde > 0 ? lastSolde / avgBurn : 0;
     }
     const runwayAmt: Record<YearKey, number> = {
-      y1: calcRunway(enc.totalEnc.y1, dec.totalDec.y1, soldeFinal.y1[11] ?? 0),
-      y2: calcRunway(enc.totalEnc.y2, dec.totalDec.y2, soldeFinal.y2[11] ?? 0),
-      y3: calcRunway(enc.totalEnc.y3, dec.totalDec.y3, soldeFinal.y3[11] ?? 0),
+      y1: calcRunway(totalEncMonthly.y1, totalDecMonthly.y1, soldeFinal.y1[11] ?? 0),
+      y2: calcRunway(totalEncMonthly.y2, totalDecMonthly.y2, soldeFinal.y2[11] ?? 0),
+      y3: calcRunway(totalEncMonthly.y3, totalDecMonthly.y3, soldeFinal.y3[11] ?? 0),
     };
 
     // ── Plan de financement & KPIs Investissements / Financement ─────────────
-    const pfData = buildPlanFinancementRows(data, fc);
     const pfRows = pfData.rows;
     const pfTotalImmo = extractPfAmt(pfRows, "total_immo");
     const pfApportsCapital = extractPfAmt(pfRows, "apports_capital");
     const pfApportsCC = extractPfAmt(pfRows, "apports_cc");
     const pfNouveauxEmprunts = extractPfAmt(pfRows, "nouveaux_emprunts");
     const pfTotalBesoins = extractPfAmt(pfRows, "total_besoins");
-    const pfTotalRessources = extractPfAmt(pfRows, "total_ressources");
-    const pfSolde = extractPfAmt(pfRows, "solde_tresorerie");
+    const pfTotalRessources     = extractPfAmt(pfRows, "total_ressources");
+    const pfVariationBfr         = extractPfAmt(pfRows, "variation_bfr");
+    const pfRemboursementCapital = extractPfAmt(pfRows, "remboursement_capital");
+    const pfCaf                  = extractPfAmt(pfRows, "caf");
 
     // KPI — Total investissements (acquisitions initiales y0 → incluses en N1)
     const totalImmoKpi: Record<YearKey, number> = {
@@ -342,6 +281,33 @@ export function useDashboardKpiData(dossierId: string): DashboardKpiState {
       y1: pfNouveauxEmprunts.y0 + pfNouveauxEmprunts.y1,
       y2: pfNouveauxEmprunts.y2,
       y3: pfNouveauxEmprunts.y3,
+    };
+
+    // KPI — Besoin total de financement (y0 initial → inclus en N1)
+    const totalBesoinsKpi: Record<YearKey, number> = {
+      y1: pfTotalBesoins.y0 + pfTotalBesoins.y1,
+      y2: pfTotalBesoins.y2,
+      y3: pfTotalBesoins.y3,
+    };
+
+    // KPI — Total ressources (y0 initial → inclus en N1)
+    const totalRessourcesKpi: Record<YearKey, number> = {
+      y1: pfTotalRessources.y0 + pfTotalRessources.y1,
+      y2: pfTotalRessources.y2,
+      y3: pfTotalRessources.y3,
+    };
+
+    // KPI — Couverture des besoins initiaux (snapshot y0 uniquement)
+    // Répété sur y1/y2/y3 car c'est une donnée point-in-time, pas un flux annuel
+    const totalBesoinsInitialKpi: Record<YearKey, number> = {
+      y1: pfTotalBesoins.y0,
+      y2: pfTotalBesoins.y0,
+      y3: pfTotalBesoins.y0,
+    };
+    const totalRessourcesInitialKpi: Record<YearKey, number> = {
+      y1: pfTotalRessources.y0,
+      y2: pfTotalRessources.y0,
+      y3: pfTotalRessources.y0,
     };
 
     // KPI — Taux d'endettement = emprunts passif / capitaux propres × 100 %
@@ -400,7 +366,7 @@ export function useDashboardKpiData(dossierId: string): DashboardKpiState {
         key: "cash",
         label: "Cash & Financement",
         cards: [
-          buildCard("caf", "CAF", "cash", "currency", "up", cafAmt, ca, true, "Capacité d'autofinancement"),
+          { ...buildCard("caf", "CAF", "cash", "currency", "up", cafAmt, ca, true, "Capacité d'autofinancement"), y0value: { amount: pfCaf.y0, trend: null } },
           buildCard("autofinancement", "Autofinancement net", "cash", "currency", "up", autofinAnce, ZERO, false, "CAF − remboursements"),
           buildCard("tresorerie_mensuelle", "Trésorerie fin d'exercice", "cash", "currency", "up", soldeMensuelAmt, ZERO, false, "Solde mensuel M12"),
           buildCard("runway", "Autonomie de trésorerie", "cash", "months", "up", runwayAmt, ZERO, false, "Mois avant trésorerie nulle"),
@@ -411,7 +377,7 @@ export function useDashboardKpiData(dossierId: string): DashboardKpiState {
         label: "BFR & Trésorerie",
         cards: [
           buildCard("fr", "Fonds de roulement", "bfr", "currency", "up", frAmt, ZERO, false),
-          buildCard("bfr", "Besoin en fonds de roulement", "bfr", "currency", "down", bfrAmt, ZERO, false),
+          { ...buildCard("bfr", "Besoin en fonds de roulement", "bfr", "currency", "down", bfrAmt, ZERO, false), y0value: { amount: pfVariationBfr.y0, trend: null } },
           buildCard("solde_annuel", "Trésorerie nette", "bfr", "currency", "up", soldeAnnuelAmt, ZERO, false, "FR − BFR"),
         ],
       },
@@ -441,7 +407,7 @@ export function useDashboardKpiData(dossierId: string): DashboardKpiState {
         key: "investissement",
         label: "Investissements",
         cards: [
-          buildCard("total_immo", "Total investissements", "investissement", "currency", "up", totalImmoKpi, ZERO, false, "Immo corpo + incorpo"),
+          { ...buildCard("total_immo", "Total investissements", "investissement", "currency", "up", totalImmoKpi, ZERO, false, "Immo corpo + incorpo"), y0value: { amount: pfTotalImmo.y0, trend: null } },
           buildCard("dotations_amort", "Dotations amortissements", "investissement", "currency", "up", { y1: fc.dotationsAmort.y1, y2: fc.dotationsAmort.y2, y3: fc.dotationsAmort.y3 }, ZERO, false),
           buildCard("immo_nette", "Immobilisations nettes", "investissement", "currency", "up", immoNette, ZERO, false, "Bilan fin d'exercice"),
         ],
@@ -450,154 +416,29 @@ export function useDashboardKpiData(dossierId: string): DashboardKpiState {
         key: "financement",
         label: "Financement",
         cards: [
-          buildCard("apports_capital", "Apports en capital", "financement", "currency", "up", apportsCapitalKpi, ZERO, false, "Capital + comptes courants"),
-          buildCard("nouveaux_emprunts", "Emprunts souscrits", "financement", "currency", "up", nouveauxEmpruntsKpi, ZERO, false),
+          { ...buildCard("apports_capital", "Apports en capital", "financement", "currency", "up", apportsCapitalKpi, ZERO, false, "Capital + comptes courants"), y0value: { amount: pfApportsCapital.y0 + pfApportsCC.y0, trend: null } },
+          { ...buildCard("nouveaux_emprunts", "Emprunts souscrits", "financement", "currency", "up", nouveauxEmpruntsKpi, ZERO, false), y0value: { amount: pfNouveauxEmprunts.y0, trend: null } },
+          { ...buildCard("total_besoins", "Total besoins", "financement", "currency", "up", totalBesoinsKpi, ZERO, false, "Investissements + BFR"), y0value: { amount: pfTotalBesoins.y0, trend: null } },
+          { ...buildCard("total_ressources", "Total ressources", "financement", "currency", "up", totalRessourcesKpi, ZERO, false, "Apports + emprunts + CAF"), y0value: { amount: pfTotalRessources.y0, trend: null } },
+          buildCard("total_besoins_initial", "Besoins initiaux (y0)", "financement", "currency", "up", totalBesoinsInitialKpi, ZERO, false, "Snapshot démarrage"),
+          buildCard("total_ressources_initial", "Ressources initiales (y0)", "financement", "currency", "up", totalRessourcesInitialKpi, ZERO, false, "Snapshot démarrage"),
+          buildCard("mensualite_emprunt", "Mensualité emprunt", "financement", "currency", "down", { y1: Math.round((fc.capitalRembourse.y1 + fc.interetsEmprunts.y1) / 12), y2: Math.round((fc.capitalRembourse.y2 + fc.interetsEmprunts.y2) / 12), y3: Math.round((fc.capitalRembourse.y3 + fc.interetsEmprunts.y3) / 12) }, ZERO, false, "Capital + intérêts / 12"),
           buildCard("capital_restant_du", "Capital restant dû", "financement", "currency", "down", empruntsPassif, ZERO, false, "Bilan fin d'exercice"),
+          buildCard("capitaux_propres", "Capitaux propres", "financement", "currency", "up", capitauxPropres, ZERO, false, "Bilan fin d'exercice"),
+          { ...buildCard("remboursement_capital", "Remboursement capital", "financement", "currency", "down", { y1: fc.capitalRembourse.y1, y2: fc.capitalRembourse.y2, y3: fc.capitalRembourse.y3 }, ZERO, false, "Annuel"), y0value: { amount: pfRemboursementCapital.y0, trend: null } },
           buildCard("taux_endettement", "Taux d'endettement", "financement", "percent", "down", tauxEndettement, ZERO, false, "Emprunts / Capitaux propres"),
           buildCard("couverture_caf", "Couverture CAF", "financement", "ratio", "up", couvertureCAF, ZERO, false, "CAF / Remboursement capital"),
         ],
       },
     ];
 
-    // ── Données charts ─────────────────────────────────────────────────────────
-
-    // Labels des mois en français
-    const MONTH_SHORT = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
-    function monthLabel(moisDemarrage: number, idx: number): string {
-      return MONTH_SHORT[(moisDemarrage - 1 + idx) % 12];
-    }
-    const moisDeb = fc.moisDebut ?? 1;
-
-    // Chart 1 — Trésorerie mensuelle par exercice
-    // Décaissements d'exploitation (hors immo, emprunts, TVA, IS) pour les colonnes CA/Charges
-    const decExpl = {
-      y1: Array.from({ length: 12 }, (_, i) =>
-        (dec.decAchats.y1[i] ?? 0) + (dec.decChargesExt.y1[i] ?? 0) +
-        (dec.decImpots.y1[i] ?? 0) + (dec.decPersonnel.y1[i] ?? 0),
-      ),
-      y2: Array.from({ length: 12 }, (_, i) =>
-        (dec.decAchats.y2[i] ?? 0) + (dec.decChargesExt.y2[i] ?? 0) +
-        (dec.decImpots.y2[i] ?? 0) + (dec.decPersonnel.y2[i] ?? 0),
-      ),
-      y3: Array.from({ length: 12 }, (_, i) =>
-        (dec.decAchats.y3[i] ?? 0) + (dec.decChargesExt.y3[i] ?? 0) +
-        (dec.decImpots.y3[i] ?? 0) + (dec.decPersonnel.y3[i] ?? 0),
-      ),
-    };
-    const tresorerieCharts: Record<YearKey, TresoMonthPoint[]> = {
-      y1: Array.from({ length: 12 }, (_, i) => ({
-        mois: monthLabel(moisDeb, i),
-        encaissements: Math.round(enc.totalEnc.y1[i] ?? 0),
-        decaissements: Math.round(dec.totalDec.y1[i] ?? 0),
-        solde: Math.round(soldeFinal.y1[i] ?? 0),
-        ca: Math.round(enc.encProdVendue.y1[i] ?? 0),
-        charges: Math.round(decExpl.y1[i]),
-      })),
-      y2: Array.from({ length: 12 }, (_, i) => ({
-        mois: monthLabel(moisDeb, i),
-        encaissements: Math.round(enc.totalEnc.y2[i] ?? 0),
-        decaissements: Math.round(dec.totalDec.y2[i] ?? 0),
-        solde: Math.round(soldeFinal.y2[i] ?? 0),
-        ca: Math.round(enc.encProdVendue.y2[i] ?? 0),
-        charges: Math.round(decExpl.y2[i]),
-      })),
-      y3: Array.from({ length: 12 }, (_, i) => ({
-        mois: monthLabel(moisDeb, i),
-        encaissements: Math.round(enc.totalEnc.y3[i] ?? 0),
-        decaissements: Math.round(dec.totalDec.y3[i] ?? 0),
-        solde: Math.round(soldeFinal.y3[i] ?? 0),
-        ca: Math.round(enc.encProdVendue.y3[i] ?? 0),
-        charges: Math.round(decExpl.y3[i]),
-      })),
-    };
-
-    // Chart 2 — CA vs Charges vs Résultat par exercice
-    const yearKeys: YearKey[] = ["y1", "y2", "y3"];
-    const annuelChart: AnnuelBarPoint[] = yearKeys.map((yk) => ({
-      exercice: sigData.yearLabels[yk],
-      ca: Math.round(ca[yk]),
-      charges: Math.round(
-        fc.achatsConsommes[yk] +
-        fc.chargesExternes[yk] +
-        fc.chargesPersonnel.total[yk] +
-        fc.impotsTaxes[yk] +
-        fc.dotationsAmort[yk] +
-        fc.interetsEmprunts[yk],
-      ),
-      resNet: Math.round(resNet[yk]),
-    }));
-
-    // Chart 2b — Vue mensuelle (CA + Charges + Résultat mensuel approximatif)
-    const monthlyChart: Record<YearKey, MonthlyBarPoint[]> = {
-      y1: Array.from({ length: 12 }, (_, i) => {
-        const caM = Math.round(enc.encProdVendue.y1[i] ?? 0);
-        const chM = Math.round(decExpl.y1[i]);
-        return { mois: monthLabel(moisDeb, i), ca: caM, charges: chM, resNet: caM - chM };
-      }),
-      y2: Array.from({ length: 12 }, (_, i) => {
-        const caM = Math.round(enc.encProdVendue.y2[i] ?? 0);
-        const chM = Math.round(decExpl.y2[i]);
-        return { mois: monthLabel(moisDeb, i), ca: caM, charges: chM, resNet: caM - chM };
-      }),
-      y3: Array.from({ length: 12 }, (_, i) => {
-        const caM = Math.round(enc.encProdVendue.y3[i] ?? 0);
-        const chM = Math.round(decExpl.y3[i]);
-        return { mois: monthLabel(moisDeb, i), ca: caM, charges: chM, resNet: caM - chM };
-      }),
-    };
-
-    // Chart 3 — Répartition des charges par exercice
-    const chargesBreakdownChart: ChargesBreakdownPoint[] = yearKeys.map((yk) => ({
-      exercice: sigData.yearLabels[yk],
-      achats: Math.round(fc.achatsConsommes[yk]),
-      chargesExternes: Math.round(fc.chargesExternes[yk]),
-      personnel: Math.round(fc.chargesPersonnel.total[yk]),
-      impotsTaxes: Math.round(fc.impotsTaxes[yk]),
-      amortissements: Math.round(fc.dotationsAmort[yk]),
-      interets: Math.round(fc.interetsEmprunts[yk]),
-    }));
-
-    // Chart 4 — Seuil de rentabilité vs CA réalisé
-    const seuilChart: SeuilBarPoint[] = yearKeys.map((yk) => {
-      const caVal = Math.round(ca[yk]);
-      const seuilVal = Math.round(seuilEco[yk]);
-      return {
-        exercice: sigData.yearLabels[yk],
-        caRealise: caVal,
-        seuilEco: seuilVal,
-        excedent: caVal - seuilVal,
-      };
-    });
-
-    // Chart 5 — Plan de financement : Besoins vs Ressources sur 4 périodes
-    const PF_PERIODS: Array<{ key: "y0" | "y1" | "y2" | "y3"; label: string }> = [
-      { key: "y0", label: pfData.yearLabels.y0 },
-      { key: "y1", label: pfData.yearLabels.y1 },
-      { key: "y2", label: pfData.yearLabels.y2 },
-      { key: "y3", label: pfData.yearLabels.y3 },
-    ];
-    const planFinancementChart: PfChartPoint[] = PF_PERIODS.map(({ key, label }) => ({
-      periode: label,
-      besoins: Math.round(pfTotalBesoins[key]),
-      ressources: Math.round(pfTotalRessources[key]),
-      solde: Math.round(pfSolde[key]),
-    }));
-
-    const charts: DashboardChartData = {
-      tresorerie: tresorerieCharts,
-      annuel: annuelChart,
-      monthly: monthlyChart,
-      chargesBreakdown: chargesBreakdownChart,
-      seuil: seuilChart,
-      planFinancement: planFinancementChart,
-    };
-
     return {
       yearLabels: sigData.yearLabels,
+      y0Label: pfData.yearLabels.y0,
       groups,
-      charts,
+      charts: chartsData,
     };
-  }, [data, fc]);
+  }, [data, fc, sigData, seuilData, bfrData, bilanData, pfData, tresoData, chartsData]);
 
   return { data: result, status, error };
 }

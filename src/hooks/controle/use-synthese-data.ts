@@ -6,16 +6,7 @@ import { buildSigData } from "@/lib/finance/aggregations/sig";
 import { calcSeuil } from "@/lib/finance/calculs/seuil";
 import { buildBfrRows } from "@/lib/finance/aggregations/bfr";
 import { buildBilanRows } from "@/lib/finance/aggregations/bilan";
-import { subSeries } from "@/lib/finance/calculs/monthly";
-import { computeSoldeMonthly } from "@/lib/finance/tresorerie-engine";
-import { buildTemporelCtx } from "@/lib/finance/pipeline/calendar";
-import {
-  calcEncaissements,
-  calcAchatsRaw,
-  calcEncoursFournisseurs,
-} from "@/lib/finance/calculs/encaissements";
-import { calcDecaissements } from "@/lib/finance/calculs/decaissements";
-import { buildTresorerieRows } from "@/lib/finance/aggregations/tresorerie";
+import { useTresorerieData } from "@/hooks/controle/use-tresorerie-data";
 import type { SigNode } from "@/lib/finance/aggregations/sig";
 import type { BreakEvenRow } from "@/lib/finance/calculs/seuil";
 import type { BfrRow } from "@/lib/finance/aggregations/bfr";
@@ -27,7 +18,7 @@ import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface SynthValue {
-  amount: number;
+  amount: number | null;
   pct: number | null;
 }
 
@@ -142,6 +133,7 @@ function sectionRow(key: string, label: string): SynthRow {
 
 export function useSyntheseData(dossierId: string): SyntheseDataState {
   const { data, fc, status, error } = useFinCalc(dossierId);
+  const { data: tresoData } = useTresorerieData(dossierId);
 
   const result = useMemo<SyntheseData | null>(() => {
     if (!data || !fc) return null;
@@ -159,32 +151,8 @@ export function useSyntheseData(dossierId: string): SyntheseDataState {
     const bilanData = buildBilanRows(data, fc);
 
     // ── Calculs trésorerie ─────────────────────────────────────────────────────
-    const { dateDemarrage, scenario } = data;
-    const effectiveMoisPaiement = scenario.parametres?.moisPaiementSalaires ?? 1;
-    const regimeTVA = scenario.parametres?.regimeTVA ?? "REEL_NORMAL";
-    const isFranchise = regimeTVA === "FRANCHISE";
-
-    const ctx = buildTemporelCtx(dateDemarrage, isFranchise);
-    const enc = calcEncaissements(data, ctx);
-    const dec = calcDecaissements(data, ctx, effectiveMoisPaiement, fc.isParAnnee);
-
-    const variation = {
-      y1: subSeries(enc.totalEnc.y1, dec.totalDec.y1),
-      y2: subSeries(enc.totalEnc.y2, dec.totalDec.y2),
-      y3: subSeries(enc.totalEnc.y3, dec.totalDec.y3),
-    };
-    const y1Sol = computeSoldeMonthly(variation.y1, 0);
-    const y2Sol = computeSoldeMonthly(variation.y2, y1Sol.soldeFinal[11] ?? 0);
-    const y3Sol = computeSoldeMonthly(variation.y3, y2Sol.soldeFinal[11] ?? 0);
-
-    const soldePrecedent = { y1: y1Sol.soldePrecedent, y2: y2Sol.soldePrecedent, y3: y3Sol.soldePrecedent };
-    const soldeFinal = { y1: y1Sol.soldeFinal, y2: y2Sol.soldeFinal, y3: y3Sol.soldeFinal };
-    const decAchatsRaw = calcAchatsRaw(data.activites, isFranchise);
-    const encoursFournisseurs = calcEncoursFournisseurs(decAchatsRaw, dec.decAchats);
-    const tresoRows = buildTresorerieRows({
-      enc, dec, soldePrecedent, variation, soldeFinal, encoursFournisseurs,
-      immosParNature: dec.immosParNature,
-    });
+    // Délégué à useTresorerieData — source unique de vérité, évite la duplication
+    const tresoRows = tresoData?.rows ?? [];
 
     // ── Extraction des valeurs ─────────────────────────────────────────────────
     const ca = extractSig(sigData.nodes, "ca");
@@ -258,7 +226,7 @@ export function useSyntheseData(dossierId: string): SyntheseDataState {
     ];
 
     return { yearLabels: sigData.yearLabels, rows };
-  }, [data, fc]);
+  }, [data, fc, tresoData]);
 
   return { data: result, status, error };
 }
