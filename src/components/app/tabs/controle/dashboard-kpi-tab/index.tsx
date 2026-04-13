@@ -19,16 +19,17 @@ import { useDashboardKpiData } from "@/hooks/controle/use-dashboard-kpi-data";
 import { useScenarioDataStore } from "@/stores/scenario-data-store";
 import type { YearKey } from "@/lib/finance/utils";
 import { YEAR_KEYS, findGroupCard } from "./utils";
-import { TresoChart } from "./treso-chart";
-import { AnnuelChart } from "./annuel-chart";
-import { ChargesChart } from "./charges-chart";
-import { SeuilChart } from "./seuil-chart";
-import { PfChart } from "./pf-chart";
+import { AnnuelChart } from "../../../../charts/annuel-chart";
+import { ChargesChart } from "../../../../charts/charges-chart";
+import { SeuilChart } from "../../../../charts/seuil-chart";
+import { PfChart } from "../../../../charts/pf-chart";
 import { HeroKpiCard } from "./hero-kpi-card";
-import { AlertesPanel } from "./alertes-panel";
 import { KpisSecondairesPanel } from "./kpis-secondaires-panel";
 import { TableauMensuelPanel } from "./tableau-mensuel-panel";
 import { FinancementKpisPanel } from "./financement-kpis-panel";
+import { SoliditeFinancierePanel } from "./solidite-financiere-panel";
+import { RentabilitePanel } from "./rentabilite-panel";
+import { RentabiliteChart } from "../../../../charts/rentabilite-chart";
 import { DashboardSkeleton } from "./dashboard-skeleton";
 import { ChartPanel } from "./chart-tooltip";
 
@@ -158,27 +159,51 @@ export default function DashboardKpiTab({ dossierId }: DashboardKpiTabProps) {
             />
           </div>
 
-          {/* ── Ligne 2 — Trésorerie + Alertes ──────────────────────────── */}
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[3fr_2fr]">
-            <ChartPanel className="h-64">
-              <TresoChart data={data.charts.tresorerie} yearLabels={data.yearLabels} selectedYear={selectedYear} />
+          {/* ── Ligne 2 — Solidité financière ──────────────────────────── */}
+          <h3>Est ce que le projet est finançable ?</h3>
+          {/* ── Ligne 7 — Investissements & Financement ──────────────────── */}
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[2fr_3fr]">
+            <FinancementKpisPanel groups={data.groups} yearLabels={data.yearLabels} y0Label={data.y0Label} />
+            <ChartPanel className="h-full" title="Plan de financement">
+              <PfChart data={data.charts.planFinancement} />
             </ChartPanel>
-            <div className="h-64">
-              <AlertesPanel
-                charts={data.charts}
-                yearLabels={data.yearLabels}
-                selectedYear={selectedYear}
-                groups={data.groups}
-              />
-            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            {/* KPI — 4 cartes statut avec seuils */}
+            <SoliditeFinancierePanel groups={data.groups} yk={selectedYear} />
+
+            {/* Graphique — Besoins vs Ressources */}
+            <ChartPanel className="min-h-55" title="Plan de financement">
+              <PfChart data={data.charts.planFinancement} />
+            </ChartPanel>
           </div>
 
-          {/* ── Ligne 3 — CA vs Charges + Répartition charges ───────────── */}
+          <h3>Est-ce que le projet est rentable et viable dans le temps ?</h3>
+          {/* ── Ligne 3 — Performance économique ────────────────────────── */}
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <ChartPanel className="h-56">
+            <div className="h-70">
+              <RentabilitePanel groups={data.groups} yk={selectedYear} />
+            </div>
+            <ChartPanel className="h-70" title="Performance économique">
+              <RentabiliteChart data={data.charts.annuel} />
+            </ChartPanel>
+          </div>
+
+          {/* ── Ligne 4 — Robustesse du modèle ───────────────────────── */}
+          <h3>Est-ce que le modèle est robuste ?</h3>
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <KpisSecondairesPanel groups={data.groups} yearLabels={data.yearLabels} />
+            <ChartPanel className="h-64" title="Seuil de rentabilité">
+              <SeuilChart data={data.charts.seuil} />
+            </ChartPanel>
+          </div>
+
+          {/* ── Ligne 5 — CA vs Charges + Répartition charges ───────────── */}
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <ChartPanel className="h-56" title="CA vs Charges / Résultat">
               <AnnuelChart data={data.charts.annuel} monthly={data.charts.monthly} selectedYear={selectedYear} />
             </ChartPanel>
-            <ChartPanel className="h-56">
+            <ChartPanel className="h-56" title="Répartition des charges">
               <ChargesChart
                 data={data.charts.chargesBreakdown}
                 yearLabels={data.yearLabels}
@@ -187,23 +212,8 @@ export default function DashboardKpiTab({ dossierId }: DashboardKpiTabProps) {
             </ChartPanel>
           </div>
 
-          {/* ── Ligne 4 — KPIs secondaires + Seuil de rentabilité ────────── */}
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <KpisSecondairesPanel groups={data.groups} yearLabels={data.yearLabels} />
-            <ChartPanel className="h-64">
-              <SeuilChart data={data.charts.seuil} />
-            </ChartPanel>
-          </div>
 
-          {/* ── Ligne 5 — Investissements & Financement ──────────────────── */}
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[2fr_3fr]">
-            <FinancementKpisPanel groups={data.groups} yearLabels={data.yearLabels} />
-            <ChartPanel className="h-72">
-              <PfChart data={data.charts.planFinancement} />
-            </ChartPanel>
-          </div>
-
-          {/* ── Ligne 6 — Tableau mensuel ─────────────────────────────────── */}
+          {/* ── Ligne 8 — Tableau mensuel ─────────────────────────────────── */}
           <TableauMensuelPanel data={data.charts} yearLabels={data.yearLabels} defaultYear={selectedYear} />
         </div>
       </div>
