@@ -12,6 +12,8 @@ import {
 import type { YearKey4 as PfYearKey } from "@/lib/finance/utils";
 import { usePlanFinancementData } from "@/hooks/controle/use-plan-financement-data";
 import { useScenarioDataStore } from "@/stores/scenario-data-store";
+import { ChartPanel } from "./dashboard-kpi-tab/chart-tooltip";
+import { PfChart } from "../../../charts/pf-chart";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -168,7 +170,7 @@ interface PlanFinancementTabProps {
 export default function PlanFinancementTab({
   dossierId,
 }: PlanFinancementTabProps) {
-  const { data, status, error } = usePlanFinancementData(dossierId);
+  const { data, chartPoints, status, error } = usePlanFinancementData(dossierId);
   const isPending = status === "loading";
 
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
@@ -213,51 +215,51 @@ export default function PlanFinancementTab({
       </div>
 
       {/* ── Contenu ──────────────────────────────────────────────────────── */}
-      <div className="min-h-0 flex-1 overflow-auto">
-        {/* Erreur */}
-        {error && (
-          <div className="m-4 rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-            {error}
-          </div>
-        )}
+        <div className="min-h-0 flex-1">
+          {/* Erreur */}
+          {error && (
+            <div className="m-4 rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          )}
 
-        {/* Chargement */}
-        {isPending && !data && (
-          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-            Calcul du plan de financement…
-          </div>
-        )}
+          {/* Chargement */}
+          {isPending && !data && (
+            <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+              Calcul du plan de financement…
+            </div>
+          )}
 
-        {/* Tableau */}
-        {data && data.rows.length > 0 && (
-          <div className="min-w-175">
-            <PfHeader yearLabels={data.yearLabels} />
-            {data.rows.map((row) =>
-              row.style === "section" ? (
-                <PfSectionRow key={row.key} label={row.label} />
-              ) : (
-                <PfRowItem
-                  key={row.key}
-                  row={row}
-                  depth={0}
-                  expandedKeys={expandedKeys}
-                  onToggle={handleToggle}
-                />
-              ),
-            )}
-          </div>
-        )}
+          {/* Tableau */}
+          {data && data.rows.length > 0 && (
+            <div className="min-w-75">
+              <PfHeader yearLabels={data.yearLabels} />
+              {data.rows.map((row) =>
+                row.style === "section" ? (
+                  <PfSectionRow key={row.key} label={row.label} />
+                ) : (
+                  <PfRowItem
+                    key={row.key}
+                    row={row}
+                    depth={0}
+                    expandedKeys={expandedKeys}
+                    onToggle={handleToggle}
+                  />
+                ),
+              )}
+            </div>
+          )}
 
-        {/* État vide */}
-        {data && data.rows.length === 0 && (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-            <p className="text-sm">Aucune donnée disponible.</p>
-            <p className="text-xs">
-              Renseignez les onglets de saisie puis actualisez.
-            </p>
-          </div>
-        )}
-      </div>
+          {/* État vide */}
+          {data && data.rows.length === 0 && (
+            <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
+              <p className="text-sm">Aucune donnée disponible.</p>
+              <p className="text-xs">
+                Renseignez les onglets de saisie puis actualisez.
+              </p>
+            </div>
+          )}
+        </div>
     </div>
   );
 }
