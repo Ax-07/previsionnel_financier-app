@@ -3,11 +3,16 @@
  * Source unique de vérité — importé par pipeline/build.ts, calculs/index.ts et tous les consommateurs.
  */
 import type { YearAcc, MonthlyAcc } from "./series";
+import type { MonthlyCalcResult } from "@/lib/finance/calculs/monthly";
+import type { TVACalcResult } from "@/lib/finance/calculs/calc-tva";
+export type { TVACalcResult };
 
 export interface FinCalcResult {
   // ── Labels ────────────────────────────────────────────────────────────────
   anneeDebut: number;
   moisDebut: number;
+  /** Durée de projection configurée (1, 2 ou 3 ans). Les consommateurs utilisent ce champ pour masquer les colonnes y2/y3. */
+  dureeProjection: 1 | 2 | 3;
   yearLabels: Record<"y1" | "y2" | "y3", string>;
 
   // ── Helpers date ──────────────────────────────────────────────────────────
@@ -20,6 +25,8 @@ export interface FinCalcResult {
 
   // ── CA & stocks ───────────────────────────────────────────────────────────
   ca: YearAcc;
+  /** Séries mensuelles du CA HT par exercice (issues du moteur mensuel). */
+  caSeries: MonthlyAcc;
   achatsEffectues: YearAcc;
   /** Niveau de stock fin d'exercice (= dernier mois de la série cumulative RCA). */
   stockInitial: YearAcc;
@@ -49,6 +56,8 @@ export interface FinCalcResult {
   };
   valeurAjoutee: YearAcc;
   ebe: YearAcc;
+  /** Séries mensuelles de l'EBE par exercice (avec saisonnalité réelle). */
+  ebeSeries: MonthlyAcc;
 
   // ── Amortissements & provisions ───────────────────────────────────────────
   dotationsAmort: YearAcc;
@@ -76,6 +85,8 @@ export interface FinCalcResult {
   ajustementNet: YearAcc;
   isParAnnee: YearAcc;
   resNet: YearAcc;
+  /** Séries mensuelles du résultat net par exercice (IS réel, passe 2). */
+  resNetSeries: MonthlyAcc;
 
   // ── CAF ───────────────────────────────────────────────────────────────────
   caf: YearAcc;
@@ -85,4 +96,16 @@ export interface FinCalcResult {
   // ── Drill-down CAF ────────────────────────────────────────────────────────
   dotationsParImmoAcc: { immo: { id: string; libelle: string; nature: string }; values: YearAcc }[];
   capitalRembourseParEmprunt: { emprunt: { id: string; libelle: string }; values: YearAcc }[];
-}
+  // ── TVA (source unique de vérité) ─────────────────────────────────────────
+  /**
+   * Résultat de `calcTVA` — toutes les séries TVA calculées une seule fois.
+   * Consommé par `calcBfr`, `calcDecaissements`, `buildTVARows`.
+   */
+  tva: TVACalcResult;
+
+  // ── Séries mensuelles brutes (passe 2 — IS réel) ──────────────────────────────
+  /**
+   * Résultat complet du moteur mensuel (passe 2, IS réel inclus).
+   * Utilisé par `useBudgetData` pour éviter de rappeler `buildMonthlyCalc`.
+   */
+  monthlyCalc: MonthlyCalcResult;}
