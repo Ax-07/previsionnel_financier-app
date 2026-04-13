@@ -129,7 +129,7 @@ function BreakEvenRowItem({ row }: { row: BreakEvenRow }) {
       {/* Valeurs */}
       {YEAR_KEYS.map((yk) => {
         const val  = row.values[yk];
-        const isNeg = val.amount < 0;
+        const isNeg = val.amount !== null && val.amount < 0;
         return (
           <Fragment key={`${row.key}_${yk}`}>
             {/* Montant */}
@@ -139,7 +139,7 @@ function BreakEvenRowItem({ row }: { row: BreakEvenRow }) {
                 isNeg && !isHighlight && "text-destructive",
               )}
             >
-              {formatAmount(val.amount, isJours, isTaux)}
+              {formatAmount(val.amount ?? 0, isJours, isTaux)}
             </div>
             {/* % */}
             <div
