@@ -2,6 +2,12 @@ import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import type { FinCalcResult } from "@/lib/finance/calculs";
 import { n } from "@/lib/finance/utils";
 import { distribuerAmortParExercice } from "@/lib/finance/calculs/amortissements";
+import {
+  seasonalMonthly,
+  ponctuelMonthly,
+  computeStocksAchatsSeries,
+  type MonthlySeries,
+} from "@/lib/finance/calculs/monthly";
 
 // ── Type inféré automatiquement ───────────────────────────────────────────────
 export type DrilldownRows = ReturnType<typeof buildDrilldownRows>;
@@ -63,43 +69,45 @@ export function buildDrilldownRows(data: ScenarioFinData, fc: FinCalcResult) {
     }));
 
   // ── Achats de matières / marchandises ──────────────────────────────────────
-  // achatsRows = achats effectués par activité = consommés + varStock annuelle
-  // Formule : cN + (sfY1 - 0) pour Y1 ; cN1 + (sfY2 - sfY1) pour Y2, etc.
-  // Les ponctuels NE sont PAS ajoutés ici : ils sont absorbés par la dynamique
-  // stock (sfBase = cumulConsommes×jours/360) et n'affectent pas le total annuel.
+  // achatsRows = achats effectués par activité, alignés sur le moteur (computeStocksAchatsSeries).
+  // Les ponctuels sont inclus dans la dynamique stock (ils affectent sfFinal) et ne sont PAS
+  // affichés séparément pour garantir la cohérence avec fc.achatsEffectues.
+  const sumOf = (s: MonthlySeries) => s.reduce((acc, v) => acc + (v ?? 0), 0);
   const achatsRows = caRows
     .filter((r) => r.typeActivite !== "PRESTATION_SERVICES")
     .map((r) => {
+      const act = activites.find((a) => a.id === r.id);
+      const saisonnalite = act?.saisonnaliteCA ?? null;
+      const achatsStockPonctuel = act?.achatsStockPonctuel ?? null;
       const coef = Math.max(0, 1 - r.tauxMarge / 100);
-      const cN  = r.montantN  * coef;
-      const cN1 = r.montantN1 * coef;
-      const cN2 = r.montantN2 * coef;
-      const jours = r.stocks;
-      const sfY1 = (cN  * jours) / 360;
-      const sfY2 = (cN1 * jours) / 360;
-      const sfY3 = (cN2 * jours) / 360;
+      const joursStock = r.stocks;
+
+      // Y1
+      const consY1 = seasonalMonthly(r.montantN * coef, saisonnalite, "N");
+      const poncY1 = ponctuelMonthly(achatsStockPonctuel, "N");
+      const rY1 = computeStocksAchatsSeries(consY1, poncY1, joursStock, 0);
+
+      // Y2 (stock initial = sfFinal Y1)
+      const consY2 = seasonalMonthly(r.montantN1 * coef, saisonnalite, "N1");
+      const poncY2 = ponctuelMonthly(achatsStockPonctuel, "N1");
+      const rY2 = computeStocksAchatsSeries(consY2, poncY2, joursStock, rY1.sfFinal);
+
+      // Y3 (stock initial = sfFinal Y2)
+      const consY3 = seasonalMonthly(r.montantN2 * coef, saisonnalite, "N2");
+      const poncY3 = ponctuelMonthly(achatsStockPonctuel, "N2");
+      const rY3 = computeStocksAchatsSeries(consY3, poncY3, joursStock, rY2.sfFinal);
+
       return {
         libelle: `Achats – ${r.libelle}`,
         actif: r.actif,
-        montantN:  cN  + sfY1,
-        montantN1: cN1 + (sfY2 - sfY1),
-        montantN2: cN2 + (sfY3 - sfY2),
+        montantN:  sumOf(rY1.achatsEffSeries),
+        montantN1: sumOf(rY2.achatsEffSeries),
+        montantN2: sumOf(rY3.achatsEffSeries),
       };
     });
 
-  // ── Achats de stock ponctuels ──────────────────────────────────────────────
-  const achatsPonctuelsRows = activites
-    .filter((a) => a.actif !== false && a.typeActivite !== "PRESTATION_SERVICES")
-    .flatMap((a) => {
-      const p = a.achatsStockPonctuel as Record<string, number[]> | null | undefined;
-      if (!p) return [];
-      const sumArr = (arr: number[] | undefined) => (arr ?? []).reduce((s, v) => s + v, 0);
-      const y1 = sumArr(p["N"]);
-      const y2 = sumArr(p["N1"]);
-      const y3 = sumArr(p["N2"]);
-      if (y1 === 0 && y2 === 0 && y3 === 0) return [];
-      return [{ libelle: `Achats ponctuels – ${a.libelle}`, montantN: y1, montantN1: y2, montantN2: y3 }];
-    });
+  // Ponctuels désormais intégrés dans achatsRows via computeStocksAchatsSeries
+  const achatsPonctuelsRows: { libelle: string; montantN: number; montantN1: number; montantN2: number }[] = [];
 
   // ── Commissions ───────────────────────────────────────────────────────────
   const commissionRows = commissions

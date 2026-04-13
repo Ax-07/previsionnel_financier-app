@@ -16,7 +16,8 @@ function deriveAggregates(fc: FinCalcResult, rows: DrilldownRows) {
     // Charges externes (Total) = somme exacte des lignes affichées :
     //   Achats effectués + Variation de stocks (affichée −) + Fournitures + Services
     // = achatsEffectues − varStock + fournitures + services
-    // = achatsConsommes + achatsPonctuels + fournitures + services
+    // = achatsConsommes + fournitures + services
+    // (achatsConsommes = achatsEffectués − varStock ; les achatsPonctuels sont inclus dans achatsConsommes)
     chargesExternes: {
       y1: fc.achatsEffectues.y1 - fc.varStock.y1 + fc.fournitures.y1 + fc.services.y1,
       y2: fc.achatsEffectues.y2 - fc.varStock.y2 + fc.fournitures.y2 + fc.services.y2,
