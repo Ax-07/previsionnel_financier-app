@@ -85,6 +85,15 @@ export function lastMonthToYearAcc(m: MonthlyAcc): Record<YearKey, number> {
 }
 
 /**
+ * Extrait la valeur du **premier mois** (index 0 = janvier) de chaque année.
+ * À utiliser pour les **niveaux d'ouverture** (stock initial d'exercice) qui
+ * correspondent au 1er jour de l'exercice — pas à la fin.
+ */
+export function firstMonthToYearAcc(m: MonthlyAcc): Record<YearKey, number> {
+  return { y1: m.y1[0] ?? 0, y2: m.y2[0] ?? 0, y3: m.y3[0] ?? 0 };
+}
+
+/**
  * Répartit un total annuel selon la saisonnalité JSON { N: number[], N1: number[], N2: number[] }
  * (pourcentages mensuels), ou uniformément si absente/incomplète.
  */
@@ -153,6 +162,12 @@ export function distributeByFrequency(
         (m) => ((m % 12) + 12) % 12,
       );
       for (const idx of starts) series[idx]! += quarter;
+      return series;
+    }
+    case "SEMESTRIELLE": {
+      const half = total / 2;
+      series[(mois - 1 + 12) % 12]! += half;
+      series[((mois - 1 + 6) % 12 + 12) % 12]! += half;
       return series;
     }
     case "ANNUELLE":
@@ -297,6 +312,7 @@ export function computeStocksAchatsSeries(
   stockInitial: number,
 ): { siSeries: MonthlySeries; sfSeries: MonthlySeries; achatsEffSeries: MonthlySeries; sfFinal: number } {
   const totalConsommes = totalOf(consommesMonthly);
+  const totalPonctuels = totalOf(ponctuelM); // dénominateur stable pour ratioCumul
   const siSeries = zeroSeries();
   const sfSeries = zeroSeries();
   const achatsEffSeries = zeroSeries();
@@ -308,7 +324,7 @@ export function computeStocksAchatsSeries(
     const ponc = ponctuelM[j] ?? 0;
     cumulConsommes += conso;
     const sfBase = totalConsommes > 0 ? (cumulConsommes * stocksJoursCible) / 360 : 0;
-    const ratioCumul = (totalConsommes + ponc) > 0 ? cumulConsommes / (totalConsommes + ponc) : 0;
+    const ratioCumul = (totalConsommes + totalPonctuels) > 0 ? cumulConsommes / (totalConsommes + totalPonctuels) : 0;
     const sf = sfBase + (ponc + si) * (1 - ratioCumul);
     sfSeries[j] = sf;
     achatsEffSeries[j] = conso + sf - si;
@@ -807,20 +823,20 @@ export function buildMonthlyCalc(
     }
   }
 
-  // Frais de dossier : charge ponctuelle à la date de déblocage (moisNumero = -1)
+  // Frais de dossier : charge ponctuelle à la date de déblocage
+  // Source unique : emprunt.fraisDossier (champ direct DB).
   const fraisDossierAcc = emptyAcc();
   for (const emprunt of data.emprunts) {
-    for (const ligne of emprunt.lignesEcheancier) {
-      if (ligne.moisNumero !== -1) continue;
-      const dateStr =
-        ligne.dateEcheance instanceof Date
-          ? ligne.dateEcheance.toISOString()
-          : String(ligne.dateEcheance ?? "");
-      if (!dateStr) continue;
-      const r = ykAndMonthIdx(dateStr);
-      if (r) {
-        fraisDossierAcc[r.yk][r.idx]! += n(ligne.mensualiteTotale);
-      }
+    const frais = n(emprunt.fraisDossier ?? 0);
+    if (frais <= 0) continue;
+    const dateStr =
+      emprunt.dateDéblocage instanceof Date
+        ? emprunt.dateDéblocage.toISOString()
+        : String(emprunt.dateDéblocage ?? "");
+    if (!dateStr) continue;
+    const r = ykAndMonthIdx(dateStr);
+    if (r) {
+      fraisDossierAcc[r.yk][r.idx]! += frais;
     }
   }
 

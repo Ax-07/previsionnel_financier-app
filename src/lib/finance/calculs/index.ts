@@ -13,6 +13,8 @@ export { buildFinCalc } from "@/lib/finance/pipeline/build";
 // ── Types ─────────────────────────────────────────────────────────────────────
 export type { FinCalcResult } from "@/lib/finance/types/results";
 export type { YearAcc } from "@/lib/finance/types/series";
+export type { TVACalcResult, TVACalcHelpers } from "@/lib/finance/calculs/calc-tva";
+export { calcTVA } from "@/lib/finance/calculs/calc-tva";
 
 // ── Helpers calendrier ────────────────────────────────────────────────────────
 export { makeExerciceHelpers, fmtExercice } from "@/lib/finance/pipeline/calendar";

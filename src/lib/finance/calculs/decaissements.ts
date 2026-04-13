@@ -26,10 +26,9 @@ import {
   salarieMonthlyBrut,
   shiftSeries,
   shiftSeriesWeighted,
-  isQuarterly,
   isQuarterlyDecaissement,
 } from "@/lib/finance/tresorerie-engine";
-import { computeTVAMonthly } from "@/lib/finance/tva-engine";
+import type { TVACalcResult } from "@/lib/finance/calculs/calc-tva";
 import {
   simulerTresorerieUrssafSur3Ans,
   trouverBrutPourNet,
@@ -50,36 +49,6 @@ export function shiftYk3(raw: Yk3, delay: number): Yk3 {
   const { shifted: s2, overflow: ov2 } = shiftSeries(raw.y2, delay, ov1);
   const { shifted: s3 } = shiftSeries(raw.y3, delay, ov2);
   return { y1: s1, y2: s2, y3: s3 };
-}
-
-/**
- * Distribue un montant annuel selon la fréquence de règlement de la charge.
- * Trimestrielle → M3/M6/M9/M12, Semestrielle → M6/M12, Annuelle → M12.
- */
-export function buildFrequenceSeries(annualAmount: number, frequence: string): MonthlySeries {
-  switch (frequence) {
-    case "TRIMESTRIELLE": {
-      const s = zeroSeries();
-      const q = annualAmount / 4;
-      s[2] = q; s[5] = q; s[8] = q; s[11] = q;
-      return s;
-    }
-    case "SEMESTRIELLE": {
-      const s = zeroSeries();
-      const h = annualAmount / 2;
-      s[5] = h; s[11] = h;
-      return s;
-    }
-    case "ANNUELLE": {
-      const s = zeroSeries();
-      s[11] = annualAmount;
-      return s;
-    }
-    case "MENSUELLE":
-    case "PERSONNALISEE":
-    default:
-      return uniformMonthly(annualAmount);
-  }
 }
 
 /**
@@ -187,6 +156,7 @@ export function calcDecaissements(
   ctx: TemporelCtx,
   moisPaiementSalaires: number,
   isParAnnee: Record<"y1" | "y2" | "y3", number>,
+  tva: TVACalcResult,
 ): DecaissementsResult {
   const {
     emprunts,
@@ -208,14 +178,10 @@ export function calcDecaissements(
 
   const { yearStarts, isFranchise, moisDebut } = ctx;
 
-  const periodicite: "mensuel" | "trimestriel" =
-    (scenario.parametres?.periodiciteDeclarationTVA ?? "mensuel") === "trimestriel"
-      ? "trimestriel"
-      : "mensuel";
   const defaultDelaiFourn = 30;
 
   // ── Immobilisations ────────────────────────────────────────────────────────
-  const immosData = immobilisations.map((immo) => {
+  const immosData = immobilisations.filter((immo) => immo.actif !== false).map((immo) => {
     const yk3: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
     // En trésorerie on décaisse TTC : la TVA récupérable se résorbe via la déclaration TVA (decTVA),
     // la TVA non-récupérable est définitivement perdue — dans les deux cas le flux de caisse est TTC.
@@ -449,9 +415,10 @@ export function calcDecaissements(
     // → La trésorerie utilise le calendrier URSSAF réel ; le CR/bilan utilise
     //   les montants définitifs stockés en BDD (séparation comptable correcte).
     const tnsModeCalcul = scenario.parametres?.tnsModeCalcul ?? "DEFINITIF";
-    if (tnsModeCalcul === "DEBUT_ACTIVITE_FORFAIT" && dirigeants.length > 0) {
+    const dirigeantsActifs = dirigeants.filter((d) => d.actif !== false);
+    if (tnsModeCalcul === "DEBUT_ACTIVITE_FORFAIT" && dirigeantsActifs.length > 0) {
       const tnsRegimeSocial = (scenario.parametres?.tnsRegimeSocial ?? "commerce") as RegimeSocial;
-      const tnsDir = dirigeants.map((d) => ({
+      const tnsDir = dirigeantsActifs.map((d) => ({
         actif: d.actif,
         montantN: n(d.montantN),
         montantN1: n(d.montantN1),
@@ -484,11 +451,12 @@ export function calcDecaissements(
       );
     }
     // Mode DEFINITIF : utiliser les montants définitifs stockés en BDD
+    const activeCotisations = cotisationsTNS.filter((c) => c.actif !== false);
     return shiftYk3(
       {
-        y1: uniformMonthly(cotisationsTNS.reduce((s, c) => s + n(c.montantN), 0)),
-        y2: uniformMonthly(cotisationsTNS.reduce((s, c) => s + n(c.montantN1), 0)),
-        y3: uniformMonthly(cotisationsTNS.reduce((s, c) => s + n(c.montantN2), 0)),
+        y1: uniformMonthly(activeCotisations.reduce((s, c) => s + n(c.montantN), 0)),
+        y2: uniformMonthly(activeCotisations.reduce((s, c) => s + n(c.montantN1), 0)),
+        y3: uniformMonthly(activeCotisations.reduce((s, c) => s + n(c.montantN2), 0)),
       },
       moisPaiementSalaires,
     );
@@ -534,128 +502,17 @@ export function calcDecaissements(
     y3: sumAll(decSalairesNets.y3, decChargesSociales.y3, decRemuDirigeant.y3, decCotisationsTNS.y3, decTaxesSalaires.y3),
   };
 
-  // ── TVA ────────────────────────────────────────────────────────────────────
-  // Cohérence avec build-rows.ts : exclure les activités inactives
-  const activitesActives = activites.filter((a) => a.actif !== false);
-  const activitesAchats = activitesActives.filter((a) => a.typeActivite !== "PRESTATION_SERVICES");
-
-  const tvaCollY1 = activitesActives.reduce(
-    (acc, a) => sumSeries(acc, seasonalMonthly(n(a.montantN) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N")),
-    zeroSeries(),
-  );
-  const tvaCollY2 = activitesActives.reduce(
-    (acc, a) => sumSeries(acc, seasonalMonthly(n(a.montantN1) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N1")),
-    zeroSeries(),
-  );
-  const tvaCollY3 = activitesActives.reduce(
-    (acc, a) => sumSeries(acc, seasonalMonthly(n(a.montantN2) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N2")),
-    zeroSeries(),
-  );
-
-  // Les ponctuels sont des montants HT d'achats (pas du CA) : on applique uniquement
-  // le tauxTVA, sans le coef (qui sert à convertir du CA en achats).
-  // La TVA déductible porte sur les achats effectués = consommés + ΔStock + ponctuels.
-  const tvaAchatsY1 = activitesAchats.reduce((acc, a) => {
-      const coef = Math.max(0, 1 - n(a.tauxMarge) / 100);
-      const tauxTVA = n(a.tvaAchats) / 100;
-      const joursStk = n(a.stocks ?? 0);
-      const varStock = (n(a.montantN) * coef * joursStk) / 360; // ΔStock Y1 (SI=0)
-      const recurrents = seasonalMonthly(n(a.montantN) * coef * tauxTVA, a.saisonnaliteAchats, "N");
-      const stockVar = uniformMonthly(varStock * tauxTVA); // TVA sur ΔStock uniforme
-      // ponctuelN[0] = stock initial y0 — TVA exclue du flux Y1 (cohérent avec p1[0]=0 achats TTC)
-      const poncsRaw = [...ponctuelMonthly(a.achatsStockPonctuel, "N")] as MonthlySeries;
-      poncsRaw[0] = 0;
-      const ponctuels = poncsRaw.map((v) => v * tauxTVA) as MonthlySeries;
-      return sumSeries(acc, sumSeries(sumSeries(recurrents, stockVar), ponctuels));
-    }, zeroSeries());
-  const tvaAchatsY2 = activitesAchats.reduce((acc, a) => {
-      const coef = Math.max(0, 1 - n(a.tauxMarge) / 100);
-      const tauxTVA = n(a.tvaAchats) / 100;
-      const joursStk = n(a.stocks ?? 0);
-      const sfY1 = (n(a.montantN) * coef * joursStk) / 360;
-      const varStock = (n(a.montantN1) * coef * joursStk) / 360 - sfY1; // ΔStock Y2
-      const recurrents = seasonalMonthly(n(a.montantN1) * coef * tauxTVA, a.saisonnaliteAchats, "N1");
-      const stockVar = uniformMonthly(varStock * tauxTVA); // TVA sur ΔStock uniforme
-      const ponctuels = ponctuelMonthly(a.achatsStockPonctuel, "N1").map((v: number) => v * tauxTVA) as MonthlySeries;
-      return sumSeries(acc, sumSeries(sumSeries(recurrents, stockVar), ponctuels));
-    }, zeroSeries());
-  const tvaAchatsY3 = activitesAchats.reduce((acc, a) => {
-      const coef = Math.max(0, 1 - n(a.tauxMarge) / 100);
-      const tauxTVA = n(a.tvaAchats) / 100;
-      const joursStk = n(a.stocks ?? 0);
-      const sfY2 = (n(a.montantN1) * coef * joursStk) / 360;
-      const varStock = (n(a.montantN2) * coef * joursStk) / 360 - sfY2; // ΔStock Y3
-      const recurrents = seasonalMonthly(n(a.montantN2) * coef * tauxTVA, a.saisonnaliteAchats, "N2");
-      const stockVar = uniformMonthly(varStock * tauxTVA); // TVA sur ΔStock uniforme
-      const ponctuels = ponctuelMonthly(a.achatsStockPonctuel, "N2").map((v: number) => v * tauxTVA) as MonthlySeries;
-      return sumSeries(acc, sumSeries(sumSeries(recurrents, stockVar), ponctuels));
-    }, zeroSeries());
-
-  const allCharges = [...fournitures, ...services];
-  // Utilise chargeExplMonthly (même logique que build-rows.ts) pour respecter
-  // la fréquence (TRIMESTRIELLE, SEMESTRIELLE, ANNUELLE) et la saisonnalité %CA.
-  const tvaChargesY1 = allCharges.reduce(
-    (s, c) => sumSeries(s, chargeExplMonthly(n(c.montantN) * (n(c.tauxTVA) / 100), { frequence: c.frequence as string, detailCalc: c.detailCalc }, "N")),
-    zeroSeries(),
-  );
-  const tvaChargesY2 = allCharges.reduce(
-    (s, c) => sumSeries(s, chargeExplMonthly(n(c.montantN1) * (n(c.tauxTVA) / 100), { frequence: c.frequence as string, detailCalc: c.detailCalc }, "N1")),
-    zeroSeries(),
-  );
-  const tvaChargesY3 = allCharges.reduce(
-    (s, c) => sumSeries(s, chargeExplMonthly(n(c.montantN2) * (n(c.tauxTVA) / 100), { frequence: c.frequence as string, detailCalc: c.detailCalc }, "N2")),
-    zeroSeries(),
-  );
-
-  // Immos y0 (avant démarrage) : crédit TVA récupérable dès le premier mois d'activité
-  let tvaImmoY0 = 0;
-  const tvaImmoY1 = zeroSeries();
-  const tvaImmoY2 = zeroSeries();
-  const tvaImmoY3 = zeroSeries();
-  for (const immo of immobilisations) {
-    if (immo.actif === false) continue;
-    if (immo.typeTva !== "RECUPERABLE") continue;
-    const tva = n(immo.montantHT) * (n(immo.tauxTVA) / 100);
-    if (tva <= 0) continue;
-    const { yk, mi } = { yk: null as "y1" | "y2" | "y3" | null, mi: -1 };
-    const slot = { yk, mi };
-    const computed = (() => {
-      for (let i = 0; i < 3; i++) {
-        const d = new Date(immo.dateAcquisition);
-        if (d >= yearStarts[i]! && d < yearStarts[i + 1]!) {
-          const dy = d.getFullYear() - yearStarts[i]!.getFullYear();
-          const dm = d.getMonth() - yearStarts[i]!.getMonth();
-          return { yk: (["y1", "y2", "y3"] as const)[i]!, mi: Math.min(11, Math.max(0, dy * 12 + dm)) };
-        }
-      }
-      return slot;
-    })();
-    if (computed.yk === "y1" && computed.mi >= 0) tvaImmoY1[computed.mi] = (tvaImmoY1[computed.mi] ?? 0) + tva;
-    else if (computed.yk === "y2" && computed.mi >= 0) tvaImmoY2[computed.mi] = (tvaImmoY2[computed.mi] ?? 0) + tva;
-    else if (computed.yk === "y3" && computed.mi >= 0) tvaImmoY3[computed.mi] = (tvaImmoY3[computed.mi] ?? 0) + tva;
-    else tvaImmoY0 += tva; // immo acquise avant démarrage → crédit initial
-  }
-
-  const decTVACollectee: Yk3 = { y1: tvaCollY1, y2: tvaCollY2, y3: tvaCollY3 };
-  const decTVADeductible: Yk3 = {
-    y1: sumAll(tvaAchatsY1, tvaChargesY1, tvaImmoY1),
-    y2: sumAll(tvaAchatsY2, tvaChargesY2, tvaImmoY2),
-    y3: sumAll(tvaAchatsY3, tvaChargesY3, tvaImmoY3),
-  };
-
+  // ── TVA (source unique : tva = fc.tva) ────────────────────────────────────
+  const decTVACollectee: Yk3 = { y1: tva.tvaCollectee.y1, y2: tva.tvaCollectee.y2, y3: tva.tvaCollectee.y3 };
+  const decTVADeductible: Yk3 = { y1: tva.tvaDeductible.y1, y2: tva.tvaDeductible.y2, y3: tva.tvaDeductible.y3 };
   const decTVA: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
   if (!isFranchise) {
-    const { tvaAPayerMonthly: t1, finalCredit: c1 } = computeTVAMonthly(tvaCollY1, sumAll(tvaAchatsY1, tvaChargesY1, tvaImmoY1), periodicite, tvaImmoY0);
-    const { tvaAPayerMonthly: t2, finalCredit: c2 } = computeTVAMonthly(tvaCollY2, sumAll(tvaAchatsY2, tvaChargesY2, tvaImmoY2), periodicite, c1);
-    const { tvaAPayerMonthly: t3 } = computeTVAMonthly(tvaCollY3, sumAll(tvaAchatsY3, tvaChargesY3, tvaImmoY3), periodicite, c2);
-    // En France, la TVA du mois M est déclarée et payée le 19 du mois M+1.
-    // La TVA de décembre (M12) est donc payée en janvier de l'exercice suivant.
-    // Ce décalage de 1 mois est cohérent avec tvaAPayer dans le BFR (§12.2),
-    // qui modélise la TVA de M12 comme une dette non encore soldée au 31/12.
-    const { y1: s1, y2: s2, y3: s3 } = shiftYk3({ y1: t1, y2: t2, y3: t3 }, 1);
-    decTVA.y1 = s1;
-    decTVA.y2 = s2;
-    decTVA.y3 = s3;
+    // La TVA du mois M est payée le 19 du mois M+1 (décalage 1 mois).
+    const { y1: s1, y2: s2, y3: s3 } = shiftYk3(
+      { y1: tva.y1.tvaAPayerMonthly, y2: tva.y2.tvaAPayerMonthly, y3: tva.y3.tvaAPayerMonthly },
+      1,
+    );
+    decTVA.y1 = s1; decTVA.y2 = s2; decTVA.y3 = s3;
   }
 
   // ── IS ─────────────────────────────────────────────────────────────────────

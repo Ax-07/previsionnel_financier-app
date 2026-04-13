@@ -12,10 +12,13 @@ export type YAcc = YearAcc;
 export interface ImmoBilanResult {
   immoBruteIncorp: YAcc;
   immoBruteCorp: YAcc;
+  immoBruteFin: YAcc;
   amortCumulIncorp: YAcc;
   amortCumulCorp: YAcc;
+  amortCumulFin: YAcc;
   immoNetteIncorp: YAcc;
   immoNetteCorp: YAcc;
+  immoNetteFin: YAcc;
   immoNette: YAcc;
   /** Total cumulatif des montants HT acquis (= immobilisations brutes totales). */
   immoAcquises: YAcc;
@@ -43,23 +46,33 @@ export function calcImmosBilan(
 
   const immoBruteIncorp: YAcc = { ...zero };
   const immoBruteCorp: YAcc = { ...zero };
+  const immoBruteFin: YAcc = { ...zero };
   const immoAcquises: YAcc = { ...zero };
 
   for (const immo of actives) {
     const dAcq = new Date(String(immo.dateAcquisition));
     const montant = n(immo.montantHT);
-    const target = immo.nature === "INCORPOREL" ? immoBruteIncorp : immoBruteCorp;
+    const target =
+      immo.nature === "INCORPOREL" ? immoBruteIncorp
+      : immo.nature === "FINANCIER" ? immoBruteFin
+      : immoBruteCorp;
 
-    if (dAcq < exBorne1) { target.y1 += montant; immoAcquises.y1 += montant; }
+    if (dAcq <= exBorne1) { target.y1 += montant; immoAcquises.y1 += montant; }
     if (dAcq < exBorne2) { target.y2 += montant; immoAcquises.y2 += montant; }
     if (dAcq < exBorne3) { target.y3 += montant; immoAcquises.y3 += montant; }
+    // Convention : borne inclusive pour exBorne1 (immo acquise le 1er jour de Y1 → présente en Y1).
+    // Borne exclusive pour exBorne2/3 : immo acquise sur exBorne2 appartient à Y2, pas Y1.
   }
 
   const dotIncorp: YAcc = { ...zero };
   const dotCorp: YAcc = { ...zero };
+  const dotFin: YAcc = { ...zero };
   if (dotationsParImmo) {
     for (const { immo, values } of dotationsParImmo) {
-      const acc = immo.nature === "INCORPOREL" ? dotIncorp : dotCorp;
+      const acc =
+        immo.nature === "INCORPOREL" ? dotIncorp
+        : immo.nature === "FINANCIER" ? dotFin
+        : dotCorp;
       acc.y1 += values.y1;
       acc.y2 += values.y2;
       acc.y3 += values.y3;
@@ -67,7 +80,10 @@ export function calcImmosBilan(
   } else {
     for (const immo of actives) {
       const dot = distribuerAmortParExercice(immo, anneeDebut, moisDebut);
-      const acc = immo.nature === "INCORPOREL" ? dotIncorp : dotCorp;
+      const acc =
+        immo.nature === "INCORPOREL" ? dotIncorp
+        : immo.nature === "FINANCIER" ? dotFin
+        : dotCorp;
       acc.y1 += dot.y1;
       acc.y2 += dot.y2;
       acc.y3 += dot.y3;
@@ -84,6 +100,11 @@ export function calcImmosBilan(
     y2: dotCorp.y1 + dotCorp.y2,
     y3: dotCorp.y1 + dotCorp.y2 + dotCorp.y3,
   };
+  const amortCumulFin: YAcc = {
+    y1: dotFin.y1,
+    y2: dotFin.y1 + dotFin.y2,
+    y3: dotFin.y1 + dotFin.y2 + dotFin.y3,
+  };
 
   const immoNetteIncorp: YAcc = {
     y1: immoBruteIncorp.y1 - amortCumulIncorp.y1,
@@ -95,19 +116,27 @@ export function calcImmosBilan(
     y2: immoBruteCorp.y2 - amortCumulCorp.y2,
     y3: immoBruteCorp.y3 - amortCumulCorp.y3,
   };
+  const immoNetteFin: YAcc = {
+    y1: immoBruteFin.y1 - amortCumulFin.y1,
+    y2: immoBruteFin.y2 - amortCumulFin.y2,
+    y3: immoBruteFin.y3 - amortCumulFin.y3,
+  };
   const immoNette: YAcc = {
-    y1: immoNetteIncorp.y1 + immoNetteCorp.y1,
-    y2: immoNetteIncorp.y2 + immoNetteCorp.y2,
-    y3: immoNetteIncorp.y3 + immoNetteCorp.y3,
+    y1: immoNetteIncorp.y1 + immoNetteCorp.y1 + immoNetteFin.y1,
+    y2: immoNetteIncorp.y2 + immoNetteCorp.y2 + immoNetteFin.y2,
+    y3: immoNetteIncorp.y3 + immoNetteCorp.y3 + immoNetteFin.y3,
   };
 
   return {
     immoBruteIncorp,
     immoBruteCorp,
+    immoBruteFin,
     amortCumulIncorp,
     amortCumulCorp,
+    amortCumulFin,
     immoNetteIncorp,
     immoNetteCorp,
+    immoNetteFin,
     immoNette,
     immoAcquises,
   };
@@ -151,7 +180,7 @@ export function calcApportsCumulatifs(
     const isCapital = apport.type === "CAPITAL" || apport.type === "APPORT_NATURE";
     const isCC = apport.type === "COMPTE_COURANT";
 
-    if (dApp < exBorne1) {
+    if (dApp <= exBorne1) {
       if (isCapital) apportsCapital.y1 += montant;
       else if (isCC) apportsCC.y1 += montant;
     }
@@ -173,7 +202,7 @@ export function calcApportsCumulatifs(
     if (!d) continue;
     const dSubv = new Date(String(d));
     const montant = n(subv.montant);
-    if (dSubv < exBorne1) apportsCC.y1 += montant;
+    if (dSubv <= exBorne1) apportsCC.y1 += montant;
     if (dSubv < exBorne2) apportsCC.y2 += montant;
     if (dSubv < exBorne3) apportsCC.y3 += montant;
   }
@@ -184,7 +213,7 @@ export function calcApportsCumulatifs(
     if (flux.dateN) {
       const d = new Date(String(flux.dateN));
       const m = n(flux.montantN);
-      if (d < exBorne1) apportsCC.y1 -= m;
+      if (d <= exBorne1) apportsCC.y1 -= m;
       if (d < exBorne2) apportsCC.y2 -= m;
       if (d < exBorne3) apportsCC.y3 -= m;
     }
@@ -236,7 +265,7 @@ export function calcEmpruntsPassif(
     const totalCapital = n(emprunt.montant);
     const dDeb = new Date(String(emprunt.dateDéblocage));
 
-    if (dDeb < exBorne1) empruntsDebloques.y1 += totalCapital;
+    if (dDeb <= exBorne1) empruntsDebloques.y1 += totalCapital;
     if (dDeb < exBorne2) empruntsDebloques.y2 += totalCapital;
     if (dDeb < exBorne3) empruntsDebloques.y3 += totalCapital;
 
@@ -246,7 +275,7 @@ export function calcEmpruntsPassif(
     for (const ligne of emprunt.lignesEcheancier) {
       const dl = new Date(String(ligne.dateEcheance));
       const cap = n(ligne.capitalRembourse);
-      if (dl < exBorne1) { cumY1 += cap; remboursementsCumul.y1 += cap; }
+      if (dl <= exBorne1) { cumY1 += cap; remboursementsCumul.y1 += cap; }
       if (dl < exBorne2) { cumY2 += cap; remboursementsCumul.y2 += cap; }
       if (dl < exBorne3) { cumY3 += cap; remboursementsCumul.y3 += cap; }
     }
@@ -402,22 +431,6 @@ export function calcTresorerieBilan(params: {
       - immoAcquises.y3 - stocksCumul.y3 - remboursementsCumul.y3,
   };
 
-  console.table({
-    tresorerie
-  })
-  console.table({
-    apportsCapital,
-    apportsCC,
-    empruntsDebloques,
-    cafCumul,
-    encFluxNonPLCumul,
-    decFluxNonPLCumul,
-    immoAcquises,
-    stocksCumul,
-    remboursementsCumul,
-    totalDettesExploitation,
-  });
-
   // Les dettes d'exploitation sont des ressources implicites (cash non encore décaissé)
   const tresorerieCor: YAcc = {
     y1: tresorerie.y1 + totalDettesExploitation.y1,
@@ -437,4 +450,67 @@ export function calcTresorerieBilan(params: {
       y3: Math.max(0, -tresorerieCor.y3),
     },
   };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// ── Flux non-P&L cumulatifs ──────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+
+export interface FluxNonPLResult {
+  /** Encaissements cumulatifs non-P&L : subventions d'investissement (hors PRET_HONNEUR) + divers encaissements. */
+  encFluxNonPLCumul: YAcc;
+  /** Décaissements cumulatifs non-P&L : divers décaissements (hors remboursements CC déjà dans apportsCC). */
+  decFluxNonPLCumul: YAcc;
+}
+
+/**
+ * Calcule les flux non-P&L cumulatifs (subventions d'investissement + encaissements/décaissements divers)
+ * nécessaires à l'équation de trésorerie du bilan et des ratios.
+ *
+ * Source unique de vérité partagée par `aggregations/bilan.ts` et `aggregations/ratios.ts`
+ * pour garantir la cohérence de la trésorerie entre le bilan et les ratios.
+ */
+export function calcFluxNonPLCumul(
+  data: Pick<ScenarioFinData, "subventions" | "diversEncaissements" | "diversDecaissements">,
+  exBorne1: Date,
+  exBorne2: Date,
+  exBorne3: Date,
+): FluxNonPLResult {
+  const encFluxNonPLCumul: YAcc = { y1: 0, y2: 0, y3: 0 };
+  const decFluxNonPLCumul: YAcc = { y1: 0, y2: 0, y3: 0 };
+
+  // Subventions d'investissement (hors PRET_HONNEUR déjà dans apportsCC)
+  for (const subv of data.subventions) {
+    if (subv.type === "PRET_HONNEUR") continue;
+    const d = subv.dateEncaissement ?? subv.dateObtention;
+    if (!d) continue;
+    const dt = new Date(String(d));
+    const m = n(subv.montant);
+    if (dt < exBorne1) encFluxNonPLCumul.y1 += m;
+    if (dt < exBorne2) encFluxNonPLCumul.y2 += m;
+    if (dt < exBorne3) encFluxNonPLCumul.y3 += m;
+  }
+
+  // Encaissements divers (TypeDiversFlux.ENCAISSEMENT)
+  // Flux sans date → distribués uniformément dans l'exercice (cumulativement présent en Y1, Y2, Y3).
+  for (const flux of data.diversEncaissements) {
+    if (flux.dateN) { const dt = new Date(String(flux.dateN)); const m = n(flux.montantN); if (dt < exBorne1) encFluxNonPLCumul.y1 += m; if (dt < exBorne2) encFluxNonPLCumul.y2 += m; if (dt < exBorne3) encFluxNonPLCumul.y3 += m; }
+    else { const m = n(flux.montantN); encFluxNonPLCumul.y1 += m; encFluxNonPLCumul.y2 += m; encFluxNonPLCumul.y3 += m; }
+    if (flux.dateN1) { const dt = new Date(String(flux.dateN1)); const m = n(flux.montantN1); if (dt < exBorne2) encFluxNonPLCumul.y2 += m; if (dt < exBorne3) encFluxNonPLCumul.y3 += m; }
+    else { const m = n(flux.montantN1); encFluxNonPLCumul.y2 += m; encFluxNonPLCumul.y3 += m; }
+    if (flux.dateN2) { const dt = new Date(String(flux.dateN2)); const m = n(flux.montantN2); if (dt < exBorne3) encFluxNonPLCumul.y3 += m; }
+    else { encFluxNonPLCumul.y3 += n(flux.montantN2); }
+  }
+
+  // Décaissements divers (TypeDiversFlux.DECAISSEMENT)
+  for (const flux of data.diversDecaissements) {
+    if (flux.dateN) { const dt = new Date(String(flux.dateN)); const m = n(flux.montantN); if (dt < exBorne1) decFluxNonPLCumul.y1 += m; if (dt < exBorne2) decFluxNonPLCumul.y2 += m; if (dt < exBorne3) decFluxNonPLCumul.y3 += m; }
+    else { const m = n(flux.montantN); decFluxNonPLCumul.y1 += m; decFluxNonPLCumul.y2 += m; decFluxNonPLCumul.y3 += m; }
+    if (flux.dateN1) { const dt = new Date(String(flux.dateN1)); const m = n(flux.montantN1); if (dt < exBorne2) decFluxNonPLCumul.y2 += m; if (dt < exBorne3) decFluxNonPLCumul.y3 += m; }
+    else { const m = n(flux.montantN1); decFluxNonPLCumul.y2 += m; decFluxNonPLCumul.y3 += m; }
+    if (flux.dateN2) { const dt = new Date(String(flux.dateN2)); const m = n(flux.montantN2); if (dt < exBorne3) decFluxNonPLCumul.y3 += m; }
+    else { decFluxNonPLCumul.y3 += n(flux.montantN2); }
+  }
+
+  return { encFluxNonPLCumul, decFluxNonPLCumul };
 }

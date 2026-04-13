@@ -43,30 +43,46 @@ export function calcISParAnnee(
     return { y1: 0, y2: 0, y3: 0 };
   }
   const p = parametresIS;
-  return {
-    y1: calcIS(
-      resCourant.y1 + resExcep.y1 + ajustementNet.y1,
-      n(p?.plafondReduitN ?? 42500),
-      n(p?.tauxReduitN ?? 15),
-      n(p?.tauxNormalN ?? 25),
-      n(p?.creditImpotN ?? 0),
-      n(p?.contributionVolN ?? 0),
-    ),
-    y2: calcIS(
-      resCourant.y2 + resExcep.y2 + ajustementNet.y2,
-      n(p?.plafondReduitN1 ?? 42500),
-      n(p?.tauxReduitN1 ?? 15),
-      n(p?.tauxNormalN1 ?? 25),
-      n(p?.creditImpotN1 ?? 0),
-      n(p?.contributionVolN1 ?? 0),
-    ),
-    y3: calcIS(
-      resCourant.y3 + resExcep.y3 + ajustementNet.y3,
-      n(p?.plafondReduitN2 ?? 42500),
-      n(p?.tauxReduitN2 ?? 15),
-      n(p?.tauxNormalN2 ?? 25),
-      n(p?.creditImpotN2 ?? 0),
-      n(p?.contributionVolN2 ?? 0),
-    ),
-  };
+
+  // ── Exercice Y1 ───────────────────────────────────────────────────────────
+  const base1 = resCourant.y1 + resExcep.y1 + ajustementNet.y1;
+  const y1 = calcIS(
+    base1,
+    n(p?.plafondReduitN ?? 42500),
+    n(p?.tauxReduitN ?? 15),
+    n(p?.tauxNormalN ?? 25),
+    n(p?.creditImpotN ?? 0),
+    n(p?.contributionVolN ?? 0),
+  );
+
+  // Déficit reportable en avant (CGI art. 209 I) : si Y1 est déficitaire,
+  // le solde négatif est reporté indéfiniment sur les exercices bénéficiaires suivants.
+  const reportY1 = Math.min(0, base1);
+
+  // ── Exercice Y2 (avec éventuel report Y1) ────────────────────────────────
+  const base2 = resCourant.y2 + resExcep.y2 + ajustementNet.y2 + reportY1;
+  const y2 = calcIS(
+    base2,
+    n(p?.plafondReduitN1 ?? 42500),
+    n(p?.tauxReduitN1 ?? 15),
+    n(p?.tauxNormalN1 ?? 25),
+    n(p?.creditImpotN1 ?? 0),
+    n(p?.contributionVolN1 ?? 0),
+  );
+
+  // Report résiduel après Y2 (si base2 encore négative, le déficit non absorbé se reporte)
+  const reportY2 = Math.min(0, base2);
+
+  // ── Exercice Y3 (avec éventuel report Y2) ────────────────────────────────
+  const base3 = resCourant.y3 + resExcep.y3 + ajustementNet.y3 + reportY2;
+  const y3 = calcIS(
+    base3,
+    n(p?.plafondReduitN2 ?? 42500),
+    n(p?.tauxReduitN2 ?? 15),
+    n(p?.tauxNormalN2 ?? 25),
+    n(p?.creditImpotN2 ?? 0),
+    n(p?.contributionVolN2 ?? 0),
+  );
+
+  return { y1, y2, y3 };
 }

@@ -6,13 +6,9 @@ import {
   seasonalMonthly,
   chargeExplMonthly,
   ponctuelMonthly,
-  uniformMonthly,
-  zeroSeries,
-  sumSeries,
   computeStocksAchatsSeries,
   type MonthlySeries,
 } from "@/lib/finance/calculs/monthly";
-import { computeTVAMonthly } from "@/lib/finance/tva-engine";
 import { salarieMonthlyBrut } from "@/lib/finance/tresorerie-engine";
 import {
   simulerTresorerieUrssafSur3Ans,
@@ -116,12 +112,6 @@ export function calcBfr(data: ScenarioFinData, fc: FinCalcResult): BfrCalcResult
     ...fournitures.filter((f) => f.actif !== false),
     ...services.filter((s) => s.actif !== false),
   ];
-
-  // Périodicité TVA (cohérente avec l'onglet TVA et la trésorerie)
-  const periodicite: "mensuel" | "trimestriel" =
-    (scenario.parametres?.periodiciteDeclarationTVA ?? "mensuel") === "trimestriel"
-      ? "trimestriel"
-      : "mensuel";
 
   // Régime TVA — détermine si la TVA est récupérable sur les achats/charges.
   // Cohérent avec decaissements.ts (isFranchise dans TemporelCtx).
@@ -267,172 +257,21 @@ export function calcBfr(data: ScenarioFinData, fc: FinCalcResult): BfrCalcResult
   }
   const dettesChargesExternes: YearAcc4 = { y0: 0, y1: dceY1, y2: dceY2, y3: dceY3 };
 
-  // ── TVA récupérable sur immobilisations (par exercice d'acquisition) ─────
-  // Les acquisitions ≤ dateDemarrage partent en y0 (Initial).
-  const tvaImmoDeductible: YearAcc4 = { y0: 0, y1: 0, y2: 0, y3: 0 };
-  for (const immo of immobilisations) {
-    if (immo.actif === false) continue;
-    if (immo.typeTva !== "RECUPERABLE") continue;
-    const tvaImmo = n(immo.montantHT) * (n(immo.tauxTVA) / 100);
-    if (tvaImmo <= 0) continue;
-    const dateAcq =
-      immo.dateAcquisition instanceof Date
-        ? immo.dateAcquisition
-        : new Date(String(immo.dateAcquisition));
-    const yk =
-      (dateAcq <= data.dateDemarrage ? null : fc.toExerciceKey(dateAcq)) ?? "y0";
-    tvaImmoDeductible[yk] += tvaImmo;
-  }
-
-  const creditInitial = tvaImmoDeductible.y0;
-
-  // TVA sur stock initial (ponctuelN[0]) : position y0/ouverture identique au HT.
-  // Elle n'entre PAS dans le moteur TVA Y1 (creditInitial inchangé) pour ne pas
-  // annuler l'effet de la suppression du flux M01 — mais est ajoutée à creditTVA.y0
-  // pour refléter la créance réelle sur le Trésor à l'ouverture de l'exercice.
-  const tvaY0StockInit = isFranchise
-    ? 0
-    : achatsActifsMois.reduce((s, a) => {
-        const taux = n(a.tvaAchats ?? 20) / 100;
-        const ponctuelRec = a.achatsStockPonctuel as Record<string, number[]> | undefined;
-        return s + (ponctuelRec?.N?.[0] ?? 0) * taux;
-      }, 0);
-
-  // ── Crédit TVA via computeTVAMonthly — source unique de vérité ────────────
-  // Cohérent avec l'onglet TVA (build-rows.ts) et la trésorerie (decaissements.ts).
-  // Les séries mensuelles tiennent compte de la saisonnalité et de la fréquence
-  // des charges ; le report mensuel est exact pour les déclarants mensuels/trimestriels.
-
-  const tvaCollMonthY1: MonthlySeries = actifsActifs.reduce(
-    (s, a) => sumSeries(s, seasonalMonthly(n(a.montantN) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N")),
-    zeroSeries(),
-  );
-  const tvaCollMonthY2: MonthlySeries = actifsActifs.reduce(
-    (s, a) => sumSeries(s, seasonalMonthly(n(a.montantN1) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N1")),
-    zeroSeries(),
-  );
-  const tvaCollMonthY3: MonthlySeries = actifsActifs.reduce(
-    (s, a) => sumSeries(s, seasonalMonthly(n(a.montantN2) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N2")),
-    zeroSeries(),
-  );
-
-  // Les ponctuels sont des montants HT d'achats (pas du CA) : on applique uniquement
-  // le tauxTVA, sans le coef (qui sert à convertir du CA en achats).
-  // La TVA déductible porte sur les achats effectués = consommés + ΔStock + ponctuels.
-  // Règle BFR : ponctuelN[0] (stock initial y0) — sa TVA suit le même traitement que
-  // le HT : position d'ouverture, exclue du flux Y1. Elle est ajoutée à creditTVA.y0.
-  const tvaDedAchatsMonthY1: MonthlySeries = achatsActifsMois.reduce((s, a) => {
-    const coef = Math.max(0, 1 - n(a.tauxMarge) / 100);
-    const taux = n(a.tvaAchats ?? 20) / 100;
-    const joursStk = n(a.stocks ?? 0);
-    const varStock = (n(a.montantN) * coef * joursStk) / 360; // ΔStock Y1 (SI=0)
-    const rec = seasonalMonthly(n(a.montantN) * coef * taux, a.saisonnaliteAchats, "N");
-    const stockVar = uniformMonthly(varStock * taux); // TVA sur ΔStock
-    const poncRaw = [...ponctuelMonthly(a.achatsStockPonctuel, "N")] as MonthlySeries;
-    poncRaw[0] = 0; // ponctuelN[0] = stock initial y0 — TVA exclue du flux Y1
-    const ponc = poncRaw.map((v: number) => v * taux) as MonthlySeries;
-    return sumSeries(s, sumSeries(sumSeries(rec, stockVar), ponc));
-  }, zeroSeries());
-  const tvaDedAchatsMonthY2: MonthlySeries = achatsActifsMois.reduce((s, a) => {
-    const coef = Math.max(0, 1 - n(a.tauxMarge) / 100);
-    const taux = n(a.tvaAchats ?? 20) / 100;
-    const joursStk = n(a.stocks ?? 0);
-    const sfY1 = (n(a.montantN) * coef * joursStk) / 360;
-    const varStock = (n(a.montantN1) * coef * joursStk) / 360 - sfY1; // ΔStock Y2
-    const rec = seasonalMonthly(n(a.montantN1) * coef * taux, a.saisonnaliteAchats, "N1");
-    const stockVar = uniformMonthly(varStock * taux); // TVA sur ΔStock
-    const ponc = ponctuelMonthly(a.achatsStockPonctuel, "N1").map((v: number) => v * taux) as MonthlySeries;
-    return sumSeries(s, sumSeries(sumSeries(rec, stockVar), ponc));
-  }, zeroSeries());
-  const tvaDedAchatsMonthY3: MonthlySeries = achatsActifsMois.reduce((s, a) => {
-    const coef = Math.max(0, 1 - n(a.tauxMarge) / 100);
-    const taux = n(a.tvaAchats ?? 20) / 100;
-    const joursStk = n(a.stocks ?? 0);
-    const sfY2 = (n(a.montantN1) * coef * joursStk) / 360;
-    const varStock = (n(a.montantN2) * coef * joursStk) / 360 - sfY2; // ΔStock Y3
-    const rec = seasonalMonthly(n(a.montantN2) * coef * taux, a.saisonnaliteAchats, "N2");
-    const stockVar = uniformMonthly(varStock * taux); // TVA sur ΔStock
-    const ponc = ponctuelMonthly(a.achatsStockPonctuel, "N2").map((v: number) => v * taux) as MonthlySeries;
-    return sumSeries(s, sumSeries(sumSeries(rec, stockVar), ponc));
-  }, zeroSeries());
-
-  const tvaDedChargesMonthY1: MonthlySeries = allChargesActif.reduce(
-    (s, c) => sumSeries(s, chargeExplMonthly(n(c.montantN) * (n(c.tauxTVA ?? 20) / 100), { frequence: c.frequence as string, detailCalc: c.detailCalc }, "N")),
-    zeroSeries(),
-  );
-  const tvaDedChargesMonthY2: MonthlySeries = allChargesActif.reduce(
-    (s, c) => sumSeries(s, chargeExplMonthly(n(c.montantN1) * (n(c.tauxTVA ?? 20) / 100), { frequence: c.frequence as string, detailCalc: c.detailCalc }, "N1")),
-    zeroSeries(),
-  );
-  const tvaDedChargesMonthY3: MonthlySeries = allChargesActif.reduce(
-    (s, c) => sumSeries(s, chargeExplMonthly(n(c.montantN2) * (n(c.tauxTVA ?? 20) / 100), { frequence: c.frequence as string, detailCalc: c.detailCalc }, "N2")),
-    zeroSeries(),
-  );
-
-  // TVA déductible mensuelle immos (y1/y2/y3) — y0 = creditInitial ci-dessus
-  const tvaImmoMonthY1 = zeroSeries();
-  const tvaImmoMonthY2 = zeroSeries();
-  const tvaImmoMonthY3 = zeroSeries();
-  for (const immo of immobilisations) {
-    if (immo.actif === false) continue;
-    if (immo.typeTva !== "RECUPERABLE") continue;
-    const tva = n(immo.montantHT) * (n(immo.tauxTVA) / 100);
-    if (tva <= 0) continue;
-    const dateAcq =
-      immo.dateAcquisition instanceof Date
-        ? immo.dateAcquisition
-        : new Date(String(immo.dateAcquisition));
-    if (dateAcq <= data.dateDemarrage) continue; // y0 — déjà dans creditInitial
-    const yk = fc.toExerciceKey(dateAcq);
-    if (yk === "y1") {
-      const mi = Math.min(11, Math.max(0, (dateAcq.getFullYear() - fc.exBorne1.getFullYear()) * 12 + (dateAcq.getMonth() - fc.exBorne1.getMonth())));
-      tvaImmoMonthY1[mi] = (tvaImmoMonthY1[mi] ?? 0) + tva;
-    } else if (yk === "y2") {
-      const mi = Math.min(11, Math.max(0, (dateAcq.getFullYear() - fc.exBorne2.getFullYear()) * 12 + (dateAcq.getMonth() - fc.exBorne2.getMonth())));
-      tvaImmoMonthY2[mi] = (tvaImmoMonthY2[mi] ?? 0) + tva;
-    } else if (yk === "y3") {
-      const mi = Math.min(11, Math.max(0, (dateAcq.getFullYear() - fc.exBorne3.getFullYear()) * 12 + (dateAcq.getMonth() - fc.exBorne3.getMonth())));
-      tvaImmoMonthY3[mi] = (tvaImmoMonthY3[mi] ?? 0) + tva;
-    }
-  }
-
-  const tvaM1 = computeTVAMonthly(
-    tvaCollMonthY1,
-    sumSeries(sumSeries(tvaDedAchatsMonthY1, tvaDedChargesMonthY1), tvaImmoMonthY1),
-    periodicite,
-    creditInitial,
-  );
-  const tvaM2 = computeTVAMonthly(
-    tvaCollMonthY2,
-    sumSeries(sumSeries(tvaDedAchatsMonthY2, tvaDedChargesMonthY2), tvaImmoMonthY2),
-    periodicite,
-    tvaM1.finalCredit,
-  );
-  const tvaM3 = computeTVAMonthly(
-    tvaCollMonthY3,
-    sumSeries(sumSeries(tvaDedAchatsMonthY3, tvaDedChargesMonthY3), tvaImmoMonthY3),
-    periodicite,
-    tvaM2.finalCredit,
-  );
-
-  // Crédit TVA = solde de créance sur le Trésor en fin d'exercice (besoin BFR)
-  // y0 : TVA récupérable sur immos acquises ≤ dateDemarrage + TVA sur stock initial (y0)
-  // y1/y2/y3 : crédit résiduel à la clôture de chaque exercice (finalCredit du moteur TVA)
+  // ── TVA (source unique : fc.tva) ─────────────────────────────────────────
+  // Tout le calcul TVA est centralisé dans calcTVA() → pipeline/build.ts → fc.tva.
   const creditTVA: YearAcc4 = {
-    y0: creditInitial + tvaY0StockInit,
-    y1: tvaM1.finalCredit,
-    y2: tvaM2.finalCredit,
-    y3: tvaM3.finalCredit,
+    y0: fc.tva.creditInitial + fc.tva.tvaY0StockInit,
+    y1: fc.tva.y1.finalCredit,
+    y2: fc.tva.y2.finalCredit,
+    y3: fc.tva.y3.finalCredit,
   };
 
-  // TVA à payer = dernier mois de la série TVA réelle (règle dernier mois — §12.2)
-  // Pour déclarant mensuel : TVA de décembre (à payer en janvier → encours fin d'exercice).
-  // Pour déclarant trimestriel : TVA accumulée sur T4 (mois 9-11, payée début janvier).
+  // TVA à payer = dernier mois de tvaAPayerMonthly (règle dernier mois §12.2)
   const tvaAPayer: YearAcc4 = {
     y0: 0,
-    y1: tvaM1.tvaAPayerMonthly[11] ?? 0,
-    y2: tvaM2.tvaAPayerMonthly[11] ?? 0,
-    y3: tvaM3.tvaAPayerMonthly[11] ?? 0,
+    y1: fc.tva.y1.tvaAPayerMonthly[11] ?? 0,
+    y2: fc.tva.y2.tvaAPayerMonthly[11] ?? 0,
+    y3: fc.tva.y3.tvaAPayerMonthly[11] ?? 0,
   };
 
   // ── Dettes fiscales et sociales ──────────────────────────────────────────
@@ -466,7 +305,7 @@ export function calcBfr(data: ScenarioFinData, fc: FinCalcResult): BfrCalcResult
 
   let lastPersonnelY1 = 0, lastPersonnelY2 = 0, lastPersonnelY3 = 0;
 
-  for (const sal of data.salaries ?? []) {
+  for (const sal of (data.salaries ?? []).filter((s) => s.actif !== false)) {
     const tCotPat = n(sal.tauxCotPat) / 100;
     const b1 = salarieMonthlyBrut(n(sal.montantN), sal.detailMensuelN, moisDebutBfr);
     const b2 = salarieMonthlyBrut(n(sal.montantN1), sal.detailMensuelN1, moisDebutBfr);
@@ -478,7 +317,7 @@ export function calcBfr(data: ScenarioFinData, fc: FinCalcResult): BfrCalcResult
     lastPersonnelY3 += sumLastMonths(b3, delaiPaie) * (1 + tCotPat);
   }
 
-  for (const d of data.dirigeants ?? []) {
+  for (const d of (data.dirigeants ?? []).filter((d) => d.actif !== false)) {
     const b1 = salarieMonthlyBrut(n(d.montantN), d.detailMensuelN, moisDebutBfr);
     const b2 = salarieMonthlyBrut(n(d.montantN1), d.detailMensuelN1, moisDebutBfr);
     const b3 = salarieMonthlyBrut(n(d.montantN2), d.detailMensuelN2, moisDebutBfr);
@@ -577,12 +416,16 @@ export function calcBfr(data: ScenarioFinData, fc: FinCalcResult): BfrCalcResult
     y3: lastPersonnelY3,
   };
 
-  // IS : acomptes trimestriels — encours 1 trimestre
+  // IS : dette bilan = IS restant à payer à la clôture de l'exercice.
+  // Le tableau de trésorerie décaisse 3 acomptes trimestriels sur 4 dans l'exercice
+  // (3/4 × IS_courant + 1/4 × IS_précédent), le 4e acompte (solde) est payé au Q1 suivant.
+  // → Dette bilan = IS_courant − IS_décaissé_dans_exercice = 1/4 × IS_courant.
+  // Cohérent avec : decIS_Y = 3/4·IS_Y + 1/4·IS_{Y-1} ←→ IS_Y + dette_{Y-1} − dette_Y.
   const dettesIS: YearAcc4 = {
     y0: 0,
-    y1: fc.isParAnnee.y1 / 4,
-    y2: fc.isParAnnee.y2 / 4,
-    y3: fc.isParAnnee.y3 / 4,
+    y1: fc.isParAnnee.y1 / 4,      // solde IS Y1 restant à payer (Q1 Y2)
+    y2: fc.isParAnnee.y2 / 4,      // solde IS Y2 restant à payer (Q1 Y3)
+    y3: fc.isParAnnee.y3 / 4,      // solde IS Y3 restant à payer (Q1 Y4)
   };
 
   // ── Créances clients (cash immobilisé en attente de paiement) ─────────────

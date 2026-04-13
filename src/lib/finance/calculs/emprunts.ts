@@ -59,7 +59,8 @@ export function calcCapitalRembourse(
 // ── Frais de dossier (depuis l'échéancier) ───────────────────────────────────
 
 /**
- * Agrège les frais de dossier (lignes de type FRAIS_DOSSIER) par exercice fiscal.
+ * Agrège les frais de dossier par exercice fiscal.
+ * Source unique : emprunt.fraisDossier + emprunt.dateDéblocage (champs directs DB).
  */
 export function calcFraisDossier(
   data: Pick<ScenarioFinData, "emprunts">,
@@ -67,17 +68,11 @@ export function calcFraisDossier(
 ): YAcc {
   const acc: YAcc = { y1: 0, y2: 0, y3: 0 };
   for (const emprunt of data.emprunts) {
-    for (const ligne of emprunt.lignesEcheancier) {
-      // moisNumero === -1 identifie la ligne de frais de dossier (convention echeancier.ts)
-      if (ligne.moisNumero !== -1) continue;
-      const dateStr =
-        ligne.dateEcheance instanceof Date
-          ? ligne.dateEcheance.toISOString()
-          : String(ligne.dateEcheance);
-      const yk = toExerciceKey(dateStr);
-      if (yk) {
-        acc[yk] += n(ligne.mensualiteTotale);
-      }
+    const frais = n(emprunt.fraisDossier ?? 0);
+    if (frais <= 0) continue;
+    const yk = toExerciceKey(emprunt.dateDéblocage);
+    if (yk) {
+      acc[yk] += frais;
     }
   }
   return acc;

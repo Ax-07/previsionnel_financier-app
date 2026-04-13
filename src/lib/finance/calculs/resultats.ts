@@ -32,17 +32,19 @@ export function calcAutresChargesFinancieres(
 // ── Résultat financier ────────────────────────────────────────────────────────
 
 /**
- * ResFin = ProduitsFinanciers − (InteretsEmprunts + AutresChargesFinancieres)
+ * ResFin = ProduitsFinanciers − (InteretsEmprunts + FraisDossierEmprunts + AutresChargesFinancieres)
+ * Cohérent avec monthly.ts : chargesFinancièresAcc = interets + fraisDossier + autresChargesFinancières
  */
 export function calcResFin(
   produitsFinanciers: YAcc,
   interetsEmprunts: YAcc,
+  fraisDossierEmprunts: YAcc,
   autresChargesFinancieres: YAcc,
 ): YAcc {
   return {
-    y1: produitsFinanciers.y1 - interetsEmprunts.y1 - autresChargesFinancieres.y1,
-    y2: produitsFinanciers.y2 - interetsEmprunts.y2 - autresChargesFinancieres.y2,
-    y3: produitsFinanciers.y3 - interetsEmprunts.y3 - autresChargesFinancieres.y3,
+    y1: produitsFinanciers.y1 - interetsEmprunts.y1 - fraisDossierEmprunts.y1 - autresChargesFinancieres.y1,
+    y2: produitsFinanciers.y2 - interetsEmprunts.y2 - fraisDossierEmprunts.y2 - autresChargesFinancieres.y2,
+    y3: produitsFinanciers.y3 - interetsEmprunts.y3 - fraisDossierEmprunts.y3 - autresChargesFinancieres.y3,
   };
 }
 

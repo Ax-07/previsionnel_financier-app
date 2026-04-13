@@ -24,8 +24,8 @@ import type { FinCalcResult } from "@/lib/finance/calculs";
 // ── Types publics ─────────────────────────────────────────────────────────────
 
 export interface BreakEvenValue {
-  /** Montant en € (ou nombre de jours pour point mort) */
-  amount: number;
+  /** Montant en € (ou nombre de jours pour point mort). null = non calculable (ex: marge nulle) */
+  amount: number | null;
   /** % par rapport aux ventes+production (null si non applicable) */
   pct: number | null;
 }
@@ -198,9 +198,9 @@ export function calcSeuil(
   const impotsEtTaxes = fc.impotsTaxes;
 
   const totalCoutsFixes: Record<YearKey, number> = {
-    y1: chargesExternes.y1 + chargesPersonnel.y1 + totalDotations.y1 + impotsEtTaxes.y1,
-    y2: chargesExternes.y2 + chargesPersonnel.y2 + totalDotations.y2 + impotsEtTaxes.y2,
-    y3: chargesExternes.y3 + chargesPersonnel.y3 + totalDotations.y3 + impotsEtTaxes.y3,
+    y1: chargesExternes.y1 + chargesPersonnel.y1 + totalDotations.y1 + impotsEtTaxes.y1 - fc.reprises.y1,
+    y2: chargesExternes.y2 + chargesPersonnel.y2 + totalDotations.y2 + impotsEtTaxes.y2 - fc.reprises.y2,
+    y3: chargesExternes.y3 + chargesPersonnel.y3 + totalDotations.y3 + impotsEtTaxes.y3 - fc.reprises.y3,
   };
 
   // ── Résultat courant (exploitation uniquement) ───────────────────────────────
@@ -220,23 +220,24 @@ export function calcSeuil(
   const isParAnnee = fc.isParAnnee;
 
   // ── Seuil de rentabilité économique ─────────────────────────────────────────
+  // null = non calculable (marge sur coût variable nulle → seuil mathématiquement infini)
   const ZERO: Record<YearKey, number> = { y1: 0, y2: 0, y3: 0 };
-  const seuilEco: Record<YearKey, number> = {
-    y1: tauxMargeCVPct.y1 !== 0 ? totalCoutsFixes.y1 / (tauxMargeCVPct.y1 / 100) : 0,
-    y2: tauxMargeCVPct.y2 !== 0 ? totalCoutsFixes.y2 / (tauxMargeCVPct.y2 / 100) : 0,
-    y3: tauxMargeCVPct.y3 !== 0 ? totalCoutsFixes.y3 / (tauxMargeCVPct.y3 / 100) : 0,
+  const seuilEco: Record<YearKey, number | null> = {
+    y1: tauxMargeCVPct.y1 !== 0 ? totalCoutsFixes.y1 / (tauxMargeCVPct.y1 / 100) : null,
+    y2: tauxMargeCVPct.y2 !== 0 ? totalCoutsFixes.y2 / (tauxMargeCVPct.y2 / 100) : null,
+    y3: tauxMargeCVPct.y3 !== 0 ? totalCoutsFixes.y3 / (tauxMargeCVPct.y3 / 100) : null,
   };
 
-  const excedentEco: Record<YearKey, number> = {
-    y1: ventesProduction.y1 - seuilEco.y1,
-    y2: ventesProduction.y2 - seuilEco.y2,
-    y3: ventesProduction.y3 - seuilEco.y3,
+  const excedentEco: Record<YearKey, number | null> = {
+    y1: seuilEco.y1 !== null ? ventesProduction.y1 - seuilEco.y1 : null,
+    y2: seuilEco.y2 !== null ? ventesProduction.y2 - seuilEco.y2 : null,
+    y3: seuilEco.y3 !== null ? ventesProduction.y3 - seuilEco.y3 : null,
   };
 
-  const pointMortEco: Record<YearKey, number> = {
-    y1: ventesProduction.y1 > 0 ? (seuilEco.y1 / ventesProduction.y1) * 365 : 0,
-    y2: ventesProduction.y2 > 0 ? (seuilEco.y2 / ventesProduction.y2) * 365 : 0,
-    y3: ventesProduction.y3 > 0 ? (seuilEco.y3 / ventesProduction.y3) * 365 : 0,
+  const pointMortEco: Record<YearKey, number | null> = {
+    y1: seuilEco.y1 !== null && ventesProduction.y1 > 0 ? (seuilEco.y1 / ventesProduction.y1) * 365 : (seuilEco.y1 !== null ? 0 : null),
+    y2: seuilEco.y2 !== null && ventesProduction.y2 > 0 ? (seuilEco.y2 / ventesProduction.y2) * 365 : (seuilEco.y2 !== null ? 0 : null),
+    y3: seuilEco.y3 !== null && ventesProduction.y3 > 0 ? (seuilEco.y3 / ventesProduction.y3) * 365 : (seuilEco.y3 !== null ? 0 : null),
   };
 
   // ── Seuil de rentabilité financier ───────────────────────────────────────────
@@ -246,22 +247,22 @@ export function calcSeuil(
     y3: remboursementCapital.y3 + isParAnnee.y3,
   };
 
-  const seuilFin: Record<YearKey, number> = {
-    y1: tauxMargeCVPct.y1 !== 0 ? (totalCoutsFixes.y1 + chargesSupplementaires.y1) / (tauxMargeCVPct.y1 / 100) : 0,
-    y2: tauxMargeCVPct.y2 !== 0 ? (totalCoutsFixes.y2 + chargesSupplementaires.y2) / (tauxMargeCVPct.y2 / 100) : 0,
-    y3: tauxMargeCVPct.y3 !== 0 ? (totalCoutsFixes.y3 + chargesSupplementaires.y3) / (tauxMargeCVPct.y3 / 100) : 0,
+  const seuilFin: Record<YearKey, number | null> = {
+    y1: tauxMargeCVPct.y1 !== 0 ? (totalCoutsFixes.y1 + chargesSupplementaires.y1) / (tauxMargeCVPct.y1 / 100) : null,
+    y2: tauxMargeCVPct.y2 !== 0 ? (totalCoutsFixes.y2 + chargesSupplementaires.y2) / (tauxMargeCVPct.y2 / 100) : null,
+    y3: tauxMargeCVPct.y3 !== 0 ? (totalCoutsFixes.y3 + chargesSupplementaires.y3) / (tauxMargeCVPct.y3 / 100) : null,
   };
 
-  const excedentFin: Record<YearKey, number> = {
-    y1: ventesProduction.y1 - seuilFin.y1,
-    y2: ventesProduction.y2 - seuilFin.y2,
-    y3: ventesProduction.y3 - seuilFin.y3,
+  const excedentFin: Record<YearKey, number | null> = {
+    y1: seuilFin.y1 !== null ? ventesProduction.y1 - seuilFin.y1 : null,
+    y2: seuilFin.y2 !== null ? ventesProduction.y2 - seuilFin.y2 : null,
+    y3: seuilFin.y3 !== null ? ventesProduction.y3 - seuilFin.y3 : null,
   };
 
-  const pointMortFin: Record<YearKey, number> = {
-    y1: ventesProduction.y1 > 0 ? (seuilFin.y1 / ventesProduction.y1) * 365 : 0,
-    y2: ventesProduction.y2 > 0 ? (seuilFin.y2 / ventesProduction.y2) * 365 : 0,
-    y3: ventesProduction.y3 > 0 ? (seuilFin.y3 / ventesProduction.y3) * 365 : 0,
+  const pointMortFin: Record<YearKey, number | null> = {
+    y1: seuilFin.y1 !== null && ventesProduction.y1 > 0 ? (seuilFin.y1 / ventesProduction.y1) * 365 : (seuilFin.y1 !== null ? 0 : null),
+    y2: seuilFin.y2 !== null && ventesProduction.y2 > 0 ? (seuilFin.y2 / ventesProduction.y2) * 365 : (seuilFin.y2 !== null ? 0 : null),
+    y3: seuilFin.y3 !== null && ventesProduction.y3 > 0 ? (seuilFin.y3 / ventesProduction.y3) * 365 : (seuilFin.y3 !== null ? 0 : null),
   };
 
   // ── Assemblage des lignes ─────────────────────────────────────────────────────
@@ -300,17 +301,37 @@ export function calcSeuil(
 
     mkSeparator("sep_eco"),
     mkSection("sec_eco", "Seuil de rentabilité économique"),
-    mkRow("seuil_eco", "Seuil de rentabilité économique", undefined, "highlight", false, seuilEco, ZERO),
-    mkRow("excedent_eco", "Excédent / insuffisance d'activité", undefined, "normal", false, excedentEco, ZERO),
+    {
+      key: "seuil_eco",
+      label: "Seuil de rentabilité économique",
+      style: "highlight" as const,
+      showPct: false,
+      values: {
+        y1: { amount: seuilEco.y1, pct: null },
+        y2: { amount: seuilEco.y2, pct: null },
+        y3: { amount: seuilEco.y3, pct: null },
+      },
+    },
+    {
+      key: "excedent_eco",
+      label: "Excédent / insuffisance d'activité",
+      style: "normal" as const,
+      showPct: false,
+      values: {
+        y1: { amount: excedentEco.y1, pct: null },
+        y2: { amount: excedentEco.y2, pct: null },
+        y3: { amount: excedentEco.y3, pct: null },
+      },
+    },
     {
       key: "point_mort_eco",
       label: "Point mort (jours)",
-      style: "normal",
+      style: "normal" as const,
       showPct: false,
       values: {
-        y1: { amount: Math.round(pointMortEco.y1), pct: null },
-        y2: { amount: Math.round(pointMortEco.y2), pct: null },
-        y3: { amount: Math.round(pointMortEco.y3), pct: null },
+        y1: { amount: pointMortEco.y1 !== null ? Math.round(pointMortEco.y1) : null, pct: null },
+        y2: { amount: pointMortEco.y2 !== null ? Math.round(pointMortEco.y2) : null, pct: null },
+        y3: { amount: pointMortEco.y3 !== null ? Math.round(pointMortEco.y3) : null, pct: null },
       },
     },
 
@@ -322,17 +343,37 @@ export function calcSeuil(
     ...(isIS && (isParAnnee.y1 !== 0 || isParAnnee.y2 !== 0 || isParAnnee.y3 !== 0)
       ? [mkRow("is_annee", "+ Impôt sur les sociétés", "+", "indent", false, isParAnnee, ZERO)]
       : []),
-    mkRow("seuil_fin", "Seuil de rentabilité financier", undefined, "highlight", false, seuilFin, ZERO),
-    mkRow("excedent_fin", "Excédent / insuffisance d'activité", undefined, "normal", false, excedentFin, ZERO),
+    {
+      key: "seuil_fin",
+      label: "Seuil de rentabilité financier",
+      style: "highlight" as const,
+      showPct: false,
+      values: {
+        y1: { amount: seuilFin.y1, pct: null },
+        y2: { amount: seuilFin.y2, pct: null },
+        y3: { amount: seuilFin.y3, pct: null },
+      },
+    },
+    {
+      key: "excedent_fin",
+      label: "Excédent / insuffisance d'activité",
+      style: "normal" as const,
+      showPct: false,
+      values: {
+        y1: { amount: excedentFin.y1, pct: null },
+        y2: { amount: excedentFin.y2, pct: null },
+        y3: { amount: excedentFin.y3, pct: null },
+      },
+    },
     {
       key: "point_mort_fin",
       label: "Point mort financier (jours)",
-      style: "normal",
+      style: "normal" as const,
       showPct: false,
       values: {
-        y1: { amount: Math.round(pointMortFin.y1), pct: null },
-        y2: { amount: Math.round(pointMortFin.y2), pct: null },
-        y3: { amount: Math.round(pointMortFin.y3), pct: null },
+        y1: { amount: pointMortFin.y1 !== null ? Math.round(pointMortFin.y1) : null, pct: null },
+        y2: { amount: pointMortFin.y2 !== null ? Math.round(pointMortFin.y2) : null, pct: null },
+        y3: { amount: pointMortFin.y3 !== null ? Math.round(pointMortFin.y3) : null, pct: null },
       },
     },
   ];

@@ -116,6 +116,13 @@ export function distribuerAmortParExercice(
  * Quand `pFin = 0` (démarrage en janvier) le comportement est identique à une
  * affectation simple année civile → exercice fiscal.
  */
+/**
+ * @deprecated Cette fonction N'EST PAS utilisée par le moteur principal.
+ * La logique d'amortissement du pipeline passe par `distribuerAmortParExercice` (LINEARAIRE/DEGRESSIF),
+ * et les dotations mensuelles sont calculées inline dans `buildMonthlyCalc` (monthly.ts).
+ * Cette fonction est conservée pour les scripts de debug uniquement.
+ * Ne jamais l'appeler depuis le pipeline de calcul (`build.ts` ou `monthly.ts`).
+ */
 export function calcDotationsAmort(
   data: Pick<ScenarioFinData, "immobilisations">,
   anneeDebut: number,
