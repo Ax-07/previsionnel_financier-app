@@ -4,234 +4,270 @@
 
 Toutes les valeurs sont issues directement de la base de données via `fetchScenarioData`.
 
+
 ## 0. Paramètres généraux
 
-| Paramètre                     | Valeur                      |
-| ----------------------------- | --------------------------- |
-| Dossier ID                    | `cmmjoradm0001kohp15on2xe1` |
-| Scénario ID                   | `cmmjov2cg0002kohpzhuxswct` |
-| Date de démarrage             | 01/05/2026                  |
-| Durée projection              | 3 an(s)                     |
-| Régime fiscal                 | IS                          |
-| Taux IS normal                | 25.00 %                     |
-| Taux IS réduit                | 15.00 %                     |
-| Plafond IS réduit             | 42 500,00 €                 |
-| Régime TVA                    | REEL_NORMAL                 |
-| Périodicité déclaration TVA   | trimestriel                 |
-| Taux TVA standard             | 20.00 %                     |
-| Mois de paiement des salaires | 1                           |
-| Régime social TNS             | commerce                    |
-| Mode de calcul TNS            | DEFINITIF                   |
+| Paramètre | Valeur |
+| --- | --- |
+| Dossier ID | `cmmjoradm0001kohp15on2xe1` |
+| Scénario ID | `cmmjov2cg0002kohpzhuxswct` |
+| Date de démarrage | 01/05/2026 |
+| Durée projection | 3 an(s) |
+| Régime fiscal | IS |
+| Taux IS normal | 25.00 % |
+| Taux IS réduit | 15.00 % |
+| Plafond IS réduit | 42 500,00 € |
+| Régime TVA | REEL_NORMAL |
+| Périodicité déclaration TVA | mensuel |
+| Taux TVA standard | 20.00 % |
+| Mois de paiement des salaires | 1 |
+| Régime social TNS | commerce |
+| Mode de calcul TNS | DEFINITIF |
+
 
 ## 1. Activités — Chiffre d'affaires
 
-| Libellé       | Type              | Actif | Hyp.   | HT N (2026) | HT N+1     | HT N+2     | TVA     | Fréq.   | Règl. clients | Taux marge | TVA achats | J. stock | J. fourn. |
-| ------------- | ----------------- | ----- | ------ | ----------- | ---------- | ---------- | ------- | ------- | ------------- | ---------- | ---------- | -------- | --------- |
-| Vente pizza   | PRODUCTION_VENDUE | Oui   | normal | 96 955,00   | 101 802,75 | 106 892,89 | 10.00 % | MENSUEL | —             | 73.00 %    | 5.50 %     | 15 j     | 15 j      |
-| Vente boisson | PRODUCTION_VENDUE | Oui   | normal | 2 060,00    | 2 163,00   | 2 271,15   | 10.00 % | MENSUEL | —             | 65.00 %    | 5.50 %     | 15 j     | 15 j      |
-| Vente alcool  | PRODUCTION_VENDUE | Oui   | normal | 4 121,00    | 4 327,05   | 4 543,40   | 20.00 % | MENSUEL | —             | 65.00 %    | 20.00 %    | 15 j     | 15 j      |
+| Libellé | Type | Actif | Hyp. | HT N (2026) | HT N+1 | HT N+2 | TVA | Fréq. | Règl. clients | Taux marge | TVA achats | J. stock | J. fourn. |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Vente pizza | PRODUCTION_VENDUE | Oui | normal | 98 750,00 | 103 687,50 | 108 871,88 | 10.00 % | MENSUEL | — | 73.00 % | 5.50 % | 15 j | 30 j |
+| Vente boisson | PRODUCTION_VENDUE | Oui | normal | 8 000,00 | 8 400,00 | 8 820,00 | 10.00 % | MENSUEL | — | 65.00 % | 5.50 % | 15 j | 30 j |
+| Vente alcool | PRODUCTION_VENDUE | Oui | normal | 4 197,00 | 4 406,85 | 4 627,19 | 20.00 % | MENSUEL | — | 65.00 % | 20.00 % | 15 j | 30 j |
+
 
 ## 2. Commissions — _(vide)_
 
 _Aucune donnée._
 
+
 ## 3. Subventions d'exploitation — _(vide)_
 
 _Aucune donnée._
+
 
 ## 4. Productions immobilisées — _(vide)_
 
 _Aucune donnée._
 
+
 ## 5. Fournitures & Consommables — **6** ligne(s)
 
-| Libellé                     | Actif | Hyp.    | N (2026) | Évol. N+1 | N+1      | Évol. N+2 | N+2      | TVA     | Fréq.         | Délai (j) |
-| --------------------------- | ----- | ------- | -------- | --------- | -------- | --------- | -------- | ------- | ------------- | --------- |
-| Embalages                   | Oui   | normale | 1 543,15 | 0.00 %    | 1 543,15 | 0.00 %    | 1 543,15 | 20.00 % | PERSONNALISEE | 0         |
-| Electricité                 | Oui   | normale | 4 500,00 | 2.00 %    | 4 590,00 | 2.00 %    | 4 681,80 | 20.00 % | MENSUELLE     | 0         |
-| Eau                         | Oui   | normale | 250,00   | 2.00 %    | 255,00   | 2.00 %    | 260,10   | 20.00 % | MENSUELLE     | 30        |
-| Petit équimement            | Oui   | normale | 450,00   | 2.00 %    | 459,00   | 2.00 %    | 468,18   | 20.00 % | MENSUELLE     | 0         |
-| Produits d'entretiens       | Oui   | normale | 600,00   | 2.00 %    | 612,00   | 2.00 %    | 624,24   | 20.00 % | MENSUELLE     | 15        |
-| Fournitures administratives | Oui   | normale | 450,00   | 2.00 %    | 459,00   | 2.00 %    | 468,18   | 20.00 % | MENSUELLE     | 0         |
+| Libellé | Actif | Hyp. | N (2026) | Évol. N+1 | N+1 | Évol. N+2 | N+2 | TVA | Fréq. | Délai (j) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Embalages | Oui | normale | 1 244,25 | 5.00 % | 1 306,46 | 5.00 % | 1 371,79 | 20.00 % | PERSONNALISEE | 0 |
+| Electricité | Oui | normale | 4 500,00 | 2.00 % | 4 590,00 | 2.00 % | 4 681,80 | 20.00 % | MENSUELLE | 0 |
+| Eau | Oui | normale | 250,00 | 2.00 % | 255,00 | 2.00 % | 260,10 | 20.00 % | MENSUELLE | 30 |
+| Petit équimement | Oui | normale | 450,00 | 2.00 % | 459,00 | 2.00 % | 468,18 | 20.00 % | MENSUELLE | 0 |
+| Produits d'entretiens | Oui | normale | 600,00 | 2.00 % | 612,00 | 2.00 % | 624,24 | 20.00 % | MENSUELLE | 15 |
+| Fournitures administratives | Oui | normale | 450,00 | 2.00 % | 459,00 | 2.00 % | 468,18 | 20.00 % | MENSUELLE | 0 |
+
 
 ## 6. Services extérieurs — **16** ligne(s)
 
-| Libellé                                    | Actif | Hyp.    | N (2026)  | Évol. N+1 | N+1       | Évol. N+2 | N+2       | TVA     | Fréq.         | Délai (j) |
-| ------------------------------------------ | ----- | ------- | --------- | --------- | --------- | --------- | --------- | ------- | ------------- | --------- |
-| Location immobilière                       | Oui   | normale | 15 126,00 | 0.00 %    | 15 126,00 | 0.00 %    | 15 126,00 | 20.00 % | MENSUELLE     | 30        |
-| Location TPE + pp                          | Oui   | normale | 231,00    | 2.00 %    | 235,62    | 2.00 %    | 240,33    | 20.00 % | MENSUELLE     | 0         |
-| Frais de télécommunication                 | Oui   | normale | 480,00    | 25.00 %   | 600,00    | 0.00 %    | 600,00    | 20.00 % | MENSUELLE     | 0         |
-| Primes d'assurances                        | Oui   | normale | 1 400,00  | 2.00 %    | 1 428,00  | 2.00 %    | 1 456,56  | 0.00 %  | MENSUELLE     | 0         |
-| Entretiens et réparations                  | Oui   | normale | 1 600,00  | 2.00 %    | 1 632,00  | 2.00 %    | 1 664,64  | 20.00 % | MENSUELLE     | 0         |
-| Honoraires comptable et juridiques         | Oui   | normale | 2 800,00  | 2.00 %    | 2 856,00  | 2.00 %    | 2 913,12  | 20.00 % | MENSUELLE     | 30        |
-| Honoraires juridiques                      | Oui   | normale | 600,00    | 5.00 %    | 630,00    | 5.00 %    | 661,50    | 20.00 % | MENSUELLE     | 30        |
-| Publicité, publications                    | Oui   | normale | 1 000,00  | -50.00 %  | 500,00    | 0.00 %    | 500,00    | 20.00 % | MENSUELLE     | 0         |
-| Services bancaires                         | Oui   | normale | 584,00    | 2.00 %    | 595,68    | 2.00 %    | 607,59    | 20.00 % | MENSUELLE     | 30        |
-| Frais divers                               | Oui   | normale | 500,00    | 2.00 %    | 510,00    | 2.00 %    | 520,20    | 20.00 % | MENSUELLE     | 0         |
-| Frais titre restaurant                     | Oui   | normale | 415,52    | 0.00 %    | 415,52    | 0.00 %    | 415,52    | 20.00 % | PERSONNALISEE | 30        |
-| Déplacements                               | Oui   | normale | 200,00    | 0.00 %    | 200,00    | 0.00 %    | 200,00    | 20.00 % | MENSUELLE     | 0         |
-| Vetements de travail                       | Oui   | normale | 100,00    | 0.00 %    | 100,00    | 0.00 %    | 100,00    | 20.00 % | MENSUELLE     | 0         |
-| Commission CB                              | Oui   | normale | 658,00    | 3.00 %    | 677,74    | 3.00 %    | 698,07    | 20.00 % | MENSUELLE     | 30        |
-| Abonnement logiciel de caisse (airkitchen) | Oui   | normale | 810,00    | 0.00 %    | 810,00    | 0.00 %    | 810,00    | 20.00 % | MENSUELLE     | 0         |
-| offerts                                    | Oui   | normale | 3 061,80  | 0.00 %    | 3 061,80  | 0.00 %    | 3 061,80  | 20.00 % | PERSONNALISEE | 30        |
+| Libellé | Actif | Hyp. | N (2026) | Évol. N+1 | N+1 | Évol. N+2 | N+2 | TVA | Fréq. | Délai (j) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Vetements de travail | Oui | normale | 100,00 | 0.00 % | 100,00 | 0.00 % | 100,00 | 20.00 % | MENSUELLE | 0 |
+| Commission CB | Oui | normale | 658,00 | 3.00 % | 677,74 | 3.00 % | 698,07 | 0.00 % | MENSUELLE | 30 |
+| offerts | Oui | normale | 2 468,75 | 5.00 % | 2 592,19 | 5.00 % | 2 721,80 | 20.00 % | PERSONNALISEE | 30 |
+| Location immobilière | Oui | normale | 15 126,00 | 0.00 % | 15 126,00 | 0.00 % | 15 126,00 | 20.00 % | MENSUELLE | 30 |
+| Location TPE + pp | Oui | normale | 231,00 | 2.00 % | 235,62 | 2.00 % | 240,33 | 20.00 % | MENSUELLE | 0 |
+| Frais de télécommunication | Oui | normale | 480,00 | 25.00 % | 600,00 | 0.00 % | 600,00 | 20.00 % | MENSUELLE | 0 |
+| Primes d'assurances | Oui | normale | 1 400,00 | 2.00 % | 1 428,00 | 2.00 % | 1 456,56 | 0.00 % | MENSUELLE | 0 |
+| Entretiens et réparations | Oui | normale | 1 600,00 | 2.00 % | 1 632,00 | 2.00 % | 1 664,64 | 20.00 % | MENSUELLE | 0 |
+| Honoraires comptable et juridiques | Oui | normale | 2 800,00 | 2.00 % | 2 856,00 | 2.00 % | 2 913,12 | 20.00 % | MENSUELLE | 30 |
+| Honoraires juridiques | Oui | normale | 600,00 | 5.00 % | 630,00 | 5.00 % | 661,50 | 20.00 % | MENSUELLE | 30 |
+| Publicité, publications | Oui | normale | 1 000,00 | -50.00 % | 500,00 | 0.00 % | 500,00 | 20.00 % | MENSUELLE | 0 |
+| Frais divers | Oui | normale | 500,00 | 2.00 % | 510,00 | 2.00 % | 520,20 | 20.00 % | MENSUELLE | 0 |
+| Déplacements | Oui | normale | 200,00 | 0.00 % | 200,00 | 0.00 % | 200,00 | 20.00 % | MENSUELLE | 0 |
+| Abonnement logiciel de caisse (airkitchen) | Oui | normale | 810,00 | 0.00 % | 810,00 | 0.00 % | 810,00 | 20.00 % | MENSUELLE | 0 |
+| Services bancaires | Oui | normale | 584,00 | 2.00 % | 595,68 | 2.00 % | 607,59 | 20.00 % | MENSUELLE | 30 |
+| Frais titre restaurant | Oui | normale | 395,00 | 5.00 % | 414,75 | 5.00 % | 435,49 | 20.00 % | PERSONNALISEE | 30 |
+
 
 ## 7. Impôts & Taxes — **2** ligne(s)
 
-| Libellé       | Actif | Hyp.    | Date N     | Montant N (2026) | Date N+1   | Montant N+1 | Date N+2   | Montant N+2 | CFE | Base CFE | Taux CFE |
-| ------------- | ----- | ------- | ---------- | ---------------- | ---------- | ----------- | ---------- | ----------- | --- | -------- | -------- |
-| CFE           | Oui   | normale | 2026-11-01 | 1 128,00         | 2027-11-01 | 1 128,00    | 2028-11-01 | 1 128,00    | Oui | —        | —        |
-| Taxe foncière | Oui   | normale | 2026-10-01 | 495,00           | 2027-10-01 | 850,00      | 2028-10-01 | 850,00      | Non | —        | —        |
+| Libellé | Actif | Hyp. | Date N | Montant N (2026) | Date N+1 | Montant N+1 | Date N+2 | Montant N+2 | CFE | Base CFE | Taux CFE |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CFE | Oui | normale | 2026-11-01 | 1 128,00 | 2027-11-01 | 1 128,00 | 2028-11-01 | 1 128,00 | Oui | — | — |
+| Taxe foncière | Oui | normale | 2026-10-01 | 495,00 | 2027-10-01 | 850,00 | 2028-10-01 | 850,00 | Non | — | — |
 
-## 8. Salariés — **1** ligne(s)
 
-| Libellé                           | Actif | Hyp.    | Brut N (2026) | Évol.N+1 | Brut N+1  | Évol.N+2 | Brut N+2  | Taux sal. | Taux pat. | Fixe %   |
-| --------------------------------- | ----- | ------- | ------------- | -------- | --------- | -------- | --------- | --------- | --------- | -------- |
-| Serveur saisonnier 39h (42 repas) | Non   | normale | 12 391,00     | 2.00 %   | 12 638,82 | 2.00 %   | 12 891,59 | 22.00 %   | 25.00 %   | 100.00 % |
+## 8. Salariés — **2** ligne(s)
+
+| Libellé | Actif | Hyp. | Brut N (2026) | Évol.N+1 | Brut N+1 | Évol.N+2 | Brut N+2 | Taux sal. | Taux pat. | Fixe % |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Serveur saisonnier 39h (42 repas) | Non | normale | 12 391,00 | 2.00 % | 12 638,82 | 2.00 % | 12 891,59 | 22.00 % | 42.00 % | 100.00 % |
+| Serveur 39h (42 repas) CDI | Non | normale | 19 118,00 | 2.00 % | 19 500,36 | 2.00 % | 19 890,37 | 22.00 % | 42.00 % | 100.00 % |
+
 
 ## 9. Dirigeants — **1** ligne(s)
 
-| Libellé             | Actif | Hyp.    | Rémun. N (2026) | Évol.N+1 | Rémun. N+1 | Évol.N+2 | Rémun. N+2 | Exonération TNS | Conjoint | Fixe %   |
-| ------------------- | ----- | ------- | --------------- | -------- | ---------- | -------- | ---------- | --------------- | -------- | -------- |
-| Rémunération gérant | Oui   | normale | 14 400,00       | 25.00 %  | 18 000,00  | 0.00 %   | 18 000,00  | —               | Non      | 100.00 % |
+| Libellé | Actif | Hyp. | Rémun. N (2026) | Évol.N+1 | Rémun. N+1 | Évol.N+2 | Rémun. N+2 | Exonération TNS | Conjoint | Fixe % |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Rémunération gérant | Oui | normale | 18 000,00 | 0.00 % | 18 000,00 | 0.00 % | 18 000,00 | ACRE | Non | 100.00 % |
+
 
 ## 10. Cotisations TNS — **8** ligne(s)
 
-| Libellé                                    | Actif | Auto | N (2026) | N+1      | N+2      |
-| ------------------------------------------ | ----- | ---- | -------- | -------- | -------- |
-| Allocations familiales                     | Oui   | Oui  | 0,00     | 0,00     | 0,00     |
-| Maladie-maternité                          | Oui   | Oui  | 149,77   | 323,04   | 323,04   |
-| Indemnités journalières (IJ)               | Oui   | Oui  | 96,12    | 98,73    | 98,73    |
-| Retraite (base + compl) + invalidité-décès | Oui   | Oui  | 4 286,29 | 5 384,92 | 5 384,92 |
-| CSG/CRDS                                   | Oui   | Oui  | 1 654,13 | 2 053,48 | 2 053,48 |
-| CFP (forfait PASS)                         | Oui   | Oui  | 654,20   | 824,51   | 824,51   |
-| Cotisations facultatives (Madelin)         | Oui   | Non  | 700,00   | 700,00   | 700,00   |
-| Cotisations facultatives (non Madelin)     | Oui   | Non  | 0,00     | 0,00     | 0,00     |
+| Libellé | Actif | Auto | N (2026) | N+1 | N+2 |
+| --- | --- | --- | --- | --- | --- |
+| Allocations familiales | Oui | Oui | 0,00 | 0,00 | 0,00 |
+| Maladie-maternité | Oui | Oui | 193,95 | 323,04 | 323,04 |
+| Indemnités journalières (IJ) | Oui | Oui | 96,12 | 98,73 | 98,73 |
+| Retraite (base + compl) + invalidité-décès | Oui | Oui | 4 168,86 | 5 384,92 | 5 384,92 |
+| CSG/CRDS | Oui | Oui | 1 861,63 | 2 053,48 | 2 053,48 |
+| CFP (forfait PASS) | Oui | Oui | 742,69 | 824,51 | 824,51 |
+| Cotisations facultatives (Madelin) | Oui | Non | 0,00 | 0,00 | 0,00 |
+| Cotisations facultatives (non Madelin) | Oui | Non | 0,00 | 0,00 | 0,00 |
+
 
 ## 11. Taxes assises sur les salaires — _(vide)_
 
 _Aucune donnée._
 
-## 12. Immobilisations — **12** ligne(s)
 
-| Libellé                                                          | Actif | Nature     | Date acquis. | Montant HT (€) | TVA     | Type TVA    | Durée amort. | Mode amort. | Différé | Renouvellement |
-| ---------------------------------------------------------------- | ----- | ---------- | ------------ | -------------- | ------- | ----------- | ------------ | ----------- | ------- | -------------- |
-| Meuble pizza                                                     | Oui   | CORPOREL   | 01/05/2026   | 1 499,00       | 20.00 % | RECUPERABLE | 10 ans       | LINEAIRE    | —       | Non            |
-| Enseigne et communication                                        | Oui   | CORPOREL   | 01/05/2026   | 1 500,00       | 20.00 % | RECUPERABLE | 10 ans       | LINEAIRE    | —       | Non            |
-| Caisse enregistreuse (airkitchen)                                | Oui   | CORPOREL   | 01/05/2026   | 889,00         | 20.00 % | RECUPERABLE | 5 ans        | LINEAIRE    | —       | Non            |
-| Frais d'agence                                                   | Oui   | INCORPOREL | 01/05/2026   | 5 833,00       | 20.00 % | RECUPERABLE | 0 ans        | AUCUN       | —       | Non            |
-| Fond de commerce (materiel)                                      | Oui   | CORPOREL   | 01/05/2026   | 31 060,00      | 0.00 %  | RECUPERABLE | 10 ans       | LINEAIRE    | —       | Non            |
-| Débours (provision pour frais de greffe et journal)              | Oui   | INCORPOREL | 01/05/2026   | 500,00         | 0.00 %  | RECUPERABLE | 0 ans        | AUCUN       | —       | Non            |
-| Honoraires notaire (vente)                                       | Oui   | INCORPOREL | 01/05/2026   | 1 200,00       | 20.00 % | RECUPERABLE | 0 ans        | AUCUN       | —       | Non            |
-| Honoraires notaire (constitution société)                        | Oui   | INCORPOREL | 01/05/2026   | 700,00         | 20.00 % | RECUPERABLE | 0 ans        | AUCUN       | —       | Non            |
-| Provision pour frais de greffe et journal (constitution société) | Oui   | INCORPOREL | 01/05/2026   | 500,00         | 0.00 %  | RECUPERABLE | 0 ans        | AUCUN       | —       | Non            |
-| Frais de garantie "France active"                                | Oui   | FINANCIER  | 01/05/2026   | 950,00         | 0.00 %  | RECUPERABLE | 0 ans        | AUCUN       | —       | Non            |
-| Droit d'enregistrement                                           | Oui   | INCORPOREL | 01/05/2026   | 1 110,00       | 0.00 %  | RECUPERABLE | 0 ans        | AUCUN       | —       | Non            |
-| Fond de commerce                                                 | Oui   | INCORPOREL | 01/05/2026   | 18 940,00      | 0.00 %  | RECUPERABLE | 0 ans        | AUCUN       | —       | Non            |
+## 12. Immobilisations — **14** ligne(s)
+
+| Libellé | Actif | Nature | Date acquis. | Montant HT (€) | TVA | Type TVA | Durée amort. | Mode amort. | Différé | Renouvellement |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Frais d'agence | Oui | INCORPOREL | 01/05/2026 | 5 833,00 | 20.00 % | RECUPERABLE | 0 ans | AUCUN | — | Non |
+| Fond de commerce (materiel) | Oui | CORPOREL | 01/05/2026 | 31 060,00 | 0.00 % | RECUPERABLE | 10 ans | LINEAIRE | — | Non |
+| Débours (provision pour frais de greffe et journal) | Oui | INCORPOREL | 01/05/2026 | 500,00 | 0.00 % | RECUPERABLE | 0 ans | AUCUN | — | Non |
+| Honoraires notaire (vente) | Oui | INCORPOREL | 01/05/2026 | 1 200,00 | 20.00 % | RECUPERABLE | 0 ans | AUCUN | — | Non |
+| Honoraires notaire (constitution société) | Oui | INCORPOREL | 01/05/2026 | 700,00 | 20.00 % | RECUPERABLE | 0 ans | AUCUN | — | Non |
+| Provision pour frais de greffe et journal (constitution société) | Oui | INCORPOREL | 01/05/2026 | 500,00 | 0.00 % | RECUPERABLE | 0 ans | AUCUN | — | Non |
+| Enseigne et communication | Oui | CORPOREL | 01/05/2026 | 1 000,00 | 20.00 % | RECUPERABLE | 10 ans | LINEAIRE | — | Non |
+| Droit d'enregistrement | Oui | INCORPOREL | 01/05/2026 | 1 110,00 | 0.00 % | RECUPERABLE | 0 ans | AUCUN | — | Non |
+| Fond de commerce | Oui | INCORPOREL | 01/05/2026 | 28 940,00 | 0.00 % | RECUPERABLE | 0 ans | AUCUN | — | Non |
+| Caisse enregistreuse (airkitchen) | Oui | CORPOREL | 01/05/2026 | 889,00 | 20.00 % | RECUPERABLE | 10 ans | LINEAIRE | — | Non |
+| Formation HACCP | Non | INCORPOREL | 01/05/2026 | 759,00 | 20.00 % | RECUPERABLE | 0 ans | AUCUN | — | Non |
+| Meuble pizza | Oui | CORPOREL | 01/05/2026 | 1 222,99 | 20.00 % | RECUPERABLE | 10 ans | LINEAIRE | — | Non |
+| Frais de garantie "France active" | Non | INCORPOREL | 01/05/2026 | 950,00 | 0.00 % | RECUPERABLE | 0 ans | AUCUN | — | Non |
+| Frais de garantie "BPI" | Oui | FINANCIER | 01/05/2026 | 3 200,00 | 0.00 % | RECUPERABLE | 0 ans | AUCUN | — | Non |
+
 
 ### Tableau d'amortissement synthétique
 
-| Immobilisation                    | Exercice | Val. brute début (€) | Dotation (€) | Amort. cumulé (€) | Val. nette (€) |
-| --------------------------------- | -------- | -------------------: | -----------: | ----------------: | -------------: |
-| Meuble pizza                      | 2026     |             1 499,00 |        99,93 |             99,93 |       1 399,07 |
-| Meuble pizza                      | 2027     |             1 499,00 |       149,90 |            249,83 |       1 249,17 |
-| Meuble pizza                      | 2028     |             1 499,00 |       149,90 |            399,73 |       1 099,27 |
-| Enseigne et communication         | 2026     |             1 500,00 |       100,00 |            100,00 |       1 400,00 |
-| Enseigne et communication         | 2027     |             1 500,00 |       150,00 |            250,00 |       1 250,00 |
-| Enseigne et communication         | 2028     |             1 500,00 |       150,00 |            400,00 |       1 100,00 |
-| Caisse enregistreuse (airkitchen) | 2026     |               889,00 |       118,53 |            118,53 |         770,47 |
-| Caisse enregistreuse (airkitchen) | 2027     |               889,00 |       177,80 |            296,33 |         592,67 |
-| Caisse enregistreuse (airkitchen) | 2028     |               889,00 |       177,80 |            474,13 |         414,87 |
-| Fond de commerce (materiel)       | 2026     |            31 060,00 |     2 070,67 |          2 070,67 |      28 989,33 |
-| Fond de commerce (materiel)       | 2027     |            31 060,00 |     3 106,00 |          5 176,67 |      25 883,33 |
-| Fond de commerce (materiel)       | 2028     |            31 060,00 |     3 106,00 |          8 282,67 |      22 777,33 |
+
+| Immobilisation | Exercice | Val. brute début (€) | Dotation (€) | Amort. cumulé (€) | Val. nette (€) |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Fond de commerce (materiel) | 2026 | 31 060,00 | 2 070,67 | 2 070,67 | 28 989,33 |
+| Fond de commerce (materiel) | 2027 | 31 060,00 | 3 106,00 | 5 176,67 | 25 883,33 |
+| Fond de commerce (materiel) | 2028 | 31 060,00 | 3 106,00 | 8 282,67 | 22 777,33 |
+| Enseigne et communication | 2026 | 1 000,00 | 66,67 | 66,67 | 933,33 |
+| Enseigne et communication | 2027 | 1 000,00 | 100,00 | 166,67 | 833,33 |
+| Enseigne et communication | 2028 | 1 000,00 | 100,00 | 266,67 | 733,33 |
+| Caisse enregistreuse (airkitchen) | 2026 | 889,00 | 59,27 | 59,27 | 829,73 |
+| Caisse enregistreuse (airkitchen) | 2027 | 889,00 | 88,90 | 148,17 | 740,83 |
+| Caisse enregistreuse (airkitchen) | 2028 | 889,00 | 88,90 | 237,07 | 651,93 |
+| Meuble pizza | 2026 | 1 222,99 | 81,53 | 81,53 | 1 141,46 |
+| Meuble pizza | 2027 | 1 222,99 | 122,30 | 203,83 | 1 019,16 |
+| Meuble pizza | 2028 | 1 222,99 | 122,30 | 326,13 | 896,86 |
+
 
 ## 13. Provisions — _(vide)_
 
 _Aucune donnée._
 
+
 ## 14. Charges financières — _(vide)_
 
 _Aucune donnée._
+
 
 ## 15. Charges exceptionnelles — _(vide)_
 
 _Aucune donnée._
 
+
 ## 16. Charges de gestion courante — _(vide)_
 
 _Aucune donnée._
+
 
 ## 17. Reprises sur provisions — _(vide)_
 
 _Aucune donnée._
 
+
 ## 18. Produits financiers — _(vide)_
 
 _Aucune donnée._
+
 
 ## 19. Produits exceptionnels — _(vide)_
 
 _Aucune donnée._
 
+
 ## 20. Transferts de charges — _(vide)_
 
 _Aucune donnée._
+
 
 ## 21. Produits de gestion courante — _(vide)_
 
 _Aucune donnée._
 
+
 ## 22. Emprunts — **1** ligne(s)
 
-| Libellé | Type         | Montant (€) | Taux annuel | Taux assur. | Durée (mois) | Périodicité | Date déblocage | Différé | Durée diff. | Mode remb.         | Frais doss. |
-| ------- | ------------ | ----------- | ----------- | ----------- | ------------ | ----------- | -------------- | ------- | ----------- | ------------------ | ----------- |
-| CIC     | AMORTISSABLE | 60 000,00   | 4.00 %      | 0.80 %      | 84           | MENSUEL     | 01/05/2026     | PARTIEL | 0           | ECHEANCE_CONSTANTE | 600,00      |
+| Libellé | Type | Montant (€) | Taux annuel | Taux assur. | Durée (mois) | Périodicité | Date déblocage | Différé | Durée diff. | Mode remb. | Frais doss. |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CIC | AMORTISSABLE | 70 000,00 | 4.00 % | 0.80 % | 84 | MENSUEL | 01/05/2026 | PARTIEL | 0 | ECHEANCE_CONSTANTE | 600,00 |
+
 
 ### Échéancier — CIC
 
 > 86 lignes · 84 mois
 
-| Mois | Date éch.  | Cap. début (€) | Intérêts (€) | Assur. (€) | Cap. remb. (€) | Mensualité (€) | Cap. fin (€) |
-| ---: | ---------- | -------------: | -----------: | ---------: | -------------: | -------------: | -----------: |
-|   -1 | 01/05/2026 |      60 000,00 |         0,00 |       0,00 |           0,00 |         600,00 |    60 000,00 |
-|    0 | 01/05/2026 |      60 000,00 |       200,00 |      40,00 |           0,00 |           0,00 |    60 000,00 |
-|    1 | 01/06/2026 |      60 000,00 |       200,00 |      40,00 |         620,13 |         860,13 |    59 379,87 |
-|    … | …          |              … |            … |          … |              … |              … |            … |
-|   82 | 01/03/2033 |       2 444,07 |         8,15 |       1,63 |         811,98 |         821,76 |     1 632,09 |
-|   83 | 01/04/2033 |       1 632,09 |         5,44 |       1,09 |         814,69 |         821,22 |       817,40 |
-|   84 | 01/05/2033 |         817,40 |         2,72 |       0,54 |         817,40 |         820,67 |         0,00 |
+| Mois | Date éch. | Cap. début (€) | Intérêts (€) | Assur. (€) | Cap. remb. (€) | Mensualité (€) | Cap. fin (€) |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| -1 | 01/05/2026 | 70 000,00 | 0,00 | 0,00 | 0,00 | 600,00 | 70 000,00 |
+| 0 | 01/05/2026 | 70 000,00 | 233,33 | 46,67 | 0,00 | 0,00 | 70 000,00 |
+| 1 | 01/06/2026 | 70 000,00 | 233,33 | 46,67 | 723,48 | 1 003,48 | 69 276,52 |
+| … | … | … | … | … | … | … | … |
+| 82 | 01/03/2033 | 2 851,42 | 9,50 | 1,90 | 947,31 | 958,72 | 1 904,11 |
+| 83 | 01/04/2033 | 1 904,11 | 6,35 | 1,27 | 950,47 | 958,09 | 953,64 |
+| 84 | 01/05/2033 | 953,64 | 3,18 | 0,64 | 953,64 | 957,45 | 0,00 |
 
-## 23. Apports — **3** ligne(s)
 
-| Libellé               | Type           | Montant (€) | Date apport | Remboursable |
-| --------------------- | -------------- | ----------- | ----------- | ------------ |
-| Apport personnel      | CAPITAL        | 1 000,00    | 01/05/2026  | Non          |
-| Apport prêt d'honneur | COMPTE_COURANT | 10 000,00   | 01/05/2026  | Non          |
-| Apport personnel      | COMPTE_COURANT | 9 000,00    | 01/05/2026  | Non          |
+## 23. Apports — **2** ligne(s)
+
+| Libellé | Type | Montant (€) | Date apport | Remboursable |
+| --- | --- | --- | --- | --- |
+| Apport personnel | CAPITAL | 1 000,00 | 01/05/2026 | Non |
+| Apport personnel | COMPTE_COURANT | 19 000,00 | 01/05/2026 | Non |
+
 
 ## 24. Subventions d'investissement — _(vide)_
 
 _Aucune donnée._
 
+
 ## 25. Divers encaissements — _(vide)_
 
 _Aucune donnée._
+
 
 ## 26. Divers décaissements — _(vide)_
 
 _Aucune donnée._
 
+
 ## 27. Remboursements Compte Courant — _(vide)_
 
 _Aucune donnée._
+
 
 ## 28. Paramètres IS
 
 _Non applicable (régime IR) ou non renseigné._
 
+
 ## 29. Ajustements fiscaux — _(vide)_
 
 _Aucun ajustement fiscal._
+
 
 ---
 
@@ -239,428 +275,457 @@ _Aucun ajustement fiscal._
 
 > Générées par `buildMonthlyCalc` avec IS réel (2-pass). Valeurs en €.
 
+
 ## 31. Séries mensuelles — CA par activité
+
 
 ### Exercice 2026–2027
 
-| Mois      | Vente pizza | Vente boisson | Vente alcool |          Total |
-| --------- | ----------: | ------------: | -----------: | -------------: |
-| Mai 2026  |   10 985,00 |        233,40 |       466,91 |      11 685,31 |
-| Jun 2026  |   10 635,96 |        225,98 |       452,07 |      11 314,02 |
-| Jul 2026  |   10 985,00 |        233,40 |       466,91 |      11 685,31 |
-| Aoû 2026  |   13 185,88 |        280,16 |       560,46 |      14 026,50 |
-| Sep 2026  |    8 502,95 |        180,66 |       361,41 |       9 045,03 |
-| Oct 2026  |    5 739,74 |        121,95 |       243,96 |       6 105,65 |
-| Nov 2026  |    5 526,44 |        117,42 |       234,90 |       5 878,75 |
-| Déc 2026  |    5 526,44 |        117,42 |       234,90 |       5 878,75 |
-| Jan 2027  |    5 739,74 |        121,95 |       243,96 |       6 105,65 |
-| Fév 2027  |    5 099,83 |        108,36 |       216,76 |       5 424,95 |
-| Mar 2027  |    7 620,66 |        161,92 |       323,91 |       8 106,49 |
-| Avr 2027  |    7 407,36 |        157,38 |       314,84 |       7 879,59 |
-| **Total** |   96 955,00 |      2 060,00 |     4 121,00 | **103 136,00** |
+| Mois | Vente pizza | Vente boisson | Vente alcool | Total |
+| --- | ---: | ---: | ---: | ---: |
+| Mai 2026 | 11 188,38 | 906,40 | 475,52 | 12 570,30 |
+| Jun 2026 | 10 832,88 | 877,60 | 460,41 | 12 170,89 |
+| Jul 2026 | 11 188,38 | 906,40 | 475,52 | 12 570,30 |
+| Aoû 2026 | 13 430,00 | 1 088,00 | 570,79 | 15 088,79 |
+| Sep 2026 | 8 660,38 | 701,60 | 368,08 | 9 730,05 |
+| Oct 2026 | 5 846,00 | 473,60 | 248,46 | 6 568,06 |
+| Nov 2026 | 5 628,75 | 456,00 | 239,23 | 6 323,98 |
+| Déc 2026 | 5 628,75 | 456,00 | 239,23 | 6 323,98 |
+| Jan 2027 | 5 846,00 | 473,60 | 248,46 | 6 568,06 |
+| Fév 2027 | 5 194,25 | 420,80 | 220,76 | 5 835,81 |
+| Mar 2027 | 7 761,75 | 628,80 | 329,88 | 8 720,43 |
+| Avr 2027 | 7 544,50 | 611,20 | 320,65 | 8 476,35 |
+| **Total** | 98 750,00 | 8 000,00 | 4 197,00 | **110 947,00** |
+
 
 ### Exercice 2027–2028
 
-| Mois      | Vente pizza | Vente boisson | Vente alcool |          Total |
-| --------- | ----------: | ------------: | -----------: | -------------: |
-| Mai 2027  |   11 534,25 |        245,07 |       490,25 |      12 269,57 |
-| Jun 2027  |   11 167,76 |        237,28 |       474,68 |      11 879,72 |
-| Jul 2027  |   11 534,25 |        245,07 |       490,25 |      12 269,57 |
-| Aoû 2027  |   13 845,17 |        294,17 |       588,48 |      14 727,82 |
-| Sep 2027  |    8 928,10 |        189,70 |       379,48 |       9 497,28 |
-| Oct 2027  |    6 026,72 |        128,05 |       256,16 |       6 410,93 |
-| Nov 2027  |    5 802,76 |        123,29 |       246,64 |       6 172,69 |
-| Déc 2027  |    5 802,76 |        123,29 |       246,64 |       6 172,69 |
-| Jan 2028  |    6 026,72 |        128,05 |       256,16 |       6 410,93 |
-| Fév 2028  |    5 354,82 |        113,77 |       227,60 |       5 696,20 |
-| Mar 2028  |    8 001,70 |        170,01 |       340,11 |       8 511,81 |
-| Avr 2028  |    7 777,73 |        165,25 |       330,59 |       8 273,57 |
-| **Total** |  101 802,75 |      2 163,00 |     4 327,05 | **108 292,80** |
+| Mois | Vente pizza | Vente boisson | Vente alcool | Total |
+| --- | ---: | ---: | ---: | ---: |
+| Mai 2027 | 11 747,79 | 951,72 | 499,30 | 13 198,81 |
+| Jun 2027 | 11 374,52 | 921,48 | 483,43 | 12 779,43 |
+| Jul 2027 | 11 747,79 | 951,72 | 499,30 | 13 198,81 |
+| Aoû 2027 | 14 101,50 | 1 142,40 | 599,33 | 15 843,23 |
+| Sep 2027 | 9 093,39 | 736,68 | 386,48 | 10 216,55 |
+| Oct 2027 | 6 138,30 | 497,28 | 260,89 | 6 896,47 |
+| Nov 2027 | 5 910,19 | 478,80 | 251,19 | 6 640,18 |
+| Déc 2027 | 5 910,19 | 478,80 | 251,19 | 6 640,18 |
+| Jan 2028 | 6 138,30 | 497,28 | 260,89 | 6 896,47 |
+| Fév 2028 | 5 453,96 | 441,84 | 231,80 | 6 127,60 |
+| Mar 2028 | 8 149,84 | 660,24 | 346,38 | 9 156,46 |
+| Avr 2028 | 7 921,73 | 641,76 | 336,68 | 8 900,17 |
+| **Total** | 103 687,50 | 8 400,00 | 4 406,85 | **116 494,35** |
+
 
 ### Exercice 2028–2029
 
-| Mois      | Vente pizza | Vente boisson | Vente alcool |          Total |
-| --------- | ----------: | ------------: | -----------: | -------------: |
-| Mai 2028  |   12 110,96 |        257,32 |       514,77 |      12 883,05 |
-| Jun 2028  |   11 726,15 |        249,15 |       498,41 |      12 473,71 |
-| Jul 2028  |   12 110,96 |        257,32 |       514,77 |      12 883,05 |
-| Aoû 2028  |   14 537,43 |        308,88 |       617,90 |      15 464,21 |
-| Sep 2028  |    9 374,51 |        199,18 |       398,46 |       9 972,14 |
-| Oct 2028  |    6 328,06 |        134,45 |       268,97 |       6 731,48 |
-| Nov 2028  |    6 092,89 |        129,46 |       258,97 |       6 481,32 |
-| Déc 2028  |    6 092,89 |        129,46 |       258,97 |       6 481,32 |
-| Jan 2029  |    6 328,06 |        134,45 |       268,97 |       6 731,48 |
-| Fév 2029  |    5 622,57 |        119,46 |       238,98 |       5 981,01 |
-| Mar 2029  |    8 401,78 |        178,51 |       357,11 |       8 937,40 |
-| Avr 2029  |    8 166,62 |        173,52 |       347,12 |       8 687,25 |
-| **Total** |  106 892,89 |      2 271,15 |     4 543,40 | **113 707,44** |
+| Mois | Vente pizza | Vente boisson | Vente alcool | Total |
+| --- | ---: | ---: | ---: | ---: |
+| Mai 2028 | 12 335,18 | 999,31 | 524,26 | 13 858,75 |
+| Jun 2028 | 11 943,25 | 967,55 | 507,60 | 13 418,40 |
+| Jul 2028 | 12 335,18 | 999,31 | 524,26 | 13 858,75 |
+| Aoû 2028 | 14 806,58 | 1 199,52 | 629,30 | 16 635,39 |
+| Sep 2028 | 9 548,06 | 773,51 | 405,80 | 10 727,38 |
+| Oct 2028 | 6 445,22 | 522,14 | 273,93 | 7 241,29 |
+| Nov 2028 | 6 205,70 | 502,74 | 263,75 | 6 972,19 |
+| Déc 2028 | 6 205,70 | 502,74 | 263,75 | 6 972,19 |
+| Jan 2029 | 6 445,22 | 522,14 | 273,93 | 7 241,29 |
+| Fév 2029 | 5 726,66 | 463,93 | 243,39 | 6 433,98 |
+| Mar 2029 | 8 557,33 | 693,25 | 363,70 | 9 614,28 |
+| Avr 2029 | 8 317,81 | 673,85 | 353,52 | 9 345,18 |
+| **Total** | 108 871,88 | 8 820,00 | 4 627,19 | **122 319,07** |
+
 
 ## 32. Séries mensuelles — Achats & Variation de stock par activité
 
+
 ### Exercice 2026–2027 — Achats
 
-| Mois      | Achats – Vente pizza | Achats – Vente boisson | Achats – Vente alcool |         Total |
-| --------- | -------------------: | ---------------------: | --------------------: | ------------: |
-| Mai 2026  |             4 428,79 |                  85,09 |                170,23 |      4 684,11 |
-| Jun 2026  |             2 788,73 |                  85,03 |                170,11 |      3 043,88 |
-| Jul 2026  |             2 868,72 |                  88,65 |                177,34 |      3 134,71 |
-| Aoû 2026  |             3 469,56 |                 104,54 |                209,14 |      3 783,24 |
-| Sep 2026  |             2 239,09 |                  67,29 |                134,61 |      2 441,00 |
-| Oct 2026  |             1 522,14 |                  44,66 |                 89,34 |      1 656,14 |
-| Nov 2026  |             1 480,66 |                  41,92 |                 83,86 |      1 606,44 |
-| Déc 2026  |             1 488,11 |                  41,39 |                 82,79 |      1 612,29 |
-| Jan 2027  |             1 548,57 |                  42,77 |                 85,55 |      1 676,89 |
-| Fév 2027  |             1 376,70 |                  37,94 |                 75,90 |      1 490,55 |
-| Mar 2027  |             2 057,54 |                  56,67 |                113,37 |      2 227,58 |
-| Avr 2027  |             1 999,98 |                  55,08 |                110,20 |      2 165,26 |
-| **Total** |            27 268,59 |                 751,04 |              1 502,45 | **29 522,08** |
+| Mois | Achats – Vente pizza | Achats – Vente boisson | Achats – Vente alcool | Total |
+| --- | ---: | ---: | ---: | ---: |
+| Mai 2026 | 4 037,53 | 782,39 | 631,10 | 5 451,02 |
+| Jun 2026 | 2 954,09 | 245,16 | 97,49 | 3 296,74 |
+| Jul 2026 | 3 055,45 | 241,44 | 86,40 | 3 383,29 |
+| Aoû 2026 | 3 658,93 | 304,72 | 115,58 | 4 079,24 |
+| Sep 2026 | 2 359,51 | 191,50 | 64,17 | 2 615,19 |
+| Oct 2026 | 1 589,21 | 134,39 | 45,34 | 1 768,94 |
+| Nov 2026 | 1 524,51 | 143,34 | 59,28 | 1 727,13 |
+| Déc 2026 | 1 521,56 | 152,08 | 70,59 | 1 744,23 |
+| Jan 2027 | 1 578,99 | 162,69 | 80,53 | 1 822,21 |
+| Fév 2027 | 1 402,59 | 146,21 | 74,46 | 1 623,26 |
+| Mar 2027 | 2 095,70 | 219,75 | 114,33 | 2 429,78 |
+| Avr 2027 | 2 037,02 | 213,84 | 111,85 | 2 362,71 |
+| **Total** | 27 815,10 | 2 937,51 | 1 551,12 | **32 303,74** |
+
 
 ### Exercice 2026–2027 — Variation de stock
 
-| Mois      | Vente pizza | Vente boisson | Vente alcool |        Total |
-| --------- | ----------: | ------------: | -----------: | -----------: |
-| Mai 2026  |    1 462,84 |          3,40 |         6,81 |     1 473,05 |
-| Jun 2026  |      -82,98 |          5,94 |        11,88 |       -65,15 |
-| Jul 2026  |      -97,23 |          6,96 |        13,92 |       -76,35 |
-| Aoû 2026  |      -90,63 |          6,49 |        12,98 |       -71,16 |
-| Sep 2026  |      -56,71 |          4,06 |         8,12 |       -44,53 |
-| Oct 2026  |      -27,59 |          1,97 |         3,95 |       -21,66 |
-| Nov 2026  |      -11,47 |          0,82 |         1,64 |        -9,01 |
-| Déc 2026  |       -4,03 |          0,29 |         0,58 |        -3,16 |
-| Jan 2027  |       -1,16 |          0,08 |         0,17 |        -0,91 |
-| Fév 2027  |       -0,26 |          0,02 |         0,04 |        -0,20 |
-| Mar 2027  |       -0,04 |          0,00 |         0,01 |        -0,03 |
-| Avr 2027  |       -0,00 |          0,00 |         0,00 |        -0,00 |
-| **Total** |    1 090,74 |         30,04 |        60,10 | **1 180,88** |
+| Mois | Vente pizza | Vente boisson | Vente alcool | Total |
+| --- | ---: | ---: | ---: | ---: |
+| Mai 2026 | 1 016,67 | 465,15 | 464,67 | 1 946,49 |
+| Jun 2026 | 29,22 | -62,00 | -63,66 | -96,44 |
+| Jul 2026 | 34,59 | -75,80 | -80,03 | -121,24 |
+| Aoû 2026 | 32,83 | -76,08 | -84,19 | -127,44 |
+| Sep 2026 | 21,21 | -54,06 | -64,65 | -97,50 |
+| Oct 2026 | 10,79 | -31,37 | -41,62 | -62,20 |
+| Nov 2026 | 4,75 | -16,26 | -24,45 | -35,96 |
+| Déc 2026 | 1,79 | -7,52 | -13,14 | -18,86 |
+| Jan 2027 | 0,57 | -3,07 | -6,43 | -8,93 |
+| Fév 2027 | 0,14 | -1,07 | -2,80 | -3,73 |
+| Mar 2027 | 0,03 | -0,33 | -1,13 | -1,44 |
+| Avr 2027 | 0,00 | -0,08 | -0,38 | -0,46 |
+| **Total** | 1 152,60 | 137,51 | 82,17 | **1 372,29** |
+
 
 ### Exercice 2027–2028 — Achats
 
-| Mois      | Achats – Vente pizza | Achats – Vente boisson | Achats – Vente alcool |         Total |
-| --------- | -------------------: | ---------------------: | --------------------: | ------------: |
-| Mai 2027  |             3 120,43 |                  85,94 |                171,93 |      3 378,30 |
-| Jun 2027  |             3 026,08 |                  83,35 |                166,73 |      3 276,16 |
-| Jul 2027  |             3 126,88 |                  86,12 |                172,29 |      3 385,29 |
-| Aoû 2027  |             3 749,98 |                 103,28 |                206,62 |      4 059,87 |
-| Sep 2027  |             2 417,96 |                  66,60 |                133,22 |      2 617,78 |
-| Oct 2027  |             1 630,80 |                  44,92 |                 89,85 |      1 765,57 |
-| Nov 2027  |             1 568,24 |                  43,19 |                 86,41 |      1 697,84 |
-| Déc 2027  |             1 567,27 |                  43,17 |                 86,35 |      1 696,79 |
-| Jan 2028  |             1 627,37 |                  44,82 |                 89,66 |      1 761,85 |
-| Fév 2028  |             1 445,84 |                  39,82 |                 79,66 |      1 565,32 |
-| Mar 2028  |             2 160,46 |                  59,50 |                119,04 |      2 339,01 |
-| Avr 2028  |             2 099,99 |                  57,84 |                115,71 |      2 273,53 |
-| **Total** |            27 541,28 |                 758,55 |              1 517,47 | **29 817,30** |
+| Mois | Achats – Vente pizza | Achats – Vente boisson | Achats – Vente alcool | Total |
+| --- | ---: | ---: | ---: | ---: |
+| Mai 2027 | 3 173,48 | 331,40 | 172,73 | 3 677,60 |
+| Jun 2027 | 3 073,86 | 319,55 | 165,66 | 3 559,07 |
+| Jul 2027 | 3 175,12 | 329,62 | 170,61 | 3 675,35 |
+| Aoû 2027 | 3 810,40 | 396,60 | 205,90 | 4 412,90 |
+| Sep 2027 | 2 457,09 | 255,81 | 132,85 | 2 845,75 |
+| Oct 2027 | 1 658,25 | 173,06 | 90,13 | 1 921,45 |
+| Nov 2027 | 1 596,13 | 167,17 | 87,43 | 1 850,73 |
+| Déc 2027 | 1 595,88 | 167,44 | 87,74 | 1 851,06 |
+| Jan 2028 | 1 657,38 | 174,01 | 91,26 | 1 922,65 |
+| Fév 2028 | 1 472,58 | 154,63 | 81,12 | 1 708,33 |
+| Mar 2028 | 2 200,46 | 231,08 | 121,23 | 2 552,77 |
+| Avr 2028 | 2 138,87 | 224,62 | 117,84 | 2 481,32 |
+| **Total** | 28 009,51 | 2 924,99 | 1 524,49 | **32 458,99** |
+
 
 ### Exercice 2027–2028 — Variation de stock
 
-| Mois      | Vente pizza | Vente boisson | Vente alcool |     Total |
-| --------- | ----------: | ------------: | -----------: | --------: |
-| Mai 2027  |        6,18 |          0,17 |         0,34 |      6,69 |
-| Jun 2027  |       10,78 |          0,30 |         0,59 |     11,68 |
-| Jul 2027  |       12,64 |          0,35 |         0,70 |     13,68 |
-| Aoû 2027  |       11,78 |          0,32 |         0,65 |     12,75 |
-| Sep 2027  |        7,37 |          0,20 |         0,41 |      7,98 |
-| Oct 2027  |        3,59 |          0,10 |         0,20 |      3,88 |
-| Nov 2027  |        1,49 |          0,04 |         0,08 |      1,61 |
-| Déc 2027  |        0,52 |          0,01 |         0,03 |      0,57 |
-| Jan 2028  |        0,15 |          0,00 |         0,01 |      0,16 |
-| Fév 2028  |        0,03 |          0,00 |         0,00 |      0,04 |
-| Mar 2028  |        0,01 |          0,00 |         0,00 |      0,01 |
-| Avr 2028  |        0,00 |          0,00 |         0,00 |      0,00 |
-| **Total** |       54,54 |          1,50 |         3,00 | **59,04** |
+| Mois | Vente pizza | Vente boisson | Vente alcool | Total |
+| --- | ---: | ---: | ---: | ---: |
+| Mai 2027 | 1,57 | -1,70 | -2,03 | -2,16 |
+| Jun 2027 | 2,74 | -2,97 | -3,54 | -3,76 |
+| Jul 2027 | 3,22 | -3,48 | -4,15 | -4,41 |
+| Aoû 2027 | 3,00 | -3,24 | -3,87 | -4,11 |
+| Sep 2027 | 1,88 | -2,03 | -2,42 | -2,57 |
+| Oct 2027 | 0,91 | -0,99 | -1,18 | -1,25 |
+| Nov 2027 | 0,38 | -0,41 | -0,49 | -0,52 |
+| Déc 2027 | 0,13 | -0,14 | -0,17 | -0,18 |
+| Jan 2028 | 0,04 | -0,04 | -0,05 | -0,05 |
+| Fév 2028 | 0,01 | -0,01 | -0,01 | -0,01 |
+| Mar 2028 | 0,00 | -0,00 | -0,00 | -0,00 |
+| Avr 2028 | 0,00 | -0,00 | -0,00 | -0,00 |
+| **Total** | 13,88 | -15,01 | -17,90 | **-19,04** |
+
 
 ### Exercice 2028–2029 — Achats
 
-| Mois      | Achats – Vente pizza | Achats – Vente boisson | Achats – Vente alcool |         Total |
-| --------- | -------------------: | ---------------------: | --------------------: | ------------: |
-| Mai 2028  |             3 276,45 |                  90,24 |                180,53 |      3 547,22 |
-| Jun 2028  |             3 177,38 |                  87,51 |                175,07 |      3 439,96 |
-| Jul 2028  |             3 283,23 |                  90,43 |                180,90 |      3 554,56 |
-| Aoû 2028  |             3 937,47 |                 108,45 |                216,95 |      4 262,87 |
-| Sep 2028  |             2 538,85 |                  69,93 |                139,89 |      2 748,67 |
-| Oct 2028  |             1 712,34 |                  47,16 |                 94,35 |      1 853,85 |
-| Nov 2028  |             1 646,65 |                  45,35 |                 90,73 |      1 782,73 |
-| Déc 2028  |             1 645,63 |                  45,32 |                 90,67 |      1 781,63 |
-| Jan 2029  |             1 708,73 |                  47,06 |                 94,15 |      1 849,95 |
-| Fév 2029  |             1 518,13 |                  41,81 |                 83,65 |      1 643,59 |
-| Mar 2029  |             2 268,49 |                  62,48 |                124,99 |      2 455,96 |
-| Avr 2029  |             2 204,99 |                  60,73 |                121,49 |      2 387,21 |
-| **Total** |            28 918,34 |                 796,48 |              1 593,35 | **31 308,17** |
+| Mois | Achats – Vente pizza | Achats – Vente boisson | Achats – Vente alcool | Total |
+| --- | ---: | ---: | ---: | ---: |
+| Mai 2028 | 3 337,11 | 350,45 | 183,86 | 3 871,41 |
+| Jun 2028 | 3 236,21 | 339,86 | 178,30 | 3 754,36 |
+| Jul 2028 | 3 344,01 | 351,18 | 184,24 | 3 879,43 |
+| Aoû 2028 | 4 010,37 | 421,15 | 220,95 | 4 652,47 |
+| Sep 2028 | 2 585,86 | 271,56 | 142,47 | 2 999,88 |
+| Oct 2028 | 1 744,04 | 183,15 | 96,09 | 2 023,28 |
+| Nov 2028 | 1 677,13 | 176,13 | 92,40 | 1 945,66 |
+| Déc 2028 | 1 676,10 | 176,02 | 92,34 | 1 944,46 |
+| Jan 2029 | 1 740,37 | 182,77 | 95,88 | 2 019,02 |
+| Fév 2029 | 1 546,23 | 162,38 | 85,19 | 1 793,80 |
+| Mar 2029 | 2 310,49 | 242,64 | 127,29 | 2 680,42 |
+| Avr 2029 | 2 245,81 | 235,85 | 123,73 | 2 605,39 |
+| **Total** | 29 453,73 | 3 093,12 | 1 622,73 | **34 169,59** |
+
 
 ### Exercice 2028–2029 — Variation de stock
 
-| Mois      | Vente pizza | Vente boisson | Vente alcool |     Total |
-| --------- | ----------: | ------------: | -----------: | --------: |
-| Mai 2028  |        6,49 |          0,18 |         0,36 |      7,02 |
-| Jun 2028  |       11,32 |          0,31 |         0,62 |     12,26 |
-| Jul 2028  |       13,27 |          0,37 |         0,73 |     14,36 |
-| Aoû 2028  |       12,37 |          0,34 |         0,68 |     13,39 |
-| Sep 2028  |        7,74 |          0,21 |         0,43 |      8,38 |
-| Oct 2028  |        3,76 |          0,10 |         0,21 |      4,08 |
-| Nov 2028  |        1,57 |          0,04 |         0,09 |      1,69 |
-| Déc 2028  |        0,55 |          0,02 |         0,03 |      0,60 |
-| Jan 2029  |        0,16 |          0,00 |         0,01 |      0,17 |
-| Fév 2029  |        0,04 |          0,00 |         0,00 |      0,04 |
-| Mar 2029  |        0,01 |          0,00 |         0,00 |      0,01 |
-| Avr 2029  |        0,00 |          0,00 |         0,00 |      0,00 |
-| **Total** |       57,26 |          1,58 |         3,16 | **62,00** |
+| Mois | Vente pizza | Vente boisson | Vente alcool | Total |
+| --- | ---: | ---: | ---: | ---: |
+| Mai 2028 | 6,61 | 0,69 | 0,36 | 7,67 |
+| Jun 2028 | 11,53 | 1,21 | 0,64 | 13,38 |
+| Jul 2028 | 13,51 | 1,42 | 0,74 | 15,68 |
+| Aoû 2028 | 12,60 | 1,32 | 0,69 | 14,61 |
+| Sep 2028 | 7,88 | 0,83 | 0,43 | 9,14 |
+| Oct 2028 | 3,83 | 0,40 | 0,21 | 4,45 |
+| Nov 2028 | 1,59 | 0,17 | 0,09 | 1,85 |
+| Déc 2028 | 0,56 | 0,06 | 0,03 | 0,65 |
+| Jan 2029 | 0,16 | 0,02 | 0,01 | 0,19 |
+| Fév 2029 | 0,04 | 0,00 | 0,00 | 0,04 |
+| Mar 2029 | 0,01 | 0,00 | 0,00 | 0,01 |
+| Avr 2029 | 0,00 | 0,00 | 0,00 | 0,00 |
+| **Total** | 58,32 | 6,12 | 3,21 | **67,66** |
+
 
 ## 33. Séries mensuelles — Charges d'exploitation
 
+
 ### Exercice 2026–2027
 
-| Mois      | Fournitures | Services ext. | Impôts & taxes | Charges personnel |         Total |
-| --------- | ----------: | ------------: | -------------: | ----------------: | ------------: |
-| Mai 2026  |      695,67 |      2 568,06 |         135,25 |          1 828,38 |      5 227,36 |
-| Jun 2026  |      690,12 |      2 555,55 |         135,25 |          1 828,38 |      5 209,29 |
-| Jul 2026  |      695,67 |      2 568,06 |         135,25 |          1 828,38 |      5 227,36 |
-| Aoû 2026  |      730,70 |      2 647,00 |         135,25 |          1 828,38 |      5 341,33 |
-| Sep 2026  |      656,17 |      2 479,04 |         135,25 |          1 828,38 |      5 098,84 |
-| Oct 2026  |      612,19 |      2 379,94 |         135,25 |          1 828,38 |      4 955,75 |
-| Nov 2026  |      608,79 |      2 372,29 |         135,25 |          1 828,38 |      4 944,71 |
-| Déc 2026  |      608,79 |      2 372,29 |         135,25 |          1 828,38 |      4 944,71 |
-| Jan 2027  |      612,19 |      2 379,94 |         135,25 |          1 828,38 |      4 955,75 |
-| Fév 2027  |      602,00 |      2 356,99 |         135,25 |          1 828,38 |      4 922,62 |
-| Mar 2027  |      642,12 |      2 447,40 |         135,25 |          1 828,38 |      5 053,15 |
-| Avr 2027  |      638,73 |      2 439,75 |         135,25 |          1 828,38 |      5 042,11 |
-| **Total** |    7 793,15 |     29 566,32 |       1 623,00 |         21 940,51 | **60 922,98** |
+| Mois | Fournitures | Services ext. | Impôts & taxes | Charges personnel | Total |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Mai 2026 | 661,81 | 2 498,55 | 135,25 | 2 088,60 | 5 384,21 |
+| Jun 2026 | 657,33 | 2 488,24 | 135,25 | 2 088,60 | 5 369,42 |
+| Jul 2026 | 661,81 | 2 498,55 | 135,25 | 2 088,60 | 5 384,21 |
+| Aoû 2026 | 690,05 | 2 563,55 | 135,25 | 2 088,60 | 5 477,46 |
+| Sep 2026 | 629,95 | 2 425,23 | 135,25 | 2 088,60 | 5 279,04 |
+| Oct 2026 | 594,49 | 2 343,62 | 135,25 | 2 088,60 | 5 161,96 |
+| Nov 2026 | 591,76 | 2 337,32 | 135,25 | 2 088,60 | 5 152,93 |
+| Déc 2026 | 591,76 | 2 337,32 | 135,25 | 2 088,60 | 5 152,93 |
+| Jan 2027 | 594,49 | 2 343,62 | 135,25 | 2 088,60 | 5 161,96 |
+| Fév 2027 | 586,28 | 2 324,72 | 135,25 | 2 088,60 | 5 134,85 |
+| Mar 2027 | 618,63 | 2 399,17 | 135,25 | 2 088,60 | 5 241,66 |
+| Avr 2027 | 615,89 | 2 392,87 | 135,25 | 2 088,60 | 5 232,62 |
+| **Total** | 7 494,25 | 28 952,75 | 1 623,00 | 25 063,25 | **63 133,25** |
+
 
 ### Exercice 2027–2028
 
-| Mois      | Fournitures | Services ext. | Impôts & taxes | Charges personnel |         Total |
-| --------- | ----------: | ------------: | -------------: | ----------------: | ------------: |
-| Mai 2027  |      706,09 |      2 552,40 |         164,83 |          2 282,06 |      5 705,38 |
-| Jun 2027  |      700,53 |      2 539,88 |         164,83 |          2 282,06 |      5 687,31 |
-| Jul 2027  |      706,09 |      2 552,40 |         164,83 |          2 282,06 |      5 705,38 |
-| Aoû 2027  |      741,12 |      2 631,34 |         164,83 |          2 282,06 |      5 819,34 |
-| Sep 2027  |      666,58 |      2 463,38 |         164,83 |          2 282,06 |      5 576,86 |
-| Oct 2027  |      622,60 |      2 364,28 |         164,83 |          2 282,06 |      5 433,77 |
-| Nov 2027  |      619,21 |      2 356,63 |         164,83 |          2 282,06 |      5 422,73 |
-| Déc 2027  |      619,21 |      2 356,63 |         164,83 |          2 282,06 |      5 422,73 |
-| Jan 2028  |      622,60 |      2 364,28 |         164,83 |          2 282,06 |      5 433,77 |
-| Fév 2028  |      612,42 |      2 341,33 |         164,83 |          2 282,06 |      5 400,64 |
-| Mar 2028  |      652,54 |      2 431,74 |         164,83 |          2 282,06 |      5 531,17 |
-| Avr 2028  |      649,15 |      2 424,09 |         164,83 |          2 282,06 |      5 520,12 |
-| **Total** |    7 918,15 |     29 378,36 |       1 978,00 |         27 384,68 | **66 659,19** |
+| Mois | Fournitures | Services ext. | Impôts & taxes | Charges personnel | Total |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Mai 2027 | 679,27 | 2 499,11 | 164,83 | 2 223,72 | 5 566,93 |
+| Jun 2027 | 674,57 | 2 488,28 | 164,83 | 2 223,72 | 5 551,41 |
+| Jul 2027 | 679,27 | 2 499,11 | 164,83 | 2 223,72 | 5 566,93 |
+| Aoû 2027 | 708,93 | 2 567,36 | 164,83 | 2 223,72 | 5 664,85 |
+| Sep 2027 | 645,83 | 2 422,13 | 164,83 | 2 223,72 | 5 456,51 |
+| Oct 2027 | 608,59 | 2 336,43 | 164,83 | 2 223,72 | 5 333,58 |
+| Nov 2027 | 605,72 | 2 329,82 | 164,83 | 2 223,72 | 5 324,09 |
+| Déc 2027 | 605,72 | 2 329,82 | 164,83 | 2 223,72 | 5 324,09 |
+| Jan 2028 | 608,59 | 2 336,43 | 164,83 | 2 223,72 | 5 333,58 |
+| Fév 2028 | 599,97 | 2 316,59 | 164,83 | 2 223,72 | 5 305,11 |
+| Mar 2028 | 633,94 | 2 394,77 | 164,83 | 2 223,72 | 5 417,26 |
+| Avr 2028 | 631,06 | 2 388,15 | 164,83 | 2 223,72 | 5 407,77 |
+| **Total** | 7 681,46 | 28 907,98 | 1 978,00 | 26 684,68 | **65 252,12** |
+
 
 ### Exercice 2028–2029
 
-| Mois      | Fournitures | Services ext. | Impôts & taxes | Charges personnel |         Total |
-| --------- | ----------: | ------------: | -------------: | ----------------: | ------------: |
-| Mai 2028  |      716,71 |      2 568,81 |         164,83 |          2 282,06 |      5 732,42 |
-| Jun 2028  |      711,16 |      2 556,30 |         164,83 |          2 282,06 |      5 714,34 |
-| Jul 2028  |      716,71 |      2 568,81 |         164,83 |          2 282,06 |      5 732,42 |
-| Aoû 2028  |      751,74 |      2 647,75 |         164,83 |          2 282,06 |      5 846,38 |
-| Sep 2028  |      677,21 |      2 479,80 |         164,83 |          2 282,06 |      5 603,89 |
-| Oct 2028  |      633,23 |      2 380,69 |         164,83 |          2 282,06 |      5 460,81 |
-| Nov 2028  |      629,83 |      2 373,04 |         164,83 |          2 282,06 |      5 449,77 |
-| Déc 2028  |      629,83 |      2 373,04 |         164,83 |          2 282,06 |      5 449,77 |
-| Jan 2029  |      633,23 |      2 380,69 |         164,83 |          2 282,06 |      5 460,81 |
-| Fév 2029  |      623,04 |      2 357,74 |         164,83 |          2 282,06 |      5 427,68 |
-| Mar 2029  |      663,17 |      2 448,15 |         164,83 |          2 282,06 |      5 558,21 |
-| Avr 2029  |      659,77 |      2 440,50 |         164,83 |          2 282,06 |      5 547,16 |
-| **Total** |    8 045,65 |     29 575,33 |       1 978,00 |         27 384,68 | **66 983,66** |
+| Mois | Fournitures | Services ext. | Impôts & taxes | Charges personnel | Total |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Mai 2028 | 697,30 | 2 532,56 | 164,83 | 2 223,72 | 5 618,41 |
+| Jun 2028 | 692,36 | 2 521,19 | 164,83 | 2 223,72 | 5 602,11 |
+| Jul 2028 | 697,30 | 2 532,56 | 164,83 | 2 223,72 | 5 618,41 |
+| Aoû 2028 | 728,44 | 2 604,23 | 164,83 | 2 223,72 | 5 721,22 |
+| Sep 2028 | 662,18 | 2 451,73 | 164,83 | 2 223,72 | 5 502,47 |
+| Oct 2028 | 623,08 | 2 361,75 | 164,83 | 2 223,72 | 5 373,39 |
+| Nov 2028 | 620,07 | 2 354,80 | 164,83 | 2 223,72 | 5 363,42 |
+| Déc 2028 | 620,07 | 2 354,80 | 164,83 | 2 223,72 | 5 363,42 |
+| Jan 2029 | 623,08 | 2 361,75 | 164,83 | 2 223,72 | 5 373,39 |
+| Fév 2029 | 614,03 | 2 340,91 | 164,83 | 2 223,72 | 5 343,50 |
+| Mar 2029 | 649,70 | 2 423,00 | 164,83 | 2 223,72 | 5 461,25 |
+| Avr 2029 | 646,68 | 2 416,05 | 164,83 | 2 223,72 | 5 451,29 |
+| **Total** | 7 874,29 | 29 255,30 | 1 978,00 | 26 684,68 | **65 792,27** |
+
 
 ## 34. Séries mensuelles — Personnel (détail)
 
+
 ### Exercice 2026–2027
 
-| Mois      | Salaires bruts | Ch. patronales | Rémun. dirigeant | Cotis. TNS | Taxes sal. |         Total |
-| --------- | -------------: | -------------: | ---------------: | ---------: | ---------: | ------------: |
-| Mai 2026  |           0,00 |           0,00 |         1 200,00 |     628,38 |       0,00 |      1 828,38 |
-| Jun 2026  |           0,00 |           0,00 |         1 200,00 |     628,38 |       0,00 |      1 828,38 |
-| Jul 2026  |           0,00 |           0,00 |         1 200,00 |     628,38 |       0,00 |      1 828,38 |
-| Aoû 2026  |           0,00 |           0,00 |         1 200,00 |     628,38 |       0,00 |      1 828,38 |
-| Sep 2026  |           0,00 |           0,00 |         1 200,00 |     628,38 |       0,00 |      1 828,38 |
-| Oct 2026  |           0,00 |           0,00 |         1 200,00 |     628,38 |       0,00 |      1 828,38 |
-| Nov 2026  |           0,00 |           0,00 |         1 200,00 |     628,38 |       0,00 |      1 828,38 |
-| Déc 2026  |           0,00 |           0,00 |         1 200,00 |     628,38 |       0,00 |      1 828,38 |
-| Jan 2027  |           0,00 |           0,00 |         1 200,00 |     628,38 |       0,00 |      1 828,38 |
-| Fév 2027  |           0,00 |           0,00 |         1 200,00 |     628,38 |       0,00 |      1 828,38 |
-| Mar 2027  |           0,00 |           0,00 |         1 200,00 |     628,38 |       0,00 |      1 828,38 |
-| Avr 2027  |           0,00 |           0,00 |         1 200,00 |     628,38 |       0,00 |      1 828,38 |
-| **Total** |           0,00 |           0,00 |        14 400,00 |   7 540,51 |       0,00 | **21 940,51** |
+| Mois | Salaires bruts | Ch. patronales | Rémun. dirigeant | Cotis. TNS | Taxes sal. | Total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Mai 2026 | 0,00 | 0,00 | 1 500,00 | 588,60 | 0,00 | 2 088,60 |
+| Jun 2026 | 0,00 | 0,00 | 1 500,00 | 588,60 | 0,00 | 2 088,60 |
+| Jul 2026 | 0,00 | 0,00 | 1 500,00 | 588,60 | 0,00 | 2 088,60 |
+| Aoû 2026 | 0,00 | 0,00 | 1 500,00 | 588,60 | 0,00 | 2 088,60 |
+| Sep 2026 | 0,00 | 0,00 | 1 500,00 | 588,60 | 0,00 | 2 088,60 |
+| Oct 2026 | 0,00 | 0,00 | 1 500,00 | 588,60 | 0,00 | 2 088,60 |
+| Nov 2026 | 0,00 | 0,00 | 1 500,00 | 588,60 | 0,00 | 2 088,60 |
+| Déc 2026 | 0,00 | 0,00 | 1 500,00 | 588,60 | 0,00 | 2 088,60 |
+| Jan 2027 | 0,00 | 0,00 | 1 500,00 | 588,60 | 0,00 | 2 088,60 |
+| Fév 2027 | 0,00 | 0,00 | 1 500,00 | 588,60 | 0,00 | 2 088,60 |
+| Mar 2027 | 0,00 | 0,00 | 1 500,00 | 588,60 | 0,00 | 2 088,60 |
+| Avr 2027 | 0,00 | 0,00 | 1 500,00 | 588,60 | 0,00 | 2 088,60 |
+| **Total** | 0,00 | 0,00 | 18 000,00 | 7 063,25 | 0,00 | **25 063,25** |
+
 
 ### Exercice 2027–2028
 
-| Mois      | Salaires bruts | Ch. patronales | Rémun. dirigeant | Cotis. TNS | Taxes sal. |         Total |
-| --------- | -------------: | -------------: | ---------------: | ---------: | ---------: | ------------: |
-| Mai 2027  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Jun 2027  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Jul 2027  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Aoû 2027  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Sep 2027  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Oct 2027  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Nov 2027  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Déc 2027  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Jan 2028  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Fév 2028  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Mar 2028  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Avr 2028  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| **Total** |           0,00 |           0,00 |        18 000,00 |   9 384,68 |       0,00 | **27 384,68** |
+| Mois | Salaires bruts | Ch. patronales | Rémun. dirigeant | Cotis. TNS | Taxes sal. | Total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Mai 2027 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Jun 2027 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Jul 2027 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Aoû 2027 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Sep 2027 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Oct 2027 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Nov 2027 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Déc 2027 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Jan 2028 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Fév 2028 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Mar 2028 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Avr 2028 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| **Total** | 0,00 | 0,00 | 18 000,00 | 8 684,68 | 0,00 | **26 684,68** |
+
 
 ### Exercice 2028–2029
 
-| Mois      | Salaires bruts | Ch. patronales | Rémun. dirigeant | Cotis. TNS | Taxes sal. |         Total |
-| --------- | -------------: | -------------: | ---------------: | ---------: | ---------: | ------------: |
-| Mai 2028  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Jun 2028  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Jul 2028  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Aoû 2028  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Sep 2028  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Oct 2028  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Nov 2028  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Déc 2028  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Jan 2029  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Fév 2029  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Mar 2029  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| Avr 2029  |           0,00 |           0,00 |         1 500,00 |     782,06 |       0,00 |      2 282,06 |
-| **Total** |           0,00 |           0,00 |        18 000,00 |   9 384,68 |       0,00 | **27 384,68** |
+| Mois | Salaires bruts | Ch. patronales | Rémun. dirigeant | Cotis. TNS | Taxes sal. | Total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Mai 2028 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Jun 2028 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Jul 2028 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Aoû 2028 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Sep 2028 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Oct 2028 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Nov 2028 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Déc 2028 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Jan 2029 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Fév 2029 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Mar 2029 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| Avr 2029 | 0,00 | 0,00 | 1 500,00 | 723,72 | 0,00 | 2 223,72 |
+| **Total** | 0,00 | 0,00 | 18 000,00 | 8 684,68 | 0,00 | **26 684,68** |
+
 
 ## 35. Séries mensuelles — Amortissements par immobilisation
 
+
 ### Exercice 2026–2027
 
-| Mois      | Meuble pizza (C) | Enseigne et communicat (C) | Caisse enregistreuse ( (C) | Fond de commerce (mate (C) |        Total |
-| --------- | ---------------: | -------------------------: | -------------------------: | -------------------------: | -----------: |
-| Mai 2026  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Jun 2026  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Jul 2026  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Aoû 2026  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Sep 2026  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Oct 2026  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Nov 2026  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Déc 2026  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Jan 2027  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Fév 2027  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Mar 2027  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Avr 2027  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| **Total** |           149,90 |                     150,00 |                     177,80 |                   3 106,00 | **3 583,70** |
+| Mois | Fond de commerce (mate (C) | Enseigne et communicat (C) | Caisse enregistreuse ( (C) | Meuble pizza (C) | Total |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Mai 2026 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Jun 2026 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Jul 2026 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Aoû 2026 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Sep 2026 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Oct 2026 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Nov 2026 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Déc 2026 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Jan 2027 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Fév 2027 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Mar 2027 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Avr 2027 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| **Total** | 3 106,00 | 100,00 | 88,90 | 122,30 | **3 417,20** |
+
 
 ### Exercice 2027–2028
 
-| Mois      | Meuble pizza (C) | Enseigne et communicat (C) | Caisse enregistreuse ( (C) | Fond de commerce (mate (C) |        Total |
-| --------- | ---------------: | -------------------------: | -------------------------: | -------------------------: | -----------: |
-| Mai 2027  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Jun 2027  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Jul 2027  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Aoû 2027  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Sep 2027  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Oct 2027  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Nov 2027  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Déc 2027  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Jan 2028  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Fév 2028  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Mar 2028  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Avr 2028  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| **Total** |           149,90 |                     150,00 |                     177,80 |                   3 106,00 | **3 583,70** |
+| Mois | Fond de commerce (mate (C) | Enseigne et communicat (C) | Caisse enregistreuse ( (C) | Meuble pizza (C) | Total |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Mai 2027 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Jun 2027 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Jul 2027 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Aoû 2027 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Sep 2027 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Oct 2027 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Nov 2027 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Déc 2027 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Jan 2028 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Fév 2028 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Mar 2028 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Avr 2028 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| **Total** | 3 106,00 | 100,00 | 88,90 | 122,30 | **3 417,20** |
+
 
 ### Exercice 2028–2029
 
-| Mois      | Meuble pizza (C) | Enseigne et communicat (C) | Caisse enregistreuse ( (C) | Fond de commerce (mate (C) |        Total |
-| --------- | ---------------: | -------------------------: | -------------------------: | -------------------------: | -----------: |
-| Mai 2028  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Jun 2028  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Jul 2028  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Aoû 2028  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Sep 2028  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Oct 2028  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Nov 2028  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Déc 2028  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Jan 2029  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Fév 2029  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Mar 2029  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| Avr 2029  |            12,49 |                      12,50 |                      14,82 |                     258,83 |       298,64 |
-| **Total** |           149,90 |                     150,00 |                     177,80 |                   3 106,00 | **3 583,70** |
+| Mois | Fond de commerce (mate (C) | Enseigne et communicat (C) | Caisse enregistreuse ( (C) | Meuble pizza (C) | Total |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Mai 2028 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Jun 2028 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Jul 2028 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Aoû 2028 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Sep 2028 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Oct 2028 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Nov 2028 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Déc 2028 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Jan 2029 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Fév 2029 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Mar 2029 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| Avr 2029 | 258,83 | 8,33 | 7,41 | 10,19 | 284,77 |
+| **Total** | 3 106,00 | 100,00 | 88,90 | 122,30 | **3 417,20** |
+
 
 ## 36. Séries mensuelles — Résultats consolidés
 
+
 ### Exercice 2026–2027
 
-| Mois      | Subventions |       EBE | Résult. expl. | Pdts fin. | Intérêts | Résult. courant |       IS | Résult. net |       CAF |         Total |
-| --------- | ----------: | --------: | ------------: | --------: | -------: | --------------: | -------: | ----------: | --------: | ------------: |
-| Mai 2026  |        0,00 |  3 246,89 |      2 948,25 |      0,00 |   240,00 |        2 108,25 |    86,82 |    2 021,42 |  2 320,07 |     12 971,70 |
-| Jun 2026  |        0,00 |  2 995,70 |      2 697,06 |      0,00 |   240,00 |        2 457,06 |    86,82 |    2 370,24 |  2 668,88 |     13 515,76 |
-| Jul 2026  |        0,00 |  3 246,89 |      2 948,25 |      0,00 |   237,52 |        2 710,73 |    86,82 |    2 623,90 |  2 922,55 |     14 776,66 |
-| Aoû 2026  |        0,00 |  4 830,77 |      4 532,12 |      0,00 |   235,03 |        4 297,09 |    86,82 |    4 210,27 |  4 508,91 |     22 701,02 |
-| Sep 2026  |        0,00 |  1 460,67 |      1 162,02 |      0,00 |   232,54 |          929,48 |    86,82 |      842,66 |  1 141,30 |      5 855,50 |
-| Oct 2026  |        0,00 |   -527,90 |       -826,54 |      0,00 |   230,03 |       -1 056,57 |    86,82 |   -1 143,40 |   -844,76 |     -4 082,32 |
-| Nov 2026  |        0,00 |   -681,41 |       -980,05 |      0,00 |   227,52 |       -1 207,57 |    86,82 |   -1 294,39 |   -995,75 |     -4 844,82 |
-| Déc 2026  |        0,00 |   -681,41 |       -980,05 |      0,00 |   224,99 |       -1 205,04 |    86,82 |   -1 291,86 |   -993,22 |     -4 839,76 |
-| Jan 2027  |        0,00 |   -527,90 |       -826,54 |      0,00 |   222,46 |       -1 049,00 |    86,82 |   -1 135,83 |   -837,19 |     -4 067,18 |
-| Fév 2027  |        0,00 |   -988,41 |     -1 287,05 |      0,00 |   219,92 |       -1 506,97 |    86,82 |   -1 593,80 | -1 295,16 |     -6 364,65 |
-| Mar 2027  |        0,00 |    825,72 |        527,08 |      0,00 |   217,38 |          309,70 |    86,82 |      222,87 |    521,52 |      2 711,09 |
-| Avr 2027  |        0,00 |    672,22 |        373,57 |      0,00 |   214,82 |          158,75 |    86,82 |       71,93 |    370,57 |      1 948,69 |
-| **Total** |        0,00 | 13 871,82 |     10 288,12 |      0,00 | 2 742,21 |        6 945,91 | 1 041,89 |    5 904,02 |  9 487,72 | **50 281,69** |
+| Mois | Subventions | EBE | Résult. expl. | Pdts fin. | Intérêts | Résult. courant | IS | Résult. net | CAF | Total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Mai 2026 | 0,00 | 3 681,55 | 3 396,79 | 0,00 | 280,00 | 2 516,79 | 120,82 | 2 395,96 | 2 680,73 | 15 072,65 |
+| Jun 2026 | 0,00 | 3 408,29 | 3 123,52 | 0,00 | 280,00 | 2 843,52 | 120,82 | 2 722,70 | 3 007,46 | 15 506,31 |
+| Jul 2026 | 0,00 | 3 681,55 | 3 396,79 | 0,00 | 277,10 | 3 119,69 | 120,82 | 2 998,86 | 3 283,63 | 16 878,45 |
+| Aoû 2026 | 0,00 | 5 404,66 | 5 119,89 | 0,00 | 274,20 | 4 845,69 | 120,82 | 4 724,87 | 5 009,63 | 25 499,76 |
+| Sep 2026 | 0,00 | 1 738,32 | 1 453,55 | 0,00 | 271,28 | 1 182,27 | 120,82 | 1 061,45 | 1 346,22 | 7 173,92 |
+| Oct 2026 | 0,00 | -425,04 | -709,81 | 0,00 | 268,37 | -978,18 | 120,82 | -1 099,00 | -814,24 | -3 637,08 |
+| Nov 2026 | 0,00 | -592,04 | -876,81 | 0,00 | 265,43 | -1 142,24 | 120,82 | -1 263,06 | -978,29 | -4 466,19 |
+| Déc 2026 | 0,00 | -592,04 | -876,81 | 0,00 | 262,49 | -1 139,30 | 120,82 | -1 260,12 | -975,35 | -4 460,31 |
+| Jan 2027 | 0,00 | -425,04 | -709,81 | 0,00 | 259,54 | -969,35 | 120,82 | -1 090,17 | -805,41 | -3 619,42 |
+| Fév 2027 | 0,00 | -926,03 | -1 210,80 | 0,00 | 256,57 | -1 467,37 | 120,82 | -1 588,19 | -1 303,43 | -6 118,43 |
+| Mar 2027 | 0,00 | 1 047,56 | 762,80 | 0,00 | 253,61 | 509,19 | 120,82 | 388,36 | 673,13 | 3 755,47 |
+| Avr 2027 | 0,00 | 880,57 | 595,80 | 0,00 | 250,62 | 345,18 | 120,82 | 224,36 | 509,12 | 2 926,47 |
+| **Total** | 0,00 | 16 882,30 | 13 465,10 | 0,00 | 3 199,21 | 9 665,89 | 1 449,88 | 8 216,01 | 11 633,21 | **64 511,60** |
+
 
 ### Exercice 2027–2028
 
-| Mois      | Subventions |       EBE | Résult. expl. | Pdts fin. | Intérêts | Résult. courant |     IS | Résult. net |       CAF |         Total |
-| --------- | ----------: | --------: | ------------: | --------: | -------: | --------------: | -----: | ----------: | --------: | ------------: |
-| Mai 2027  |        0,00 |  3 192,58 |      2 893,94 |      0,00 |   212,26 |        2 681,68 |  73,95 |    2 607,73 |  2 906,37 |     14 568,52 |
-| Jun 2027  |        0,00 |  2 927,93 |      2 629,29 |      0,00 |   209,69 |        2 419,60 |  73,95 |    2 345,65 |  2 644,29 |     13 250,41 |
-| Jul 2027  |        0,00 |  3 192,58 |      2 893,94 |      0,00 |   207,10 |        2 686,84 |  73,95 |    2 612,89 |  2 911,53 |     14 578,84 |
-| Aoû 2027  |        0,00 |  4 861,35 |      4 562,71 |      0,00 |   204,52 |        4 358,19 |  73,95 |    4 284,24 |  4 582,88 |     22 927,85 |
-| Sep 2027  |        0,00 |  1 310,62 |      1 011,98 |      0,00 |   201,91 |          810,07 |  73,95 |      736,12 |  1 034,76 |      5 179,42 |
-| Oct 2027  |        0,00 |   -784,53 |     -1 083,17 |      0,00 |   199,31 |       -1 282,48 |  73,95 |   -1 356,43 | -1 057,79 |     -5 291,13 |
-| Nov 2027  |        0,00 |   -946,26 |     -1 244,90 |      0,00 |   196,69 |       -1 441,59 |  73,95 |   -1 515,54 | -1 216,90 |     -6 094,55 |
-| Déc 2027  |        0,00 |   -946,26 |     -1 244,90 |      0,00 |   194,06 |       -1 438,96 |  73,95 |   -1 512,91 | -1 214,27 |     -6 089,29 |
-| Jan 2028  |        0,00 |   -784,53 |     -1 083,17 |      0,00 |   191,42 |       -1 274,59 |  73,95 |   -1 348,54 | -1 049,90 |     -5 275,35 |
-| Fév 2028  |        0,00 | -1 269,72 |     -1 568,36 |      0,00 |   188,78 |       -1 757,14 |  73,95 |   -1 831,10 | -1 532,45 |     -7 696,04 |
-| Mar 2028  |        0,00 |    641,65 |        343,00 |      0,00 |   186,13 |          156,87 |  73,95 |       82,92 |    381,56 |      1 866,09 |
-| Avr 2028  |        0,00 |    479,91 |        181,27 |      0,00 |   183,48 |           -2,21 |  73,95 |      -76,16 |    222,48 |      1 062,74 |
-| **Total** |        0,00 | 11 875,35 |      8 291,65 |      0,00 | 2 375,35 |        5 916,30 | 887,45 |    5 028,86 |  8 612,55 | **42 987,51** |
+| Mois | Subventions | EBE | Résult. expl. | Pdts fin. | Intérêts | Résult. courant | IS | Résult. net | CAF | Total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Mai 2027 | 0,00 | 3 952,12 | 3 667,35 | 0,00 | 247,63 | 3 419,72 | 157,20 | 3 262,52 | 3 547,29 | 18 253,82 |
+| Jun 2027 | 0,00 | 3 665,18 | 3 380,42 | 0,00 | 244,63 | 3 135,79 | 157,20 | 2 978,59 | 3 263,36 | 16 825,17 |
+| Jul 2027 | 0,00 | 3 952,12 | 3 667,35 | 0,00 | 241,62 | 3 425,73 | 157,20 | 3 268,53 | 3 553,30 | 18 265,84 |
+| Aoû 2027 | 0,00 | 5 761,37 | 5 476,60 | 0,00 | 238,60 | 5 238,00 | 157,20 | 5 080,81 | 5 365,57 | 27 318,16 |
+| Sep 2027 | 0,00 | 1 911,72 | 1 626,95 | 0,00 | 235,56 | 1 391,39 | 157,20 | 1 234,20 | 1 518,96 | 8 075,98 |
+| Oct 2027 | 0,00 | -359,81 | -644,58 | 0,00 | 232,52 | -877,10 | 157,20 | -1 034,30 | -749,53 | -3 275,60 |
+| Nov 2027 | 0,00 | -535,16 | -819,93 | 0,00 | 229,46 | -1 049,39 | 157,20 | -1 206,58 | -921,82 | -4 146,22 |
+| Déc 2027 | 0,00 | -535,16 | -819,93 | 0,00 | 226,40 | -1 046,33 | 157,20 | -1 203,52 | -918,76 | -4 140,10 |
+| Jan 2028 | 0,00 | -359,81 | -644,58 | 0,00 | 223,33 | -867,91 | 157,20 | -1 025,11 | -740,34 | -3 257,22 |
+| Fév 2028 | 0,00 | -885,85 | -1 170,62 | 0,00 | 220,25 | -1 390,87 | 157,20 | -1 548,07 | -1 263,30 | -5 881,26 |
+| Mar 2028 | 0,00 | 1 186,42 | 901,66 | 0,00 | 217,16 | 684,50 | 157,20 | 527,30 | 812,07 | 4 486,30 |
+| Avr 2028 | 0,00 | 1 011,08 | 726,31 | 0,00 | 214,06 | 512,25 | 157,20 | 355,05 | 639,82 | 3 615,77 |
+| **Total** | 0,00 | 18 764,21 | 15 347,01 | 0,00 | 2 771,22 | 12 575,79 | 1 886,37 | 10 689,42 | 14 106,62 | **76 140,63** |
+
 
 ### Exercice 2028–2029
 
-| Mois      | Subventions |       EBE | Résult. expl. | Pdts fin. | Intérêts | Résult. courant |       IS | Résult. net |       CAF |         Total |
-| --------- | ----------: | --------: | ------------: | --------: | -------: | --------------: | -------: | ----------: | --------: | ------------: |
-| Mai 2028  |        0,00 |  3 610,44 |      3 311,80 |      0,00 |   180,80 |        3 131,00 |   123,79 |    3 007,21 |  3 305,86 |     16 670,90 |
-| Jun 2028  |        0,00 |  3 331,66 |      3 033,01 |      0,00 |   178,13 |        2 854,88 |   123,79 |    2 731,10 |  3 029,74 |     15 282,31 |
-| Jul 2028  |        0,00 |  3 610,44 |      3 311,80 |      0,00 |   175,44 |        3 136,36 |   123,79 |    3 012,57 |  3 311,22 |     16 681,62 |
-| Aoû 2028  |        0,00 |  5 368,35 |      5 069,71 |      0,00 |   172,75 |        4 896,96 |   123,79 |    4 773,17 |  5 071,81 |     25 476,53 |
-| Sep 2028  |        0,00 |  1 627,96 |      1 329,32 |      0,00 |   170,04 |        1 159,28 |   123,79 |    1 035,49 |  1 334,13 |      6 780,00 |
-| Oct 2028  |        0,00 |   -579,10 |       -877,75 |      0,00 |   167,33 |       -1 045,08 |   123,79 |   -1 168,86 |   -870,22 |     -4 249,89 |
-| Nov 2028  |        0,00 |   -749,47 |     -1 048,12 |      0,00 |   164,60 |       -1 212,72 |   123,79 |   -1 336,50 | -1 037,86 |     -5 096,28 |
-| Déc 2028  |        0,00 |   -749,47 |     -1 048,12 |      0,00 |   161,87 |       -1 209,99 |   123,79 |   -1 333,77 | -1 035,13 |     -5 090,82 |
-| Jan 2029  |        0,00 |   -579,10 |       -877,75 |      0,00 |   159,13 |       -1 036,88 |   123,79 |   -1 160,66 |   -862,02 |     -4 233,49 |
-| Fév 2029  |        0,00 | -1 090,21 |     -1 388,85 |      0,00 |   156,38 |       -1 545,23 |   123,79 |   -1 669,02 | -1 370,38 |     -6 783,54 |
-| Mar 2029  |        0,00 |    923,25 |        624,61 |      0,00 |   153,62 |          470,99 |   123,79 |      347,20 |    645,84 |      3 289,29 |
-| Avr 2029  |        0,00 |    752,88 |        454,24 |      0,00 |   150,85 |          303,39 |   123,79 |      179,60 |    478,24 |      2 442,98 |
-| **Total** |        0,00 | 15 477,61 |     11 893,91 |      0,00 | 1 990,94 |        9 902,97 | 1 485,45 |    8 417,52 | 12 001,22 | **61 169,61** |
+| Mois | Subventions | EBE | Résult. expl. | Pdts fin. | Intérêts | Résult. courant | IS | Résult. net | CAF | Total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Mai 2028 | 0,00 | 4 376,59 | 4 091,83 | 0,00 | 210,94 | 3 880,89 | 208,56 | 3 672,32 | 3 957,09 | 20 398,22 |
+| Jun 2028 | 0,00 | 4 075,31 | 3 790,55 | 0,00 | 207,82 | 3 582,73 | 208,56 | 3 374,17 | 3 658,93 | 18 898,07 |
+| Jul 2028 | 0,00 | 4 376,59 | 4 091,83 | 0,00 | 204,68 | 3 887,15 | 208,56 | 3 678,58 | 3 963,35 | 20 410,74 |
+| Aoû 2028 | 0,00 | 6 276,31 | 5 991,54 | 0,00 | 201,54 | 5 790,00 | 208,56 | 5 581,44 | 5 866,21 | 29 915,61 |
+| Sep 2028 | 0,00 | 2 234,18 | 1 949,41 | 0,00 | 198,38 | 1 751,03 | 208,56 | 1 542,47 | 1 827,24 | 9 711,27 |
+| Oct 2028 | 0,00 | -150,93 | -435,70 | 0,00 | 195,22 | -630,92 | 208,56 | -839,48 | -554,71 | -2 207,96 |
+| Nov 2028 | 0,00 | -335,05 | -619,81 | 0,00 | 192,04 | -811,85 | 208,56 | -1 020,41 | -735,65 | -3 122,17 |
+| Déc 2028 | 0,00 | -335,05 | -619,81 | 0,00 | 188,86 | -808,67 | 208,56 | -1 017,23 | -732,47 | -3 115,81 |
+| Jan 2029 | 0,00 | -150,93 | -435,70 | 0,00 | 185,65 | -621,35 | 208,56 | -829,91 | -545,14 | -2 188,82 |
+| Fév 2029 | 0,00 | -703,27 | -988,04 | 0,00 | 182,45 | -1 170,49 | 208,56 | -1 379,05 | -1 094,28 | -4 944,13 |
+| Mar 2029 | 0,00 | 1 472,62 | 1 187,85 | 0,00 | 179,23 | 1 008,62 | 208,56 | 800,06 | 1 084,83 | 5 941,76 |
+| Avr 2029 | 0,00 | 1 288,50 | 1 003,74 | 0,00 | 175,99 | 827,75 | 208,56 | 619,18 | 903,95 | 5 027,67 |
+| **Total** | 0,00 | 22 424,88 | 19 007,68 | 0,00 | 2 322,80 | 16 684,88 | 2 502,73 | 14 182,15 | 17 599,34 | **94 724,45** |
+
 
 ## 30. Récapitulatif général
 
-| Section                    | Nb lignes |
-| -------------------------- | --------: |
-| Activités CA               |         3 |
-| Commissions                |         — |
-| Subventions exploitation   |         — |
-| Productions immobilisées   |         — |
-| Fournitures & Consommables |         6 |
-| Services extérieurs        |        16 |
-| Impôts & Taxes             |         2 |
-| Salariés                   |         1 |
-| Dirigeants                 |         1 |
-| Cotisations TNS            |         8 |
-| Taxes salaires             |         — |
-| Immobilisations            |        12 |
-| Provisions                 |         — |
-| Charges financières        |         — |
-| Charges exceptionnelles    |         — |
-| Charges gestion courante   |         — |
-| Reprises sur provisions    |         — |
-| Produits financiers        |         — |
-| Produits exceptionnels     |         — |
-| Transferts de charges      |         — |
-| Produits gestion courante  |         — |
-| Emprunts                   |         1 |
-| Apports                    |         3 |
-| Subventions investissement |         — |
-| Divers encaissements       |         — |
-| Divers décaissements       |         — |
-| Remboursements CC          |         — |
-| Ajustements fiscaux        |         — |
-| **Total**                  |    **53** |
 
-> **10/28** sections renseignées · **53** lignes de saisie au total.
+| Section | Nb lignes |
+| --- | ---: |
+| Activités CA | 3 |
+| Commissions | — |
+| Subventions exploitation | — |
+| Productions immobilisées | — |
+| Fournitures & Consommables | 6 |
+| Services extérieurs | 16 |
+| Impôts & Taxes | 2 |
+| Salariés | 2 |
+| Dirigeants | 1 |
+| Cotisations TNS | 8 |
+| Taxes salaires | — |
+| Immobilisations | 14 |
+| Provisions | — |
+| Charges financières | — |
+| Charges exceptionnelles | — |
+| Charges gestion courante | — |
+| Reprises sur provisions | — |
+| Produits financiers | — |
+| Produits exceptionnels | — |
+| Transferts de charges | — |
+| Produits gestion courante | — |
+| Emprunts | 1 |
+| Apports | 2 |
+| Subventions investissement | — |
+| Divers encaissements | — |
+| Divers décaissements | — |
+| Remboursements CC | — |
+| Ajustements fiscaux | — |
+| **Total** | **55** |
+
+> **10/28** sections renseignées · **55** lignes de saisie au total.

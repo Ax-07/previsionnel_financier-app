@@ -154,7 +154,7 @@ async function main() {
   const ctx = buildTemporelCtx(dateDemarrageDate, isFranchise);
 
   const enc = calcEncaissements(data, ctx);
-  const dec = calcDecaissements(data, ctx, moisPaiementSalaires, fc.isParAnnee);
+  const dec = calcDecaissements(data, ctx, moisPaiementSalaires, fc.isParAnnee, fc.tva);
 
   const variation = {
     y1: subSeries(enc.totalEnc.y1, dec.totalDec.y1),

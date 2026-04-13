@@ -1186,6 +1186,7 @@ function writeSheetTresorerie(
 function writeSheetTVA(
   wb: ExcelJS.Workbook,
   data: SFD,
+  fc: ReturnType<typeof buildFinCalc>,
   y1L: string, y2L: string, y3L: string,
   monthLabels: Record<YearKey, string[]>,
 ) {
@@ -1207,7 +1208,7 @@ function writeSheetTVA(
     return;
   }
 
-  const vatRows = buildTVARows(data, periodicite);
+  const vatRows = buildTVARows(data, fc);
 
   const yLabels = [y1L, y2L, y3L];
   const bgYears: RGB[] = [C.Y1, C.Y2, C.Y3];
@@ -1689,7 +1690,7 @@ async function main() {
   writeSheetTresorerie(wb, data, fc, y1L, y2L, y3L, monthLabels);
 
   console.log("  [10/10 — 5/5] TVA mensuelle & Ratios…");
-  writeSheetTVA(wb, data, y1L, y2L, y3L, monthLabels);
+  writeSheetTVA(wb, data, fc, y1L, y2L, y3L, monthLabels);
   writeSheetRatios(wb, data, fc);
 
   // ── Écriture du fichier

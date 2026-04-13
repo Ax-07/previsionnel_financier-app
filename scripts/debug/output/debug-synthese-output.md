@@ -20,7 +20,7 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Mois paiement salaires | M+1 |
 | Exercices | 2026–2027 · 2027–2028 · 2028–2029 |
 | Activités | 3 |
-| Salariés | 1 |
+| Salariés | 2 |
 | Immobilisations actives | 12 |
 | Emprunts | 1 |
 
@@ -34,28 +34,28 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Désignation | 2026–2027 € | 2026–2027 % CA | 2027–2028 € | 2027–2028 % CA | 2028–2029 € | 2028–2029 % CA |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| ****Chiffre d'affaires**** | 103 136,00 | 100.0 % | 108 292,80 | 100.0 % | 113 707,44 | 100.0 % |
-| Ventes + Production réelle | 103 136,00 | 100.0 % | 108 292,80 | 100.0 % | 113 707,44 | 100.0 % |
-| Marge globale | 74 794,80 | 72.5 % | 78 534,54 | 72.5 % | 82 461,27 | 72.5 % |
-| Valeur ajoutée | 37 435,33 | 36.3 % | 41 238,03 | 38.1 % | 44 840,29 | 39.4 % |
-| Excédent brut d'exploitation (EBE) | 13 871,82 | 13.5 % | 11 875,35 | 11.0 % | 15 477,61 | 13.6 % |
-| Résultat d'exploitation | 10 288,12 | 10.0 % | 8 291,65 | 7.7 % | 11 893,91 | 10.5 % |
-| Résultat financier | -3 342,21 | -3.2 % | -2 375,35 | -2.2 % | -1 990,94 | -1.8 % |
-| Résultat courant | 6 945,91 | 6.7 % | 5 916,30 | 5.5 % | 9 902,97 | 8.7 % |
-| ****Résultat de l'exercice**** | 5 904,02 | 5.7 % | 5 028,86 | 4.6 % | 8 417,52 | 7.4 % |
-| ****CAF**** | 9 487,72 | 9.2 % | 8 612,55 | 8.0 % | 12 001,22 | 10.6 % |
+| ****Chiffre d'affaires**** | 110 947,00 | 100.0 % | 116 494,35 | 100.0 % | 122 319,07 | 100.0 % |
+| Ventes + Production réelle | 110 947,00 | 100.0 % | 116 494,35 | 100.0 % | 122 319,07 | 100.0 % |
+| Marge globale | 80 015,55 | 72.1 % | 84 016,33 | 72.1 % | 88 217,15 | 72.1 % |
+| Valeur ajoutée | 43 568,55 | 39.3 % | 47 426,89 | 40.7 % | 51 087,56 | 41.8 % |
+| Excédent brut d'exploitation (EBE) | 16 882,30 | 15.2 % | 18 764,21 | 16.1 % | 22 424,88 | 18.3 % |
+| Résultat d'exploitation | 13 465,10 | 12.1 % | 15 347,01 | 13.2 % | 19 007,68 | 15.5 % |
+| Résultat financier | -3 799,21 | -3.4 % | -2 771,22 | -2.4 % | -2 322,80 | -1.9 % |
+| Résultat courant | 9 665,89 | 8.7 % | 12 575,79 | 10.8 % | 16 684,88 | 13.6 % |
+| ****Résultat de l'exercice**** | 8 216,01 | 7.4 % | 10 689,42 | 9.2 % | 14 182,15 | 11.6 % |
+| ****CAF**** | 11 633,21 | 10.5 % | 14 106,62 | 12.1 % | 17 599,34 | 14.4 % |
 
 
 ### 1.2 Vérifications de cohérence SIG
 
 | Check | Statut | Détail |
 | --- | :---: | --- |
-| CAF ≥ Résultat net (2026–2027) | ✅ | CAF = 9 487,72 € | ResNet = 5 904,02 € |
-| CAF ≥ Résultat net (2027–2028) | ✅ | CAF = 8 612,55 € | ResNet = 5 028,86 € |
-| CAF ≥ Résultat net (2028–2029) | ✅ | CAF = 12 001,22 € | ResNet = 8 417,52 € |
-| EBE ≥ Résultat exploitation (2026–2027) | ✅ | EBE = 13 871,82 € | ResExpl = 10 288,12 € |
-| EBE ≥ Résultat exploitation (2027–2028) | ✅ | EBE = 11 875,35 € | ResExpl = 8 291,65 € |
-| EBE ≥ Résultat exploitation (2028–2029) | ✅ | EBE = 15 477,61 € | ResExpl = 11 893,91 € |
+| CAF ≥ Résultat net (2026–2027) | ✅ | CAF = 11 633,21 € | ResNet = 8 216,01 € |
+| CAF ≥ Résultat net (2027–2028) | ✅ | CAF = 14 106,62 € | ResNet = 10 689,42 € |
+| CAF ≥ Résultat net (2028–2029) | ✅ | CAF = 17 599,34 € | ResNet = 14 182,15 € |
+| EBE ≥ Résultat exploitation (2026–2027) | ✅ | EBE = 16 882,30 € | ResExpl = 13 465,10 € |
+| EBE ≥ Résultat exploitation (2027–2028) | ✅ | EBE = 18 764,21 € | ResExpl = 15 347,01 € |
+| EBE ≥ Résultat exploitation (2028–2029) | ✅ | EBE = 22 424,88 € | ResExpl = 19 007,68 € |
 
 
 ## 2. Seuil de Rentabilité Économique
@@ -63,25 +63,25 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Désignation | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| ****Ventes + Production réelle**** | 103 136,00 | 108 292,80 | 113 707,44 |
-| Coûts variables | 28 341,20 | 27.5 % | 29 758,26 | 27.5 % | 31 246,17 | 27.5 % |
-| Taux de marge sur coût variable | 72.5 % | 72.5 % | 72.5 % |
-| Coûts fixes | 64 506,68 | 62.5 % | 70 242,89 | 64.9 % | 70 567,36 | 62.1 % |
-| ****Seuil de rentabilité**** | 88 949,51 | 96 859,28 | 97 306,70 |
-| Excédent / insuffisance | 14 186,49 | 11 433,52 | 16 400,74 |
-| Point mort (jours) | 315 j | 326 j | 312 j |
+| ****Ventes + Production réelle**** | 110 947,00 | 116 494,35 | 122 319,07 |
+| Coûts variables | 30 931,45 | 27.9 % | 32 478,02 | 27.9 % | 34 101,92 | 27.9 % |
+| Taux de marge sur coût variable | 72.1 % | 72.1 % | 72.1 % |
+| Coûts fixes | 66 550,45 | 60.0 % | 68 669,32 | 58.9 % | 69 209,47 | 56.6 % |
+| ****Seuil de rentabilité**** | 92 276,72 | 95 214,68 | 95 963,63 |
+| Excédent / insuffisance | 18 670,28 | 21 279,67 | 26 355,44 |
+| Point mort (jours) | 304 j | 298 j | 286 j |
 
 
 ### 2.1 Vérifications de cohérence seuil
 
 | Check | Statut | Détail |
 | --- | :---: | --- |
-| Excédent = Ventes − Seuil (2026–2027) | ✅ | 14 186,49 ≟ 103 136,00 − 88 949,51 = 14 186,49 |
-| Excédent = Ventes − Seuil (2027–2028) | ✅ | 11 433,52 ≟ 108 292,80 − 96 859,28 = 11 433,52 |
-| Excédent = Ventes − Seuil (2028–2029) | ✅ | 16 400,74 ≟ 113 707,44 − 97 306,70 = 16 400,74 |
-| Seuil = CF / Taux MCV (2026–2027) | ✅ | 88 949,51 ≟ 64 506,68 / 72.5 % = 88 949,51 |
-| Seuil = CF / Taux MCV (2027–2028) | ✅ | 96 859,28 ≟ 70 242,89 / 72.5 % = 96 859,28 |
-| Seuil = CF / Taux MCV (2028–2029) | ✅ | 97 306,70 ≟ 70 567,36 / 72.5 % = 97 306,70 |
+| Excédent = Ventes − Seuil (2026–2027) | ✅ | 18 670,28 ≟ 110 947,00 − 92 276,72 = 18 670,28 |
+| Excédent = Ventes − Seuil (2027–2028) | ✅ | 21 279,67 ≟ 116 494,35 − 95 214,68 = 21 279,67 |
+| Excédent = Ventes − Seuil (2028–2029) | ✅ | 26 355,44 ≟ 122 319,07 − 95 963,63 = 26 355,44 |
+| Seuil = CF / Taux MCV (2026–2027) | ✅ | 92 276,72 ≟ 66 550,45 / 72.1 % = 92 276,72 |
+| Seuil = CF / Taux MCV (2027–2028) | ✅ | 95 214,68 ≟ 68 669,32 / 72.1 % = 95 214,68 |
+| Seuil = CF / Taux MCV (2028–2029) | ✅ | 95 963,63 ≟ 69 209,47 / 72.1 % = 95 963,63 |
 
 
 ## 3. Besoin en Fonds de Roulement (BFR)
@@ -91,25 +91,25 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Désignation | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| Stocks de matières | 1 180,88 | 1 239,93 | 1 301,92 |
-| Crédit de TVA | 631,96 | 0,00 | 0,00 |
-| Total des besoins | 1 812,85 | 1 239,93 | 1 301,92 |
-| Dettes fournisseurs (achats matières) | 1 150,17 | 1 207,68 | 1 268,06 |
-| Dettes charges externes | 2 350,60 | 2 363,44 | 2 376,65 |
+| Stocks de matières | 1 372,29 | 1 353,25 | 1 420,91 |
+| Crédit de TVA | 0,00 | 0,00 | 0,00 |
+| Total des besoins | 1 372,29 | 1 353,25 | 1 420,91 |
+| Dettes fournisseurs (achats matières) | 2 508,87 | 2 634,88 | 2 766,62 |
+| Dettes charges externes | 2 283,38 | 2 309,02 | 2 335,68 |
 | Dettes impôts et taxes | 0,00 | 0,00 | 0,00 |
-| Dettes personnel | 1 828,38 | 2 282,06 | 2 282,06 |
-| TVA à payer | 0,00 | 112,68 | 262,08 |
-| Impôt sur les sociétés (dette) | 260,47 | 221,86 | 371,36 |
-| Total des ressources | 5 589,61 | 6 187,72 | 6 560,21 |
-| Variation du BFR | -7 683,47 | -1 171,02 | -310,50 |
-| **Besoin en fonds de roulement (BFR)** | -3 776,77 | -4 947,79 | -5 258,29 |
+| Dettes personnel | 2 088,60 | 2 223,72 | 2 223,72 |
+| TVA à payer | 308,32 | 405,04 | 486,93 |
+| Impôt sur les sociétés (dette) | 362,47 | 471,59 | 625,68 |
+| Total des ressources | 7 551,65 | 8 044,25 | 8 438,64 |
+| Variation du BFR | -10 530,87 | -511,64 | -326,72 |
+| **Besoin en fonds de roulement (BFR)** | -6 179,37 | -6 691,00 | -7 017,73 |
 
 
 ### 3.1 Récapitulatif BFR
 
 | Désignation | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| ****BFR total**** | -3 776,77 | -4 947,79 | -5 258,29 |
+| ****BFR total**** | -6 179,37 | -6 691,00 | -7 017,73 |
 
 
 ## 4. Équilibre Financier (Fonds de Roulement)
@@ -120,24 +120,24 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Désignation | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| Capitaux propres | 25 904,02 | 30 932,88 | 39 350,40 |
-| Emprunts (LMT) | 53 063,76 | 45 201,68 | 37 019,26 |
-| Immobilisations nettes | 61 097,30 | 57 513,60 | 53 929,90 |
-| ****Fonds de roulement (FR)**** | 17 870,48 | 18 620,96 | 22 439,76 |
-| ****BFR**** | -3 776,77 | -4 947,79 | -5 258,29 |
-| ****Solde de trésorerie (Annuel)**** | 21 647,25 | 23 568,75 | 27 698,05 |
+| Capitaux propres | 28 216,01 | 38 905,43 | 53 087,57 |
+| Emprunts (LMT) | 61 907,74 | 52 735,31 | 43 189,17 |
+| Immobilisations nettes | 72 737,79 | 69 320,59 | 65 903,39 |
+| ****Fonds de roulement (FR)**** | 17 385,96 | 22 320,15 | 30 373,35 |
+| ****BFR**** | -6 179,37 | -6 691,00 | -7 017,73 |
+| ****Solde de trésorerie (Annuel)**** | 23 565,32 | 29 011,15 | 37 391,08 |
 
 
 ### 4.1 Vérifications de cohérence FR
 
 | Check | Statut | Détail |
 | --- | :---: | --- |
-| FR = CP + Emprunts − Immo (2026–2027) | ✅ | 17 870,48 ≟ 25 904,02 + 53 063,76 − 61 097,30 = 17 870,48 |
-| Solde annuel = FR − BFR (2026–2027) | ✅ | 21 647,25 ≟ 17 870,48 − -3 776,77 = 21 647,25 |
-| FR = CP + Emprunts − Immo (2027–2028) | ✅ | 18 620,96 ≟ 30 932,88 + 45 201,68 − 57 513,60 = 18 620,96 |
-| Solde annuel = FR − BFR (2027–2028) | ✅ | 23 568,75 ≟ 18 620,96 − -4 947,79 = 23 568,75 |
-| FR = CP + Emprunts − Immo (2028–2029) | ✅ | 22 439,76 ≟ 39 350,40 + 37 019,26 − 53 929,90 = 22 439,76 |
-| Solde annuel = FR − BFR (2028–2029) | ✅ | 27 698,05 ≟ 22 439,76 − -5 258,29 = 27 698,05 |
+| FR = CP + Emprunts − Immo (2026–2027) | ✅ | 17 385,96 ≟ 28 216,01 + 61 907,74 − 72 737,79 = 17 385,96 |
+| Solde annuel = FR − BFR (2026–2027) | ✅ | 23 565,32 ≟ 17 385,96 − -6 179,37 = 23 565,32 |
+| FR = CP + Emprunts − Immo (2027–2028) | ✅ | 22 320,15 ≟ 38 905,43 + 52 735,31 − 69 320,59 = 22 320,15 |
+| Solde annuel = FR − BFR (2027–2028) | ✅ | 29 011,15 ≟ 22 320,15 − -6 691,00 = 29 011,15 |
+| FR = CP + Emprunts − Immo (2028–2029) | ✅ | 30 373,35 ≟ 53 087,57 + 43 189,17 − 65 903,39 = 30 373,35 |
+| Solde annuel = FR − BFR (2028–2029) | ✅ | 37 391,08 ≟ 30 373,35 − -7 017,73 = 37 391,08 |
 
 
 ## 5. Trésorerie
@@ -150,8 +150,8 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | --- | ---: | ---: | ---: |
 | Total encaissements | 0,00 | 0,00 | 0,00 |
 | Total décaissements | 0,00 | 0,00 | 0,00 |
-| Variation de trésorerie | 21 647,25 | 1 921,50 | 4 129,30 |
-| ****Solde trésorerie fin d'exercice (M12)**** | 21 647,25 | 23 568,75 | 27 698,05 |
+| Variation de trésorerie | 23 557,69 | 5 453,46 | 8 379,93 |
+| ****Solde trésorerie fin d'exercice (M12)**** | 23 557,69 | 29 011,15 | 37 391,08 |
 
 
 ### 5.2 Vérification solde M12 vs solde annuel (FR−BFR)
@@ -163,9 +163,9 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Exercice | Solde M12 (trésorerie) | Solde Annuel (FR−BFR) | Écart |
 | --- | ---: | ---: | ---: |
-| 2026–2027 | 21 647,25 | 21 647,25 | 0,00 |
-| 2027–2028 | 23 568,75 | 23 568,75 | 0,00 |
-| 2028–2029 | 27 698,05 | 27 698,05 | -0,00 |
+| 2026–2027 | 23 557,69 | 23 565,32 | -7,63 |
+| 2027–2028 | 29 011,15 | 29 011,15 | -0,00 |
+| 2028–2029 | 37 391,08 | 37 391,08 | -0,00 |
 
 
 ### 5.3 Soldes mensuels de trésorerie
@@ -175,52 +175,52 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Mois | Encaissements | Décaissements | Variation | Solde final |
 | --- | ---: | ---: | ---: | ---: |
-| Jan | 92 900,53 | 71 716,98 | 21 183,55 | 21 183,55 |
-| Fév | 12 490,63 | 10 676,18 | 1 814,45 | 22 998,00 |
-| Mar | 12 900,53 | 10 111,09 | 2 789,44 | 25 787,44 |
-| Avr | 15 485,19 | 10 300,10 | 5 185,09 | 30 972,53 |
-| Mai | 9 985,67 | 9 935,94 | 49,73 | 31 022,26 |
-| Jun | 6 740,61 | 9 305,94 | -2 565,33 | 28 456,93 |
-| Jul | 6 490,12 | 9 111,14 | -2 621,02 | 25 835,91 |
-| Aoû | 6 490,12 | 7 949,92 | -1 459,81 | 24 376,11 |
-| Sep | 6 740,61 | 8 251,33 | -1 510,72 | 22 865,39 |
-| Oct | 5 989,13 | 7 922,68 | -1 933,56 | 20 931,83 |
-| Nov | 8 949,53 | 8 235,38 | 714,15 | 21 645,98 |
-| Déc | 8 699,03 | 8 697,77 | 1,27 | 21 647,25 |
+| Jan | 103 874,88 | 80 551,92 | 23 322,95 | 23 322,95 |
+| Fév | 13 434,02 | 12 687,17 | 746,85 | 24 069,80 |
+| Mar | 13 874,88 | 10 692,02 | 3 182,86 | 27 252,66 |
+| Avr | 16 654,75 | 10 465,03 | 6 189,72 | 33 442,38 |
+| Mai | 10 739,86 | 11 208,89 | -469,02 | 32 973,35 |
+| Jun | 7 249,71 | 10 305,32 | -3 055,61 | 29 917,75 |
+| Jul | 6 980,30 | 9 740,67 | -2 760,37 | 27 157,37 |
+| Aoû | 6 980,30 | 8 400,47 | -1 420,17 | 25 737,21 |
+| Sep | 7 249,71 | 8 785,42 | -1 535,70 | 24 201,50 |
+| Oct | 6 441,47 | 8 507,09 | -2 065,62 | 22 135,88 |
+| Nov | 9 625,47 | 8 308,75 | 1 316,72 | 23 452,60 |
+| Déc | 9 356,05 | 9 250,96 | 105,09 | 23 557,69 |
 
 **2027–2028**
 
 | Mois | Encaissements | Décaissements | Variation | Solde final |
 | --- | ---: | ---: | ---: | ---: |
-| Jan | 13 545,56 | 9 348,14 | 4 197,42 | 25 844,67 |
-| Fév | 13 115,16 | 10 551,64 | 2 563,52 | 28 408,19 |
-| Mar | 13 545,56 | 10 768,42 | 2 777,14 | 31 185,33 |
-| Avr | 16 259,45 | 11 669,66 | 4 589,79 | 35 775,12 |
-| Mai | 10 484,95 | 10 616,64 | -131,69 | 35 643,44 |
-| Jun | 7 077,64 | 10 215,04 | -3 137,40 | 32 506,04 |
-| Jul | 6 814,62 | 10 492,56 | -3 677,94 | 28 828,10 |
-| Aoû | 6 814,62 | 8 484,92 | -1 670,30 | 27 157,80 |
-| Sep | 7 077,64 | 8 744,41 | -1 666,77 | 25 491,04 |
-| Oct | 6 288,58 | 8 449,24 | -2 160,66 | 23 330,37 |
-| Nov | 9 397,01 | 8 775,99 | 621,02 | 23 951,39 |
-| Déc | 9 133,99 | 9 516,63 | -382,65 | 23 568,75 |
+| Jan | 14 568,62 | 9 524,06 | 5 044,56 | 28 602,25 |
+| Fév | 14 105,72 | 10 899,54 | 3 206,17 | 31 808,42 |
+| Mar | 14 568,62 | 11 237,22 | 3 331,40 | 35 139,83 |
+| Avr | 17 487,49 | 12 526,26 | 4 961,23 | 40 101,06 |
+| Mai | 11 276,86 | 11 725,99 | -449,13 | 39 651,92 |
+| Jun | 7 612,20 | 11 164,18 | -3 551,98 | 36 099,94 |
+| Jul | 7 329,31 | 10 979,91 | -3 650,59 | 32 449,35 |
+| Aoû | 7 329,31 | 8 671,00 | -1 341,69 | 31 107,66 |
+| Sep | 7 612,20 | 9 145,94 | -1 533,73 | 29 573,93 |
+| Oct | 6 763,54 | 8 835,25 | -2 071,71 | 27 502,22 |
+| Nov | 10 106,74 | 8 536,32 | 1 570,42 | 29 072,64 |
+| Déc | 9 823,85 | 9 885,34 | -61,49 | 29 011,15 |
 
 **2028–2029**
 
 | Mois | Encaissements | Décaissements | Variation | Solde final |
 | --- | ---: | ---: | ---: | ---: |
-| Jan | 14 222,83 | 10 088,09 | 4 134,74 | 27 703,49 |
-| Fév | 13 770,92 | 10 755,09 | 3 015,83 | 30 719,32 |
-| Mar | 14 222,83 | 11 121,54 | 3 101,29 | 33 820,62 |
-| Avr | 17 072,42 | 12 669,35 | 4 403,07 | 38 223,69 |
-| Mai | 11 009,20 | 10 820,66 | 188,55 | 38 412,23 |
-| Jun | 7 431,53 | 10 507,60 | -3 076,08 | 35 336,16 |
-| Jul | 7 155,35 | 10 729,37 | -3 574,02 | 31 762,14 |
-| Aoû | 7 155,35 | 8 601,68 | -1 446,33 | 30 315,81 |
-| Sep | 7 431,53 | 9 012,37 | -1 580,85 | 28 734,97 |
-| Oct | 6 603,01 | 8 564,18 | -1 961,17 | 26 773,80 |
-| Nov | 9 866,86 | 8 906,23 | 960,62 | 27 734,42 |
-| Déc | 9 590,68 | 9 627,06 | -36,37 | 27 698,05 |
+| Jan | 15 297,05 | 9 929,06 | 5 367,99 | 34 379,13 |
+| Fév | 14 811,00 | 11 160,17 | 3 650,83 | 38 029,96 |
+| Mar | 15 297,05 | 11 653,31 | 3 643,74 | 41 673,70 |
+| Avr | 18 361,86 | 12 941,19 | 5 420,67 | 47 094,37 |
+| Mai | 11 840,70 | 12 037,78 | -197,08 | 46 897,29 |
+| Jun | 7 992,81 | 11 528,16 | -3 535,35 | 43 361,94 |
+| Jul | 7 695,78 | 11 245,28 | -3 549,50 | 39 812,44 |
+| Aoû | 7 695,78 | 8 812,02 | -1 116,24 | 38 696,20 |
+| Sep | 7 992,81 | 9 439,50 | -1 446,69 | 37 249,51 |
+| Oct | 7 101,72 | 9 043,78 | -1 942,06 | 35 307,45 |
+| Nov | 10 612,08 | 8 668,04 | 1 944,03 | 37 251,49 |
+| Déc | 10 315,05 | 10 175,46 | 139,59 | 37 391,08 |
 
 
 ## 6. Détail des lignes du tableau de trésorerie
@@ -231,28 +231,28 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | **ENCAISSEMENTS** | 0,00 | 0,00 | 0,00 |
 | Apports en capital | 1 000,00 | 0,00 | 0,00 |
 | Apports en comptes courants | 19 000,00 | 0,00 | 0,00 |
-| Emprunts (déblocages) | 60 000,00 | 0,00 | 0,00 |
-| Production vendue | 113 861,70 | 119 554,79 | 125 532,52 |
+| Emprunts (déblocages) | 70 000,00 | 0,00 | 0,00 |
+| Production vendue | 122 461,40 | 128 584,47 | 135 013,70 |
 | Subventions d'exploitation | 0,00 | 0,00 | 0,00 |
 | Subventions et aides | 0,00 | 0,00 | 0,00 |
 | Encaissements divers | 0,00 | 0,00 | 0,00 |
-| Total des encaissements | 193 861,70 | 119 554,79 | 125 532,52 |
+| Total des encaissements | 212 461,40 | 128 584,47 | 135 013,70 |
 | **DÉCAISSEMENTS** | 0,00 | 0,00 | 0,00 |
-| Immobilisations (Total) | 67 005,20 | 0,00 | 0,00 |
-| Échéances d'emprunts | 10 278,45 | 10 237,43 | 10 173,36 |
-| Achats effectués (Total) | 30 213,49 | 31 619,78 | 33 200,77 |
-| Charges externes (Total) | 42 200,76 | 44 457,37 | 44 840,66 |
+| Immobilisations (Total) | 78 323,99 | 0,00 | 0,00 |
+| Échéances d'emprunts | 11 891,47 | 11 943,65 | 11 868,94 |
+| Achats effectués (Total) | 31 796,48 | 34 339,28 | 36 152,46 |
+| Charges externes (Total) | 41 041,42 | 43 460,54 | 44 097,93 |
 | État – Impôts et taxes | 1 623,00 | 1 978,00 | 1 978,00 |
-| Charges de personnel (Total) | 20 112,13 | 26 931,00 | 27 384,68 |
-| TVA à payer | 0,00 | 1 483,65 | 2 489,81 |
-| Impôt sur les sociétés | 781,41 | 926,06 | 1 335,95 |
+| Charges de personnel (Total) | 22 974,65 | 26 549,56 | 26 684,68 |
+| TVA à payer | 165,29 | 3 082,74 | 3 503,11 |
+| Impôt sur les sociétés | 1 087,41 | 1 777,25 | 2 348,64 |
 | Décaissements divers | 0,00 | 0,00 | 0,00 |
-| Total des décaissements | 172 214,45 | 117 633,29 | 121 403,23 |
+| Total des décaissements | 188 903,71 | 123 131,01 | 126 633,77 |
 | **SOLDE DE TRÉSORERIE** | 0,00 | 0,00 | 0,00 |
-| Solde précédent | 0,00 | 21 647,25 | 23 568,75 |
-| Variation de trésorerie | 21 647,25 | 1 921,50 | 4 129,30 |
-| **Solde de trésorerie** | 21 647,25 | 23 568,75 | 27 698,05 |
-| Encours fournisseurs | 1 478,12 | 1 472,90 | 1 467,42 |
+| Solde précédent | 0,00 | 23 557,69 | 29 011,15 |
+| Variation de trésorerie | 23 557,69 | 5 453,46 | 8 379,93 |
+| **Solde de trésorerie** | 23 557,69 | 29 011,15 | 37 391,08 |
+| Encours fournisseurs | 3 231,70 | 3 380,38 | 3 440,28 |
 
 
 ## 7. Récapitulatif global de cohérence
@@ -272,12 +272,12 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Indicateur | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| Chiffre d'affaires | 103 136,00 | 108 292,80 | 113 707,44 |
-| EBE | 13 871,82 | 11 875,35 | 15 477,61 |
-| Résultat net | 5 904,02 | 5 028,86 | 8 417,52 |
-| CAF | 9 487,72 | 8 612,55 | 12 001,22 |
-| Seuil de rentabilité | 88 949,51 | 96 859,28 | 97 306,70 |
-| Fonds de roulement | 17 870,48 | 18 620,96 | 22 439,76 |
-| BFR | -3 776,77 | -4 947,79 | -5 258,29 |
-| Solde trésorerie annuel | 21 647,25 | 23 568,75 | 27 698,05 |
-| Solde trésorerie M12 | 21 647,25 | 23 568,75 | 27 698,05 |
+| Chiffre d'affaires | 110 947,00 | 116 494,35 | 122 319,07 |
+| EBE | 16 882,30 | 18 764,21 | 22 424,88 |
+| Résultat net | 8 216,01 | 10 689,42 | 14 182,15 |
+| CAF | 11 633,21 | 14 106,62 | 17 599,34 |
+| Seuil de rentabilité | 92 276,72 | 95 214,68 | 95 963,63 |
+| Fonds de roulement | 17 385,96 | 22 320,15 | 30 373,35 |
+| BFR | -6 179,37 | -6 691,00 | -7 017,73 |
+| Solde trésorerie annuel | 23 565,32 | 29 011,15 | 37 391,08 |
+| Solde trésorerie M12 | 23 557,69 | 29 011,15 | 37 391,08 |

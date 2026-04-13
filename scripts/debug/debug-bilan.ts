@@ -909,7 +909,7 @@ async function main() {
   const moisPaiement = data.scenario.parametres?.moisPaiementSalaires ?? 1;
   const ctx = buildTemporelCtx(dateDemarrageDate, isFranchise);
   const enc = calcEncaissements(data, ctx);
-  const dec = calcDecaissements(data, ctx, moisPaiement, fc.isParAnnee);
+  const dec = calcDecaissements(data, ctx, moisPaiement, fc.isParAnnee, fc.tva);
 
   const varY1 = subSeries(enc.totalEnc.y1, dec.totalDec.y1);
   const varY2 = subSeries(enc.totalEnc.y2, dec.totalDec.y2);
@@ -1152,22 +1152,17 @@ async function main() {
       y2: bfr.stocksMatieres.y2 - bfr.stocksMatieres.y1,
       y3: bfr.stocksMatieres.y3 - bfr.stocksMatieres.y2,
     };
-    // Recalcul TVA déd achats = Σ (achatsConsommés[a] × tauxTVA[a]) + ΔStock[a] × tauxTVA[a]
+    // TVA déd achats = Σ (achatsEffectués[a] × tauxTVA[a])
+    // = Σ (consommes_a + sfFinal_a) × taux_a  (via identité télescopique de computeStocksAchatsSeries)
+    // Utilise bfr.achatsRows dont m11StockY1 = sfFinal exact (avec ponctuels) — cohérent avec decaissements.ts
+    // ⚠ Ne PAS utiliser la formule forfaitaire montantN × coef × joursStk / 360 :
+    //   elle ignore l'effet des achats ponctuels initiaux sur le stock de clôture.
     const tvaDedAchatsAnn: YAcc = { y1: 0, y2: 0, y3: 0 };
-    for (const a of data.activites.filter(a => a.actif !== false)) {
-      const coef = Math.max(0, 1 - n(a.tauxMarge) / 100);
-      const taux = n((a as Record<string, unknown>).tvaAchats ?? 20) / 100;
-      const jours = n((a as Record<string, unknown>).stocks ?? 0);
-      tvaDedAchatsAnn.y1 += n(a.montantN) * coef * taux;
-      tvaDedAchatsAnn.y2 += n(a.montantN1) * coef * taux;
-      tvaDedAchatsAnn.y3 += n(a.montantN2) * coef * taux;
-      // + TVA sur ΔStock
-      const sf1 = (n(a.montantN) * coef * jours) / 360;
-      const sf2 = (n(a.montantN1) * coef * jours) / 360;
-      const sf3 = (n(a.montantN2) * coef * jours) / 360;
-      tvaDedAchatsAnn.y1 += sf1 * taux;
-      tvaDedAchatsAnn.y2 += (sf2 - sf1) * taux;
-      tvaDedAchatsAnn.y3 += (sf3 - sf2) * taux;
+    for (const r of bfr.achatsRows) {
+      const taux = r.tvaAchats / 100;
+      tvaDedAchatsAnn.y1 += (r.montantN  * r.coef + r.m11StockY1)                * taux;
+      tvaDedAchatsAnn.y2 += (r.montantN1 * r.coef + r.m11StockY2 - r.m11StockY1) * taux;
+      tvaDedAchatsAnn.y3 += (r.montantN2 * r.coef + r.m11StockY3 - r.m11StockY2) * taux;
     }
     const achatsBilanEquiv: YAcc = {
       y1: achatsConsoHT.y1 + deltaSotcks.y1 + tvaDedAchatsAnn.y1 - bfr.dettesFournisseurs.y1,
@@ -1278,7 +1273,7 @@ async function main() {
     L(`> ℹ **Franchise de TVA** — aucun calcul TVA applicable.`);
     L(``);
   } else {
-    const tvaRows = buildTVARows(data, periodicite);
+    const tvaRows = buildTVARows(data, fc);
     const findRow = (key: string) => tvaRows.find((r) => r.key === key);
 
     const rowCA       = findRow("tva-ca");
@@ -1361,17 +1356,34 @@ async function main() {
     // ── C. Cohérence avec le tableau de trésorerie ────────────────────────────
     L(`#### C — Cohérence TVA décaissée vs tableau de trésorerie`);
     L(``);
-    L(`> \`dec.decTVA\` = TVA payée dans le tableau mensuel. Doit correspondre à \`tvaAPayerMonthly\` du moteur TVA.`);
+    L(`> Identité : \`decTVA = tvaAPayerAnnuel − ΔDettes TVA\``);
+    L(`> où \`ΔDettes TVA = tvaM12_fin − tvaM12_debut\` (variation de la dette TVA bilan entre clôture et ouverture de l'exercice).`);
+    L(`> La TVA de M12 est décaissée en début d'exercice suivant — elle n'est pas dans le flux de l'exercice courant.`);
     L(``);
     const decTVAAnn: YAcc = { y1: sumSerie(dec.decTVA.y1), y2: sumSerie(dec.decTVA.y2), y3: sumSerie(dec.decTVA.y3) };
+    // ΔDettes TVA = tvaAPayer M12 fin − tvaAPayer M12 début (= 0 en Y1 car pas de dette TVA en y0)
+    const deltaDetteTVA: YAcc = {
+      y1: tvaPayerM12.y1 - 0,
+      y2: tvaPayerM12.y2 - tvaPayerM12.y1,
+      y3: tvaPayerM12.y3 - tvaPayerM12.y2,
+    };
+    // TVA à décaisser dans l'exercice = TVA à payer annuelle − TVA restant à décaisser fin d'exercice + TVA entrante début
+    const tvaADecaisser: YAcc = {
+      y1: toAcc(rowPayer).y1 - deltaDetteTVA.y1,
+      y2: toAcc(rowPayer).y2 - deltaDetteTVA.y2,
+      y3: toAcc(rowPayer).y3 - deltaDetteTVA.y3,
+    };
     const ecartDecTVA: YAcc = {
-      y1: decTVAAnn.y1 - toAcc(rowPayer).y1,
-      y2: decTVAAnn.y2 - toAcc(rowPayer).y2,
-      y3: decTVAAnn.y3 - toAcc(rowPayer).y3,
+      y1: decTVAAnn.y1 - tvaADecaisser.y1,
+      y2: decTVAAnn.y2 - tvaADecaisser.y2,
+      y3: decTVAAnn.y3 - tvaADecaisser.y3,
     };
     L(header(y1L, y2L, y3L));
     L(row("TVA à payer ∑ annuel (tableau TVA)", toAcc(rowPayer)));
-    L(row("dec.decTVA ∑ annuel (tableau trésorerie)", decTVAAnn));
+    L(row("− TVA restant à décaisser M12 fin exercice", tvaPayerM12));
+    L(row("+ TVA en attente M12 exercice précédent", { y1: 0, y2: tvaPayerM12.y1, y3: tvaPayerM12.y2 }));
+    L(row("= TVA à décaisser dans l'exercice (attendu)", tvaADecaisser, { bold: true }));
+    L(row("TVA décaissée (dec.decTVA ∑)", decTVAAnn, { bold: true }));
     L(row("Écart", ecartDecTVA, {
       note: eq(ecartDecTVA.y1, 0) && eq(ecartDecTVA.y2, 0) && eq(ecartDecTVA.y3, 0) ? "✅ Cohérent" : "❌ DIVERGENCE",
     }));
@@ -1585,11 +1597,13 @@ async function main() {
   L(``);
   const pfBesoins = pf.rows.find((r) => r.key === "total_besoins");
   const pfRessources = pf.rows.find((r) => r.key === "total_ressources");
-  if (pfBesoins && pfRessources) {
+  const pfVariation = pf.rows.find((r) => r.key === "variation_tresorerie");
+  if (pfBesoins && pfRessources && pfVariation) {
+    // Par construction : Ressources − Besoins = Variation de trésorerie (ce n'est pas un déséquilibre)
+    // Le vrai contrôle (solde tréso = bilan) est effectué au check #11.
     const pfEcart = (k: "y0" | "y1" | "y2" | "y3") =>
       pfRessources.values[k].amount - pfBesoins.values[k].amount;
-    const pfOk = ["y0", "y1", "y2", "y3"].every((k) => eq(pfEcart(k as "y0"), 0));
-    L(`| **Écart (Ressources − Besoins)** | ${fmt(pfEcart("y0"))} | ${fmt(pfEcart("y1"))} | ${fmt(pfEcart("y2"))} | ${fmt(pfEcart("y3"))} | *${pfOk ? "✅ Équilibré" : "❌ DÉSÉQUILIBRE"}* |`);
+    L(`| **= Variation de trésorerie (Ressources − Besoins)** | ${fmt(pfEcart("y0"))} | ${fmt(pfEcart("y1"))} | ${fmt(pfEcart("y2"))} | ${fmt(pfEcart("y3"))} | _(= par construction)_ |`);
   }
   L(``);
 
@@ -1672,7 +1686,7 @@ async function main() {
   let ecartCreditTVAConc: YAcc = zero;
   let ecartDecTVAConc: YAcc = zero;
   if (!isFranchise) {
-    const tvaRowsConc = buildTVARows(data, periodicite);
+    const tvaRowsConc = buildTVARows(data, fc);
     const findC = (key: string) => tvaRowsConc.find((r) => r.key === key);
     const rowPayerC = findC("tva-payer");
     const rowCreditC = findC("credit-tva");
@@ -1691,10 +1705,22 @@ async function main() {
       y2: sumSerie(dec.decTVA.y2),
       y3: sumSerie(dec.decTVA.y3),
     };
+    // Identité : decTVA = tvaAPayerAnnuel − ΔDettes TVA
+    // ΔDettes TVA = tvaM12_fin − tvaM12_debut (variation de la dette passif TVA entre ouverture et clôture)
+    const tvaPayerM12Conc: YAcc = {
+      y1: rowPayerC?.values.y1.months[11] ?? 0,
+      y2: rowPayerC?.values.y2.months[11] ?? 0,
+      y3: rowPayerC?.values.y3.months[11] ?? 0,
+    };
+    const tvaADecaisserConc: YAcc = {
+      y1: (rowPayerC?.values.y1.total ?? 0) - tvaPayerM12Conc.y1,
+      y2: (rowPayerC?.values.y2.total ?? 0) - (tvaPayerM12Conc.y2 - tvaPayerM12Conc.y1),
+      y3: (rowPayerC?.values.y3.total ?? 0) - (tvaPayerM12Conc.y3 - tvaPayerM12Conc.y2),
+    };
     ecartDecTVAConc = {
-      y1: decTVAAnnConc.y1 - (rowPayerC?.values.y1.total ?? 0),
-      y2: decTVAAnnConc.y2 - (rowPayerC?.values.y2.total ?? 0),
-      y3: decTVAAnnConc.y3 - (rowPayerC?.values.y3.total ?? 0),
+      y1: decTVAAnnConc.y1 - tvaADecaisserConc.y1,
+      y2: decTVAAnnConc.y2 - tvaADecaisserConc.y2,
+      y3: decTVAAnnConc.y3 - tvaADecaisserConc.y3,
     };
     ckTVAPayer = eq(ecartTVAPayerConc.y1, 0) && eq(ecartTVAPayerConc.y2, 0) && eq(ecartTVAPayerConc.y3, 0);
     ckCreditTVA = eq(ecartCreditTVAConc.y1, 0) && eq(ecartCreditTVAConc.y2, 0) && eq(ecartCreditTVAConc.y3, 0);
@@ -1763,7 +1789,7 @@ async function main() {
   L(`| 4 | Dotations amort (distribuerAmort = fc) | ${st(ckDotAmort)} | ${ef(ecartDotAmort.y1)} | ${ef(ecartDotAmort.y2)} | ${ef(ecartDotAmort.y3)} |`);
   L(`| 5 | TVA à payer BFR = tableau TVA M12 | ${tvaStatus(ckTVAPayer)} | ${tvaEf(ecartTVAPayerConc.y1)} | ${tvaEf(ecartTVAPayerConc.y2)} | ${tvaEf(ecartTVAPayerConc.y3)} |`);
   L(`| 6 | Crédit TVA BFR = tableau TVA M12 | ${tvaStatus(ckCreditTVA)} | ${tvaEf(ecartCreditTVAConc.y1)} | ${tvaEf(ecartCreditTVAConc.y2)} | ${tvaEf(ecartCreditTVAConc.y3)} |`);
-  L(`| 7 | TVA décaissée = tableau TVA annuel | ${tvaStatus(ckDecTVA)} | ${tvaEf(ecartDecTVAConc.y1)} | ${tvaEf(ecartDecTVAConc.y2)} | ${tvaEf(ecartDecTVAConc.y3)} |`);
+  L(`| 7 | TVA décaissée = tvaAnnuel − ΔDettes TVA | ${tvaStatus(ckDecTVA)} | ${tvaEf(ecartDecTVAConc.y1)} | ${tvaEf(ecartDecTVAConc.y2)} | ${tvaEf(ecartDecTVAConc.y3)} |`);
   L(`| 8 | Trésorerie tableau mensuel = bilan | ${st(ckTreso)} | ${ef(ecartTreso.y1)} | ${ef(ecartTreso.y2)} | ${ef(ecartTreso.y3)} |`);
   L(`| 9 | Capital emprunts bilan = échéancier | ${st(ckEmprunts)} | ${ef(ecartEmprunts.y1)} | ${ef(ecartEmprunts.y2)} | ${ef(ecartEmprunts.y3)} |`);
   L(`| 10 | CA activités saisies = fc.ca | ${st(ckCA)} | ${ef(ecartCA.y1)} | ${ef(ecartCA.y2)} | ${ef(ecartCA.y3)} |`);
@@ -1803,7 +1829,7 @@ async function main() {
       L(`- **[6] Crédit TVA BFR ≠ tableau TVA M12** (écarts : Y1=${fmt(ecartCreditTVAConc.y1)} · Y2=${fmt(ecartCreditTVAConc.y2)} · Y3=${fmt(ecartCreditTVAConc.y3)}) — l'actif circulant BFR ne correspond pas au crédit TVA calculé. Vérifier \`calculs/bfr.ts\` champ \`creditTVA\` et \`aggregations/tva\`.`);
     }
     if (!isFranchise && !ckDecTVA) {
-      L(`- **[7] TVA décaissée incohérente** (écarts : Y1=${fmt(ecartDecTVAConc.y1)} · Y2=${fmt(ecartDecTVAConc.y2)} · Y3=${fmt(ecartDecTVAConc.y3)}) — le décaissement TVA du tableau trésorerie diffère du tableau TVA annuel. Vérifier \`calculs/decaissements.ts\`.`);
+      L(`- **[7] TVA décaissée incohérente** (écarts : Y1=${fmt(ecartDecTVAConc.y1)} · Y2=${fmt(ecartDecTVAConc.y2)} · Y3=${fmt(ecartDecTVAConc.y3)}) — le décaissement TVA devrait égaler tvaAnnuel − ΔDettes TVA (variation M12). Vérifier \`calculs/decaissements.ts\`.`);
     }
     if (!ckTreso) {
       L(`- **[8] Trésorerie divergente** (écarts : Y1=${fmt(ecartTreso.y1)} · Y2=${fmt(ecartTreso.y2)} · Y3=${fmt(ecartTreso.y3)}) — le tableau mensuel TTC et la formule bilan ne convergent pas. Causes probables : TVA sur immos décaissée TTC vs bilan HT, subventions exploitation hors P&L, décalage acomptes IS. Voir section *Trésorerie — Comparaison*.`);

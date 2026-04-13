@@ -18,6 +18,7 @@ import { writeFileSync } from "fs";
 import { join } from "path";
 import { prisma } from "@/lib/prisma";
 import { fetchScenarioData } from "@/lib/finance/fetch-scenario";
+import { buildFinCalc } from "@/lib/finance/calculs";
 import { buildTVARows } from "@/lib/finance/aggregations/tva";
 import type { VATRow } from "@/lib/finance/aggregations/tva";
 import { buildMonthLabels } from "@/lib/finance/calculs/monthly";
@@ -82,6 +83,7 @@ async function main() {
   console.log("Données chargées. Calculs en cours…");
 
   const { dateDemarrage: dateDemarrageDate, scenario } = data;
+  const fc = buildFinCalc(data, dateDemarrageDate);
   const anneeDebut = dateDemarrageDate.getFullYear();
   const moisDebut = dateDemarrageDate.getMonth();
 
@@ -153,7 +155,7 @@ async function main() {
   }
 
   // ── Calculs officiels (= application) ──────────────────────────────────────
-  const rows = buildTVARows(data, periodicite);
+  const rows = buildTVARows(data, fc);
 
   // ─── Section 1 : Tableau TVA — totaux annuels ─────────────────────────────
 

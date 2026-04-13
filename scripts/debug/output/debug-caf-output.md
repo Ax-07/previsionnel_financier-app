@@ -25,16 +25,16 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Désignation | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| Résultat de l'exercice | 5 904,02 | 5 028,86 | 8 417,52 |
-| + Dotations aux amortissements | 3 583,70 | 3 583,70 | 3 583,70 |
-| \  Meuble pizza | 149,90 | 149,90 | 149,90 |
-| \  Enseigne et communication | 150,00 | 150,00 | 150,00 |
-| \  Caisse enregistreuse (airkitchen) | 177,80 | 177,80 | 177,80 |
+| Résultat de l'exercice | 8 216,01 | 10 689,42 | 14 182,15 |
+| + Dotations aux amortissements | 3 417,20 | 3 417,20 | 3 417,20 |
 | \  Fond de commerce (materiel) | 3 106,00 | 3 106,00 | 3 106,00 |
-| **= Capacité d'autofinancement (CAF)** | 9 487,72 | 8 612,55 | 12 001,22 |
-| − Remboursement du capital des emprunts | 6 936,24 | 7 862,08 | 8 182,42 |
-| \  CIC | 6 936,24 | 7 862,08 | 8 182,42 |
-| **= Autofinancement net** | 2 551,48 | 750,47 | 3 818,80 |
+| \  Enseigne et communication | 100,00 | 100,00 | 100,00 |
+| \  Caisse enregistreuse (airkitchen) | 88,90 | 88,90 | 88,90 |
+| \  Meuble pizza | 122,30 | 122,30 | 122,30 |
+| **= Capacité d'autofinancement (CAF)** | 11 633,21 | 14 106,62 | 17 599,34 |
+| − Remboursement du capital des emprunts | 8 092,26 | 9 172,43 | 9 546,14 |
+| \  CIC | 8 092,26 | 9 172,43 | 9 546,14 |
+| **= Autofinancement net** | 3 540,95 | 4 934,19 | 8 053,20 |
 
 
 ## 2. Vérifications de cohérence
@@ -42,39 +42,39 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Check | Statut | Détail |
 | --- | :---: | --- |
-| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2026–2027) | ✅ | 9 487,72 ≟ 9 487,72 |
-| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2027–2028) | ✅ | 8 612,55 ≟ 8 612,55 |
-| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2028–2029) | ✅ | 12 001,22 ≟ 12 001,22 |
-| Autofinancement = CAF − Remboursement capital (2026–2027) | ✅ | 2 551,48 ≟ 2 551,48 |
-| Autofinancement = CAF − Remboursement capital (2027–2028) | ✅ | 750,47 ≟ 750,47 |
-| Autofinancement = CAF − Remboursement capital (2028–2029) | ✅ | 3 818,80 ≟ 3 818,80 |
-| Dot.amort total = Σ par immobilisation (2026–2027) | ✅ | 3 583,70 ≟ 3 583,70 |
-| Dot.amort total = Σ par immobilisation (2027–2028) | ✅ | 3 583,70 ≟ 3 583,70 |
-| Dot.amort total = Σ par immobilisation (2028–2029) | ✅ | 3 583,70 ≟ 3 583,70 |
-| Remboursement capital total = Σ par emprunt (2026–2027) | ✅ | 6 936,24 ≟ 6 936,24 |
-| Remboursement capital total = Σ par emprunt (2027–2028) | ✅ | 7 862,08 ≟ 7 862,08 |
-| Remboursement capital total = Σ par emprunt (2028–2029) | ✅ | 8 182,42 ≟ 8 182,42 |
-| Résultat net — CafRows vs FinCalc (2026–2027) | ✅ | 5 904,02 ≟ 5 904,02 |
-| Résultat net — CafRows vs FinCalc (2027–2028) | ✅ | 5 028,86 ≟ 5 028,86 |
-| Résultat net — CafRows vs FinCalc (2028–2029) | ✅ | 8 417,52 ≟ 8 417,52 |
-| Dot. amortissements — CafRows vs FinCalc (2026–2027) | ✅ | 3 583,70 ≟ 3 583,70 |
-| Dot. amortissements — CafRows vs FinCalc (2027–2028) | ✅ | 3 583,70 ≟ 3 583,70 |
-| Dot. amortissements — CafRows vs FinCalc (2028–2029) | ✅ | 3 583,70 ≟ 3 583,70 |
+| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2026–2027) | ✅ | 11 633,21 ≟ 11 633,21 |
+| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2027–2028) | ✅ | 14 106,62 ≟ 14 106,62 |
+| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2028–2029) | ✅ | 17 599,34 ≟ 17 599,34 |
+| Autofinancement = CAF − Remboursement capital (2026–2027) | ✅ | 3 540,95 ≟ 3 540,95 |
+| Autofinancement = CAF − Remboursement capital (2027–2028) | ✅ | 4 934,19 ≟ 4 934,19 |
+| Autofinancement = CAF − Remboursement capital (2028–2029) | ✅ | 8 053,20 ≟ 8 053,20 |
+| Dot.amort total = Σ par immobilisation (2026–2027) | ✅ | 3 417,20 ≟ 3 417,20 |
+| Dot.amort total = Σ par immobilisation (2027–2028) | ✅ | 3 417,20 ≟ 3 417,20 |
+| Dot.amort total = Σ par immobilisation (2028–2029) | ✅ | 3 417,20 ≟ 3 417,20 |
+| Remboursement capital total = Σ par emprunt (2026–2027) | ✅ | 8 092,26 ≟ 8 092,26 |
+| Remboursement capital total = Σ par emprunt (2027–2028) | ✅ | 9 172,43 ≟ 9 172,43 |
+| Remboursement capital total = Σ par emprunt (2028–2029) | ✅ | 9 546,14 ≟ 9 546,14 |
+| Résultat net — CafRows vs FinCalc (2026–2027) | ✅ | 8 216,01 ≟ 8 216,01 |
+| Résultat net — CafRows vs FinCalc (2027–2028) | ✅ | 10 689,42 ≟ 10 689,42 |
+| Résultat net — CafRows vs FinCalc (2028–2029) | ✅ | 14 182,15 ≟ 14 182,15 |
+| Dot. amortissements — CafRows vs FinCalc (2026–2027) | ✅ | 3 417,20 ≟ 3 417,20 |
+| Dot. amortissements — CafRows vs FinCalc (2027–2028) | ✅ | 3 417,20 ≟ 3 417,20 |
+| Dot. amortissements — CafRows vs FinCalc (2028–2029) | ✅ | 3 417,20 ≟ 3 417,20 |
 | Dot. provisions — CafRows vs FinCalc (2026–2027) | ✅ | 0,00 ≟ 0,00 |
 | Dot. provisions — CafRows vs FinCalc (2027–2028) | ✅ | 0,00 ≟ 0,00 |
 | Dot. provisions — CafRows vs FinCalc (2028–2029) | ✅ | 0,00 ≟ 0,00 |
 | Reprises — CafRows vs FinCalc (2026–2027) | ✅ | 0,00 ≟ 0,00 |
 | Reprises — CafRows vs FinCalc (2027–2028) | ✅ | 0,00 ≟ 0,00 |
 | Reprises — CafRows vs FinCalc (2028–2029) | ✅ | 0,00 ≟ 0,00 |
-| CAF brute — CafRows vs FinCalc (2026–2027) | ✅ | 9 487,72 ≟ 9 487,72 |
-| CAF brute — CafRows vs FinCalc (2027–2028) | ✅ | 8 612,55 ≟ 8 612,55 |
-| CAF brute — CafRows vs FinCalc (2028–2029) | ✅ | 12 001,22 ≟ 12 001,22 |
-| Remboursement capital — CafRows vs FinCalc (2026–2027) | ✅ | 6 936,24 ≟ 6 936,24 |
-| Remboursement capital — CafRows vs FinCalc (2027–2028) | ✅ | 7 862,08 ≟ 7 862,08 |
-| Remboursement capital — CafRows vs FinCalc (2028–2029) | ✅ | 8 182,42 ≟ 8 182,42 |
-| Autofinancement net — CafRows vs FinCalc (2026–2027) | ✅ | 2 551,48 ≟ 2 551,48 |
-| Autofinancement net — CafRows vs FinCalc (2027–2028) | ✅ | 750,47 ≟ 750,47 |
-| Autofinancement net — CafRows vs FinCalc (2028–2029) | ✅ | 3 818,80 ≟ 3 818,80 |
+| CAF brute — CafRows vs FinCalc (2026–2027) | ✅ | 11 633,21 ≟ 11 633,21 |
+| CAF brute — CafRows vs FinCalc (2027–2028) | ✅ | 14 106,62 ≟ 14 106,62 |
+| CAF brute — CafRows vs FinCalc (2028–2029) | ✅ | 17 599,34 ≟ 17 599,34 |
+| Remboursement capital — CafRows vs FinCalc (2026–2027) | ✅ | 8 092,26 ≟ 8 092,26 |
+| Remboursement capital — CafRows vs FinCalc (2027–2028) | ✅ | 9 172,43 ≟ 9 172,43 |
+| Remboursement capital — CafRows vs FinCalc (2028–2029) | ✅ | 9 546,14 ≟ 9 546,14 |
+| Autofinancement net — CafRows vs FinCalc (2026–2027) | ✅ | 3 540,95 ≟ 3 540,95 |
+| Autofinancement net — CafRows vs FinCalc (2027–2028) | ✅ | 4 934,19 ≟ 4 934,19 |
+| Autofinancement net — CafRows vs FinCalc (2028–2029) | ✅ | 8 053,20 ≟ 8 053,20 |
 
 
 ## 3. Détail dotations par immobilisation
@@ -82,12 +82,12 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Immobilisation | Nature | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | --- | ---: | ---: | ---: |
-| Meuble pizza | CORPOREL | 149,90 | 149,90 | 149,90 |
-| Enseigne et communication | CORPOREL | 150,00 | 150,00 | 150,00 |
-| Caisse enregistreuse (airkitchen) | CORPOREL | 177,80 | 177,80 | 177,80 |
 | Fond de commerce (materiel) | CORPOREL | 3 106,00 | 3 106,00 | 3 106,00 |
+| Enseigne et communication | CORPOREL | 100,00 | 100,00 | 100,00 |
+| Caisse enregistreuse (airkitchen) | CORPOREL | 88,90 | 88,90 | 88,90 |
+| Meuble pizza | CORPOREL | 122,30 | 122,30 | 122,30 |
 
-| **Dot. amort. totales** | | **3 583,70** | **3 583,70** | **3 583,70** |
+| **Dot. amort. totales** | | **3 417,20** | **3 417,20** | **3 417,20** |
 
 
 ## 4. Détail provisions & reprises
@@ -99,8 +99,8 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Emprunt | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| CIC | 6 936,24 | 7 862,08 | 8 182,42 |
-| **Total** | **6 936,24** | **7 862,08** | **8 182,42** |
+| CIC | 8 092,26 | 9 172,43 | 9 546,14 |
+| **Total** | **8 092,26** | **9 172,43** | **9 546,14** |
 
 
 ## 6. Récapitulatif
@@ -120,10 +120,10 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Indicateur | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| Résultat net | 5 904,02 | 5 028,86 | 8 417,52 |
-| + Dot. amortissements | 3 583,70 | 3 583,70 | 3 583,70 |
+| Résultat net | 8 216,01 | 10 689,42 | 14 182,15 |
+| + Dot. amortissements | 3 417,20 | 3 417,20 | 3 417,20 |
 | + Dot. provisions | 0,00 | 0,00 | 0,00 |
 | − Reprises | 0,00 | 0,00 | 0,00 |
-| **= CAF brute** | **9 487,72** | **8 612,55** | **12 001,22** |
-| − Remboursement capital | 6 936,24 | 7 862,08 | 8 182,42 |
-| **= Autofinancement net** | **2 551,48** | **750,47** | **3 818,80** |
+| **= CAF brute** | **11 633,21** | **14 106,62** | **17 599,34** |
+| − Remboursement capital | 8 092,26 | 9 172,43 | 9 546,14 |
+| **= Autofinancement net** | **3 540,95** | **4 934,19** | **8 053,20** |
