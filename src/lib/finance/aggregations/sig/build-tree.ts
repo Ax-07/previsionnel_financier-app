@@ -66,6 +66,7 @@ export function buildSigTree(
     resExpl,
     produitsFinanciers,
     interetsEmprunts,
+    fraisDossierEmprunts,
     autresChargesFinancieres,
     resFin,
     resCourant,
@@ -94,9 +95,9 @@ export function buildSigTree(
   const chargesPersonnelTotal = chargesPersonnel.total;
 
   const chargesFinTotal: Record<YearKey, number> = {
-    y1: interetsEmprunts.y1 + autresChargesFinancieres.y1,
-    y2: interetsEmprunts.y2 + autresChargesFinancieres.y2,
-    y3: interetsEmprunts.y3 + autresChargesFinancieres.y3,
+    y1: interetsEmprunts.y1 + fraisDossierEmprunts.y1 + autresChargesFinancieres.y1,
+    y2: interetsEmprunts.y2 + fraisDossierEmprunts.y2 + autresChargesFinancieres.y2,
+    y3: interetsEmprunts.y3 + fraisDossierEmprunts.y3 + autresChargesFinancieres.y3,
   };
 
   return [
