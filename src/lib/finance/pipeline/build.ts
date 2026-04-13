@@ -17,9 +17,11 @@ import { n } from "@/lib/finance/utils";
 import { calcCapitalRembourse } from "@/lib/finance/calculs/emprunts";
 import { calcResExcep } from "@/lib/finance/calculs/resultats";
 import { calcAjustementNet, calcISParAnnee } from "@/lib/finance/calculs/is";
+import { calcTVA } from "@/lib/finance/calculs/calc-tva";
 import {
   buildMonthlyCalc,
   monthlyToYearAcc,
+  firstMonthToYearAcc,
   lastMonthToYearAcc,
   type MonthlyCalcResult,
 } from "@/lib/finance/calculs/monthly";
@@ -38,11 +40,16 @@ export function buildFinCalc(
   const { toExerciceKey, exBorne1, exBorne2, exBorne3, pFin, pDeb } =
     makeExerciceHelpers(dateDemarrage);
 
+  // Calcul TVA — source unique de vérité pour tout le pipeline
+  const tva = calcTVA(data, { toExerciceKey, exBorne1, exBorne2, exBorne3 });
+
   const yearLabels = {
     y1: fmtExercice(anneeDebut, moisDebut),
     y2: fmtExercice(anneeDebut + 1, moisDebut),
     y3: fmtExercice(anneeDebut + 2, moisDebut),
   };
+
+  const dureeProjection = ((data.dureeProjection ?? 3) as 1 | 2 | 3);
 
   // ── IS : nécessite resCourant et resExcep calculés d'abord ────────────────
   const _capital = calcCapitalRembourse(data, toExerciceKey);
@@ -70,7 +77,7 @@ export function buildFinCalc(
   const ca = sum(mc.ca);
   const achatsEffectues = sum(mc.achatsEffectues);
   // Stocks : niveaux de fin d'exercice → dernier mois (index 11), pas la somme
-  const stockInitial = lastMonthToYearAcc(mc.stockInitial);
+  const stockInitial = firstMonthToYearAcc(mc.stockInitial);
   const stockFinal = lastMonthToYearAcc(mc.stockFinal);
   const stockFinalSeries = mc.stockFinal;
   const stockInitialSeries = mc.stockInitial;
@@ -158,6 +165,7 @@ export function buildFinCalc(
   return {
     anneeDebut,
     moisDebut,
+    dureeProjection,
     yearLabels,
     toExerciceKey,
     exBorne1,
@@ -166,6 +174,7 @@ export function buildFinCalc(
     pFin,
     pDeb,
     ca,
+    caSeries: mc.ca,
     achatsEffectues,
     stockInitial,
     stockFinal,
@@ -181,6 +190,7 @@ export function buildFinCalc(
     chargesPersonnel,
     valeurAjoutee,
     ebe,
+    ebeSeries: mc.ebe,
     dotationsAmort,
     dotationsProvisions,
     reprises,
@@ -202,10 +212,13 @@ export function buildFinCalc(
     ajustementNet,
     isParAnnee,
     resNet,
+    resNetSeries: mc.resNet,
     caf,
     capitalRembourseForCAF: capitalRembourse,
     autofinancement,
     dotationsParImmoAcc,
     capitalRembourseParEmprunt,
+    tva,
+    monthlyCalc: mc,
   };
 }
