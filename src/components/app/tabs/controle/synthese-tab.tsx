@@ -72,17 +72,17 @@ function SynthRowItem({ row }: SynthRowProps) {
       {/* Valeurs par exercice */}
       {YEAR_KEYS.map((yk) => {
         const val = row.values[yk];
-        const isNeg = val.amount < 0;
+        const isNeg = val.amount !== null && val.amount < 0;
 
         let displayAmount: string;
         if (isSection) {
           displayAmount = "";
         } else if (row.isTaux) {
-          displayAmount = formatTaux(val.amount);
+          displayAmount = formatTaux(val.amount ?? 0);
         } else if (row.isDays) {
-          displayAmount = formatDays(val.amount);
+          displayAmount = formatDays(val.amount ?? 0);
         } else {
-          displayAmount = formatAmount(val.amount);
+          displayAmount = formatAmount(val.amount ?? 0);
         }
 
         return (
