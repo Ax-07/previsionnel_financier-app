@@ -149,11 +149,14 @@ export function buildEmpruntsData(
 export interface ImmoResult {
   immoIncorporelles: Record<FinKey, number>;
   immoCorporelles: Record<FinKey, number>;
+  immoFinancieres: Record<FinKey, number>;
   totalImmo: Record<FinKey, number>;
   /** Lignes de détail de chaque immobilisation incorporelle (pour expand/collapse). */
   immoIncorporellesChildren: FinRow[];
   /** Lignes de détail de chaque immobilisation corporelle (pour expand/collapse). */
   immoCorporellesChildren: FinRow[];
+  /** Lignes de détail de chaque immobilisation financière (pour expand/collapse). */
+  immoFinancieresChildren: FinRow[];
 }
 
 export function buildImmoData(
@@ -162,8 +165,10 @@ export function buildImmoData(
 ): ImmoResult {
   const immoIncorporelles: Record<FinKey, number> = { y0: 0, y1: 0, y2: 0, y3: 0 };
   const immoCorporelles: Record<FinKey, number> = { y0: 0, y1: 0, y2: 0, y3: 0 };
+  const immoFinancieres: Record<FinKey, number> = { y0: 0, y1: 0, y2: 0, y3: 0 };
   const incorporelItems: FinRow[] = [];
   const corporelItems: FinRow[] = [];
+  const financierItems: FinRow[] = [];
 
   for (const immo of immobilisations) {
     if (immo.actif === false) continue;
@@ -180,28 +185,33 @@ export function buildImmoData(
       itemVals,
       true,
     );
-    if (immo.nature === "INCORPOREL") {
-      immoIncorporelles[k] += montant;
-      incorporelItems.push(itemRow);
-    } else {
-      immoCorporelles[k] += montant;
-      corporelItems.push(itemRow);
-    }
+if (immo.nature === "INCORPOREL") {
+  immoIncorporelles[k] += montant;
+  incorporelItems.push(itemRow);
+} else if (immo.nature === "FINANCIER") {
+  immoFinancieres[k] += montant; // ligne dédiée à créer
+  financierItems.push(itemRow);
+} else {
+  immoCorporelles[k] += montant;
+  corporelItems.push(itemRow);
+}
   }
 
   const totalImmo: Record<FinKey, number> = {
-    y0: immoIncorporelles.y0 + immoCorporelles.y0,
-    y1: immoIncorporelles.y1 + immoCorporelles.y1,
-    y2: immoIncorporelles.y2 + immoCorporelles.y2,
-    y3: immoIncorporelles.y3 + immoCorporelles.y3,
+    y0: immoIncorporelles.y0 + immoCorporelles.y0 + immoFinancieres.y0,
+    y1: immoIncorporelles.y1 + immoCorporelles.y1 + immoFinancieres.y1,
+    y2: immoIncorporelles.y2 + immoCorporelles.y2 + immoFinancieres.y2,
+    y3: immoIncorporelles.y3 + immoCorporelles.y3 + immoFinancieres.y3,
   };
 
   return {
     immoIncorporelles,
     immoCorporelles,
+    immoFinancieres,
     totalImmo,
     immoIncorporellesChildren: incorporelItems,
     immoCorporellesChildren: corporelItems,
+    immoFinancieresChildren: financierItems,
   };
 }
 

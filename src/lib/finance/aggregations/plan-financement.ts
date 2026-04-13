@@ -49,9 +49,11 @@ export function buildPlanFinancementRows(
   const {
     immoIncorporelles,
     immoCorporelles,
+      immoFinancieres,
     totalImmo,
     immoIncorporellesChildren,
     immoCorporellesChildren,
+      immoFinancieresChildren,
   } = buildImmoData(immobilisations, toKey);
   const subventionsInvest = buildSubventionsInvestData(subventions, toKey);
 
@@ -90,6 +92,7 @@ export function buildPlanFinancementRows(
     mkFinRow("section_besoins", "BESOINS", "", "section", { y0: 0, y1: 0, y2: 0, y3: 0 }),
     mkFinRow("immo_incorporelles", "Immobilisations incorporelles", "+", "normal", immoIncorporelles, true, immoIncorporellesChildren),
     mkFinRow("immo_corporelles", "Immobilisations corporelles", "+", "normal", immoCorporelles, true, immoCorporellesChildren),
+    mkFinRow("immo_financieres", "Immobilisations financières", "+", "normal", immoFinancieres, true, immoFinancieresChildren),
     mkFinRow("total_immo", "Total immobilisations", "=", "subtotal", totalImmo, true),
     mkFinRow("variation_bfr", "Variation du BFR", "+", "normal", variationBFR, true),
     mkFinRow("remboursement_capital", "Remboursement des emprunts", "+", "normal", remboursementCapital, true),

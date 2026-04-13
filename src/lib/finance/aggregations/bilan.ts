@@ -11,7 +11,6 @@
  */
 
 import type { YearKey as BilanYearKey } from "@/lib/finance/utils";
-import { n } from "@/lib/finance/utils";
 import type { FinCalcResult } from "@/lib/finance/calculs";
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import { calcBfr } from "@/lib/finance/calculs/bfr";
@@ -22,6 +21,7 @@ import {
   calcProvisionsCumul,
   calcCapitauxPropres,
   calcTresorerieBilan,
+  calcFluxNonPLCumul,
 } from "@/lib/finance/calculs/bilan";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -116,36 +116,13 @@ export function buildBilanRows(
   const totalDettesExploitation: YAcc = { y1: bfrCalc.totalRessources.y1, y2: bfrCalc.totalRessources.y2, y3: bfrCalc.totalRessources.y3 };
 
   // ── Flux non-P&L : subventions d'investissement + divers enc/dec ────────
-  // Ces flux sont dans le tableau de trésorerie mais ne transitent pas par le
-  // compte de résultat. Ils doivent être intégrés directement dans la formule
-  // du bilan pour garantir la cohérence avec le solde de trésorerie du tableau.
-  const zero3: YAcc = { y1: 0, y2: 0, y3: 0 };
-  const encFluxNonPLCumul: YAcc = { ...zero3 };
-  const decFluxNonPLCumul: YAcc = { ...zero3 };
-
-  // Subventions d'investissement (hors PRET_HONNEUR déjà dans apportsCC)
-  for (const subv of data.subventions) {
-    if (subv.type === "PRET_HONNEUR") continue;
-    const d = subv.dateEncaissement ?? subv.dateObtention;
-    if (!d) continue;
-    const dt = new Date(String(d));
-    const m = n(subv.montant);
-    if (dt < exBorne1) encFluxNonPLCumul.y1 += m;
-    if (dt < exBorne2) encFluxNonPLCumul.y2 += m;
-    if (dt < exBorne3) encFluxNonPLCumul.y3 += m;
-  }
-  // Encaissements divers (TypeDiversFlux.ENCAISSEMENT)
-  for (const flux of data.diversEncaissements) {
-    if (flux.dateN) { const dt = new Date(String(flux.dateN)); const m = n(flux.montantN); if (dt < exBorne1) encFluxNonPLCumul.y1 += m; if (dt < exBorne2) encFluxNonPLCumul.y2 += m; if (dt < exBorne3) encFluxNonPLCumul.y3 += m; }
-    if (flux.dateN1) { const dt = new Date(String(flux.dateN1)); const m = n(flux.montantN1); if (dt < exBorne2) encFluxNonPLCumul.y2 += m; if (dt < exBorne3) encFluxNonPLCumul.y3 += m; }
-    if (flux.dateN2) { const dt = new Date(String(flux.dateN2)); const m = n(flux.montantN2); if (dt < exBorne3) encFluxNonPLCumul.y3 += m; }
-  }
-  // Décaissements divers (TypeDiversFlux.DECAISSEMENT)
-  for (const flux of data.diversDecaissements) {
-    if (flux.dateN) { const dt = new Date(String(flux.dateN)); const m = n(flux.montantN); if (dt < exBorne1) decFluxNonPLCumul.y1 += m; if (dt < exBorne2) decFluxNonPLCumul.y2 += m; if (dt < exBorne3) decFluxNonPLCumul.y3 += m; }
-    if (flux.dateN1) { const dt = new Date(String(flux.dateN1)); const m = n(flux.montantN1); if (dt < exBorne2) decFluxNonPLCumul.y2 += m; if (dt < exBorne3) decFluxNonPLCumul.y3 += m; }
-    if (flux.dateN2) { const dt = new Date(String(flux.dateN2)); const m = n(flux.montantN2); if (dt < exBorne3) decFluxNonPLCumul.y3 += m; }
-  }
+  // Source unique de vérité partagée avec aggregations/ratios.ts via calcFluxNonPLCumul.
+  const { encFluxNonPLCumul, decFluxNonPLCumul } = calcFluxNonPLCumul(
+    data,
+    exBorne1,
+    exBorne2,
+    exBorne3,
+  );
 
   const { disponibilites, decouvert } = calcTresorerieBilan({
     caf: fc.caf,
@@ -202,6 +179,10 @@ export function buildBilanRows(
     mkRow("immo_corp_brute", "Immobilisations corporelles brutes", "indent", immos.immoBruteCorp, { hideIfZero: true }),
     mkRow("amort_corp", "  − Amortissements corporels cumulés", "indent", immos.amortCumulCorp, { hideIfZero: true }),
     mkRow("immo_corp_nette", "Immobilisations corporelles nettes", "normal", immos.immoNetteCorp, { hideIfZero: true }),
+
+    mkRow("immo_fin_brute", "Immobilisations financières brutes", "indent", immos.immoBruteFin, { hideIfZero: true }),
+    mkRow("amort_fin", "  − Amortissements financiers cumulés", "indent", immos.amortCumulFin, { hideIfZero: true }),
+    mkRow("immo_fin_nette", "Immobilisations financières nettes", "normal", immos.immoNetteFin, { hideIfZero: true }),
 
     mkRow("immo_nette_total", "Total immobilisations nettes", "subtotal", immos.immoNette),
 

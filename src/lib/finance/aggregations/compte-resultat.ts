@@ -19,6 +19,5 @@ export function buildCompteResultatRows(
 ): CompteResultatData {
   const rows = buildDrilldownRows(data, fc);
   const nodes = buildCRTree(fc, rows, isIS);
-  console.log("buildCompteResultatRows", { rows, nodes });
   return { yearLabels: fc.yearLabels, nodes };
 }

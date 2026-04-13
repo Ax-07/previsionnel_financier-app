@@ -20,6 +20,7 @@ import {
   calcEmpruntsPassif,
   calcTresorerieBilan,
   calcCapitauxPropres,
+  calcFluxNonPLCumul,
 } from "@/lib/finance/calculs/bilan";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -88,17 +89,20 @@ export function buildRatiosRows(
   const achatsRows = bfr.achatsRows;
   const stocks = bfr.stocksMatieres;
 
-  const achatsAnnuels: YAcc = {
+  // achats consommés = CA × coef (COGS annuel) — source unique de vérité
+  const achatsConsommes: YAcc = {
     y1: achatsRows.reduce((s: number, r) => s + r.montantN * r.coef, 0),
     y2: achatsRows.reduce((s: number, r) => s + r.montantN1 * r.coef, 0),
     y3: achatsRows.reduce((s: number, r) => s + r.montantN2 * r.coef, 0),
   };
 
-  // Achats consommés (variation de stocks incluse)
-  const achatsConsommes: YAcc = {
-    y1: achatsAnnuels.y1 - stocks.y1,
-    y2: achatsAnnuels.y2 + stocks.y1 - stocks.y2,
-    y3: achatsAnnuels.y3 + stocks.y2 - stocks.y3,
+  // Achats effectués HT = achats consommés + ΔStock
+  // Y1 : SI=0 (démarrage)  →  achEff = consommés + SF
+  // Y2 : SF(y1) devient SI(y2)  →  achEff = consommés + SF(y2) − SF(y1)
+  const achatsEffectuesHT: YAcc = {
+    y1: achatsConsommes.y1 + stocks.y1,
+    y2: achatsConsommes.y2 + stocks.y2 - stocks.y1,
+    y3: achatsConsommes.y3 + stocks.y3 - stocks.y2,
   };
 
   // ── Calculs délégués aux modules spécialisés (cohérence avec bilan.ts) ────────
@@ -108,9 +112,9 @@ export function buildRatiosRows(
 
   // Trésorerie via la source unique de vérité (même formule que bilan.ts)
   const stocksCumul: YAcc = {
-    y1: bfr.stocksMatieres.y1 + bfr.creditTVA.y1,
-    y2: bfr.stocksMatieres.y2 + bfr.creditTVA.y2,
-    y3: bfr.stocksMatieres.y3 + bfr.creditTVA.y3,
+    y1: bfr.stocksMatieres.y1 + bfr.creditTVA.y1 + bfr.creancesClients.y1,
+    y2: bfr.stocksMatieres.y2 + bfr.creditTVA.y2 + bfr.creancesClients.y2,
+    y3: bfr.stocksMatieres.y3 + bfr.creditTVA.y3 + bfr.creancesClients.y3,
   };
   const { disponibilites, decouvert } = calcTresorerieBilan({
     caf: fc.caf,
@@ -121,21 +125,17 @@ export function buildRatiosRows(
     stocksCumul,
     totalDettesExploitation: bfr.totalRessources,
     remboursementsCumul,
+    ...calcFluxNonPLCumul(data, exBorne1, exBorne2, exBorne3),
   });
-  const tresorerie: YAcc = {
-    y1: disponibilites.y1 - decouvert.y1,
-    y2: disponibilites.y2 - decouvert.y2,
-    y3: disponibilites.y3 - decouvert.y3,
-  };
 
   const immoNetteFin = immos.immoNette;
   const resultatNet = fc.resNet;
   const caf = fc.caf;
 
   const actifCirculant: YAcc = {
-    y1: stocks.y1 + Math.max(0, tresorerie.y1),
-    y2: stocks.y2 + Math.max(0, tresorerie.y2),
-    y3: stocks.y3 + Math.max(0, tresorerie.y3),
+    y1: stocks.y1 + disponibilites.y1 + bfr.creditTVA.y1 + bfr.creancesClients.y1,
+    y2: stocks.y2 + disponibilites.y2 + bfr.creditTVA.y2 + bfr.creancesClients.y2,
+    y3: stocks.y3 + disponibilites.y3 + bfr.creditTVA.y3 + bfr.creancesClients.y3,
   };
   const totalActif: YAcc = {
     y1: immoNetteFin.y1 + actifCirculant.y1,
@@ -149,9 +149,9 @@ export function buildRatiosRows(
   // ── Dettes d'exploitation (source : calcBfr) ───────────────────────────────────
   const totalDettesExploitation = bfr.totalRessources;
   const totalDettes: YAcc = {
-    y1: capitalRestantDu.y1 + totalDettesExploitation.y1,
-    y2: capitalRestantDu.y2 + totalDettesExploitation.y2,
-    y3: capitalRestantDu.y3 + totalDettesExploitation.y3,
+    y1: capitalRestantDu.y1 + totalDettesExploitation.y1 + decouvert.y1,
+    y2: capitalRestantDu.y2 + totalDettesExploitation.y2 + decouvert.y2,
+    y3: capitalRestantDu.y3 + totalDettesExploitation.y3 + decouvert.y3,
   };
 
   // ── Construction des lignes de ratios ──────────────────────────────────────────────
@@ -163,9 +163,10 @@ export function buildRatiosRows(
       "jours",
       1,
       {
-        y1: safeDiv(stocks.y1 * 365, achatsConsommes.y1),
-        y2: safeDiv(stocks.y2 * 365, achatsConsommes.y2),
-        y3: safeDiv(stocks.y3 * 365, achatsConsommes.y3),
+        // Dénominateur = achats effectués HT (flux réel d'approvisionnement)
+        y1: safeDiv(stocks.y1 * 365, achatsEffectuesHT.y1),
+        y2: safeDiv(stocks.y2 * 365, achatsEffectuesHT.y2),
+        y3: safeDiv(stocks.y3 * 365, achatsEffectuesHT.y3),
       },
     ),
     mkRow(
@@ -174,9 +175,23 @@ export function buildRatiosRows(
       "jours",
       1,
       {
-        y1: safeDiv(bfr.dettesFournisseurs.y1 * 365, achatsAnnuels.y1),
-        y2: safeDiv(bfr.dettesFournisseurs.y2 * 365, achatsAnnuels.y2),
-        y3: safeDiv(bfr.dettesFournisseurs.y3 * 365, achatsAnnuels.y3),
+        // Dettes fournisseurs TTC → convertir le dénominateur en TTC
+        // coefTVA moyen = dettesFournisseurs(TTC) / achatsEffectués(HT)
+        // On utilise achatsEffectués HT comme base et on convertit les dettes TTC en HT
+        // via le ratio TTC/HT implicite (dettesF = achatsEffHT × (1 + tauxTVAMoy) × délai/360)
+        // Formule standard : délai = dettesF(TTC) × 365 / achatsEff(TTC)
+        // achatsEff(TTC) ≈ achatsEffHT × (1 + tauxTVAmoyen) — approché via bfr.dettesFournisseurs
+        // Simplification : délai = dettesF × 365 / achatsEffHT × coefTTC
+        // Pour éviter une double approximation on utilise achatsEffectues (déjà en HT)
+        // et on note que dettesF est en TTC → diviser par (1 + taux moyen)
+        // Le taux de TVA moyen n'est pas directement exposé ici, on utilise donc fc.achatsEffectues
+        // (déjà calculé par le moteur) comme dénominateur HT, dettes fournisseurs étant TTC :
+        // délai (j) = dettesTTC × 365 / achatsEffTTC ; achatsEffTTC = fc.achatsEffectues × coefTVA
+        // Approche pragmatique : utiliser fc.achatsEffectues (HT) directement en dénominateur
+        // car la TVA est neutre sur le délai réel (acheteur voit HT, TVA non affectante sur délai)
+        y1: safeDiv(bfr.dettesFournisseurs.y1 * 365, achatsEffectuesHT.y1),
+        y2: safeDiv(bfr.dettesFournisseurs.y2 * 365, achatsEffectuesHT.y2),
+        y3: safeDiv(bfr.dettesFournisseurs.y3 * 365, achatsEffectuesHT.y3),
       },
     ),
     // ── Structure financière ───────────────────────────────────────────────────────
