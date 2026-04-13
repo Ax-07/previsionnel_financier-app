@@ -30,6 +30,5 @@ export type {
 
 export {
   shiftYk3,
-  buildFrequenceSeries,
   calcDecaissements,
 } from "@/lib/finance/calculs/decaissements";
