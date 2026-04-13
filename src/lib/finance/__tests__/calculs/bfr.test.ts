@@ -147,27 +147,27 @@ describe("calcBfr — cohérence structurelle", () => {
   });
 });
 
-// ── dettes fournisseurs TTC M12 — règle de cohérence bilan/tableau ────────────
+// ── dettes fournisseurs TTC M12 — règle du dernier mois réel ─────────────────
 //
-// Règle : la dette fournisseur de clôture = M12 de la série TTC (achatHT + ΔStock/12)
-// × coefTTC × délai. Cette règle garantit que TresoBilan = TresoTableau (check #8).
+// Règle : la dette fournisseur de clôture = achatsEffSeries[11] × coefTTC × délai.
+// achatsEffSeries[11] = conso[11] + sf[11] - si[11]  (computeStocksAchatsSeries).
+// En régime permanent (fin d'exercice), sf[11] ≈ sf[10] → delta stock M12 ≈ 0.
 
 describe("calcBfr — dettesFournisseurs TTC M12 (14 mars 2026)", () => {
   /**
    * Scénario de référence : boulangerie, délai fourn = 30j, TVA achats 5.5%.
    * Activité : 180 000 €/an CA, marge 60%, stocks 30j → achats = 72 000/an HT.
-   * Mensuel HT uniforme = 72 000 / 12 = 6 000, M12 = 6 000.
-   * ΔStock Y1 = 72 000 × 30/360 = 6 000, mensuel = 500.
-   * achatsTTC M12 = (6 000 + 500) × 1.055 = 6 857,50.
-   * dettes fourn Y1 = 6 857,50 × (30/30) = 6 857,50.
+   * Mensuel HT uniforme = 72 000 / 12 = 6 000.
+   * Stock cible sfY1 = 72 000 × 30/360 = 6 000.
+   * En M12 (mois 11), sf[11] = 6 000, si[11] = sf[10] ≈ 5 999,68
+   * → achatsEffSeries[11] = 6 000 + 6 000 − 5 999,68 ≈ 6 000,32 (delta ≈ 0).
+   * dettes fourn Y1 = 6 000,32 × 1,055 × (30/30) ≈ 6 330,34.
+   * Note : le delta stock se concentre sur les premiers mois (build-up rapide).
    */
-  it("dettesFournisseurs TTC : inclut TVA et ΔStock mensuel", () => {
+  it("dettesFournisseurs TTC : inclut TVA (delta stock M12 ≈ 0 en régime permanent)", () => {
     const bfr = calcBfr(SCENARIO_CREATION, FC_CREATION);
-    // coef = 1 - 60/100 = 0.40 ; mensuelHT = 180000*0.40/12 = 6000
-    // sfY1 = 180000*0.40*30/360 = 6000 ; varY1M = 6000/12 = 500
-    // achatsTTCM12 = (6000 + 500) * 1.055 = 6857.5
-    // dettes = 6857.5 × (30/30) = 6857.5
-    expect(bfr.dettesFournisseurs.y1).toBeCloseTo(6857.5, 0);
+    // achatsEffSeries[11] ≈ 6000.32 ; dettes = 6000.32 × 1.055 ≈ 6330
+    expect(bfr.dettesFournisseurs.y1).toBeCloseTo(6330, 0);
   });
 
   it("dettesFournisseurs > version HT (inclut la TVA + ΔStock en transit)", () => {

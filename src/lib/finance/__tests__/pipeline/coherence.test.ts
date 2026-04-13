@@ -14,8 +14,11 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import type { FinCalcResult } from "@/lib/finance/types/results";
-import { buildFinCalc } from "@/lib/finance/calculs";
+import type { BfrCalcResult } from "@/lib/finance/calculs/bfr";
+import { buildFinCalc, calcBfr, buildTemporelCtx, calcEncaissements, calcDecaissements, subSeries } from "@/lib/finance/calculs";
+import { computeSoldeMonthly } from "@/lib/finance/tresorerie-engine";
 import { buildBilanRows } from "@/lib/finance/aggregations/bilan";
+import { buildBfrRows } from "@/lib/finance/aggregations/bfr";
 import { buildPlanFinancementRows } from "@/lib/finance/aggregations/plan-financement";
 import {
   SCENARIO_CREATION,
@@ -47,10 +50,12 @@ function pfAmt(
 
 let fc: FinCalcResult;
 let fcSal: FinCalcResult;
+let bfrCalc: BfrCalcResult;
 
 beforeAll(() => {
   fc = buildFinCalc(SCENARIO_CREATION, DATE_DEMARRAGE);
   fcSal = buildFinCalc(SCENARIO_CREATION_SALARIE, DATE_DEMARRAGE);
+  bfrCalc = calcBfr(SCENARIO_CREATION, fc);
 });
 
 // ── Identité CAF ─────────────────────────────────────────────────────────────
@@ -236,6 +241,215 @@ describe("Cohérence — soldeTrésorerie plan financement = disponibilités −
     // SCENARIO_CREATION sans emprunt → jamais en découvert
     for (const yk of ["y1", "y2", "y3"] as const) {
       expect(bilanAmt(bilan.rows, "decouvert", yk)).toBe(0);
+    }
+  });
+});
+
+// ── Cohérence TVA : BFR = Bilan (C9) ─────────────────────────────────────────
+//
+// Le bilan lit creditTVA et tvaAPayer directement depuis calcBfr.
+// Les montants affichés dans les deux onglets doivent être identiques.
+
+describe("Cohérence — TVA BFR = TVA Bilan (C9)", () => {
+  let bilan: ReturnType<typeof buildBilanRows>;
+  let bfrRows: ReturnType<typeof buildBfrRows>;
+
+  beforeAll(() => {
+    bilan = buildBilanRows(SCENARIO_CREATION, fc);
+    bfrRows = buildBfrRows(SCENARIO_CREATION, fc);
+  });
+
+  /** Helper pour extraire un montant d'une ligne BFR par sa clé. */
+  function bfrAmt(
+    rows: ReturnType<typeof buildBfrRows>["rows"],
+    key: string,
+    yk: "y1" | "y2" | "y3",
+  ): number {
+    const find = (rs: typeof rows): number | undefined => {
+      for (const r of rs) {
+        if (r.key === key) return r.values[yk].amount;
+        if (r.children) {
+          const c = find(r.children);
+          if (c !== undefined) return c;
+        }
+      }
+      return undefined;
+    };
+    return find(rows) ?? 0;
+  }
+
+  it("creditTVA du BFR (calcBfr) = creditTVA du bilan (ligne actif)", () => {
+    for (const yk of ["y1", "y2", "y3"] as const) {
+      expect(bfrCalc.creditTVA[yk]).toBeCloseTo(
+        bilanAmt(bilan.rows, "credit_tva", yk),
+        2,
+      );
+    }
+  });
+
+  it("tvaAPayer du BFR (calcBfr) = tvaAPayer du bilan (ligne passif)", () => {
+    for (const yk of ["y1", "y2", "y3"] as const) {
+      expect(bfrCalc.tvaAPayer[yk]).toBeCloseTo(
+        bilanAmt(bilan.rows, "tva_a_payer", yk),
+        2,
+      );
+    }
+  });
+
+  it("creditTVA des lignes BFR agrégées = valeurs calcBfr brutes", () => {
+    for (const yk of ["y1", "y2", "y3"] as const) {
+      expect(bfrAmt(bfrRows.rows, "credit_tva", yk)).toBeCloseTo(
+        bfrCalc.creditTVA[yk],
+        2,
+      );
+    }
+  });
+
+  it("tvaAPayer des lignes BFR agrégées = valeurs calcBfr brutes", () => {
+    for (const yk of ["y1", "y2", "y3"] as const) {
+      expect(bfrAmt(bfrRows.rows, "tva_a_payer", yk)).toBeCloseTo(
+        bfrCalc.tvaAPayer[yk],
+        2,
+      );
+    }
+  });
+});
+
+// ── Cohérence TVA : décaissement M+1 (C11) ──────────────────────────────────
+//
+// La TVA de M12 (décembre) apparaît comme dette BFR (tvaAPayer) et n'est PAS
+// décaissée en M12 dans la trésorerie (shift M+1). Autrement dit, la somme
+// annuelle décaissée = TVA nette annuelle − TVA M12 (reportée en M1 suivant).
+
+describe("Cohérence — DecTVA = TVA nette décalée M+1 (C11)", () => {
+  it("decTVA.y1[0] = 0 en création (pas de TVA M12 de l'exercice précédent)", () => {
+    const ctx = buildTemporelCtx(DATE_DEMARRAGE, false);
+    const dec = calcDecaissements(
+      SCENARIO_CREATION,
+      ctx,
+      SCENARIO_CREATION.scenario.parametres?.moisPaiementSalaires ?? 1,
+      fc.isParAnnee,
+      fc.tva,
+    );
+
+    // En création, il n'y a pas d'exercice précédent → aucun overflow TVA M12 → M1 Y1 = 0.
+    expect(dec.decTVA.y1[0]).toBe(0);
+  });
+
+  it("decTVA.y2[0] ≈ tvaAPayer.y1 (TVA M12 Y1 payée en janvier Y2)", () => {
+    const ctx = buildTemporelCtx(DATE_DEMARRAGE, false);
+    const dec = calcDecaissements(
+      SCENARIO_CREATION,
+      ctx,
+      SCENARIO_CREATION.scenario.parametres?.moisPaiementSalaires ?? 1,
+      fc.isParAnnee,
+      fc.tva,
+    );
+
+    // Le shift M+1 reporte la TVA de décembre Y1 en janvier Y2.
+    // Ce montant = tvaAPayer BFR Y1 (dette non soldée au 31/12).
+    expect(dec.decTVA.y2[0]).toBeCloseTo(bfrCalc.tvaAPayer.y1, 1);
+  });
+
+  it("decTVA.y3[0] ≈ tvaAPayer.y2 (TVA M12 Y2 payée en janvier Y3)", () => {
+    const ctx = buildTemporelCtx(DATE_DEMARRAGE, false);
+    const dec = calcDecaissements(
+      SCENARIO_CREATION,
+      ctx,
+      SCENARIO_CREATION.scenario.parametres?.moisPaiementSalaires ?? 1,
+      fc.isParAnnee,
+      fc.tva,
+    );
+
+    expect(dec.decTVA.y3[0]).toBeCloseTo(bfrCalc.tvaAPayer.y2, 1);
+  });
+
+  it("tvaAPayer BFR > 0 pour un scénario avec TVA nette positive", () => {
+    // Le scénario de création (boulangerie, TVA 5.5% sur ventes et achats)
+    // génère une TVA nette positive chaque mois car CA >> Achats×tauxMarge.
+    for (const yk of ["y1", "y2", "y3"] as const) {
+      expect(bfrCalc.tvaAPayer[yk]).toBeGreaterThan(0);
+    }
+  });
+});
+
+// ── Cohérence solde trésorerie mensuel ↔ bilan ───────────────────────────────
+//
+// Le solde de trésorerie au 31/12 (M12 du tableau mensuel) doit être égal
+// aux disponibilités − découvert du bilan. C'est l'identité la plus forte :
+// elle relie le tableau de trésorerie mensuel (flux) au bilan (stock).
+
+describe("Cohérence — soldeTrésorerie mensuel M12 = disponibilités − découvert bilan", () => {
+  function buildSoldeM12(data: typeof SCENARIO_CREATION, result: FinCalcResult) {
+    const isFranchise = data.scenario.parametres?.regimeTVA === "FRANCHISE";
+    const delaiClients = data.activites?.[0]?.reglementClients ?? 0;
+    const ctx = buildTemporelCtx(
+      data.dateDemarrage as unknown as Date,
+      isFranchise,
+      delaiClients,
+    );
+
+    const enc = calcEncaissements(data, ctx);
+    const dec = calcDecaissements(
+      data,
+      ctx,
+      data.scenario.parametres?.moisPaiementSalaires ?? 1,
+      result.isParAnnee,
+      result.tva,
+    );
+
+    const variation = {
+      y1: subSeries(enc.totalEnc.y1, dec.totalDec.y1),
+      y2: subSeries(enc.totalEnc.y2, dec.totalDec.y2),
+      y3: subSeries(enc.totalEnc.y3, dec.totalDec.y3),
+    };
+
+    const y1Sol = computeSoldeMonthly(variation.y1, 0);
+    const y2Sol = computeSoldeMonthly(variation.y2, y1Sol.soldeFinal[11] ?? 0);
+    const y3Sol = computeSoldeMonthly(variation.y3, y2Sol.soldeFinal[11] ?? 0);
+
+    return {
+      y1: y1Sol.soldeFinal[11] ?? 0,
+      y2: y2Sol.soldeFinal[11] ?? 0,
+      y3: y3Sol.soldeFinal[11] ?? 0,
+    };
+  }
+
+  it("Y1 : soldeMensuel M12 = disponibilités − découvert (bilan) — SCENARIO_CREATION", () => {
+    const bilan = buildBilanRows(SCENARIO_CREATION, fc);
+    const solde = buildSoldeM12(SCENARIO_CREATION, fc);
+
+    const dispo = bilanAmt(bilan.rows, "disponibilites", "y1");
+    const decouvert = bilanAmt(bilan.rows, "decouvert", "y1");
+    expect(solde.y1).toBeCloseTo(dispo - decouvert, 1);
+  });
+
+  it("Y2 : soldeMensuel M12 = disponibilités − découvert (bilan) — SCENARIO_CREATION", () => {
+    const bilan = buildBilanRows(SCENARIO_CREATION, fc);
+    const solde = buildSoldeM12(SCENARIO_CREATION, fc);
+
+    const dispo = bilanAmt(bilan.rows, "disponibilites", "y2");
+    const decouvert = bilanAmt(bilan.rows, "decouvert", "y2");
+    expect(solde.y2).toBeCloseTo(dispo - decouvert, 1);
+  });
+
+  it("Y3 : soldeMensuel M12 = disponibilités − découvert (bilan) — SCENARIO_CREATION", () => {
+    const bilan = buildBilanRows(SCENARIO_CREATION, fc);
+    const solde = buildSoldeM12(SCENARIO_CREATION, fc);
+
+    const dispo = bilanAmt(bilan.rows, "disponibilites", "y3");
+    const decouvert = bilanAmt(bilan.rows, "decouvert", "y3");
+    expect(solde.y3).toBeCloseTo(dispo - decouvert, 1);
+  });
+
+  it("Identité tient aussi avec salarié (Y1–Y3)", () => {
+    const bilan = buildBilanRows(SCENARIO_CREATION_SALARIE, fcSal);
+    const solde = buildSoldeM12(SCENARIO_CREATION_SALARIE, fcSal);
+
+    for (const yk of ["y1", "y2", "y3"] as const) {
+      const dispo = bilanAmt(bilan.rows, "disponibilites", yk);
+      const decouvert = bilanAmt(bilan.rows, "decouvert", yk);
+      expect(solde[yk]).toBeCloseTo(dispo - decouvert, 1);
     }
   });
 });
