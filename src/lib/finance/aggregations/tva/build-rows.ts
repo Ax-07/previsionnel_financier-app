@@ -7,44 +7,37 @@ import {
   chargeExplMonthly,
   ponctuelMonthly,
 } from "@/lib/finance/calculs/monthly";
-import { computeTVAMonthly } from "@/lib/finance/tva-engine";
 import { n } from "@/lib/finance/utils";
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
-import type { YearKey } from "@/lib/finance/utils";
+import type { FinCalcResult } from "@/lib/finance/types/results";
 import { vatValue, vatRow, dateToExercise } from "./helpers";
 import type { VATRow, VATRowStyle } from "./types";
 
 /**
  * Construit les lignes du tableau TVA.
  *
- * Le tableau affiche toujours les colonnes mois par mois (résolution mensuelle),
- * indépendamment du régime de déclaration. Le paramètre `periodiciteDecaissement`
- * contrôle uniquement le calendrier de paiement de la TVA à payer (trimestriel
- * = paiement en fin de trimestre), ce qui affecte la ligne « TVA à payer » et
- * « Crédit TVA reporté » mais PAS les colonnes mensuelles du tableau.
+ * Les totaux utilisent fc.tva (source unique de vérité — calcTVA).
+ * Les children (drill-down par activité/charge) sont calculés localement
+ * pour l'affichage — ils n'affectent pas les calculs financiers.
  */
 export function buildTVARows(
   data: ScenarioFinData,
-  periodiciteDecaissement: "mensuel" | "trimestriel",
+  fc: FinCalcResult,
 ): VATRow[] {
   const { dateDemarrage, activites, fournitures, services, immobilisations } = data;
 
-  // ── TVA collectée sur CA ──────────────────────────────────────────────────
+  // ── Totaux TVA (source unique : fc.tva) ───────────────────────────────────
+  const tvaCollecteeSeries = fc.tva.tvaCollectee;
+  const tvaImmoSeries = fc.tva.tvaDeductibleImmos;
+  const tvaAchatsSeries = fc.tva.tvaDeductibleAchats;
+  const tvaChargesSeries = fc.tva.tvaDeductibleCharges;
+  const tvaDeductibleSeries = fc.tva.tvaDeductible;
+  const y1Calc = fc.tva.y1;
+  const y2Calc = fc.tva.y2;
+  const y3Calc = fc.tva.y3;
+
+  // ── TVA collectée sur CA — children (drill-down) ──────────────────────────
   const activitesActives = activites.filter((a) => a.actif !== false);
-  const tvaCollecteeSeries: Record<YearKey, MonthlySeries> = {
-    y1: activitesActives.reduce(
-      (s, a) => sumSeries(s, seasonalMonthly(n(a.montantN) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N")),
-      zeroSeries(),
-    ),
-    y2: activitesActives.reduce(
-      (s, a) => sumSeries(s, seasonalMonthly(n(a.montantN1) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N1")),
-      zeroSeries(),
-    ),
-    y3: activitesActives.reduce(
-      (s, a) => sumSeries(s, seasonalMonthly(n(a.montantN2) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N2")),
-      zeroSeries(),
-    ),
-  };
 
   const tvaCAChildren: VATRow[] = activitesActives
     .map((a) => ({
@@ -59,24 +52,7 @@ export function buildTVARows(
       hideIfZero: true,
     }));
 
-  // ── TVA déductible sur immobilisations ────────────────────────────────────
-  const tvaImmoSeries: Record<YearKey, MonthlySeries> = {
-    y1: zeroSeries(),
-    y2: zeroSeries(),
-    y3: zeroSeries(),
-  };
-
-  for (const immo of immobilisations) {
-    if (immo.actif === false) continue;
-    if (immo.typeTva !== "RECUPERABLE") continue;
-    const tva = n(immo.montantHT) * (n(immo.tauxTVA) / 100);
-    if (tva <= 0) continue;
-    const { yk, monthIndex } = dateToExercise(dateDemarrage, new Date(immo.dateAcquisition));
-    if (yk && monthIndex >= 0) {
-      tvaImmoSeries[yk][monthIndex] = (tvaImmoSeries[yk][monthIndex] ?? 0) + tva;
-    }
-  }
-
+  // ── TVA déductible sur immobilisations — children (drill-down) ───────────
   const tvaImmoChildren: VATRow[] = immobilisations
     .filter((immo) => immo.actif !== false && immo.typeTva === "RECUPERABLE")
     .map((immo) => {
@@ -97,48 +73,10 @@ export function buildTVARows(
       };
     });
 
-  // ── TVA déductible sur achats de matières ─────────────────────────────────
+  // ── TVA déductible sur achats de matières — children (drill-down) ────────
+  // Note : totaux = fc.tva.tvaDeductibleAchats (méthode exacte via computeStocksAchatsSeries)
+  // Les children utilisent une approximation pour l'affichage (forfait uniforme).
   const activitesAchats = activitesActives.filter((a) => a.typeActivite !== "PRESTATION_SERVICES");
-
-  // TVA déductible sur achats effectués = consommés + ΔStock + ponctuels
-  // Cohérent avec decaissements.ts (tvaAchatsY1) et bfr.ts (tvaDedAchatsMonthY1).
-  const tvaAchatsSeries: Record<YearKey, MonthlySeries> = {
-    y1: activitesAchats.reduce((s, a) => {
-        const coef = Math.max(0, 1 - n(a.tauxMarge) / 100);
-        const tauxTVA = n(a.tvaAchats) / 100;
-        const joursStk = n(a.stocks ?? 0);
-        const varStock = (n(a.montantN) * coef * joursStk) / 360; // ΔStock Y1 (SI=0)
-        const rec = seasonalMonthly(n(a.montantN) * coef * tauxTVA, a.saisonnaliteAchats, "N");
-        const stockVar = uniformMonthly(varStock * tauxTVA); // TVA sur ΔStock
-        // ponctuelN[0] = stock initial y0 — TVA exclue du flux Y1 (position ouverture)
-        const poncRaw = [...ponctuelMonthly(a.achatsStockPonctuel, "N")] as MonthlySeries;
-        poncRaw[0] = 0;
-        const ponc = poncRaw.map((v: number) => v * tauxTVA) as MonthlySeries;
-        return sumSeries(s, sumSeries(sumSeries(rec, stockVar), ponc));
-      }, zeroSeries()),
-    y2: activitesAchats.reduce((s, a) => {
-        const coef = Math.max(0, 1 - n(a.tauxMarge) / 100);
-        const tauxTVA = n(a.tvaAchats) / 100;
-        const joursStk = n(a.stocks ?? 0);
-        const sfY1 = (n(a.montantN) * coef * joursStk) / 360;
-        const varStock = (n(a.montantN1) * coef * joursStk) / 360 - sfY1; // ΔStock Y2
-        const rec = seasonalMonthly(n(a.montantN1) * coef * tauxTVA, a.saisonnaliteAchats, "N1");
-        const stockVar = uniformMonthly(varStock * tauxTVA); // TVA sur ΔStock
-        const ponc = ponctuelMonthly(a.achatsStockPonctuel, "N1").map((v: number) => v * tauxTVA) as MonthlySeries;
-        return sumSeries(s, sumSeries(sumSeries(rec, stockVar), ponc));
-      }, zeroSeries()),
-    y3: activitesAchats.reduce((s, a) => {
-        const coef = Math.max(0, 1 - n(a.tauxMarge) / 100);
-        const tauxTVA = n(a.tvaAchats) / 100;
-        const joursStk = n(a.stocks ?? 0);
-        const sfY2 = (n(a.montantN1) * coef * joursStk) / 360;
-        const varStock = (n(a.montantN2) * coef * joursStk) / 360 - sfY2; // ΔStock Y3
-        const rec = seasonalMonthly(n(a.montantN2) * coef * tauxTVA, a.saisonnaliteAchats, "N2");
-        const stockVar = uniformMonthly(varStock * tauxTVA); // TVA sur ΔStock
-        const ponc = ponctuelMonthly(a.achatsStockPonctuel, "N2").map((v: number) => v * tauxTVA) as MonthlySeries;
-        return sumSeries(s, sumSeries(sumSeries(rec, stockVar), ponc));
-      }, zeroSeries()),
-  };
 
   const tvaAchatsChildren: VATRow[] = activitesAchats
     .map((a) => {
@@ -175,41 +113,7 @@ export function buildTVARows(
       };
     });
 
-  // ── TVA déductible sur charges externes ───────────────────────────────────
-  const chargesRows = [
-    ...fournitures.map((f) => ({
-      montantN: n(f.montantN),
-      montantN1: n(f.montantN1),
-      montantN2: n(f.montantN2),
-      tva: n(f.tauxTVA),
-      frequence: f.frequence as string,
-      detailCalc: f.detailCalc,
-    })),
-    ...services.map((s) => ({
-      montantN: n(s.montantN),
-      montantN1: n(s.montantN1),
-      montantN2: n(s.montantN2),
-      tva: n(s.tauxTVA),
-      frequence: s.frequence as string,
-      detailCalc: s.detailCalc,
-    })),
-  ];
-
-  const tvaChargesSeries: Record<YearKey, MonthlySeries> = {
-    y1: chargesRows.reduce(
-      (s, r) => sumSeries(s, chargeExplMonthly(r.montantN * (r.tva / 100), r, "N")),
-      zeroSeries(),
-    ),
-    y2: chargesRows.reduce(
-      (s, r) => sumSeries(s, chargeExplMonthly(r.montantN1 * (r.tva / 100), r, "N1")),
-      zeroSeries(),
-    ),
-    y3: chargesRows.reduce(
-      (s, r) => sumSeries(s, chargeExplMonthly(r.montantN2 * (r.tva / 100), r, "N2")),
-      zeroSeries(),
-    ),
-  };
-
+  // ── TVA déductible sur charges externes — children (drill-down) ──────────
   const tvaChargesChildren: VATRow[] = [
     ...fournitures.map((f) => ({
       key: `tva-charges-f-${f.id}`,
@@ -235,31 +139,6 @@ export function buildTVARows(
     })),
   ];
 
-  // ── Total TVA déductible ──────────────────────────────────────────────────
-  const tvaDeductibleSeries: Record<YearKey, MonthlySeries> = {
-    y1: sumSeries(sumSeries(tvaImmoSeries.y1, tvaAchatsSeries.y1), tvaChargesSeries.y1),
-    y2: sumSeries(sumSeries(tvaImmoSeries.y2, tvaAchatsSeries.y2), tvaChargesSeries.y2),
-    y3: sumSeries(sumSeries(tvaImmoSeries.y3, tvaAchatsSeries.y3), tvaChargesSeries.y3),
-  };
-
-  // ── TVA nette, crédit et TVA à payer (report inter-exercices) ─────────────
-  let tvaImmoY0 = 0;
-  for (const immo of immobilisations) {
-    if (immo.actif === false) continue;
-    if (immo.typeTva !== "RECUPERABLE") continue;
-    const tva = n(immo.montantHT) * (n(immo.tauxTVA) / 100);
-    if (tva <= 0) continue;
-    const { yk } = dateToExercise(dateDemarrage, new Date(immo.dateAcquisition));
-    if (yk === null) tvaImmoY0 += tva;
-  }
-
-  // Le tableau affiche les montants mensuels (résolution = mensuel).
-  // periodiciteDecaissement n'affecte que les lignes TVA à payer / Crédit reporté
-  // dans la colonne Total et la logique de paiement groupé (trimestriel).
-  const y1Calc = computeTVAMonthly(tvaCollecteeSeries.y1, tvaDeductibleSeries.y1, periodiciteDecaissement, tvaImmoY0);
-  const y2Calc = computeTVAMonthly(tvaCollecteeSeries.y2, tvaDeductibleSeries.y2, periodiciteDecaissement, y1Calc.finalCredit);
-  const y3Calc = computeTVAMonthly(tvaCollecteeSeries.y3, tvaDeductibleSeries.y3, periodiciteDecaissement, y2Calc.finalCredit);
-
   return [
     // ── Section TVA collectée ─────────────────────────────────────────────
     vatRow("section-collectee", "TVA COLLECTÉE", { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() }, "section"),
@@ -280,10 +159,7 @@ export function buildTVARows(
       y3: y3Calc.tvaNetteMonthly,
     }, "result"),
 
-    // Crédit TVA reporté : le total est le crédit RÉSIDUEL en fin d'exercice
-    // (= finalCredit), pas la somme des mois. En régime trimestriel, la série
-    // mensuelle répète le stock de crédit sur les mois intermédiaires du
-    // trimestre, donc Σmois serait artificiellement gonflé (ex. ×3 par trimestre).
+    // Crédit TVA reporté : total = crédit RÉSIDUEL en fin d'exercice (finalCredit)
     {
       key: "credit-tva",
       label: "Crédit TVA reporté",
