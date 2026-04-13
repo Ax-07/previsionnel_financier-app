@@ -120,9 +120,9 @@ function extractBreakEvenAmt(rows: BreakEvenRow[], key: string): YAcc {
     const r = rows.find((brow) => brow.key === key);
     if (!r) return { y1: 0, y2: 0, y3: 0 };
     return {
-        y1: r.values.y1.amount,
-        y2: r.values.y2.amount,
-        y3: r.values.y3.amount,
+        y1: r.values.y1.amount ?? 0,
+        y2: r.values.y2.amount ?? 0,
+        y3: r.values.y3.amount ?? 0,
     };
 }
 
@@ -200,7 +200,7 @@ async function main() {
 
     const ctx = buildTemporelCtx(dateDemarrageDate, isFranchise);
     const enc = calcEncaissements(data, ctx);
-    const dec = calcDecaissements(data, ctx, effectiveMoisPaiement, fc.isParAnnee);
+    const dec = calcDecaissements(data, ctx, effectiveMoisPaiement, fc.isParAnnee, fc.tva);
 
     const variation = {
         y1: subSeries(enc.totalEnc.y1, dec.totalDec.y1),

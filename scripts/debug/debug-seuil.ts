@@ -55,9 +55,9 @@ function rowAmt(rows: BreakEvenRow[], key: string): YAcc {
   const row = findRow(rows, key);
   if (!row) return { y1: 0, y2: 0, y3: 0 };
   return {
-    y1: row.values.y1.amount,
-    y2: row.values.y2.amount,
-    y3: row.values.y3.amount,
+    y1: row.values.y1.amount ?? 0,
+    y2: row.values.y2.amount ?? 0,
+    y3: row.values.y3.amount ?? 0,
   };
 }
 
@@ -72,8 +72,8 @@ function renderBreakEvenRow(row: BreakEvenRow): string {
   const fmtVal = (y: YearKey) => {
     const v = row.values[y];
     if (row.key === "taux_marge_cv") return fmtPct(v.amount);
-    if (row.key === "point_mort_eco" || row.key === "point_mort_fin") return fmtJ(v.amount);
-    const eur = fmtEur(v.amount);
+    if (row.key === "point_mort_eco" || row.key === "point_mort_fin") return fmtJ(v.amount ?? 0);
+    const eur = fmtEur(v.amount ?? 0);
     if (row.showPct && v.pct !== null) return `${eur} *(${fmtPct(v.pct)})*`;
     return eur;
   };
