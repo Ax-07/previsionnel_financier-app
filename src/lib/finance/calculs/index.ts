@@ -40,7 +40,7 @@ export { computeTVAMonthly } from "./tva";
 export {
   calcEncaissements, calcDecaissements,
   buildTemporelCtx, dateToSlot, addToYk3,
-  shiftYk3, buildFrequenceSeries,
+  shiftYk3,
 } from "./tresorerie";
 
 // ── Helpers séries ────────────────────────────────────────────────────────────
