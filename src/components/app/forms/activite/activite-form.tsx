@@ -291,12 +291,18 @@ function TableauActivites({
                   <Td>
                     <input
                       type="number"
-                      className={cn(cellInput, "text-right bg-muted/40")}
+                      className={cn(cellInput, "text-right")}
                       value={row.montantN1 === 0 ? "" : row.montantN1}
-                      readOnly
-                      tabIndex={-1}
                       placeholder="0"
-                      title="Calculé automatiquement depuis N × (1 + % Év.)"
+                      title="Saisie directe → taux calculé / Taux 'évol. → montant calculé"
+                      onChange={(e) => {
+                        const n1 = numVal(e.target.value);
+                        const ev1 = row.montantN > 0
+                          ? parseFloat(((n1 / row.montantN - 1) * 100).toFixed(2))
+                          : 0;
+                        const n2 = parseFloat((n1 * (1 + row.evolutionN2 / 100)).toFixed(2));
+                        onUpdate(i, { montantN1: n1, evolutionN1: ev1, montantN2: n2 });
+                      }}
                     />
                   </Td>
                   <Td>
@@ -315,12 +321,17 @@ function TableauActivites({
                   <Td>
                     <input
                       type="number"
-                      className={cn(cellInput, "text-right bg-muted/40")}
+                      className={cn(cellInput, "text-right")}
                       value={row.montantN2 === 0 ? "" : row.montantN2}
-                      readOnly
-                      tabIndex={-1}
                       placeholder="0"
-                      title="Calculé automatiquement depuis N+1 × (1 + % Év.)"
+                      title="Saisie directe → taux calculé / Taux 'évol. → montant calculé"
+                      onChange={(e) => {
+                        const n2 = numVal(e.target.value);
+                        const ev2 = row.montantN1 > 0
+                          ? parseFloat(((n2 / row.montantN1 - 1) * 100).toFixed(2))
+                          : 0;
+                        onUpdate(i, { montantN2: n2, evolutionN2: ev2 });
+                      }}
                     />
                   </Td>
                   <Td>
