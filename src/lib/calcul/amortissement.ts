@@ -114,7 +114,7 @@ export function calculerAmortissementDegressif(params: {
       lignes.push({
         annee: anneeCalendrier,
         valeurBruteDebut: montantHT,
-        dotationAnnuelle: valeurResiduelle > 0 && anneeRelative < 0 ? 0 : 0,
+        dotationAnnuelle: 0,
         amortissementCumule: montantHT - valeurResiduelle,
         valeurNette: valeurResiduelle,
       });
