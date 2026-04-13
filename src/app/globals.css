@@ -21,7 +21,7 @@
   --primary-foreground: oklch(0.985 0.002 247);
 
   /* Gris bleuté pour zones secondaires */
-  --secondary: oklch(0.955 0.006 250);
+  --secondary: oklch(0.72 0.24 250);
   --secondary-foreground: oklch(0.34 0.04 252);
 
   /* Zones neutres */
@@ -98,7 +98,7 @@
   --primary: oklch(0.68 0.12 245);
   --primary-foreground: oklch(0.14 0.01 255);
 
-  --secondary: oklch(0.24 0.015 255);
+  --secondary: oklch(0.72 0.24 250);
   --secondary-foreground: oklch(0.86 0.02 245);
 
   --muted: oklch(0.22 0.01 255);
