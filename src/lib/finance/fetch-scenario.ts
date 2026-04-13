@@ -1,4 +1,3 @@
-import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 
@@ -6,14 +5,15 @@ import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
  * Centralise toutes les requêtes Prisma communes aux actions de contrôle.
  * Un seul appel = ~32 requêtes en parallèle au lieu de ~32 × 13 = ~416.
  *
- * `cache()` de React déduplique les appels à `fetchScenarioData` dans la même
- * Request Node.js : si deux Server Actions appellent fetchScenarioData avec le
- * même dossierId dans le même cycle, le résultat est partagé en mémoire.
+ * Note : `react.cache()` n'a aucun effet ici — `fetchScenarioData` est appelé
+ * depuis des Server Actions déclenchées par le client (Zustand). Chaque appel
+ * crée un nouveau contexte serveur ; la déduplication par `cache()` ne s'applique
+ * qu'à des appels dans le même arbre de rendu serveur (même Request).
  *
  * Utiliser `ScenarioFinData = Awaited<ReturnType<typeof fetchScenarioData>>`
  * pour typer les fonctions de calcul.
  */
-export const fetchScenarioData = cache(async function fetchScenarioData(dossierId: string) {
+export async function fetchScenarioData(dossierId: string) {
   // ── 1. Infos dossier ────────────────────────────────────────────────────────
   const dossier = await prisma.dossier.findUnique({
     where: { id: dossierId },
@@ -42,6 +42,7 @@ export const fetchScenarioData = cache(async function fetchScenarioData(dossierI
           moisPaiementSalaires: true,
           tnsRegimeSocial: true,
           tnsModeCalcul: true,
+          delaiPaiementClients: true,
         },
       },
     },
@@ -178,7 +179,7 @@ export const fetchScenarioData = cache(async function fetchScenarioData(dossierI
     parametresIS,
     ajustementsFiscaux,
   };
-});
+}
 
 /** Type de toutes les données du scénario, utilisable dans les modules de calcul. */
 export type ScenarioFinData = Awaited<ReturnType<typeof fetchScenarioData>>;
