@@ -1077,7 +1077,7 @@ function writeSheetTresorerie(
 
   const ctx = buildTemporelCtx(data.dateDemarrage, isFranchise);
   const enc = calcEncaissements(data, ctx);
-  const dec = calcDecaissements(data, ctx, moisPaiementSalaires, fc.isParAnnee);
+  const dec = calcDecaissements(data, ctx, moisPaiementSalaires, fc.isParAnnee, fc.tva);
 
   const variation = {
     y1: subSeries(enc.totalEnc.y1, dec.totalDec.y1),
@@ -1335,7 +1335,7 @@ function writeSheetSynthese(
   const moisPmt = par?.moisPaiementSalaires ?? 1;
   const ctx = buildTemporelCtx(data.dateDemarrage, isFranchise);
   const enc = calcEncaissements(data, ctx);
-  const dec = calcDecaissements(data, ctx, moisPmt, fc.isParAnnee);
+  const dec = calcDecaissements(data, ctx, moisPmt, fc.isParAnnee, fc.tva);
   const variation = {
     y1: subSeries(enc.totalEnc.y1, dec.totalDec.y1),
     y2: subSeries(enc.totalEnc.y2, dec.totalDec.y2),
@@ -1369,9 +1369,9 @@ function writeSheetSynthese(
     const r = seuilData.rows.find((x) => x.key === key);
     if (!r) return ZERO_ROW;
     return {
-      y1: { amount: r.values.y1.amount, pct: r.values.y1.pct ?? null },
-      y2: { amount: r.values.y2.amount, pct: r.values.y2.pct ?? null },
-      y3: { amount: r.values.y3.amount, pct: r.values.y3.pct ?? null },
+      y1: { amount: r.values.y1.amount ?? 0, pct: r.values.y1.pct ?? null },
+      y2: { amount: r.values.y2.amount ?? 0, pct: r.values.y2.pct ?? null },
+      y3: { amount: r.values.y3.amount ?? 0, pct: r.values.y3.pct ?? null },
     };
   }
   function exBilanAmt(key: string): Record<YearKey, number> {

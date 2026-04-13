@@ -43,8 +43,10 @@ function CRRow({ node, depth, expandedKeys, onToggle }: CRRowProps) {
   const hasChildren = node.children && node.children.length > 0;
   const isExpanded = expandedKeys.has(node.key);
   const isSection = node.style === "section";
+  const isSubtotal = node.style === "subtotal";
   const isTotal = node.style === "total";
   const isResult = node.style === "result";
+  const isNormal = node.style === "normal";
 
   // Masquer les lignes vides avec hideIfZero
   if (node.hideIfZero && isAllZero(node)) return null;
@@ -53,10 +55,12 @@ function CRRow({ node, depth, expandedKeys, onToggle }: CRRowProps) {
     "grid h-9 items-center border-b transition-colors",
     // Colonnes responsive : libellé + 3× (montant + %)
     "grid-cols-[1fr_repeat(3,minmax(0,120px)_minmax(0,68px))]",
-    isSection && "bg-muted/60 font-semibold uppercase tracking-wide text-xs text-muted-foreground",
-    isTotal && "bg-muted/30 font-semibold",
-    isResult && "bg-primary/10 font-bold text-primary",
-    !isSection && !isTotal && !isResult && "hover:bg-muted/20",
+    isSection && "bg-primary font-semibold uppercase tracking-wide text-xs text-primary-foreground hover:bg-primary/90",
+    isNormal && "italic",
+    isSubtotal && "bg-secondary/10 font-medium hover:bg-secondary/20",
+    isTotal && "bg-secondary/30 font-semibold hover:bg-secondary/40",
+    isResult && "bg-amber-500/30 font-bold text-secondary-foreground hover:bg-amber-500/40",
+    !isSection && !isSubtotal && !isTotal && !isResult && "hover:bg-muted",
   );
 
   return (
@@ -194,7 +198,7 @@ export default function CompteResultatTab({ dossierId }: CompteResultatTabProps)
         <div className="flex items-center gap-3">
           <h2 className="font-semibold text-sm">Compte de résultat prévisionnel</h2>
           {data && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="outline" className="text-xs">
               Lecture seule
             </Badge>
           )}

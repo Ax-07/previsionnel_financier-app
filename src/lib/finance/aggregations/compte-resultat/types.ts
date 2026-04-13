@@ -10,8 +10,8 @@ export interface CRNode {
   label: string;
   values: Record<YearKey, CRYearValue>;
   children?: CRNode[];
-  /** Niveau d'affichage : normal | section (titre section) | total | result */
-  style: "normal" | "section" | "total" | "result";
+  /** Niveau d'affichage : normal | section (titre section) | subtotal | total | result */
+  style: "normal" | "section" | "subtotal" | "total" | "result";
   /** Masquer si les trois valeurs sont à 0 (lignes vides) */
   hideIfZero?: boolean;
 }

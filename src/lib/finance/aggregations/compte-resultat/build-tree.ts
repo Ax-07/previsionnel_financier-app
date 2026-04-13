@@ -46,6 +46,40 @@ function deriveAggregates(fc: FinCalcResult, rows: DrilldownRows) {
   };
 }
 
+// ── Libellés français par typeActivite (ordre PCG) ───────────────────────────
+const CA_TYPE_ORDER = ["PRODUCTION_VENDUE", "PRESTATION_SERVICES", "VENTE_MARCHANDISES"] as const;
+type CAType = (typeof CA_TYPE_ORDER)[number];
+
+const CA_TYPE_LABELS: Record<CAType, string> = {
+  PRODUCTION_VENDUE: "Production vendue",
+  PRESTATION_SERVICES: "Prestations de services",
+  VENTE_MARCHANDISES: "Ventes de marchandises",
+};
+
+// ── Groupement des lignes CA par type d'activité ──────────────────────────────
+function groupCaByType(caRows: DrilldownRows["caRows"]) {
+  const grouped = new Map<CAType, typeof caRows>();
+  for (const type of CA_TYPE_ORDER) {
+    grouped.set(type, []);
+  }
+  for (const row of caRows) {
+    const rawType = (row.typeActivite ?? "PRESTATION_SERVICES") as string;
+    const type: CAType = (CA_TYPE_ORDER as readonly string[]).includes(rawType)
+      ? (rawType as CAType)
+      : "PRESTATION_SERVICES";
+    grouped.get(type)!.push(row);
+  }
+  return CA_TYPE_ORDER.map((type) => {
+    const rows = grouped.get(type)!;
+    const subtotal = {
+      y1: rows.reduce((s, r) => s + r.montantN, 0),
+      y2: rows.reduce((s, r) => s + r.montantN1, 0),
+      y3: rows.reduce((s, r) => s + r.montantN2, 0),
+    };
+    return { type, label: CA_TYPE_LABELS[type], rows, subtotal };
+  }).filter((g) => g.rows.length > 0);
+}
+
 // ── Constructeur de l'arbre de nœuds ─────────────────────────────────────────
 
 /**
@@ -61,13 +95,12 @@ export function buildCRTree(
   const ca = fc.ca;
   const node = makeNodeBuilder(ca);
   const agg = deriveAggregates(fc, rows);
+  const caGroups = groupCaByType(rows.caRows);
 
   const {
-    caRows,
     commissionRows,
     reprisesRows,
     achatsRows,
-    achatsPonctuelsRows,
     fournituresRows,
     servicesRows,
     impotsRows,
@@ -94,23 +127,29 @@ export function buildCRTree(
     // ── PRODUITS D'EXPLOITATION ───────────────────────────────────────────
     node("prod_expl_header", "PRODUITS D'EXPLOITATION", fc.totalProduitsExpl, "section"),
 
-    node(
-      "ca",
-      "Chiffre d'affaires",
-      ca,
-      "total",
-      caRows.map((r, i) => ({
-        key: `ca_child_${i}`,
-        label: r.libelle,
-        values: {
-          y1: mkVal(r.montantN, pct(r.montantN, ca.y1)),
-          y2: mkVal(r.montantN1, pct(r.montantN1, ca.y2)),
-          y3: mkVal(r.montantN2, pct(r.montantN2, ca.y3)),
-        },
-        style: "normal" as const,
-        hideIfZero: true,
-      })),
+    // ── CA groupé par type d'activité ─────────────────────────────────────
+    ...caGroups.map((g, gi) =>
+      node(
+        `ca_group_${gi}`,
+        g.label,
+        g.subtotal,
+        "normal",
+        g.rows.map((r, i) => ({
+          key: `ca_group_${gi}_child_${i}`,
+          label: r.libelle,
+          values: {
+            y1: mkVal(r.montantN, pct(r.montantN, ca.y1)),
+            y2: mkVal(r.montantN1, pct(r.montantN1, ca.y2)),
+            y3: mkVal(r.montantN2, pct(r.montantN2, ca.y3)),
+          },
+          style: "normal" as const,
+          hideIfZero: true,
+        })),
+        caGroups.length === 1 && g.rows.length === 1,
+      ),
     ),
+
+    node("ca", "Chiffre d'affaires", ca, "subtotal"),
 
     ...(nonZero(fc.commissionsTotal)
       ? [
@@ -165,10 +204,9 @@ export function buildCRTree(
     ...(nonZero(fc.fournitures) ? [node("fournitures", "Fournitures consommables", fc.fournitures, "normal", buildChildNodes(fournituresRows, "fournitures", ca), true)] : []),
     ...(nonZero(fc.services) ? [node("services", "Services extérieurs", fc.services, "normal", buildChildNodes(servicesRows, "services", ca), true)] : []),
 
-    node("charges_ext", "Charges externes (Total)", agg.chargesExternes, "total"),
+    node("charges_ext", "Charges externes (Total)", agg.chargesExternes, "subtotal"),
 
-    node("impots_taxes", "Impôts et taxes", fc.impotsTaxes, "normal", buildChildNodes(impotsRows, "impots", ca), true),
-
+    
     node("salaires_bruts", "Salaires bruts (Salariés)", fc.chargesPersonnel.salairesBruts, "normal", buildChildNodes(salaireRows, "salaires", ca), true),
     node("charges_sociales", "Charges sociales (Salariés)", fc.chargesPersonnel.chargesPatronales, "normal", undefined, true),
     node("remunerations_dir", "Rémunération du dirigeant", fc.chargesPersonnel.remuDirigeant, "normal", buildChildNodes(dirigeantRows, "dirigeants", ca), true),
@@ -181,8 +219,9 @@ export function buildCRTree(
       buildChildNodes(taxesSalairesRows, "taxes_sal", ca),
       taxesSalairesRows.length === 0,
     ),
-    node("charges_personnel", "Charges de personnel (Total)", fc.chargesPersonnel.total, "total"),
+    node("charges_personnel", "Charges de personnel (Total)", fc.chargesPersonnel.total, "subtotal"),
 
+    node("impots_taxes", "Impôts et taxes", fc.impotsTaxes, "normal", buildChildNodes(impotsRows, "impots", ca), true),
     node(
       "dotations_amort",
       "Dotations aux amortissements",
