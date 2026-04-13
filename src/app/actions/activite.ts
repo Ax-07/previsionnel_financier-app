@@ -133,9 +133,10 @@ export async function saveActivites(
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i]!;
-        // Recalcul cohérence N+1/N+2 côté serveur (P3-11)
-        const montantN1 = Math.round(row.montantN * (1 + row.evolutionN1 / 100) * 100) / 100;
-        const montantN2 = Math.round(montantN1 * (1 + row.evolutionN2 / 100) * 100) / 100;
+        // Les montants N+1/N+2 et les taux d'évolution sont cohérents par construction :
+        // le client calcule montantN1/N2 depuis les taux (mode évolution)
+        // ou les taux depuis les montants (mode saisie directe). On persiste les valeurs telles quelles.
+        const { montantN1, montantN2 } = row;
         const data = {
           libelle: row.libelle,
           typeActivite: secteurToTypeActivite(row.secteur),
@@ -250,9 +251,9 @@ export async function saveActivitesCommission(
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i]!;
-        // Recalcul cohérence N+1/N+2 côté serveur (P3-11)
-        const montantN1 = Math.round(row.montantN * (1 + row.evolutionN1 / 100) * 100) / 100;
-        const montantN2 = Math.round(montantN1 * (1 + row.evolutionN2 / 100) * 100) / 100;
+        // Les montants N+1/N+2 et les taux d'évolution sont cohérents par construction
+        // (calculés côté client). On persiste les valeurs telles quelles.
+        const { montantN1, montantN2 } = row;
         const data = {
           libelle: row.libelle,
           hypothese: row.hypothese,
