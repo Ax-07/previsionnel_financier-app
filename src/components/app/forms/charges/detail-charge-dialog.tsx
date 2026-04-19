@@ -15,26 +15,17 @@ import { cn, numVal } from "@/lib/utils";
 import { useChargesStore } from "@/stores/charges-store";
 import { useActiviteStore } from "@/stores/activite-store";
 import type { ChargeExploitationRow } from "@/lib/schemas/charges";
+import type {
+  ExerciceKey,
+  ExerciceCalendrierEntry,
+  ExerciceConfig,
+  ExercicesConfig,
+} from "@/hooks/use-activite-calculs";
 
 // ── Types locaux ─────────────────────────────────────────────────────────────
 
-type ExerciceKey = "N" | "N1" | "N2";
 type Categorie = "FOURNITURE_CONSOMMABLE" | "SERVICE_EXTERIEUR";
 type ModeCalc = "FIXE" | "POURCENTAGE_CA";
-
-interface ExerciceCalendrierEntry {
-  dateCloture: string;
-  duree: number;
-  annee: number;
-}
-
-interface ExerciceConfig {
-  startMonth: number; // 0–11
-  startYear: number;
-  duree: number;
-}
-
-type ExercicesConfig = Record<ExerciceKey, ExerciceConfig>;
 
 interface DetailChargeDialogProps {
   open: boolean;

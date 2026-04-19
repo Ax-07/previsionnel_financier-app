@@ -31,12 +31,13 @@ import {
   type DetailMensuelExercice,
 } from "@/lib/schemas/personnel";
 import { numVal } from "@/lib/utils";
+import type {
+  ExerciceCalendrierEntry,
+  ExerciceConfig,
+  ExercicesConfig,
+} from "@/hooks/use-activite-calculs";
 
-// ── Types & helpers calendrier ───────────────────────────────────────────────
-
-interface ExerciceCalendrierEntry { dateCloture: string; duree: number; annee: number; }
-interface ExerciceConfig { startMonth: number; startYear: number; duree: number; }
-type ExercicesConfig = Record<"N" | "N1" | "N2", ExerciceConfig>;
+// ── Types & helpers calendrier ───────────────────────────────────────────────────
 
 const TOUS_MOIS = [
   "Jan.", "Fév.", "Mar.", "Avr.", "Mai", "Juin",

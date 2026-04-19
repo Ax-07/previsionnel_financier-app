@@ -34,6 +34,7 @@ import {
 } from "@/lib/schemas/porteur";
 import { upsertPorteur } from "@/app/actions/porteur";
 import { cn } from "@/lib/utils";
+import { DeleteDossierButton } from "@/components/app/delete-dossier-button";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -547,20 +548,23 @@ export default function PorteurForm({
         {/* ── Barre d'actions sticky ───────────────────────────────────── */}
         <div className="shrink-0 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
           <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-6 py-3">
-            <div className="flex min-w-0 flex-1 items-center gap-2">{statusNode}</div>
-            <Button
-              type="submit"
-              size="sm"
-              disabled={isPending || !isDirty}
-              className="gap-1.5"
-            >
-              {isPending ? (
-                <Loader2Icon className="size-3.5 animate-spin" />
-              ) : (
-                <SaveIcon className="size-3.5" />
-              )}
-              Enregistrer
-            </Button>
+            <DeleteDossierButton dossierId={dossierId} />
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-3">
+              {statusNode}
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isPending || !isDirty}
+                className="gap-1.5"
+              >
+                {isPending ? (
+                  <Loader2Icon className="size-3.5 animate-spin" />
+                ) : (
+                  <SaveIcon className="size-3.5" />
+                )}
+                Enregistrer
+              </Button>
+            </div>
           </div>
         </div>
       </form>
