@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   Popover,
   PopoverContent,
@@ -9,32 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { InfoIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LigneCotisation } from "@/lib/paie/types";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Libellés des familles
-// ─────────────────────────────────────────────────────────────────────────────
-
-const LIBELLES_FAMILLE: Record<string, string> = {
-  assurance_maladie: "Maladie",
-  assurance_vieillesse: "Vieillesse",
-  allocations_familiales: "Alloc. familiales",
-  assurance_chomage: "Chômage",
-  ags: "AGS",
-  fnal: "FNAL",
-  csa: "CSA",
-  dialogue_social: "Dialogue social",
-  csg_deductible: "CSG déductible",
-  csg_non_deductible: "CSG non déd.",
-  crds: "CRDS",
-  at_mp: "AT/MP",
-  versement_mobilite: "Mobilité",
-  retraite_complementaire: "Retraite compl.",
-  ceg: "CEG",
-  cet: "CET",
-  apec: "APEC",
-  exoneration: "Exonération",
-  rgdu: "RGDU",
-};
+import { formatEur } from "@/lib/format";
+import { LIBELLES_FAMILLE } from "./famille-labels";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Composant CotisationLine
@@ -46,7 +23,7 @@ interface CotisationLineProps {
   highlight?: boolean;
 }
 
-export function CotisationLine({ ligne, highlight }: CotisationLineProps) {
+export const CotisationLine = memo(function CotisationLine({ ligne, highlight }: CotisationLineProps) {
   const montantSalarial = ligne.montantSalarie ?? 0;
   const montantPatronal = ligne.montantEmployeur ?? 0;
 
@@ -127,23 +104,31 @@ export function CotisationLine({ ligne, highlight }: CotisationLineProps) {
       <span
         className={cn(
           "w-20 text-right font-mono tabular-nums",
-          montantSalarial > 0 ? "text-destructive" : "text-muted-foreground"
+          montantSalarial < 0
+            ? "text-green-700 dark:text-green-400"
+            : montantSalarial > 0
+              ? "text-destructive"
+              : "text-muted-foreground"
         )}
       >
-        {montantSalarial !== 0 ? `-${formatEur(montantSalarial)}` : "—"}
+        {montantSalarial !== 0 ? formatEur(Math.abs(montantSalarial)) : "—"}
       </span>
 
       {/* Patronal */}
       <span
         className={cn(
-          "w-20 text-right font-mono tabular-nums text-muted-foreground"
+          "w-20 text-right font-mono tabular-nums",
+          montantPatronal < 0
+            ? "text-green-700 dark:text-green-400"
+            : "text-muted-foreground"
         )}
       >
-        {montantPatronal !== 0 ? formatEur(montantPatronal) : "—"}
+        {montantPatronal !== 0 ? formatEur(Math.abs(montantPatronal)) : "—"}
       </span>
     </div>
   );
-}
+});
+CotisationLine.displayName = "CotisationLine";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // En-tête des colonnes
@@ -160,10 +145,4 @@ export function CotisationTableHeader() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
-function formatEur(n: number) {
-  return n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
-}

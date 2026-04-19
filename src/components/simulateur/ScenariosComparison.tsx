@@ -12,14 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { DiffTable } from "./DiffTable";
 import type { Scenario } from "@/stores/simulateur-paie-store";
+import { formatEur as eur } from "@/lib/format";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-function eur(v: number): string {
-  return v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
-}
 
 function formatDate(ts: number): string {
   return new Date(ts).toLocaleDateString("fr-FR", {

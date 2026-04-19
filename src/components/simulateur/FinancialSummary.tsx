@@ -2,9 +2,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { TrendingDownIcon, TrendingUpIcon, PercentIcon, CoinsIcon } from "lucide-react";
 import type { SimulationResultat } from "@/lib/paie/types";
+import { formatEur, formatPct } from "@/lib/format";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FinancialSummary
@@ -125,13 +127,15 @@ export function FinancialSummary({ resultat, onInjectPrevi }: FinancialSummaryPr
           Taux brut total charges : <strong>{formatPct(tauxChargesTotal)}</strong>
         </p>
         {onInjectPrevi && (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => onInjectPrevi(parseFloat(tauxPatPct.toFixed(2)))}
-            className="mt-2 w-full rounded border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
+            className="mt-2 w-full border-primary/40 text-xs font-semibold text-primary hover:bg-primary/10"
           >
             Injecter dans le prévisionnel
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -177,14 +181,4 @@ function MetricCard({ icon, label, value, sublabel, accent = "default" }: Metric
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
-function formatEur(n: number) {
-  return n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
-}
-
-function formatPct(n: number) {
-  return (n * 100).toFixed(2) + " %";
-}

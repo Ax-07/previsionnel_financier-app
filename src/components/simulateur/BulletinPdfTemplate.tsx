@@ -9,16 +9,16 @@
  * de garantir la compatibilité avec tous les moteurs de rendu PDF.
  */
 
+import React from "react";
 import type { SimulationInput, SimulationResultat, LigneCotisation } from "@/lib/paie/types";
 import { CONVENTION_CATALOG } from "@/lib/paie/conventions/catalog";
+import { formatEur as eur } from "@/lib/format";
+import { FAMILLE_LABELS_PDF as FAMILLE_LABELS } from "./famille-labels";
+import { calcBrutDetails } from "./bulletin-helpers";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-function eur(v: number): string {
-  return v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
-}
 
 function pct(v: number): string {
   return (v * 100).toFixed(4) + " %";
@@ -37,28 +37,6 @@ function groupByFamille(lignes: LigneCotisation[]): Map<string, LigneCotisation[
   }
   return map;
 }
-
-const FAMILLE_LABELS: Record<string, string> = {
-  assurance_maladie: "Santé",
-  assurance_vieillesse: "Assurance vieillesse",
-  allocations_familiales: "Allocations familiales",
-  assurance_chomage: "Retraite et prévoyance",
-  ags: "Garantie salaires (AGS)",
-  fnal: "Logement (FNAL)",
-  csa: "Solidarité autonomie",
-  dialogue_social: "Dialogue social",
-  csg_deductible: "CSG déductible",
-  csg_non_deductible: "CSG / CRDS non déductible",
-  crds: "CRDS",
-  at_mp: "Accidents du travail / maladies professionnelles",
-  versement_mobilite: "Versement mobilité",
-  retraite_complementaire: "Retraite complémentaire (Agirc-Arrco)",
-  ceg: "Contribution équilibre général (CEG)",
-  cet: "Contribution temporaire (CET)",
-  apec: "APEC",  prevoyance_prevoyance: "Prévoyance (Convention collective)",
-  prevoyance_mutuelle: "Mutuelle (Convention collective)",  exoneration: "Exonérations",
-  rgdu: "Réduction générale (RGDU)",
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Styles print inline
@@ -112,9 +90,8 @@ export function BulletinPdfTemplate({ input, resultat }: BulletinPdfTemplateProp
   // Convention collective
   const convMeta = salarié.conventionCode ? CONVENTION_CATALOG.get(salarié.conventionCode) : undefined;
 
-  // Taux horaire pour le détail HS
-  const heuresNormales = Math.min(salarié.heuresContrat, 151.66669);
-  const tauxHoraire = salarié.brutMensuel > 0 ? salarié.brutMensuel / heuresNormales : 0;
+  // Détails du brut via helper partagé
+  const { tauxHoraire } = calcBrutDetails(input, resultat);
 
   // Exclure les lignes "exoneration" / "rgdu" des cotisations principales
   const lignesNormales = resultat.lignes.filter(
@@ -282,8 +259,8 @@ export function BulletinPdfTemplate({ input, resultat }: BulletinPdfTemplateProp
               </thead>
               <tbody>
                 {Array.from(groupes.entries()).map(([famille, lignes]) => (
-                  <>
-                    <tr className="famille-header" key={`header-${famille}`}>
+                  <React.Fragment key={famille}>
+                    <tr className="famille-header">
                       <td colSpan={7}>
                         {FAMILLE_LABELS[famille] ?? famille}
                       </td>
@@ -301,7 +278,7 @@ export function BulletinPdfTemplate({ input, resultat }: BulletinPdfTemplateProp
                         <td>{eur(ligne.montantEmployeur)}</td>
                       </tr>
                     ))}
-                  </>
+                  </React.Fragment>
                 ))}
 
                 {/* Exonérations */}

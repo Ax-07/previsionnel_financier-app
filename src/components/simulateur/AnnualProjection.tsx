@@ -11,12 +11,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   CalendarDaysIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   TrendingUpIcon,
 } from "lucide-react";
 import type { SimulationResultat } from "@/lib/paie/types";
+import { formatEur } from "@/lib/format";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types internes
@@ -27,18 +36,6 @@ interface LigneAnnuelle {
   mensuel: number;
   annuel: number;
   accent?: "green" | "red" | "muted";
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-function formatEur(v: number): string {
-  return v.toLocaleString("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 2,
-  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -184,6 +181,7 @@ export function AnnualProjection({ resultat }: AnnualProjectionProps) {
             className="w-full justify-between text-sm text-muted-foreground"
             onClick={() => setDetailsOuverts((v) => !v)}
             aria-expanded={detailsOuverts}
+            aria-controls="annual-projection-detail"
           >
             Détail poste par poste
             {detailsOuverts
@@ -192,31 +190,31 @@ export function AnnualProjection({ resultat }: AnnualProjectionProps) {
           </Button>
 
           {detailsOuverts && (
-            <div className="mt-3 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-xs font-semibold uppercase text-muted-foreground">
-                    <th className="pb-2 text-left">Poste</th>
-                    <th className="pb-2 text-right">Mensuel</th>
-                    <th className="pb-2 text-right">Annuel</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
+            <div id="annual-projection-detail" className="mt-3 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="text-xs font-semibold uppercase text-muted-foreground">
+                    <TableHead>Poste</TableHead>
+                    <TableHead className="text-right">Mensuel</TableHead>
+                    <TableHead className="text-right">Annuel</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {lignes.map((l) => (
-                    <tr key={l.libelle} className="py-1">
-                      <td className={accentClass(l.accent, "label")}>
+                    <TableRow key={l.libelle}>
+                      <TableCell className={accentClass(l.accent, "label")}>
                         {l.libelle}
-                      </td>
-                      <td className={accentClass(l.accent, "value")}>
+                      </TableCell>
+                      <TableCell className={accentClass(l.accent, "value")}>
                         {formatEur(l.mensuel)}
-                      </td>
-                      <td className={accentClass(l.accent, "value") + " font-semibold"}>
+                      </TableCell>
+                      <TableCell className={accentClass(l.accent, "value") + " font-semibold"}>
                         {formatEur(l.annuel)}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </div>

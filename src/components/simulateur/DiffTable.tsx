@@ -9,6 +9,15 @@
  */
 
 import type { SimulationResultat } from "@/lib/paie/types";
+import { formatEur as eur } from "@/lib/format";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -33,10 +42,6 @@ interface DiffTableProps {
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-function eur(v: number): string {
-  return v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
-}
 
 function pct(v: number): string {
   return v.toFixed(2) + " %";
@@ -119,27 +124,27 @@ export function DiffTable({ resultatA, labelA, resultatB, labelB }: DiffTablePro
 
   return (
     <div className="overflow-x-auto rounded-lg border">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b bg-muted/50">
-            <th className="px-4 py-2.5 text-left font-semibold text-muted-foreground w-50">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/50">
+            <TableHead className="font-semibold text-muted-foreground w-50">
               Indicateur
-            </th>
-            <th className="px-4 py-2.5 text-right font-semibold text-blue-600 dark:text-blue-400">
+            </TableHead>
+            <TableHead className="text-right font-semibold text-blue-600 dark:text-blue-400">
               {labelA}
-            </th>
-            <th className="px-4 py-2.5 text-right font-semibold text-violet-600 dark:text-violet-400">
+            </TableHead>
+            <TableHead className="text-right font-semibold text-violet-600 dark:text-violet-400">
               {labelB}
-            </th>
-            <th className="px-4 py-2.5 text-right font-semibold text-muted-foreground">
+            </TableHead>
+            <TableHead className="text-right font-semibold text-muted-foreground">
               Écart
-            </th>
-            <th className="px-4 py-2.5 text-right font-semibold text-muted-foreground">
+            </TableHead>
+            <TableHead className="text-right font-semibold text-muted-foreground">
               Δ relatif
-            </th>
-          </tr>
-        </thead>
-        <tbody>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((row, i) => {
             const diff = row.valueB - row.valueA;
             const relPct = row.valueA !== 0 ? (diff / Math.abs(row.valueA)) * 100 : 0;
@@ -155,32 +160,32 @@ export function DiffTable({ resultatA, labelA, resultatB, labelB }: DiffTablePro
                     : "text-foreground";
 
             return (
-              <tr
+              <TableRow
                 key={row.label}
-                className={`border-b last:border-0 ${i % 2 === 0 ? "" : "bg-muted/20"}`}
+                className={i % 2 === 0 ? "" : "bg-muted/20"}
               >
-                <td className="px-4 py-2 font-medium text-foreground">{row.label}</td>
-                <td className="px-4 py-2 text-right tabular-nums text-blue-700 dark:text-blue-300">
+                <TableCell className="font-medium text-foreground">{row.label}</TableCell>
+                <TableCell className="text-right tabular-nums text-blue-700 dark:text-blue-300">
                   {fmt(row.valueA, row.format)}
-                </td>
-                <td className="px-4 py-2 text-right tabular-nums text-violet-700 dark:text-violet-300">
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-violet-700 dark:text-violet-300">
                   {fmt(row.valueB, row.format)}
-                </td>
-                <td className={`px-4 py-2 text-right tabular-nums font-medium ${diffColor}`}>
+                </TableCell>
+                <TableCell className={`text-right tabular-nums font-medium ${diffColor}`}>
                   {diff === 0
                     ? "—"
                     : `${diff > 0 ? "+" : ""}${fmt(diff, row.format)}`}
-                </td>
-                <td className={`px-4 py-2 text-right tabular-nums text-xs ${diffColor}`}>
+                </TableCell>
+                <TableCell className={`text-right tabular-nums text-xs ${diffColor}`}>
                   {diff === 0
                     ? "—"
                     : `${relPct > 0 ? "+" : ""}${relPct.toFixed(1)} %`}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

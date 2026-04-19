@@ -2,48 +2,11 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { formatEur } from "@/lib/format";
 import { CotisationLine, CotisationTableHeader } from "./CotisationLine";
 import type { LigneCotisation, SimulationInput, SimulationResultat, FamilleCotisation } from "@/lib/paie/types";
-import { calcSalaireBase } from "@/lib/paie/engine/assiettes";
-import { PARAMS_2026 } from "@/lib/paie/params/2026";
 import { CONVENTION_CATALOG } from "@/lib/paie/conventions/catalog";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Ordre d'affichage des familles
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Groupes de familles pour l'affichage structuré
-type GroupeLabel = {
-  label: string;
-  familles: FamilleCotisation[];
-};
-
-const GROUPES: GroupeLabel[] = [
-  {
-    label: "Sécurité sociale",
-    familles: ["assurance_maladie", "assurance_vieillesse", "allocations_familiales", "fnal", "csa", "dialogue_social", "at_mp"],
-  },
-  {
-    label: "Chômage & AGS",
-    familles: ["assurance_chomage", "ags"],
-  },
-  {
-    label: "Retraite complémentaire",
-    familles: ["retraite_complementaire", "ceg", "cet", "apec"],
-  },
-  {
-    label: "CSG & CRDS",
-    familles: ["csg_deductible", "csg_non_deductible", "crds"],
-  },
-  {
-    label: "Versement mobilité",
-    familles: ["versement_mobilite"],
-  },
-  {
-    label: "Prévoyance & mutuelle conventionnelle",
-    familles: ["prevoyance_prevoyance", "prevoyance_mutuelle"],
-  },
-];
+import { calcBrutDetails, GROUPES } from "./bulletin-helpers";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BulletinDisplay
@@ -64,23 +27,10 @@ export function BulletinDisplay({ resultat, input }: BulletinDisplayProps) {
     : undefined;
 
   // ── Composition du brut ───────────────────────────────────────────────────
-  const HEURES_LEGALES = PARAMS_2026.heuresLegalesMensuelles;
-  const salaireBase = calcSalaireBase(sal);
-  const heuresNormales = Math.min(sal.heuresContrat, HEURES_LEGALES);
-  const tauxHoraire = sal.brutMensuel > 0 ? sal.brutMensuel / heuresNormales : 0;
-  const nbHeuresSup = sal.heuresSupplementaires ?? 0;
-  // Utilise le montant réel calculé par le moteur (prend en compte les surcharges
-  // conventionnelles ex. HCR : 10 %/20 %/50 % au lieu du légal 25 %/50 %).
-  const montantHS = nbHeuresSup > 0 ? (resultat.heuresSup ?? 0) : 0;
-  // Taux implicite (pour l'affichage détail) : back-calculé depuis le montant réel
-  const tauxMajoration =
-    nbHeuresSup > 0 && tauxHoraire > 0
-      ? montantHS / (nbHeuresSup * tauxHoraire) - 1
-      : (sal.tauxMajorationHeuresSup ?? 0.25);
-  const primes = sal.primesSoumises ?? 0;
-  const avantages = sal.avantagesEnNature ?? 0;
-  const absences = sal.absencesNonRemunerees ?? 0;
-  const aDesExtras = nbHeuresSup > 0 || primes > 0 || avantages > 0 || absences > 0;
+  const {
+    salaireBase, heuresNormales, tauxHoraire, nbHeuresSup,
+    montantHS, tauxMajoration, primes, avantages, absences, aDesExtras,
+  } = calcBrutDetails(input, resultat);
 
   // ── Cotisations ───────────────────────────────────────────────────────────
   const lignesReduction = lignes.filter(
@@ -102,7 +52,7 @@ export function BulletinDisplay({ resultat, input }: BulletinDisplayProps) {
   const totalPatNet = resultat.totalCotisationsPatronales - resultat.montantRGDU;
 
   return (
-    <div className="flex flex-col gap-0 text-sm">
+    <div className="flex flex-col gap-0 text-sm overflow-x-auto">
 
       {/* ── En-tête ── */}
       <div className="flex items-center justify-between px-3 pb-3">
@@ -366,13 +316,4 @@ function BaseChip({ label, value }: { label: string; value: string }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
-function formatEur(n: number) {
-  return n.toLocaleString("fr-FR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }) + " €";
-}

@@ -19,6 +19,17 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   BookmarkPlusIcon,
   CheckIcon,
   PencilIcon,
@@ -27,14 +38,11 @@ import {
   XIcon,
 } from "lucide-react";
 import { ScenariosComparison } from "./ScenariosComparison";
+import { formatEur as eur } from "@/lib/format";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-function eur(v: number): string {
-  return v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
-}
 
 function formatDate(ts: number): string {
   return new Date(ts).toLocaleString("fr-FR", {
@@ -102,20 +110,40 @@ function ScenarioRow({ scenario, isSelected, onSelect, onRemove, onRename }: Sce
               variant="ghost"
               className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
               onClick={() => { setDraft(scenario.nom); setEditing(true); }}
+              aria-label={`Renommer ${scenario.nom}`}
             >
               <PencilIcon className="size-3" />
             </Button>
           </div>
         )}
 
-        <Button
-          size="icon"
-          variant="ghost"
-          className="size-6 shrink-0 text-muted-foreground hover:text-destructive"
-          onClick={onRemove}
-        >
-          <Trash2Icon className="size-3" />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-6 shrink-0 text-muted-foreground hover:text-destructive"
+              aria-label={`Supprimer ${scenario.nom}`}
+            >
+              <Trash2Icon className="size-3" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer le scénario ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Le scénario « {scenario.nom} » sera définitivement supprimé.
+                Cette action est irréversible.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={onRemove}>
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Métadonnées */}
