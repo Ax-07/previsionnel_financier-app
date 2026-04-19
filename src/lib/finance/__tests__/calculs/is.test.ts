@@ -79,7 +79,7 @@ const PARAMETRES_IS_STD = {
   tauxNormalN2: 25,
   creditImpotN2: 0,
   contributionVolN2: 0,
-} as Parameters<typeof calcISParAnnee>[3];
+} as unknown as Parameters<typeof calcISParAnnee>[3];
 
 describe("calcISParAnnee", () => {
   it("isIS = false → IS = 0 pour tous les exercices (régime IR)", () => {
@@ -94,7 +94,7 @@ describe("calcISParAnnee", () => {
   });
 
   it("parametresIS.isEnabled = false → IS = 0", () => {
-    const paramsDisabled = { ...PARAMETRES_IS_STD, isEnabled: false };
+    const paramsDisabled = { ...PARAMETRES_IS_STD, isEnabled: false } as typeof PARAMETRES_IS_STD;
     const res = calcISParAnnee(
       { y1: 100000, y2: 100000, y3: 100000 },
       ZERO_ACC,

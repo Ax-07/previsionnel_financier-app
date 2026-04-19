@@ -193,3 +193,27 @@ export const SCENARIO_SERVICE_PUR: ScenarioFinData = buildScenario({
 export const SCENARIO_EXERCICE_DECALE: ScenarioFinData = buildScenario({
   dateDemarrage: DATE_DEMARRAGE_DECALE,
 });
+
+/**
+ * CA = 0 sur toutes les années : activité présente mais montant nul.
+ * Teste la robustesse des builders (division par zéro dans les ratios, % CA, etc.)
+ */
+export const SCENARIO_ZERO_CA: ScenarioFinData = buildScenario({
+  activites: [
+    {
+      ...ACTIVITE_CREATION,
+      id: "act-zero",
+      montantN: 0,
+      montantN1: 0,
+      montantN2: 0,
+    },
+  ],
+});
+
+/**
+ * Aucune activité : tableaux totalement vides.
+ * Cas limite maximal — doit retourner des structures valides sans crash.
+ */
+export const SCENARIO_AUCUNE_ACTIVITE: ScenarioFinData = buildScenario({
+  activites: [],
+});

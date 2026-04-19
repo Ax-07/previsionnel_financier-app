@@ -59,6 +59,7 @@ describe("buildFinCalc — champs FinCalcResult", () => {
     "caf",
     "autofinancement",
     "capitalRembourse",
+    "variationBFR",
     "toExerciceKey",
   ];
 

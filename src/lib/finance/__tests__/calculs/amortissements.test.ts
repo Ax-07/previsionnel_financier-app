@@ -18,7 +18,7 @@ type ImmoInput = Parameters<typeof distribuerAmortParExercice>[0];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mkImmo(overrides: Partial<ImmoInput>): ImmoInput {
+function mkImmo(overrides: Partial<ImmoInput> = {}): ImmoInput {
   return {
     modeAmortissement: "LINEAIRE",
     montantHT: 12000,
