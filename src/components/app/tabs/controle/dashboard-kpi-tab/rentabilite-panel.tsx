@@ -7,6 +7,9 @@ import type { YearKey } from "@/lib/finance/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { findGroupCard, formatAmount } from "./utils";
 
+/** Formateur monétaire FR, hoisted au niveau module pour éviter une instanciation à chaque render. */
+const FR_CURRENCY = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
 // ── Statuts ────────────────────────────────────────────────────────────────────
 
 type Status = "bon" | "moyen" | "danger" | "neutre";
@@ -104,9 +107,8 @@ export function RentabilitePanel({ groups, yk }: RentabilitePanelProps) {
   const seuilStatus  = getSeuilStatus(caVal?.amount ?? 0, seuilVal?.amount ?? 0);
   const tresoStatus  = getTresoStatus(tresoVal?.amount ?? 0, runwayVal?.amount ?? 0);
 
-  const frCurrency = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   const fmtEur = (v: number | null | undefined) =>
-    v == null || !Number.isFinite(v) ? "—" : `${frCurrency.format(Math.round(v))} €`;
+    v == null || !Number.isFinite(v) ? "—" : `${FR_CURRENCY.format(Math.round(v))} €`;
   const fmtPct = (v: number | null | undefined) =>
     v == null || !Number.isFinite(v) ? "" : ` (${v.toFixed(1)} % du CA)`;
 

@@ -3,21 +3,22 @@ import type { KpiCard, KpiGroup } from "@/hooks/controle/use-dashboard-kpi-data"
 import type { YearKey } from "@/lib/finance/utils";
 import { YEAR_KEYS, findGroupCard, formatAmount } from "./utils";
 import { TrendBadge } from "./trend-badge";
+import { Fragment } from "react/jsx-runtime";
 
 const SECTIONS: Array<{ title: string; keys: Array<{ key: string; label: string }> }> = [
   {
     title: "Exploitation",
     keys: [
-      { key: "ebe",        label: "EBE / EBITDA" },
-      { key: "res_expl",   label: "Résultat d'exploitation" },
+      { key: "ebe", label: "EBE / EBITDA" },
+      { key: "res_expl", label: "Résultat d'exploitation" },
       { key: "res_courant", label: "Résultat courant" },
     ],
   },
   {
     title: "Structure",
     keys: [
-      { key: "fr",          label: "Fonds de roulement" },
-      { key: "bfr",         label: "BFR" },
+      { key: "fr", label: "Fonds de roulement" },
+      { key: "bfr", label: "BFR" },
       { key: "solde_annuel", label: "Trésorerie nette" },
     ],
   },
@@ -59,7 +60,7 @@ export function KpisSecondairesPanel({
           <tbody>
             {sections.map((section, si) =>
               section.rows.length > 0 ? (
-                <>
+                <Fragment key={section.title}>
                   <tr key={`section-${si}`} className="border-b bg-muted/10">
                     <td
                       colSpan={YEAR_KEYS.length + 1}
@@ -74,11 +75,7 @@ export function KpisSecondairesPanel({
                       {YEAR_KEYS.map((yk) => {
                         const val = card.values[yk];
                         const isGood =
-                          val.amount !== 0
-                            ? card.positive === "up"
-                              ? val.amount > 0
-                              : val.amount < 0
-                            : null;
+                          val.amount !== 0 ? (card.positive === "up" ? val.amount > 0 : val.amount < 0) : null;
                         return (
                           <td key={yk} className="px-3 py-1.5 text-right tabular-nums">
                             <div className="flex items-center justify-end gap-1">
@@ -93,16 +90,14 @@ export function KpisSecondairesPanel({
                               >
                                 {formatAmount(val.amount, card.format)}
                               </span>
-                              {val.trend != null && (
-                                <TrendBadge trend={val.trend} positive={card.positive} />
-                              )}
+                              {val.trend != null && <TrendBadge trend={val.trend} positive={card.positive} />}
                             </div>
                           </td>
                         );
                       })}
                     </tr>
                   ))}
-                </>
+                </Fragment>
               ) : null,
             )}
           </tbody>

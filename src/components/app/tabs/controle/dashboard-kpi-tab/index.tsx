@@ -19,17 +19,17 @@ import { useDashboardKpiData } from "@/hooks/controle/use-dashboard-kpi-data";
 import { useScenarioDataStore } from "@/stores/scenario-data-store";
 import type { YearKey } from "@/lib/finance/utils";
 import { YEAR_KEYS, findGroupCard } from "./utils";
-import { AnnuelChart } from "../../../../charts/annuel-chart";
-import { ChargesChart } from "../../../../charts/charges-chart";
-import { SeuilChart } from "../../../../charts/seuil-chart";
-import { PfChart } from "../../../../charts/pf-chart";
+import { AnnuelChart } from "@/components/charts/annuel-chart";
+import { ChargesChart } from "@/components/charts/charges-chart";
+import { SeuilChart } from "@/components/charts/seuil-chart";
+import { PfChart } from "@/components/charts/pf-chart";
 import { HeroKpiCard } from "./hero-kpi-card";
 import { KpisSecondairesPanel } from "./kpis-secondaires-panel";
 import { TableauMensuelPanel } from "./tableau-mensuel-panel";
 import { FinancementKpisPanel } from "./financement-kpis-panel";
 import { SoliditeFinancierePanel } from "./solidite-financiere-panel";
 import { RentabilitePanel } from "./rentabilite-panel";
-import { RentabiliteChart } from "../../../../charts/rentabilite-chart";
+import { RentabiliteChart } from "@/components/charts/rentabilite-chart";
 import { DashboardSkeleton } from "./dashboard-skeleton";
 import { ChartPanel } from "./chart-tooltip";
 
@@ -171,11 +171,6 @@ export default function DashboardKpiTab({ dossierId }: DashboardKpiTabProps) {
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             {/* KPI — 4 cartes statut avec seuils */}
             <SoliditeFinancierePanel groups={data.groups} yk={selectedYear} />
-
-            {/* Graphique — Besoins vs Ressources */}
-            <ChartPanel className="min-h-55" title="Plan de financement">
-              <PfChart data={data.charts.planFinancement} />
-            </ChartPanel>
           </div>
 
           <h3>Est-ce que le projet est rentable et viable dans le temps ?</h3>

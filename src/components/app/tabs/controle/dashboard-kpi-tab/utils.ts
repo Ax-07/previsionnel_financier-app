@@ -1,7 +1,7 @@
 import type { KpiCard, KpiGroup } from "@/hooks/controle/use-dashboard-kpi-data";
-import type { YearKey } from "@/lib/finance/utils";
+import { YEAR_KEYS_3 as YEAR_KEYS } from "@/lib/finance/utils";
 
-export const YEAR_KEYS: YearKey[] = ["y1", "y2", "y3"];
+export { YEAR_KEYS };
 
 export const frCurrency = new Intl.NumberFormat("fr-FR", {
   minimumFractionDigits: 0,
