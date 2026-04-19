@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BarChart2Icon } from "lucide-react";
 import SyntheseTab from "@/components/app/tabs/controle/synthese-tab";
 import CompteResultatTab from "@/components/app/tabs/controle/compte-resultat-tab";
@@ -21,7 +16,31 @@ import TVATab from "@/components/app/tabs/controle/tva-tab";
 import RatiosTab from "@/components/app/tabs/controle/ratios-tab";
 import { TresorerieTab } from "./controle/tresorerie-tab";
 import DashboardKpiTab from "./controle/dashboard-kpi-tab";
-import { usePrefetchControleStores } from "@/hooks/use-prefetch-controle-stores";
+import { SubTablistContainer } from "./shared/tablist-container";
+import { cn } from "@/lib/utils";
+
+// ── Mapping valeur → composant ────────────────────────────────────────────────
+
+const TAB_COMPONENTS: Record<string, React.FC<{ dossierId: string }>> = {
+  dashboard: DashboardKpiTab,
+  synthese: SyntheseTab,
+  "compte-resultat": CompteResultatTab,
+  sig: SigTab,
+  budget: BudgetTab,
+  caf: CafTab,
+  "seuil-rentabilite": SeuilRentabiliteTab,
+  bfr: BfrTab,
+  "tableau-financement": TableauFinancementTab,
+  "plan-financement": PlanFinancementTab,
+  bilan: BilanTab,
+  ratios: RatiosTab,
+  tresorerie: TresorerieTab,
+  tva: TVATab,
+};
+
+// ── Onglets qui ne sont PAS fullHeight (placeholders en développement) ────────
+
+const NOT_FULL_HEIGHT = new Set(["ratios-sectoriels", "previsionnel-etendu"]);
 
 const controleSubTabs = [
   { value: "dashboard", label: "Dashboard KPI" },
@@ -50,9 +69,7 @@ function PlaceholderContent({ label }: { label: string }) {
       </div>
       <div>
         <p className="font-semibold">{label}</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Ce tableau de contrôle est en cours de développement.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">Ce tableau de contrôle est en cours de développement.</p>
       </div>
     </div>
   );
@@ -63,87 +80,47 @@ interface ControleTabProps {
 }
 
 export default function ControleTab({ dossierId }: ControleTabProps) {
-  // Pré-charge tous les stores de contrôle dès l'entrée dans l'onglet Contrôle
-  usePrefetchControleStores(dossierId);
-
   return (
-    <Tabs
-      defaultValue="dashboard"
-      className="flex h-full flex-col gap-0"
-    >
-      {/* Barre des sous-onglets */}
-      <div className="shrink-0 overflow-x-auto overflow-y-hidden border-b bg-muted/30">
-        <TabsList
-          variant="line"
-          className="h-10 w-max min-w-full gap-0 rounded-none bg-transparent px-4"
-        >
+    <Tabs defaultValue="dashboard" className="flex h-full flex-col gap-0">
+      <SubTablistContainer>
+        <TabsList variant="line" className="h-10 gap-0 rounded-none bg-transparent px-4">
           {controleSubTabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
               value={tab.value}
-              className="shrink-0 px-3 text-xs font-medium"
+              className={cn(
+                "shrink-0 px-3 text-xs font-medium",
+                `group-data-[variant=line]/tabs-list:bg-transparent
+                 group-data-[variant=line]/tabs-list:hover:bg-accent-foreground/10
+                 group-data-[variant=line]/tabs-list:data-[state=active]:bg-accent-foreground/30 
+                 dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent 
+                 dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-accent-foreground/30
+                 rounded-b-none`,
+              )}
             >
               {tab.label}
             </TabsTrigger>
           ))}
         </TabsList>
-      </div>
+      </SubTablistContainer>
 
-      {/* Contenu des sous-onglets */}
       <div className="min-h-0 flex-1">
         {controleSubTabs.map((tab) => {
-          const isFullHeight =
-            tab.value === "dashboard" ||
-            tab.value === "compte-resultat" ||
-            tab.value === "sig" ||
-            tab.value === "budget" ||
-            tab.value === "caf" ||
-            tab.value === "seuil-rentabilite" ||
-            tab.value === "bfr" ||
-            tab.value === "tableau-financement" ||
-            tab.value === "plan-financement" ||
-            tab.value === "bilan" ||
-            tab.value === "tva" ||
-            tab.value === "ratios" ||
-            tab.value === "tresorerie" ||
-            tab.value === "synthese";
+          const Component = TAB_COMPONENTS[tab.value];
+          const isFullHeight = !NOT_FULL_HEIGHT.has(tab.value);
           return (
             <TabsContent
               key={tab.value}
               value={tab.value}
               forceMount
-              className={isFullHeight ? "h-full data-[state=inactive]:hidden" : "h-full p-6 data-[state=inactive]:hidden"}
+              className={
+                isFullHeight ? "h-full data-[state=inactive]:hidden" : "h-full p-6 data-[state=inactive]:hidden"
+              }
             >
-              {tab.value === "dashboard" ? (
-                <DashboardKpiTab dossierId={dossierId} />
-              ) : tab.value === "synthese" ? (
-                <SyntheseTab dossierId={dossierId} />
-              ) : tab.value === "compte-resultat" ? (
-                <CompteResultatTab dossierId={dossierId} />
-              ) : tab.value === "sig" ? (
-                <SigTab dossierId={dossierId} />
-              ) : tab.value === "budget" ? (
-                <BudgetTab dossierId={dossierId} />
-              ) : tab.value === "caf" ? (
-                <CafTab dossierId={dossierId} />
-              ) : tab.value === "seuil-rentabilite" ? (
-                <SeuilRentabiliteTab dossierId={dossierId} />
-              ) : tab.value === "bfr" ? (
-                <BfrTab dossierId={dossierId} />
-              ) : tab.value === "tableau-financement" ? (
-                <TableauFinancementTab dossierId={dossierId} />
-              ) : tab.value === "plan-financement" ? (
-                <PlanFinancementTab dossierId={dossierId} />
-              ) : tab.value === "bilan" ? (
-                <BilanTab dossierId={dossierId} />
-              ) : tab.value === "tva" ? (
-                <TVATab dossierId={dossierId} />
-              ) : tab.value === "ratios" ? (
-                <RatiosTab dossierId={dossierId} />
-              ) : tab.value === "tresorerie" ? (
-                <TresorerieTab dossierId={dossierId} />
+              {Component ? (
+                <Component dossierId={dossierId} />
               ) : (
-                <PlaceholderContent label={(tab as { label: string }).label} />
+                <PlaceholderContent label={tab.label} />
               )}
             </TabsContent>
           );
@@ -152,4 +129,3 @@ export default function ControleTab({ dossierId }: ControleTabProps) {
     </Tabs>
   );
 }
-
