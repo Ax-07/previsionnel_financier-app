@@ -1,20 +1,18 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import { n, type YearKey, type YearAcc } from "@/lib/finance/utils";
 
-export type YAcc = YearAcc;
-
-// ── Intérêts d'emprunts (depuis l'échéancier) ────────────────────────────────
+// â”€â”€ IntÃ©rÃªts d'emprunts (depuis l'Ã©chÃ©ancier) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Agrège intérêts + assurances de tous les emprunts actifs par exercice fiscal.
+ * AgrÃ¨ge intÃ©rÃªts + assurances de tous les emprunts actifs par exercice fiscal.
  *
- * @param toExerciceKey – mappeur date → "y1"|"y2"|"y3"|null (de makeExerciceHelpers)
+ * @param toExerciceKey â€“ mappeur date â†’ "y1"|"y2"|"y3"|null (de makeExerciceHelpers)
  */
 export function calcInteretsEmprunts(
   data: Pick<ScenarioFinData, "emprunts">,
   toExerciceKey: (date: Date | string) => YearKey | null,
-): YAcc {
-  const acc: YAcc = { y1: 0, y2: 0, y3: 0 };
+): YearAcc {
+  const acc: YearAcc = { y1: 0, y2: 0, y3: 0 };
   for (const emprunt of data.emprunts) {
     for (const ligne of emprunt.lignesEcheancier) {
       const dateStr =
@@ -30,17 +28,17 @@ export function calcInteretsEmprunts(
   return acc;
 }
 
-// ── Capital remboursé (depuis l'échéancier) ───────────────────────────────────
+// â”€â”€ Capital remboursÃ© (depuis l'Ã©chÃ©ancier) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Agrège le capital amorti (remboursement principal) par exercice fiscal.
+ * AgrÃ¨ge le capital amorti (remboursement principal) par exercice fiscal.
  * Utile pour le tableau de financement et le bilan.
  */
 export function calcCapitalRembourse(
   data: Pick<ScenarioFinData, "emprunts">,
   toExerciceKey: (date: Date | string) => YearKey | null,
-): YAcc {
-  const acc: YAcc = { y1: 0, y2: 0, y3: 0 };
+): YearAcc {
+  const acc: YearAcc = { y1: 0, y2: 0, y3: 0 };
   for (const emprunt of data.emprunts) {
     for (const ligne of emprunt.lignesEcheancier) {
       const dateStr =
@@ -56,17 +54,17 @@ export function calcCapitalRembourse(
   return acc;
 }
 
-// ── Frais de dossier (depuis l'échéancier) ───────────────────────────────────
+// â”€â”€ Frais de dossier (depuis l'Ã©chÃ©ancier) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Agrège les frais de dossier par exercice fiscal.
+ * AgrÃ¨ge les frais de dossier par exercice fiscal.
  * Source unique : emprunt.fraisDossier + emprunt.dateDéblocage (champs directs DB).
  */
 export function calcFraisDossier(
   data: Pick<ScenarioFinData, "emprunts">,
   toExerciceKey: (date: Date | string) => YearKey | null,
-): YAcc {
-  const acc: YAcc = { y1: 0, y2: 0, y3: 0 };
+): YearAcc {
+  const acc: YearAcc = { y1: 0, y2: 0, y3: 0 };
   for (const emprunt of data.emprunts) {
     const frais = n(emprunt.fraisDossier ?? 0);
     if (frais <= 0) continue;

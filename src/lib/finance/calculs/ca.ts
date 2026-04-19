@@ -1,11 +1,9 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import { n, sumBy, type YearAcc } from "@/lib/finance/utils";
 
-type YAcc = YearAcc;
+// â”€â”€ CA par type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// ── CA par type ──────────────────────────────────────────────────────────────
-
-export function calcCA(data: Pick<ScenarioFinData, "activites">): YAcc {
+export function calcCA(data: Pick<ScenarioFinData, "activites">): YearAcc {
   const rows = data.activites.filter((a) => a.actif !== false);
   return {
     y1: sumBy(rows, (r) => n(r.montantN)),
@@ -17,7 +15,7 @@ export function calcCA(data: Pick<ScenarioFinData, "activites">): YAcc {
 export function calcCAByType(
   data: Pick<ScenarioFinData, "activites">,
   type: string,
-): YAcc {
+): YearAcc {
   const rows = data.activites.filter(
     (a) => a.actif !== false && a.typeActivite === type,
   );
@@ -28,65 +26,17 @@ export function calcCAByType(
   };
 }
 
-// ── Stocks ───────────────────────────────────────────────────────────────────
-
-export function calcStocks(data: Pick<ScenarioFinData, "activites">): {
-  achatsEffectues: YAcc;
-  stockInitial: YAcc;
-  stockFinal: YAcc;
-  varStock: YAcc;
-  achatsConsommes: YAcc;
-} {
-  const achatsRows = data.activites
-    .filter((a) => a.actif !== false && a.typeActivite !== "PRESTATION_SERVICES")
-    .map((a) => ({
-      montantN: n(a.montantN),
-      montantN1: n(a.montantN1),
-      montantN2: n(a.montantN2),
-      tauxMarge: n(a.tauxMarge),
-      stocks: a.stocks ?? 0,
-    }));
-
-  // achatsConsommés = CA × (1 − tauxMarge) — primal, indépendant de la variation de stock
-  const achatsConsommes: YAcc = {
-    y1: sumBy(achatsRows, (r) => r.montantN * Math.max(0, 1 - r.tauxMarge / 100)),
-    y2: sumBy(achatsRows, (r) => r.montantN1 * Math.max(0, 1 - r.tauxMarge / 100)),
-    y3: sumBy(achatsRows, (r) => r.montantN2 * Math.max(0, 1 - r.tauxMarge / 100)),
-  };
-
-  // Convention commerciale 360 jours (RCA)
-  const sfY1 = sumBy(achatsRows, (r) => (r.montantN * Math.max(0, 1 - r.tauxMarge / 100) * r.stocks) / 360);
-  const sfY2 = sumBy(achatsRows, (r) => (r.montantN1 * Math.max(0, 1 - r.tauxMarge / 100) * r.stocks) / 360);
-  const sfY3 = sumBy(achatsRows, (r) => (r.montantN2 * Math.max(0, 1 - r.tauxMarge / 100) * r.stocks) / 360);
-
-  const stockFinal: YAcc = { y1: sfY1, y2: sfY2, y3: sfY3 };
-  const stockInitial: YAcc = { y1: 0, y2: sfY1, y3: sfY2 };
-  const varStock: YAcc = {
-    y1: sfY1 - 0,
-    y2: sfY2 - sfY1,
-    y3: sfY3 - sfY2,
-  };
-  // achatsEffectués (avec variation de stock) = achatsConsommés + SF − SI
-  const achatsEffectues: YAcc = {
-    y1: achatsConsommes.y1 + stockFinal.y1 - stockInitial.y1,
-    y2: achatsConsommes.y2 + stockFinal.y2 - stockInitial.y2,
-    y3: achatsConsommes.y3 + stockFinal.y3 - stockInitial.y3,
-  };
-
-  return { achatsEffectues, stockInitial, stockFinal, varStock, achatsConsommes };
-}
-
-// ── Charges externes ─────────────────────────────────────────────────────────
+// â”€â”€ Charges externes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcChargesExternes(
   data: Pick<ScenarioFinData, "fournitures" | "services">,
-): { fournitures: YAcc; services: YAcc; total: YAcc } {
-  const f: YAcc = {
+): { fournitures: YearAcc; services: YearAcc; total: YearAcc } {
+  const f: YearAcc = {
     y1: sumBy(data.fournitures.filter((r) => r.actif !== false), (r) => n(r.montantN)),
     y2: sumBy(data.fournitures.filter((r) => r.actif !== false), (r) => n(r.montantN1)),
     y3: sumBy(data.fournitures.filter((r) => r.actif !== false), (r) => n(r.montantN2)),
   };
-  const s: YAcc = {
+  const s: YearAcc = {
     y1: sumBy(data.services.filter((r) => r.actif !== false), (r) => n(r.montantN)),
     y2: sumBy(data.services.filter((r) => r.actif !== false), (r) => n(r.montantN1)),
     y3: sumBy(data.services.filter((r) => r.actif !== false), (r) => n(r.montantN2)),
@@ -98,11 +48,11 @@ export function calcChargesExternes(
   };
 }
 
-// ── Subventions d'exploitation ────────────────────────────────────────────────
+// â”€â”€ Subventions d'exploitation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcSubventions(
   data: Pick<ScenarioFinData, "subventionsExploitation">,
-): YAcc {
+): YearAcc {
   const rows = data.subventionsExploitation.filter((r) => r.actif !== false);
   return {
     y1: sumBy(rows, (r) => n(r.montantN)),
@@ -111,11 +61,11 @@ export function calcSubventions(
   };
 }
 
-// ── Impôts et taxes ───────────────────────────────────────────────────────────
+// â”€â”€ Impôts et taxes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcImpotsTaxes(
   data: Pick<ScenarioFinData, "impotsTaxes">,
-): YAcc {
+): YearAcc {
   const rows = data.impotsTaxes.filter((r) => r.actif !== false);
   return {
     y1: sumBy(rows, (r) => n(r.montantN ?? 0)),
@@ -124,11 +74,11 @@ export function calcImpotsTaxes(
   };
 }
 
-// ── Commissions d'activité ────────────────────────────────────────────────────
+// â”€â”€ Commissions d'activité â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcCommissions(
   data: Pick<ScenarioFinData, "activiteCommissions">,
-): YAcc {
+): YearAcc {
   const rows = data.activiteCommissions.filter((r) => r.actif !== false);
   return {
     y1: sumBy(rows, (r) => n(r.montantN)),
@@ -137,13 +87,13 @@ export function calcCommissions(
   };
 }
 
-// ── Productions immobilisées ──────────────────────────────────────────────────
+// â”€â”€ Productions immobilisées â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcProdImmo(
   data: Pick<ScenarioFinData, "productionsImmobilisees">,
   toExerciceKey: (date: Date | string) => "y1" | "y2" | "y3" | null,
-): YAcc {
-  const acc: YAcc = { y1: 0, y2: 0, y3: 0 };
+): YearAcc {
+  const acc: YearAcc = { y1: 0, y2: 0, y3: 0 };
   for (const p of data.productionsImmobilisees) {
     if (p.actif === false) continue;
     const yk = toExerciceKey(p.date);
@@ -152,11 +102,11 @@ export function calcProdImmo(
   return acc;
 }
 
-// ── Transferts de charges (produits) ─────────────────────────────────────────
+// â”€â”€ Transferts de charges (produits) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcTransferts(
   data: Pick<ScenarioFinData, "transfertsProduits">,
-): YAcc {
+): YearAcc {
   const rows = data.transfertsProduits.filter((r) => r.actif !== false);
   return {
     y1: sumBy(rows, (r) => n(r.montantN)),
@@ -165,11 +115,11 @@ export function calcTransferts(
   };
 }
 
-// ── Autres produits de gestion courante ──────────────────────────────────────
+// â”€â”€ Autres produits de gestion courante â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcAutresProdGestion(
   data: Pick<ScenarioFinData, "gestionCouranteProduits">,
-): YAcc {
+): YearAcc {
   const rows = data.gestionCouranteProduits.filter((r) => r.actif !== false);
   return {
     y1: sumBy(rows, (r) => n(r.montantN)),
@@ -178,11 +128,11 @@ export function calcAutresProdGestion(
   };
 }
 
-// ── Autres charges de gestion courante ───────────────────────────────────────
+// â”€â”€ Autres charges de gestion courante â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcAutresChargesGestion(
   data: Pick<ScenarioFinData, "chargesGestionCourante">,
-): YAcc {
+): YearAcc {
   const rows = data.chargesGestionCourante.filter((r) => r.actif !== false);
   return {
     y1: sumBy(rows, (r) => n(r.montantN)),
@@ -190,5 +140,3 @@ export function calcAutresChargesGestion(
     y3: sumBy(rows, (r) => n(r.montantN2)),
   };
 }
-
-export { n, sumBy };

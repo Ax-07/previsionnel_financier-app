@@ -94,6 +94,158 @@ export interface BfrCalcResult {
   chargesExtRows: BfrChargeExtRow[];
 }
 
+// ── Helper privé ───────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Calcule les dettes de personnel, dirigeants et TNS en fin d'exercice (clôture).
+ *
+ * Extrait de `calcBfr()` pour améliorer la lisibilité et la testabilité.
+ * Conforme §12.2 : encours calculé via séries mensuelles réelles, jamais forfait annuel ÷ 12.
+ *
+ * @param data      Données brutes du scénario
+ * @param moisDebut Mois de début de l'exercice (FinCalcResult.moisDebut)
+ * @returns         Dettes personnel en fin d'exercice par exercice {y1, y2, y3}
+ */
+function calcDettesPersonnelTNS(
+  data: ScenarioFinData,
+  moisDebut: number,
+): { y1: number; y2: number; y3: number } {
+  // Convention RCA : 0=mois courant (M), 1=M+1, 2=M+2, 3=M+3.
+  // Si paiement en mois courant (delay=0), tout est payé dans le mois → aucune
+  // dette résiduelle à la clôture. Si delay=1, le mois 12 (décembre) est encore dû.
+  // Si delay=2, les mois 11 et 12 sont encore dus, etc.
+  // Cohérent avec shiftYk3(series, moisPaiementSalaires) dans decaissements.ts.
+  const delaiPaie = Math.max(0, n(data.scenario.parametres?.moisPaiementSalaires ?? 1));
+
+  /** Somme des derniers `delay` mois d'une série mensuelle (encours fin d'exercice). */
+  function sumLastMonths(series: MonthlySeries, delay: number): number {
+    if (delay <= 0) return 0;
+    let acc = 0;
+    for (let i = Math.max(0, 12 - delay); i < 12; i++) acc += series[i] ?? 0;
+    return acc;
+  }
+
+  let lastPersonnelY1 = 0, lastPersonnelY2 = 0, lastPersonnelY3 = 0;
+
+  for (const sal of (data.salaries ?? []).filter((s) => s.actif !== false)) {
+    const tCotPat = n(sal.tauxCotPat) / 100;
+    const b1 = salarieMonthlyBrut(n(sal.montantN), sal.detailMensuelN, moisDebut);
+    const b2 = salarieMonthlyBrut(n(sal.montantN1), sal.detailMensuelN1, moisDebut);
+    const b3 = salarieMonthlyBrut(n(sal.montantN2), sal.detailMensuelN2, moisDebut);
+    // Coût total employeur = brut × (1 + tCotPat) — les cotisations salariales
+    // sont reversées à l'organisme par l'employeur donc comptent dans la dette.
+    lastPersonnelY1 += sumLastMonths(b1, delaiPaie) * (1 + tCotPat);
+    lastPersonnelY2 += sumLastMonths(b2, delaiPaie) * (1 + tCotPat);
+    lastPersonnelY3 += sumLastMonths(b3, delaiPaie) * (1 + tCotPat);
+  }
+
+  for (const d of (data.dirigeants ?? []).filter((d) => d.actif !== false)) {
+    const b1 = salarieMonthlyBrut(n(d.montantN), d.detailMensuelN, moisDebut);
+    const b2 = salarieMonthlyBrut(n(d.montantN1), d.detailMensuelN1, moisDebut);
+    const b3 = salarieMonthlyBrut(n(d.montantN2), d.detailMensuelN2, moisDebut);
+    lastPersonnelY1 += sumLastMonths(b1, delaiPaie);
+    lastPersonnelY2 += sumLastMonths(b2, delaiPaie);
+    lastPersonnelY3 += sumLastMonths(b3, delaiPaie);
+  }
+
+  // TNS : calcul de la dette URSSAF en fin d'exercice selon le mode de calcul.
+  const tnsModeCalcul = data.scenario.parametres?.tnsModeCalcul ?? "DEFINITIF";
+  const tnsActifs = (data.cotisationsTNS ?? []).filter((c) => c.actif !== false);
+  const tnsDefY1 = tnsActifs.reduce((s, c) => s + n(c.montantN), 0);
+  const tnsDefY2 = tnsActifs.reduce((s, c) => s + n(c.montantN1), 0);
+  const tnsDefY3 = tnsActifs.reduce((s, c) => s + n(c.montantN2), 0);
+
+  // Séparation URSSAF obligatoires (calcAuto=true) / facultatives (calcAuto=false, ex. Madelin)
+  // Utilisée en mode DEBUT_ACTIVITE_FORFAIT pour éviter de gonfler la dette de régularisation URSSAF
+  // avec des montants qui ne passent pas par l'URSSAF (cotisations facultatives).
+  const tnsUrssafActifs = tnsActifs.filter((c) => c.calcAuto);
+  const tnsFacActifs    = tnsActifs.filter((c) => !c.calcAuto);
+  const tnsUrssafY1 = tnsUrssafActifs.reduce((s, c) => s + n(c.montantN), 0);
+  const tnsUrssafY2 = tnsUrssafActifs.reduce((s, c) => s + n(c.montantN1), 0);
+  const tnsUrssafY3 = tnsUrssafActifs.reduce((s, c) => s + n(c.montantN2), 0);
+  const tnsFacY1 = tnsFacActifs.reduce((s, c) => s + n(c.montantN), 0);
+  const tnsFacY2 = tnsFacActifs.reduce((s, c) => s + n(c.montantN1), 0);
+  const tnsFacY3 = tnsFacActifs.reduce((s, c) => s + n(c.montantN2), 0);
+
+  if (tnsModeCalcul === "DEBUT_ACTIVITE_FORFAIT" && (data.dirigeants ?? []).filter((d) => d.actif !== false).length > 0) {
+    // En mode « Début d'activité forfait » :
+    // La charge comptable (CR) = montants DEFINITIFS.
+    // L'URSSAF encaisse des appels PROVISIONNELS (forfait) pendant l'exercice,
+    // puis réclame la régularisation l'exercice suivant.
+    // → Dette URSSAF au bilan = DEFINITIF_annuel - forfait_provisoire_payé_dans_l'année
+    //   = montant de la régularisation à payer à l'URSSAF l'année suivante.
+    const regime = (data.scenario.parametres?.tnsRegimeSocial ?? "commerce") as RegimeSocial;
+    const tnsDir = (data.dirigeants ?? [])
+      .filter((d) => d.actif !== false)
+      .map((d) => ({
+        actif: d.actif,
+        montantN: n(d.montantN),
+        montantN1: n(d.montantN1),
+        montantN2: n(d.montantN2),
+        tauxFixe: n(d.tauxFixe),
+        exonerationTNS: d.exonerationTNS ?? undefined,
+      }));
+    const { remuN, remuN1, remuN2 } = remuTNSBase(tnsDir);
+    const acreN = detecterACRE(tnsDir);
+    const brutN  = trouverBrutPourNet(remuN,  regime, acreN,  { mode: "DEFINITIF" }).brut;
+    const brutN1 = trouverBrutPourNet(remuN1, regime, false, { mode: "DEFINITIF" }).brut;
+    const brutN2 = trouverBrutPourNet(remuN2, regime, false, { mode: "DEFINITIF" }).brut;
+    // Fix H4 : try/catch — un échec de simulerTresorerieUrssafSur3Ans ne doit
+    // pas rendre l'onglet BFR entièrement inutilisable.
+    let treso: ReturnType<typeof simulerTresorerieUrssafSur3Ans>;
+    try {
+      treso = simulerTresorerieUrssafSur3Ans({ brutN, brutN1, brutN2, regime, acreN });
+    } catch (err) {
+      console.error("[calculs/bfr] simulerTresorerieUrssafSur3Ans a échoué — dettes TNS ignorées", err);
+      treso = [
+        { totalPaye: 0, regularisation: 0 },
+        { totalPaye: 0, regularisation: 0 },
+        { totalPaye: 0, regularisation: 0 },
+      ] as ReturnType<typeof simulerTresorerieUrssafSur3Ans>;
+    }
+    // Dette URSSAF = régularisation future + dernier delaiPaie mois de cash en transit.
+    //
+    // Formule par exercice i :
+    //   dettes_i = max(0, DEFINITIF_i - PROVISIONNEL_i) + totalPaye_i / 12 × delaiPaie
+    //
+    // • DEFINITIF_i - PROVISIONNEL_i  = régularisation due à l'URSSAF l'exercice suivant.
+    //   provN = totalPaye_i - regularisation_i (= appels provisionnels seuls, sans régul précédente).
+    //   Note : treso[0].regularisation = 0 (pas de régul l'année 1).
+    //
+    // • totalPaye_i / 12 × delaiPaie = transit (cotisations du dernier mois non encore décaissées).
+    //   Cohérent avec shiftYk3(uniformMonthly(totalPaye), delaiPaie) dans decaissements.ts.
+    //
+    // Cette formule préserve l'égalité trésorerie-bilan = solde-tableau pour les 3 exercices.
+    const provN  = treso[0].totalPaye;                               // = forfN (regularisation = 0)
+    const provN1 = treso[1].totalPaye - treso[1].regularisation;     // = forfN1 seul
+    const provN2 = treso[2].totalPaye - treso[2].regularisation;     // = provisionnelN2
+
+    // URSSAF obligatoires : régularisation de fin d'exercice + transit en cours de paiement
+    lastPersonnelY1 += Math.max(0, tnsUrssafY1 - provN)  + treso[0].totalPaye / 12 * delaiPaie;
+    lastPersonnelY2 += Math.max(0, tnsUrssafY2 - provN1) + treso[1].totalPaye / 12 * delaiPaie;
+    lastPersonnelY3 += Math.max(0, tnsUrssafY3 - provN2) + treso[2].totalPaye / 12 * delaiPaie;
+    // Cotisations facultatives (Madelin etc.) : traitement DEFINITIF (encours mensuel uniforme)
+    lastPersonnelY1 += tnsFacY1 / 12 * delaiPaie;
+    lastPersonnelY2 += tnsFacY2 / 12 * delaiPaie;
+    lastPersonnelY3 += tnsFacY3 / 12 * delaiPaie;
+  } else {
+    // Mode DEFINITIF : encours de paiement standard — derniers delaiPaie mois d'appels uniformes.
+    // Si paiement mois courant (delay=0), aucune dette en fin d'exercice.
+    lastPersonnelY1 += tnsDefY1 / 12 * delaiPaie;
+    lastPersonnelY2 += tnsDefY2 / 12 * delaiPaie;
+    lastPersonnelY3 += tnsDefY3 / 12 * delaiPaie;
+  }
+
+  // Taxes sur salaires : si date précise → déjà payée avant clôture → 0 ; sinon encours × delay
+  for (const taxe of data.taxesSalaires ?? []) {
+    if (!taxe.dateN) lastPersonnelY1 += n(taxe.montantN) / 12 * delaiPaie;
+    if (!taxe.dateN1) lastPersonnelY2 += n(taxe.montantN1) / 12 * delaiPaie;
+    if (!taxe.dateN2) lastPersonnelY3 += n(taxe.montantN2) / 12 * delaiPaie;
+  }
+
+  return { y1: lastPersonnelY1, y2: lastPersonnelY2, y3: lastPersonnelY3 };
+}
+
 /**
  * Source unique de vérité pour le calcul du BFR.
  *
@@ -104,7 +256,10 @@ export interface BfrCalcResult {
  * @param data  Données du scénario (fetchScenarioData)
  * @param fc    Résultat de buildFinCalc (impôts, charges personnel, IS)
  */
-export function calcBfr(data: ScenarioFinData, fc: FinCalcResult): BfrCalcResult {
+export function calcBfr(
+  data: ScenarioFinData,
+  fc: Pick<FinCalcResult, "stockFinal" | "tva" | "moisDebut" | "isParAnnee">,
+): BfrCalcResult {
   const { isIS, activites, fournitures, services, immobilisations, scenario } = data;
   const actifsActifs = activites.filter((a) => a.actif !== false);
   const achatsActifsMois = actifsActifs.filter((a) => a.typeActivite !== "PRESTATION_SERVICES");
@@ -286,135 +441,9 @@ export function calcBfr(data: ScenarioFinData, fc: FinCalcResult): BfrCalcResult
   }
   const dettesImpots: YearAcc4 = { y0: 0, y1: diY1, y2: diY2, y3: diY3 };
 
-  // Dettes personnel : encours en fin d'exercice dépend du délai de paiement.
-  // Convention RCA : 0=mois courant (M), 1=M+1, 2=M+2, 3=M+3.
-  // Si paiement en mois courant (delay=0), tout est payé dans le mois → aucune
-  // dette résiduelle à la clôture. Si delay=1, le mois 12 (décembre) est encore dû.
-  // Si delay=2, les mois 11 et 12 sont encore dus, etc.
-  // Cohérent avec shiftYk3(series, moisPaiementSalaires) dans decaissements.ts.
-  const moisDebutBfr = fc.moisDebut;
-  const delaiPaie = Math.max(0, n(data.scenario.parametres?.moisPaiementSalaires ?? 1));
-
-  /** Somme des derniers `delay` mois d'une série mensuelle (encours fin d'exercice). */
-  function sumLastMonths(series: MonthlySeries, delay: number): number {
-    if (delay <= 0) return 0;
-    let acc = 0;
-    for (let i = Math.max(0, 12 - delay); i < 12; i++) acc += series[i] ?? 0;
-    return acc;
-  }
-
-  let lastPersonnelY1 = 0, lastPersonnelY2 = 0, lastPersonnelY3 = 0;
-
-  for (const sal of (data.salaries ?? []).filter((s) => s.actif !== false)) {
-    const tCotPat = n(sal.tauxCotPat) / 100;
-    const b1 = salarieMonthlyBrut(n(sal.montantN), sal.detailMensuelN, moisDebutBfr);
-    const b2 = salarieMonthlyBrut(n(sal.montantN1), sal.detailMensuelN1, moisDebutBfr);
-    const b3 = salarieMonthlyBrut(n(sal.montantN2), sal.detailMensuelN2, moisDebutBfr);
-    // Coût total employeur = brut × (1 + tCotPat) — les cotisations salariales
-    // sont reversées à l'organisme par l'employeur donc comptent dans la dette.
-    lastPersonnelY1 += sumLastMonths(b1, delaiPaie) * (1 + tCotPat);
-    lastPersonnelY2 += sumLastMonths(b2, delaiPaie) * (1 + tCotPat);
-    lastPersonnelY3 += sumLastMonths(b3, delaiPaie) * (1 + tCotPat);
-  }
-
-  for (const d of (data.dirigeants ?? []).filter((d) => d.actif !== false)) {
-    const b1 = salarieMonthlyBrut(n(d.montantN), d.detailMensuelN, moisDebutBfr);
-    const b2 = salarieMonthlyBrut(n(d.montantN1), d.detailMensuelN1, moisDebutBfr);
-    const b3 = salarieMonthlyBrut(n(d.montantN2), d.detailMensuelN2, moisDebutBfr);
-    lastPersonnelY1 += sumLastMonths(b1, delaiPaie);
-    lastPersonnelY2 += sumLastMonths(b2, delaiPaie);
-    lastPersonnelY3 += sumLastMonths(b3, delaiPaie);
-  }
-
-  // TNS : calcul de la dette URSSAF en fin d'exercice selon le mode de calcul.
-  const tnsModeCalcul = data.scenario.parametres?.tnsModeCalcul ?? "DEFINITIF";
-  const tnsActifs = (data.cotisationsTNS ?? []).filter((c) => c.actif !== false);
-  const tnsDefY1 = tnsActifs.reduce((s, c) => s + n(c.montantN), 0);
-  const tnsDefY2 = tnsActifs.reduce((s, c) => s + n(c.montantN1), 0);
-  const tnsDefY3 = tnsActifs.reduce((s, c) => s + n(c.montantN2), 0);
-
-  // Séparation URSSAF obligatoires (calcAuto=true) / facultatives (calcAuto=false, ex. Madelin)
-  // Utilisée en mode DEBUT_ACTIVITE_FORFAIT pour éviter de gonfler la dette de régularisation URSSAF
-  // avec des montants qui ne passent pas par l'URSSAF (cotisations facultatives).
-  const tnsUrssafActifs = tnsActifs.filter((c) => c.calcAuto);
-  const tnsFacActifs    = tnsActifs.filter((c) => !c.calcAuto);
-  const tnsUrssafY1 = tnsUrssafActifs.reduce((s, c) => s + n(c.montantN), 0);
-  const tnsUrssafY2 = tnsUrssafActifs.reduce((s, c) => s + n(c.montantN1), 0);
-  const tnsUrssafY3 = tnsUrssafActifs.reduce((s, c) => s + n(c.montantN2), 0);
-  const tnsFacY1 = tnsFacActifs.reduce((s, c) => s + n(c.montantN), 0);
-  const tnsFacY2 = tnsFacActifs.reduce((s, c) => s + n(c.montantN1), 0);
-  const tnsFacY3 = tnsFacActifs.reduce((s, c) => s + n(c.montantN2), 0);
-
-  if (tnsModeCalcul === "DEBUT_ACTIVITE_FORFAIT" && (data.dirigeants ?? []).filter((d) => d.actif !== false).length > 0) {
-    // En mode « Début d'activité forfait » :
-    // La charge comptable (CR) = montants DEFINITIFS.
-    // L'URSSAF encaisse des appels PROVISIONNELS (forfait) pendant l'exercice,
-    // puis réclame la régularisation l'exercice suivant.
-    // → Dette URSSAF au bilan = DEFINITIF_annuel - forfait_provisoire_payé_dans_l'année
-    //   = montant de la régularisation à payer à l'URSSAF l'année suivante.
-    const regime = (data.scenario.parametres?.tnsRegimeSocial ?? "commerce") as RegimeSocial;
-    const tnsDir = (data.dirigeants ?? [])
-      .filter((d) => d.actif !== false)
-      .map((d) => ({
-        actif: d.actif,
-        montantN: n(d.montantN),
-        montantN1: n(d.montantN1),
-        montantN2: n(d.montantN2),
-        tauxFixe: n(d.tauxFixe),
-        exonerationTNS: d.exonerationTNS ?? undefined,
-      }));
-    const { remuN, remuN1, remuN2 } = remuTNSBase(tnsDir);
-    const acreN = detecterACRE(tnsDir);
-    const brutN  = trouverBrutPourNet(remuN,  regime, acreN,  { mode: "DEFINITIF" }).brut;
-    const brutN1 = trouverBrutPourNet(remuN1, regime, false, { mode: "DEFINITIF" }).brut;
-    const brutN2 = trouverBrutPourNet(remuN2, regime, false, { mode: "DEFINITIF" }).brut;
-    const treso = simulerTresorerieUrssafSur3Ans({ brutN, brutN1, brutN2, regime, acreN });
-    // Dette URSSAF = régularisation future + dernier délaiPaie mois de cash en transit.
-    //
-    // Formule par exercice i :
-    //   dettes_i = max(0, DEFINITIF_i - PROVISIONNEL_i) + totalPaye_i / 12 × delaiPaie
-    //
-    // • DEFINITIF_i - PROVISIONNEL_i  = régularisation due à l'URSSAF l'exercice suivant.
-    //   provN = totalPaye_i - regularisation_i (= appels provisionnels seuls, sans régul précédente).
-    //   Note : treso[0].regularisation = 0 (pas de régul l'année 1).
-    //
-    // • totalPaye_i / 12 × delaiPaie = transit (cotisations du dernier mois non encore décaissées).
-    //   Cohérent avec shiftYk3(uniformMonthly(totalPaye), delaiPaie) dans decaissements.ts.
-    //
-    // Cette formule préserve l'égalité trésorerie-bilan = solde-tableau pour les 3 exercices.
-    const provN  = treso[0].totalPaye;                               // = forfN (regularisation = 0)
-    const provN1 = treso[1].totalPaye - treso[1].regularisation;     // = forfN1 seul
-    const provN2 = treso[2].totalPaye - treso[2].regularisation;     // = provisionnelN2
-
-    // URSSAF obligatoires : régularisation de fin d'exercice + transit en cours de paiement
-    lastPersonnelY1 += Math.max(0, tnsUrssafY1 - provN)  + treso[0].totalPaye / 12 * delaiPaie;
-    lastPersonnelY2 += Math.max(0, tnsUrssafY2 - provN1) + treso[1].totalPaye / 12 * delaiPaie;
-    lastPersonnelY3 += Math.max(0, tnsUrssafY3 - provN2) + treso[2].totalPaye / 12 * delaiPaie;
-    // Cotisations facultatives (Madelin etc.) : traitement DEFINITIF (encours mensuel uniforme)
-    lastPersonnelY1 += tnsFacY1 / 12 * delaiPaie;
-    lastPersonnelY2 += tnsFacY2 / 12 * delaiPaie;
-    lastPersonnelY3 += tnsFacY3 / 12 * delaiPaie;
-  } else {
-    // Mode DEFINITIF : encours de paiement standard — derniers délaiPaie mois d'appels uniformes.
-    // Si paiement mois courant (delay=0), aucune dette en fin d'exercice.
-    lastPersonnelY1 += tnsDefY1 / 12 * delaiPaie;
-    lastPersonnelY2 += tnsDefY2 / 12 * delaiPaie;
-    lastPersonnelY3 += tnsDefY3 / 12 * delaiPaie;
-  }
-
-  // Taxes sur salaires : si date précise → déjà payée avant clôture → 0 ; sinon encours × delay
-  for (const taxe of data.taxesSalaires ?? []) {
-    if (!taxe.dateN) lastPersonnelY1 += n(taxe.montantN) / 12 * delaiPaie;
-    if (!taxe.dateN1) lastPersonnelY2 += n(taxe.montantN1) / 12 * delaiPaie;
-    if (!taxe.dateN2) lastPersonnelY3 += n(taxe.montantN2) / 12 * delaiPaie;
-  }
-
-  const dettesPersonnel: YearAcc4 = {
-    y0: 0,
-    y1: lastPersonnelY1,
-    y2: lastPersonnelY2,
-    y3: lastPersonnelY3,
-  };
+  // Dettes personnel (salariés + dirigeants + TNS + taxes sur salaires).
+  const { y1: dpY1, y2: dpY2, y3: dpY3 } = calcDettesPersonnelTNS(data, fc.moisDebut);
+  const dettesPersonnel: YearAcc4 = { y0: 0, y1: dpY1, y2: dpY2, y3: dpY3 };
 
   // IS : dette bilan = IS restant à payer à la clôture de l'exercice.
   // Le tableau de trésorerie décaisse 3 acomptes trimestriels sur 4 dans l'exercice

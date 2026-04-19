@@ -1,11 +1,9 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import { n, sumBy, type YearAcc } from "@/lib/finance/utils";
 
-export type YAcc = YearAcc;
-
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Helpers internes
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type LigneRow = { annee: number; dotationAnnuelle: unknown };
 
@@ -21,26 +19,26 @@ type ImmoAmortInput = {
  * Distribue les dotations d'amortissement d'une immobilisation vers les 3
  * exercices fiscaux, en respectant le mode réel (AUCUN / LINEAIRE / DEGRESSIF).
  *
- * - **AUCUN**    → retourne zéro
- * - **LINEAIRE** → taux mensuel constant `montantHT / (durée × 12)` sur toute
+ * - **AUCUN**    â†’ retourne zéro
+ * - **LINEAIRE** â†’ taux mensuel constant `montantHT / (durée Ã— 12)` sur toute
  *                  la durée depuis la date d'acquisition
- * - **DEGRESSIF** → distribue les `lignesAmortissement` stockées en base sur les
+ * - **DEGRESSIF** â†’ distribue les `lignesAmortissement` stockées en base sur les
  *                   mois calendaires réels (début = mois d'acquisition, fin =
  *                   mois de fin réel), puis mappe vers y1/y2/y3 selon l'exercice
- *                   fiscal démarrant à `moisDebut`
+ *                   fiscal démarrant Ã  `moisDebut`
  *
- * @param immo       – immobilisation avec ses lignesAmortissement
- * @param anneeDebut – année civile de démarrage du prévisionnel
- * @param moisDebut  – mois de démarrage de l'exercice fiscal (0 = jan)
+ * @param immo       â€“ immobilisation avec ses lignesAmortissement
+ * @param anneeDebut â€“ année civile de démarrage du prévisionnel
+ * @param moisDebut  â€“ mois de démarrage de l'exercice fiscal (0 = jan)
  */
 export function distribuerAmortParExercice(
   immo: ImmoAmortInput,
   anneeDebut: number,
   moisDebut: number,
-): YAcc {
+): YearAcc {
   if (immo.modeAmortissement === "AUCUN") return { y1: 0, y2: 0, y3: 0 };
 
-  const acc: YAcc = { y1: 0, y2: 0, y3: 0 };
+  const acc: YearAcc = { y1: 0, y2: 0, y3: 0 };
   const dur    = n(immo.dureeAmortissement);
   const montant = n(immo.montantHT);
   if (dur <= 0 || montant <= 0) return acc;
@@ -49,7 +47,7 @@ export function distribuerAmortParExercice(
   const acqYear = dAcq.getFullYear();
   const acqMois = dAcq.getMonth(); // 0-based
 
-  /** Mappe un mois absolu (annee×12+mois) vers la clé y1/y2/y3. */
+  /** Mappe un mois absolu (anneeÃ—12+mois) vers la clé y1/y2/y3. */
   function addToExercice(absMonth: number, dotMois: number) {
     for (let e = 0; e < 3; e++) {
       const exStart = (anneeDebut + e) * 12 + moisDebut;
@@ -61,7 +59,7 @@ export function distribuerAmortParExercice(
   }
 
   if (immo.modeAmortissement !== "DEGRESSIF") {
-    // ── LINEAIRE : taux mensuel constant ────────────────────────────────────
+    // â”€â”€ LINEAIRE : taux mensuel constant â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const acqAbsMonth = acqYear * 12 + acqMois;
     const totalMonths = Math.round(dur * 12);
     const dotMois     = montant / totalMonths;
@@ -69,11 +67,11 @@ export function distribuerAmortParExercice(
       addToExercice(acqAbsMonth + k, dotMois);
     }
   } else {
-    // ── DEGRESSIF : distribuer depuis lignesAmortissement ───────────────────
+    // â”€â”€ DEGRESSIF : distribuer depuis lignesAmortissement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Chaque ligne couvre une année civile :
-    //   • ligne.annee === acqYear         → mois acqMois à 11
-    //   • ligne.annee >= acqYear+ceil(dur) → "solde résiduel" jan à acqMois-1
-    //   • autres                           → jan (0) à déc (11)
+    //   â€¢ ligne.annee === acqYear         â†’ mois acqMois Ã  11
+    //   â€¢ ligne.annee >= acqYear+ceil(dur) â†’ "solde résiduel" jan Ã  acqMois-1
+    //   â€¢ autres                           â†’ jan (0) Ã  déc (11)
     for (const ligne of immo.lignesAmortissement) {
       const D = n(ligne.dotationAnnuelle);
       if (D === 0) continue;
@@ -86,7 +84,7 @@ export function distribuerAmortParExercice(
         nbMois         = 12 - acqMois;
       } else if (ligne.annee >= acqYear + Math.ceil(dur)) {
         moisCivilDebut = 0;
-        nbMois         = acqMois; // 0 si acq en janvier → filtré par D=0
+        nbMois         = acqMois; // 0 si acq en janvier â†’ filtré par D=0
       } else {
         moisCivilDebut = 0;
         nbMois         = 12;
@@ -109,45 +107,19 @@ export function distribuerAmortParExercice(
  * Lorsque l'exercice fiscal ne démarre pas en janvier, les dotations d'une année
  * civile se répartissent entre deux exercices consécutifs via le prorata `pFin`/`pDeb`.
  *
- * @param anneeDebut – `dateDemarrage.getFullYear()` (année civile N)
- * @param pFin – fraction de l'année civile N+k qui clôt l'exercice k-1 (= moisDebut/12)
- * @param pDeb – fraction qui ouvre l'exercice k (= 1 - pFin)
+ * @param anneeDebut â€“ `dateDemarrage.getFullYear()` (année civile N)
+ * @param pFin â€“ fraction de l'année civile N+k qui clôt l'exercice k-1 (= moisDebut/12)
+ * @param pDeb â€“ fraction qui ouvre l'exercice k (= 1 - pFin)
  *
- * Quand `pFin = 0` (démarrage en janvier) le comportement est identique à une
- * affectation simple année civile → exercice fiscal.
+ * Quand `pFin = 0` (démarrage en janvier) le comportement est identique Ã  une
+ * affectation simple année civile â†’ exercice fiscal.
  */
-/**
- * @deprecated Cette fonction N'EST PAS utilisée par le moteur principal.
- * La logique d'amortissement du pipeline passe par `distribuerAmortParExercice` (LINEARAIRE/DEGRESSIF),
- * et les dotations mensuelles sont calculées inline dans `buildMonthlyCalc` (monthly.ts).
- * Cette fonction est conservée pour les scripts de debug uniquement.
- * Ne jamais l'appeler depuis le pipeline de calcul (`build.ts` ou `monthly.ts`).
- */
-export function calcDotationsAmort(
-  data: Pick<ScenarioFinData, "immobilisations">,
-  anneeDebut: number,
-  pFin = 0,
-  pDeb = 1,
-): YAcc {
-  const acc: YAcc = { y1: 0, y2: 0, y3: 0 };
-  for (const immo of data.immobilisations) {
-    if (immo.actif === false) continue;
-    for (const ligne of immo.lignesAmortissement) {
-      const d = n(ligne.dotationAnnuelle);
-      if (ligne.annee === anneeDebut)          { acc.y1 += d; }
-      else if (ligne.annee === anneeDebut + 1) { acc.y1 += d * pFin; acc.y2 += d * pDeb; }
-      else if (ligne.annee === anneeDebut + 2) { acc.y2 += d * pFin; acc.y3 += d * pDeb; }
-      else if (ligne.annee === anneeDebut + 3) { acc.y3 += d * pFin; }
-    }
-  }
-  return acc;
-}
 
-// ── Dotations aux provisions ─────────────────────────────────────────────────
+// â”€â”€ Dotations aux provisions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcDotationsProvisions(
   data: Pick<ScenarioFinData, "provisions">,
-): YAcc {
+): YearAcc {
   const rows = data.provisions.filter((p) => p.actif !== false);
   return {
     y1: sumBy(rows, (r) => n(r.montantN)),
@@ -156,11 +128,11 @@ export function calcDotationsProvisions(
   };
 }
 
-// ── Reprises sur provisions ──────────────────────────────────────────────────
+// â”€â”€ Reprises sur provisions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcReprises(
   data: Pick<ScenarioFinData, "reprisesProduits">,
-): YAcc {
+): YearAcc {
   const rows = data.reprisesProduits.filter((r) => r.actif !== false);
   return {
     y1: sumBy(rows, (r) => n(r.montantN)),

@@ -18,12 +18,20 @@ export type YearKey4 = "y0" | "y1" | "y2" | "y3";
 /** Agrégat annuel : une valeur numérique par exercice. */
 export type YearAcc = Record<YearKey, number>;
 
+/** Agrégat annuel étendu incluant l'année 0 (initial / pré-création). */
+export type YearAcc4 = Record<YearKey4, number>;
+
 /**
  * Série mensuelle d'un exercice — 12 valeurs numériques indexées 0..11.
- * NB : définie comme `number[]` (mutable) pour compatibilité avec le code existant.
- * Migration vers `readonly number[]` prévue en étape ultérieure.
+ * Exposée en lecture seule à l'API publique : les mutations internes passent par `MutableSeries`.
  */
-export type MonthlySeries = number[];
+export type MonthlySeries = readonly number[];
+
+/**
+ * Alias mutable de `MonthlySeries` — réservé aux fonctions qui construisent des séries
+ * (accumulation, index assignment). Ne jamais exposer dans les types publics.
+ */
+export type MutableSeries = number[];
 
 /** Séries mensuelles sur les 3 exercices prévisionnels. */
 export type MonthlyAcc = Record<YearKey, MonthlySeries>;

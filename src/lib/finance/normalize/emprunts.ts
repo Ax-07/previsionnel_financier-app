@@ -68,7 +68,14 @@ export function normalizeEmprunts(
               ? ligne.dateEcheance.toISOString()
               : String(ligne.dateEcheance ?? "");
 
-          if (!dateStr) continue;
+          if (!dateStr) {
+            // Fix H2 : log explicite au lieu d'un skip silencieux.
+            // Une ligne ignorée peut sous-estimer capital/intérêts.
+            console.warn(
+              `[normalize/emprunts] Ligne écheancier ignorée (date invalide) — emprunt: ${emprunt.id}, moisNumero: ${ligne.moisNumero}`
+            );
+            continue;
+          }
 
           echeancier.push(
             Object.freeze<NormalizedLigneEcheancier>({

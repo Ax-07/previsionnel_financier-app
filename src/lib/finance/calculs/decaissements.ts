@@ -181,61 +181,67 @@ export function calcDecaissements(
   const defaultDelaiFourn = 30;
 
   // ── Immobilisations ────────────────────────────────────────────────────────
-  const immosData = immobilisations.filter((immo) => immo.actif !== false).map((immo) => {
-    const yk3: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
-    // En trésorerie on décaisse TTC : la TVA récupérable se résorbe via la déclaration TVA (decTVA),
-    // la TVA non-récupérable est définitivement perdue — dans les deux cas le flux de caisse est TTC.
-    const coefTVA = isFranchise ? 1 : 1 + n(immo.tauxTVA ?? 0) / 100;
-    addToYk3(yk3, new Date(immo.dateAcquisition), n(immo.montantHT) * coefTVA, yearStarts);
-    return { immo, yk3 };
-  });
-
-  function sumImmosGroup(group: typeof immosData): Yk3 {
-    return {
-      y1: group.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y1), zeroSeries()),
-      y2: group.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y2), zeroSeries()),
-      y3: group.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y3), zeroSeries()),
+  function calcDecImmos() {
+    const immosData = immobilisations.filter((immo) => immo.actif !== false).map((immo) => {
+      const yk3: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+      // En trésorerie on décaisse TTC : la TVA récupérable se résorbe via la déclaration TVA (decTVA),
+      // la TVA non-récupérable est définitivement perdue — dans les deux cas le flux de caisse est TTC.
+      const coefTVA = isFranchise ? 1 : 1 + n(immo.tauxTVA ?? 0) / 100;
+      addToYk3(yk3, new Date(immo.dateAcquisition), n(immo.montantHT) * coefTVA, yearStarts);
+      return { immo, yk3 };
+    });
+    function sumImmosGroup(group: typeof immosData): Yk3 {
+      return {
+        y1: group.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y1), zeroSeries() as MonthlySeries),
+        y2: group.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y2), zeroSeries() as MonthlySeries),
+        y3: group.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y3), zeroSeries() as MonthlySeries),
+      };
+    }
+    const immosParNature = {
+      CORPOREL: immosData.filter(({ immo }) => immo.nature === "CORPOREL"),
+      INCORPOREL: immosData.filter(({ immo }) => immo.nature === "INCORPOREL"),
+      FINANCIER: immosData.filter(({ immo }) => immo.nature === "FINANCIER"),
     };
+    const decImmoCorporel = sumImmosGroup(immosParNature.CORPOREL);
+    const decImmoIncorporel = sumImmosGroup(immosParNature.INCORPOREL);
+    const decImmoFinancier = sumImmosGroup(immosParNature.FINANCIER);
+    const decImmoTTC: Yk3 = {
+      y1: sumAll(decImmoCorporel.y1, decImmoIncorporel.y1, decImmoFinancier.y1),
+      y2: sumAll(decImmoCorporel.y2, decImmoIncorporel.y2, decImmoFinancier.y2),
+      y3: sumAll(decImmoCorporel.y3, decImmoIncorporel.y3, decImmoFinancier.y3),
+    };
+    return { immosParNature, decImmoCorporel, decImmoIncorporel, decImmoFinancier, decImmoTTC };
   }
-
-  const immosParNature = {
-    CORPOREL: immosData.filter(({ immo }) => immo.nature === "CORPOREL"),
-    INCORPOREL: immosData.filter(({ immo }) => immo.nature === "INCORPOREL"),
-    FINANCIER: immosData.filter(({ immo }) => immo.nature === "FINANCIER"),
-  };
-
-  const decImmoCorporel = sumImmosGroup(immosParNature.CORPOREL);
-  const decImmoIncorporel = sumImmosGroup(immosParNature.INCORPOREL);
-  const decImmoFinancier = sumImmosGroup(immosParNature.FINANCIER);
-  const decImmoTTC: Yk3 = {
-    y1: sumAll(decImmoCorporel.y1, decImmoIncorporel.y1, decImmoFinancier.y1),
-    y2: sumAll(decImmoCorporel.y2, decImmoIncorporel.y2, decImmoFinancier.y2),
-    y3: sumAll(decImmoCorporel.y3, decImmoIncorporel.y3, decImmoFinancier.y3),
-  };
+  const { immosParNature, decImmoCorporel, decImmoIncorporel, decImmoFinancier, decImmoTTC } = calcDecImmos();
 
   // ── Emprunts ───────────────────────────────────────────────────────────────
-  const decCapital: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
-  const decInterets: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
-  const decFraisDossier: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
-  for (const emprunt of emprunts) {
-    for (const ligne of emprunt.lignesEcheancier) {
-      const date = new Date(ligne.dateEcheance);
-      addToYk3(decCapital, date, n(ligne.capitalRembourse), yearStarts);
-      addToYk3(decInterets, date, n(ligne.interesMois) + n(ligne.assuranceMois), yearStarts);
+  function calcDecEmprunts() {
+    const decCapital: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+    const decInterets: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+    const decFraisDossier: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+    for (const emprunt of emprunts) {
+      for (const ligne of emprunt.lignesEcheancier) {
+        const date = new Date(ligne.dateEcheance);
+        addToYk3(decCapital, date, n(ligne.capitalRembourse), yearStarts);
+        addToYk3(decInterets, date, n(ligne.interesMois) + n(ligne.assuranceMois), yearStarts);
+      }
+      // Frais de dossier décaissés à la date de déblocage
+      const frais = n(emprunt.fraisDossier ?? 0);
+      if (frais > 0) {
+        addToYk3(decFraisDossier, new Date(emprunt.dateDéblocage), frais, yearStarts);
+      }
     }
-    // Frais de dossier décaissés à la date de déblocage
-    const frais = n(emprunt.fraisDossier ?? 0);
-    if (frais > 0) {
-      addToYk3(decFraisDossier, new Date(emprunt.dateDéblocage), frais, yearStarts);
-    }
+    const decEmprunts: Yk3 = {
+      y1: sumAll(decCapital.y1, decInterets.y1, decFraisDossier.y1),
+      y2: sumAll(decCapital.y2, decInterets.y2, decFraisDossier.y2),
+      y3: sumAll(decCapital.y3, decInterets.y3, decFraisDossier.y3),
+    };
+    return { decCapital, decInterets, decFraisDossier, decEmprunts };
   }
-  const decEmprunts: Yk3 = {
-    y1: sumAll(decCapital.y1, decInterets.y1, decFraisDossier.y1),
-    y2: sumAll(decCapital.y2, decInterets.y2, decFraisDossier.y2),
-    y3: sumAll(decCapital.y3, decInterets.y3, decFraisDossier.y3),
-  };
+  const { decCapital, decInterets, decFraisDossier, decEmprunts } = calcDecEmprunts();
 
   // ── Achats TTC (avec délai fournisseur) ────────────────────────────────────
+  function calcDecAchats() {
   const activitesAchatData = activites
     .filter((act) => act.typeActivite !== "PRESTATION_SERVICES")
     .map((act) => {
@@ -285,72 +291,81 @@ export function calcDecaissements(
     });
 
   const decAchats: Yk3 = {
-    y1: activitesAchatData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y1), zeroSeries()),
-    y2: activitesAchatData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y2), zeroSeries()),
-    y3: activitesAchatData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y3), zeroSeries()),
+    y1: activitesAchatData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y1), zeroSeries() as MonthlySeries),
+    y2: activitesAchatData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y2), zeroSeries() as MonthlySeries),
+    y3: activitesAchatData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y3), zeroSeries() as MonthlySeries),
   };
+    return { activitesAchatData, decAchats };
+  }
+  const { activitesAchatData, decAchats } = calcDecAchats();
 
   // ── Charges externes ───────────────────────────────────────────────────────
-  const fournituresData = fournitures.map((c) => ({
-    charge: c,
-    yk3: buildChargeExt(c, isFranchise, defaultDelaiFourn),
-  }));
-  const servicesData = services.map((c) => ({
-    charge: c,
-    yk3: buildChargeExt(c, isFranchise, defaultDelaiFourn),
-  }));
-
-  const decFournitures: Yk3 = {
-    y1: fournituresData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y1), zeroSeries()),
-    y2: fournituresData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y2), zeroSeries()),
-    y3: fournituresData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y3), zeroSeries()),
-  };
-  const decServices: Yk3 = {
-    y1: servicesData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y1), zeroSeries()),
-    y2: servicesData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y2), zeroSeries()),
-    y3: servicesData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y3), zeroSeries()),
-  };
-  const decChargesExt: Yk3 = {
-    y1: sumSeries(decFournitures.y1, decServices.y1),
-    y2: sumSeries(decFournitures.y2, decServices.y2),
-    y3: sumSeries(decFournitures.y3, decServices.y3),
-  };
+  function calcDecChargesExt() {
+    const fournituresData = fournitures.map((c) => ({
+      charge: c,
+      yk3: buildChargeExt(c, isFranchise, defaultDelaiFourn),
+    }));
+    const servicesData = services.map((c) => ({
+      charge: c,
+      yk3: buildChargeExt(c, isFranchise, defaultDelaiFourn),
+    }));
+    const decFournitures: Yk3 = {
+      y1: fournituresData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y1), zeroSeries() as MonthlySeries),
+      y2: fournituresData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y2), zeroSeries() as MonthlySeries),
+      y3: fournituresData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y3), zeroSeries() as MonthlySeries),
+    };
+    const decServices: Yk3 = {
+      y1: servicesData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y1), zeroSeries() as MonthlySeries),
+      y2: servicesData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y2), zeroSeries() as MonthlySeries),
+      y3: servicesData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y3), zeroSeries() as MonthlySeries),
+    };
+    const decChargesExt: Yk3 = {
+      y1: sumSeries(decFournitures.y1, decServices.y1),
+      y2: sumSeries(decFournitures.y2, decServices.y2),
+      y3: sumSeries(decFournitures.y3, decServices.y3),
+    };
+    return { fournituresData, servicesData, decFournitures, decServices, decChargesExt };
+  }
+  const { fournituresData, servicesData, decFournitures, decServices, decChargesExt } = calcDecChargesExt();
 
   // ── Impôts et taxes ────────────────────────────────────────────────────────
-  // Chaque impôt/taxe a une date de paiement précise (dateN/N1/N2).
-  // Si la date est renseignée → décaissement au mois exact ; sinon → lissage uniforme.
-  const decImpots: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
-  for (const impot of impotsTaxes) {
-    const v1 = n(impot.montantN ?? 0);
-    const v2 = n(impot.montantN1 ?? 0);
-    const v3 = n(impot.montantN2 ?? 0);
-    if (impot.dateN && v1 > 0) {
-      addToYk3(decImpots, new Date(impot.dateN), v1, yearStarts);
-    } else if (v1 > 0) {
-      decImpots.y1 = sumSeries(decImpots.y1, uniformMonthly(v1));
+  function calcDecImpotsTaxes() {
+    const decImpots: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+    for (const impot of impotsTaxes) {
+      const v1 = n(impot.montantN ?? 0);
+      const v2 = n(impot.montantN1 ?? 0);
+      const v3 = n(impot.montantN2 ?? 0);
+      if (impot.dateN && v1 > 0) {
+        addToYk3(decImpots, new Date(impot.dateN), v1, yearStarts);
+      } else if (v1 > 0) {
+        decImpots.y1 = sumSeries(decImpots.y1, uniformMonthly(v1));
+      }
+      if (impot.dateN1 && v2 > 0) {
+        addToYk3(decImpots, new Date(impot.dateN1), v2, yearStarts);
+      } else if (v2 > 0) {
+        decImpots.y2 = sumSeries(decImpots.y2, uniformMonthly(v2));
+      }
+      if (impot.dateN2 && v3 > 0) {
+        addToYk3(decImpots, new Date(impot.dateN2), v3, yearStarts);
+      } else if (v3 > 0) {
+        decImpots.y3 = sumSeries(decImpots.y3, uniformMonthly(v3));
+      }
     }
-    if (impot.dateN1 && v2 > 0) {
-      addToYk3(decImpots, new Date(impot.dateN1), v2, yearStarts);
-    } else if (v2 > 0) {
-      decImpots.y2 = sumSeries(decImpots.y2, uniformMonthly(v2));
-    }
-    if (impot.dateN2 && v3 > 0) {
-      addToYk3(decImpots, new Date(impot.dateN2), v3, yearStarts);
-    } else if (v3 > 0) {
-      decImpots.y3 = sumSeries(decImpots.y3, uniformMonthly(v3));
-    }
+    return { decImpots };
   }
+  const { decImpots } = calcDecImpotsTaxes();
 
   // ── Personnel ──────────────────────────────────────────────────────────────
-  let brutSeriesY1 = zeroSeries();
-  let brutSeriesY2 = zeroSeries();
-  let brutSeriesY3 = zeroSeries();
-  let cotSalSeriesY1 = zeroSeries();
-  let cotSalSeriesY2 = zeroSeries();
-  let cotSalSeriesY3 = zeroSeries();
-  let cotPatSeriesY1 = zeroSeries();
-  let cotPatSeriesY2 = zeroSeries();
-  let cotPatSeriesY3 = zeroSeries();
+  function calcDecPersonnel() {
+  let brutSeriesY1: MonthlySeries = zeroSeries();
+  let brutSeriesY2: MonthlySeries = zeroSeries();
+  let brutSeriesY3: MonthlySeries = zeroSeries();
+  let cotSalSeriesY1: MonthlySeries = zeroSeries();
+  let cotSalSeriesY2: MonthlySeries = zeroSeries();
+  let cotSalSeriesY3: MonthlySeries = zeroSeries();
+  let cotPatSeriesY1: MonthlySeries = zeroSeries();
+  let cotPatSeriesY2: MonthlySeries = zeroSeries();
+  let cotPatSeriesY3: MonthlySeries = zeroSeries();
 
   for (const sal of salaries.filter((s) => s.actif !== false)) {
     const tCotSal = n(sal.tauxCotSal ?? 22) / 100;
@@ -380,9 +395,9 @@ export function calcDecaissements(
     y3: totalOf(cotPatSeriesY3),
   };
 
-  let remuDirigeantY1 = zeroSeries();
-  let remuDirigeantY2 = zeroSeries();
-  let remuDirigeantY3 = zeroSeries();
+  let remuDirigeantY1: MonthlySeries = zeroSeries();
+  let remuDirigeantY2: MonthlySeries = zeroSeries();
+  let remuDirigeantY3: MonthlySeries = zeroSeries();
   for (const d of dirigeants.filter((d) => d.actif !== false)) {
     remuDirigeantY1 = sumSeries(remuDirigeantY1, salarieMonthlyBrut(n(d.montantN), d.detailMensuelN, moisDebut));
     remuDirigeantY2 = sumSeries(remuDirigeantY2, salarieMonthlyBrut(n(d.montantN1), d.detailMensuelN1, moisDebut));
@@ -501,30 +516,41 @@ export function calcDecaissements(
     y2: sumAll(decSalairesNets.y2, decChargesSociales.y2, decRemuDirigeant.y2, decCotisationsTNS.y2, decTaxesSalaires.y2),
     y3: sumAll(decSalairesNets.y3, decChargesSociales.y3, decRemuDirigeant.y3, decCotisationsTNS.y3, decTaxesSalaires.y3),
   };
-
-  // ── TVA (source unique : tva = fc.tva) ────────────────────────────────────
-  const decTVACollectee: Yk3 = { y1: tva.tvaCollectee.y1, y2: tva.tvaCollectee.y2, y3: tva.tvaCollectee.y3 };
-  const decTVADeductible: Yk3 = { y1: tva.tvaDeductible.y1, y2: tva.tvaDeductible.y2, y3: tva.tvaDeductible.y3 };
-  const decTVA: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
-  if (!isFranchise) {
-    // La TVA du mois M est payée le 19 du mois M+1 (décalage 1 mois).
-    const { y1: s1, y2: s2, y3: s3 } = shiftYk3(
-      { y1: tva.y1.tvaAPayerMonthly, y2: tva.y2.tvaAPayerMonthly, y3: tva.y3.tvaAPayerMonthly },
-      1,
-    );
-    decTVA.y1 = s1; decTVA.y2 = s2; decTVA.y3 = s3;
+    return {
+      decSalairesNets, decChargesSociales, decRemuDirigeant, decCotisationsTNS,
+      decTaxesSalaires, decPersonnel, salairesBruts, cotPat,
+    };
   }
+  const {
+    decSalairesNets, decChargesSociales, decRemuDirigeant, decCotisationsTNS,
+    decTaxesSalaires, decPersonnel, salairesBruts, cotPat,
+  } = calcDecPersonnel();
 
-  // ── IS ─────────────────────────────────────────────────────────────────────
-  // Convention : 3 acomptes dans l'exercice courant (M3, M6, M9) + solde exercice précédent (M12).
-  // Cohérent avec dettesIS = IS/4 dans le BFR (1 acompte en attente à la clôture).
-  // Formule : decIS_Y = 3/4·IS_Y + 1/4·IS_{Y-1}  ←→  IS_Y + dette_{Y-1} − dette_Y
-  const decIS: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
-  if (isIS && parametresIS?.isEnabled !== false) {
-    decIS.y1 = isQuarterlyDecaissement(isParAnnee.y1, 0);                          // pas d'IS en Y0
-    decIS.y2 = isQuarterlyDecaissement(isParAnnee.y2, isParAnnee.y1);
-    decIS.y3 = isQuarterlyDecaissement(isParAnnee.y3, isParAnnee.y2);
+  // ── TVA + IS ───────────────────────────────────────────────────────────────
+  function calcDecTVAetIS() {
+    const decTVACollectee: Yk3 = { y1: tva.tvaCollectee.y1, y2: tva.tvaCollectee.y2, y3: tva.tvaCollectee.y3 };
+    const decTVADeductible: Yk3 = { y1: tva.tvaDeductible.y1, y2: tva.tvaDeductible.y2, y3: tva.tvaDeductible.y3 };
+    const decTVA: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+    if (!isFranchise) {
+      // La TVA du mois M est payée le 19 du mois M+1 (décalage 1 mois).
+      const { y1: s1, y2: s2, y3: s3 } = shiftYk3(
+        { y1: tva.y1.tvaAPayerMonthly, y2: tva.y2.tvaAPayerMonthly, y3: tva.y3.tvaAPayerMonthly },
+        1,
+      );
+      decTVA.y1 = s1; decTVA.y2 = s2; decTVA.y3 = s3;
+    }
+    // Convention : 3 acomptes dans l'exercice courant (M3, M6, M9) + solde exercice précédent (M12).
+    // Cohérent avec dettesIS = IS/4 dans le BFR (1 acompte en attente à la clôture).
+    // Formule : decIS_Y = 3/4·IS_Y + 1/4·IS_{Y-1}  ←→  IS_Y + dette_{Y-1} − dette_Y
+    const decIS: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+    if (isIS && parametresIS?.isEnabled !== false) {
+      decIS.y1 = isQuarterlyDecaissement(isParAnnee.y1, 0);                          // pas d'IS en Y0
+      decIS.y2 = isQuarterlyDecaissement(isParAnnee.y2, isParAnnee.y1);
+      decIS.y3 = isQuarterlyDecaissement(isParAnnee.y3, isParAnnee.y2);
+    }
+    return { decTVACollectee, decTVADeductible, decTVA, decIS };
   }
+  const { decTVACollectee, decTVADeductible, decTVA, decIS } = calcDecTVAetIS();
 
   // ── Décaissements divers ────────────────────────────────────────────────────
   const decDivers: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };

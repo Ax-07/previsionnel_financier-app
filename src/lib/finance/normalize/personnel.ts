@@ -7,7 +7,6 @@
  * Règles appliquées :
  *  - Filtre `actif !== false`
  *  - Convertit Decimal Prisma → number via `n()`
- *  - Résout null → 0 pour tauxCotisations
  *  - Parse JSON de `detailMensuel` — null si invalide (le moteur utilisera uniform ÷12)
  */
 
@@ -45,8 +44,6 @@ export interface NormalizedTNS {
   label: string;
   /** Cotisations TNS annuelles par exercice */
   montant: Record<"y1" | "y2" | "y3", number>;
-  /** Taux cotisations TNS (%) */
-  tauxCotisations: number;
 }
 
 // ── Helpers internes ──────────────────────────────────────────────────────────
@@ -61,7 +58,14 @@ function parseDetailMensuel(raw: unknown): readonly number[] | null {
   // Format salarié : { effectif, brutIndividuel }
   if (typeof raw === "object" && !Array.isArray(raw)) {
     const rec = raw as Record<string, unknown>;
-    const arr = rec["brutIndividuel"] ?? rec["effectif"];
+    // Fix H1 : `??` ne distingue pas un array vide [0,...] de null.
+    // On vérifie explicitement que brutIndividuel est un array de 12+ valeurs
+    // avant de l'utiliser, sinon on retombe sur effectif.
+    const brutArr = rec["brutIndividuel"];
+    const arr =
+      Array.isArray(brutArr) && brutArr.length >= 12
+        ? brutArr
+        : rec["effectif"];
     if (Array.isArray(arr) && arr.length >= 12) {
       return Object.freeze((arr as number[]).slice(0, 12).map(Number));
     }
@@ -152,8 +156,6 @@ export function normalizeTNS(
             y2: n(r.montantN1),
             y3: n(r.montantN2),
           },
-          // LigneCotisationTNS ne stocke pas de taux — le montant est saisi directement
-          tauxCotisations: 0,
         }),
       ),
   );

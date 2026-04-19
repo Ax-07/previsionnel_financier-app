@@ -2,6 +2,30 @@ import { prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 
 /**
+ * Vérifie que l'utilisateur identifié par `userId` a bien accès au dossier
+ * `dossierId` via la table `UserDossier`. Lève une erreur 403 en cas d'accès
+ * non autorisé.
+ *
+ * Fix C1 : à appeler dans chaque Server Action exposée avant d'invoquer
+ * `fetchScenarioData`. La récupération du `userId` depuis la session
+ * (ex: `const session = await auth()`) est de la responsabilité de l'appelant.
+ *
+ * TODO: intégrer l'appel côté `loadScenarioData` une fois Better Auth configuré.
+ */
+export async function assertDossierAccess(
+  dossierId: string,
+  userId: string
+): Promise<void> {
+  const access = await prisma.userDossier.findUnique({
+    where: { userId_dossierId: { userId, dossierId } },
+    select: { id: true },
+  });
+  if (!access) {
+    throw new Error("Accès refusé : vous n'avez pas accès à ce dossier.");
+  }
+}
+
+/**
  * Centralise toutes les requêtes Prisma communes aux actions de contrôle.
  * Un seul appel = ~32 requêtes en parallèle au lieu de ~32 × 13 = ~416.
  *
@@ -15,14 +39,14 @@ import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
  */
 export async function fetchScenarioData(dossierId: string) {
   // ── 1. Infos dossier ────────────────────────────────────────────────────────
-  const dossier = await prisma.dossier.findUnique({
+  // Fix C3 : findUniqueOrThrow lève une erreur explicite si le dossier n'existe
+  // pas, au lieu d'un fallback silencieux sur une date par défaut incorrecte.
+  const dossier = await prisma.dossier.findUniqueOrThrow({
     where: { id: dossierId },
     select: { dateDemarrage: true, dureeProjection: true },
   });
-  const dateDemarrage = dossier?.dateDemarrage
-    ? new Date(dossier.dateDemarrage)
-    : new Date(`${new Date().getFullYear()}-01-01`);
-  const dureeProjection = dossier?.dureeProjection ?? 3;
+  const dateDemarrage = new Date(dossier.dateDemarrage);
+  const dureeProjection = dossier.dureeProjection;
 
   // ── 2. Scénario par défaut ──────────────────────────────────────────────────
   const scenarioId = await getOrCreateDefaultScenario(dossierId);
@@ -50,6 +74,8 @@ export async function fetchScenarioData(dossierId: string) {
   const isIS = (scenario.parametres?.regimeFiscal ?? "IS") === "IS";
 
   // ── 3. Fetch parallèle ──────────────────────────────────────────────────────
+  // Fix C2 : encapsulation dans .catch() pour éviter qu'une seule requête DB
+  // en échec ne provoque un crash silencieux de toutes les données de contrôle.
   const [
     activites,
     activiteCommissions,
@@ -140,7 +166,16 @@ export async function fetchScenarioData(dossierId: string) {
     }),
     prisma.parametresIS.findUnique({ where: { scenarioId } }),
     prisma.ajustementFiscal.findMany({ where: { scenarioId } }),
-  ]);
+  ]).catch((cause: unknown) => {
+    console.error("[fetchScenarioData] Échec du chargement parallèle des données", {
+      dossierId,
+      cause,
+    });
+    throw new Error(
+      "Impossible de charger les données du dossier. Veuillez réessayer.",
+      { cause: cause instanceof Error ? cause : undefined }
+    );
+  });
 
   return {
     dossierId,

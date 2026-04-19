@@ -1,20 +1,18 @@
 import type { YearAcc } from "@/lib/finance/utils";
 
-export type YAcc = YearAcc;
-
-// ── Valeur ajoutée ────────────────────────────────────────────────────────────
+// â”€â”€ Valeur ajoutée â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * VA = CA − AchatsConsommés − ChargesExternes
+ * VA = CA âˆ’ AchatsConsommés âˆ’ ChargesExternes
  *
- * Convention PCG SIG : les subventions d'exploitation apparaissent à l'EBE,
+ * Convention PCG SIG : les subventions d'exploitation apparaissent Ã  l'EBE,
  * pas dans la VA. Les productions immobilisées ne sont pas gérées dans ce modèle.
  */
 export function calcValeurAjoutee(
-  ca: YAcc,
-  achatsConsommes: YAcc,
-  chargesExternes: YAcc,
-): YAcc {
+  ca: YearAcc,
+  achatsConsommes: YearAcc,
+  chargesExternes: YearAcc,
+): YearAcc {
   return {
     y1: ca.y1 - achatsConsommes.y1 - chargesExternes.y1,
     y2: ca.y2 - achatsConsommes.y2 - chargesExternes.y2,
@@ -22,19 +20,19 @@ export function calcValeurAjoutee(
   };
 }
 
-// ── EBE ───────────────────────────────────────────────────────────────────────
+// â”€â”€ EBE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * EBE = ValeurAjoutée + SubventionsExploitation − ImpôtsTaxes − ChargesPersonnel
+ * EBE = ValeurAjoutée + SubventionsExploitation âˆ’ ImpôtsTaxes âˆ’ ChargesPersonnel
  *
- * Convention PCG SIG : les subventions d'exploitation s'ajoutent à ce niveau.
+ * Convention PCG SIG : les subventions d'exploitation s'ajoutent Ã  ce niveau.
  */
 export function calcEBE(
-  valeurAjoutee: YAcc,
-  subventions: YAcc,
-  impotsTaxes: YAcc,
-  chargesPersonnel: YAcc,
-): YAcc {
+  valeurAjoutee: YearAcc,
+  subventions: YearAcc,
+  impotsTaxes: YearAcc,
+  chargesPersonnel: YearAcc,
+): YearAcc {
   return {
     y1: valeurAjoutee.y1 + subventions.y1 - impotsTaxes.y1 - chargesPersonnel.y1,
     y2: valeurAjoutee.y2 + subventions.y2 - impotsTaxes.y2 - chargesPersonnel.y2,
@@ -42,17 +40,17 @@ export function calcEBE(
   };
 }
 
-// ── Résultat d'exploitation ───────────────────────────────────────────────────
+// â”€â”€ Résultat d'exploitation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * ResExpl = EBE − DotAmort − DotProv + Reprises
+ * ResExpl = EBE âˆ’ DotAmort âˆ’ DotProv + Reprises
  */
 export function calcResExpl(
-  ebe: YAcc,
-  dotationsAmort: YAcc,
-  dotationsProvisions: YAcc,
-  reprises: YAcc,
-): YAcc {
+  ebe: YearAcc,
+  dotationsAmort: YearAcc,
+  dotationsProvisions: YearAcc,
+  reprises: YearAcc,
+): YearAcc {
   return {
     y1: ebe.y1 - dotationsAmort.y1 - dotationsProvisions.y1 + reprises.y1,
     y2: ebe.y2 - dotationsAmort.y2 - dotationsProvisions.y2 + reprises.y2,

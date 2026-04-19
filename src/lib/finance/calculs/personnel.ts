@@ -1,13 +1,11 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import { n, sumBy, type YearAcc } from "@/lib/finance/utils";
 
-export type YAcc = YearAcc;
-
-// ── Salariés ─────────────────────────────────────────────────────────────────
+// â”€â”€ Salariés â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcSalaires(
   data: Pick<ScenarioFinData, "salaries">,
-): { bruts: YAcc; patronales: YAcc } {
+): { bruts: YearAcc; patronales: YearAcc } {
   const rows = data.salaries.filter((s) => s.actif !== false);
   return {
     bruts: {
@@ -23,11 +21,11 @@ export function calcSalaires(
   };
 }
 
-// ── Dirigeants ───────────────────────────────────────────────────────────────
+// â”€â”€ Dirigeants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcDirigeants(
   data: Pick<ScenarioFinData, "dirigeants">,
-): YAcc {
+): YearAcc {
   const rows = data.dirigeants.filter((d) => d.actif !== false);
   return {
     y1: sumBy(rows, (r) => n(r.montantN)),
@@ -36,11 +34,11 @@ export function calcDirigeants(
   };
 }
 
-// ── Cotisations TNS ──────────────────────────────────────────────────────────
+// â”€â”€ Cotisations TNS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcCotisationsTNS(
   data: Pick<ScenarioFinData, "cotisationsTNS">,
-): YAcc {
+): YearAcc {
   const rows = data.cotisationsTNS.filter((c) => c.actif !== false);
   return {
     y1: sumBy(rows, (r) => n(r.montantN)),
@@ -49,20 +47,20 @@ export function calcCotisationsTNS(
   };
 }
 
-// ── Taxes assises sur les salaires ───────────────────────────────────────────
+// â”€â”€ Taxes assises sur les salaires â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcTaxesSalaires(
   data: Pick<ScenarioFinData, "taxesSalaires">,
-): YAcc {
+): YearAcc {
   const rows = data.taxesSalaires.filter((t) => t.actif !== false);
   return {
-    y1: rows.reduce((s, t) => s + n(t.montantN), 0),
-    y2: rows.reduce((s, t) => s + n(t.montantN1), 0),
-    y3: rows.reduce((s, t) => s + n(t.montantN2), 0),
+    y1: sumBy(rows, (t) => n(t.montantN)),
+    y2: sumBy(rows, (t) => n(t.montantN1)),
+    y3: sumBy(rows, (t) => n(t.montantN2)),
   };
 }
 
-// ── Charges de personnel (total) ─────────────────────────────────────────────
+// â”€â”€ Charges de personnel (total) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcChargesPersonnel(
   data: Pick<
@@ -70,19 +68,19 @@ export function calcChargesPersonnel(
     "salaries" | "dirigeants" | "cotisationsTNS" | "taxesSalaires"
   >,
 ): {
-  salairesBruts: YAcc;
-  chargesPatronales: YAcc;
-  remuDirigeant: YAcc;
-  cotisationsTNSTotal: YAcc;
-  taxesSalairesTotal: YAcc;
-  total: YAcc;
+  salairesBruts: YearAcc;
+  chargesPatronales: YearAcc;
+  remuDirigeant: YearAcc;
+  cotisationsTNSTotal: YearAcc;
+  taxesSalairesTotal: YearAcc;
+  total: YearAcc;
 } {
   const { bruts, patronales } = calcSalaires(data);
   const remuDirigeant = calcDirigeants(data);
   const cotisationsTNSTotal = calcCotisationsTNS(data);
   const taxesSalairesTotal = calcTaxesSalaires(data);
 
-  const total: YAcc = {
+  const total: YearAcc = {
     y1: bruts.y1 + patronales.y1 + remuDirigeant.y1 + cotisationsTNSTotal.y1 + taxesSalairesTotal.y1,
     y2: bruts.y2 + patronales.y2 + remuDirigeant.y2 + cotisationsTNSTotal.y2 + taxesSalairesTotal.y2,
     y3: bruts.y3 + patronales.y3 + remuDirigeant.y3 + cotisationsTNSTotal.y3 + taxesSalairesTotal.y3,

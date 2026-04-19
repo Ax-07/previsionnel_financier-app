@@ -18,6 +18,7 @@ import { calcCapitalRembourse } from "@/lib/finance/calculs/emprunts";
 import { calcResExcep } from "@/lib/finance/calculs/resultats";
 import { calcAjustementNet, calcISParAnnee } from "@/lib/finance/calculs/is";
 import { calcTVA } from "@/lib/finance/calculs/calc-tva";
+import { calcBfr } from "@/lib/finance/calculs/bfr";
 import {
   buildMonthlyCalc,
   monthlyToYearAcc,
@@ -128,6 +129,11 @@ export function buildFinCalc(
   const interetsEmprunts = sum(mc.interetsEmprunts);
   const fraisDossierEmprunts = sum(mc.fraisDossierEmprunts);
   const autresChargesFinancieres = sum(mc.autresChargesFinancieres);
+  const chargesFinTotal: YearAcc = {
+    y1: interetsEmprunts.y1 + fraisDossierEmprunts.y1 + autresChargesFinancieres.y1,
+    y2: interetsEmprunts.y2 + fraisDossierEmprunts.y2 + autresChargesFinancieres.y2,
+    y3: interetsEmprunts.y3 + fraisDossierEmprunts.y3 + autresChargesFinancieres.y3,
+  };
   const resFin = sum(mc.resFin);
   const resCourant = sum(mc.resCourant);
   const resExcep = sum(mc.resExcep);
@@ -142,6 +148,22 @@ export function buildFinCalc(
     y2: caf.y2 - capitalRembourse.y2,
     y3: caf.y3 - capitalRembourse.y3,
   };
+
+  // ── Agrégats dérivés ────────────────────────────────────────────────────────
+  const margeProd: YearAcc = {
+    y1: ca.y1 - achatsConsommes.y1,
+    y2: ca.y2 - achatsConsommes.y2,
+    y3: ca.y3 - achatsConsommes.y3,
+  };
+  const totalChargesExpl: YearAcc = {
+    y1: totalProduitsExpl.y1 - resExpl.y1,
+    y2: totalProduitsExpl.y2 - resExpl.y2,
+    y3: totalProduitsExpl.y3 - resExpl.y3,
+  };
+
+  // ── BFR — variation annuelle exposée dans FinCalcResult ──────────────────
+  // Appel minimal : seuls stockFinal, tva, moisDebut, isParAnnee sont requis.
+  const { variationBFR } = calcBfr(data, { stockFinal, tva, moisDebut, isParAnnee });
 
   // ── Drill-down CAF ────────────────────────────────────────────────────────
   const dotationsParImmoAcc = mc.dotationsParImmo.map((d) => ({
@@ -200,6 +222,9 @@ export function buildFinCalc(
     autresProdGestion,
     autresChargesGestion,
     totalProduitsExpl,
+    margeProd,
+    totalChargesExpl,
+    chargesFinTotal,
     resExpl,
     interetsEmprunts,
     fraisDossierEmprunts,
@@ -216,6 +241,7 @@ export function buildFinCalc(
     caf,
     capitalRembourseForCAF: capitalRembourse,
     autofinancement,
+    variationBFR,
     dotationsParImmoAcc,
     capitalRembourseParEmprunt,
     tva,

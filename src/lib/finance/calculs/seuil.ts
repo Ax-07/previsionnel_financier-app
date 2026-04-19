@@ -17,7 +17,7 @@
  */
 
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
-import { n } from "@/lib/finance/utils";
+import { n, pct } from "@/lib/finance/utils";
 import type { YearKey } from "@/lib/finance/utils";
 import type { FinCalcResult } from "@/lib/finance/calculs";
 
@@ -48,11 +48,6 @@ export interface BreakEvenData {
 }
 
 // ── Helpers internes ──────────────────────────────────────────────────────────
-
-function pct(amount: number, base: number): number | null {
-  if (base === 0) return null;
-  return (amount / base) * 100;
-}
 
 function mkRow(
   key: string,

@@ -28,7 +28,7 @@ export {
 } from "./monthly";
 
 // ── Calculs atomiques ─────────────────────────────────────────────────────────
-export { calcCA, calcCAByType, calcStocks } from "./ca";
+export { calcCA, calcCAByType } from "./ca";
 export { calcBfr } from "./bfr";
 export { calcCAF } from "./caf";
 export { calcISParAnnee, calcAjustementNet } from "./is";
@@ -43,5 +43,4 @@ export {
   shiftYk3,
 } from "./tresorerie";
 
-// ── Helpers séries ────────────────────────────────────────────────────────────
-export * from "./series-helpers";
+

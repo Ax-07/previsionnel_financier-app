@@ -34,7 +34,7 @@ export function addToYk3(
   yearStarts: TemporelCtx["yearStarts"],
 ): void {
   const { yk, mi } = dateToSlot(date, yearStarts);
-  if (yk && mi >= 0) series[yk][mi] = (series[yk][mi] ?? 0) + amount;
+  if (yk && mi >= 0) (series[yk] as number[])[mi] = ((series[yk] as number[])[mi] ?? 0) + amount;
 }
 
 // ── Encaissements ─────────────────────────────────────────────────────────────
@@ -109,9 +109,9 @@ export function calcEncaissements(
   });
 
   const encProdVendue: Yk3 = {
-    y1: activitesEncData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y1), zeroSeries()),
-    y2: activitesEncData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y2), zeroSeries()),
-    y3: activitesEncData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y3), zeroSeries()),
+    y1: activitesEncData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y1), zeroSeries() as MonthlySeries),
+    y2: activitesEncData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y2), zeroSeries() as MonthlySeries),
+    y3: activitesEncData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y3), zeroSeries() as MonthlySeries),
   };
 
   // ── Subventions d'exploitation ──────────────────────────────────────────────

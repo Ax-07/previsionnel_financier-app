@@ -1,13 +1,11 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import { n, sumBy, type YearAcc } from "@/lib/finance/utils";
 
-export type YAcc = YearAcc;
-
-// ── Produits financiers ───────────────────────────────────────────────────────
+// â”€â”€ Produits financiers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcProduitsFinanciers(
   data: Pick<ScenarioFinData, "financiersProduits">,
-): YAcc {
+): YearAcc {
   const rows = data.financiersProduits.filter((r) => r.actif !== false);
   return {
     y1: sumBy(rows, (r) => n(r.montantN)),
@@ -16,11 +14,11 @@ export function calcProduitsFinanciers(
   };
 }
 
-// ── Charges financières hors intérêts emprunts ────────────────────────────────
+// â”€â”€ Charges financières hors intérêts emprunts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcAutresChargesFinancieres(
   data: Pick<ScenarioFinData, "chargesFinancieres">,
-): YAcc {
+): YearAcc {
   const rows = data.chargesFinancieres.filter((c) => c.actif !== false);
   return {
     y1: sumBy(rows, (r) => n(r.montantN)),
@@ -29,18 +27,18 @@ export function calcAutresChargesFinancieres(
   };
 }
 
-// ── Résultat financier ────────────────────────────────────────────────────────
+// â”€â”€ Résultat financier â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * ResFin = ProduitsFinanciers − (InteretsEmprunts + FraisDossierEmprunts + AutresChargesFinancieres)
+ * ResFin = ProduitsFinanciers âˆ’ (InteretsEmprunts + FraisDossierEmprunts + AutresChargesFinancieres)
  * Cohérent avec monthly.ts : chargesFinancièresAcc = interets + fraisDossier + autresChargesFinancières
  */
 export function calcResFin(
-  produitsFinanciers: YAcc,
-  interetsEmprunts: YAcc,
-  fraisDossierEmprunts: YAcc,
-  autresChargesFinancieres: YAcc,
-): YAcc {
+  produitsFinanciers: YearAcc,
+  interetsEmprunts: YearAcc,
+  fraisDossierEmprunts: YearAcc,
+  autresChargesFinancieres: YearAcc,
+): YearAcc {
   return {
     y1: produitsFinanciers.y1 - interetsEmprunts.y1 - fraisDossierEmprunts.y1 - autresChargesFinancieres.y1,
     y2: produitsFinanciers.y2 - interetsEmprunts.y2 - fraisDossierEmprunts.y2 - autresChargesFinancieres.y2,
@@ -48,9 +46,9 @@ export function calcResFin(
   };
 }
 
-// ── Résultat courant ──────────────────────────────────────────────────────────
+// â”€â”€ Résultat courant â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-export function calcResCourant(resExpl: YAcc, resFin: YAcc): YAcc {
+export function calcResCourant(resExpl: YearAcc, resFin: YearAcc): YearAcc {
   return {
     y1: resExpl.y1 + resFin.y1,
     y2: resExpl.y2 + resFin.y2,
@@ -58,11 +56,11 @@ export function calcResCourant(resExpl: YAcc, resFin: YAcc): YAcc {
   };
 }
 
-// ── Résultat exceptionnel ─────────────────────────────────────────────────────
+// â”€â”€ Résultat exceptionnel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calcResExcep(
   data: Pick<ScenarioFinData, "exceptionnelsProduits" | "chargesExceptionnelles">,
-): YAcc {
+): YearAcc {
   const prodRows = data.exceptionnelsProduits.filter((r) => r.actif !== false);
   const chargeRows = data.chargesExceptionnelles.filter((c) => c.actif !== false);
   return {
@@ -72,16 +70,16 @@ export function calcResExcep(
   };
 }
 
-// ── Résultat net ──────────────────────────────────────────────────────────────
+// â”€â”€ Résultat net â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * ResNet = ResCourant + ResExcep − IS
+ * ResNet = ResCourant + ResExcep âˆ’ IS
  */
 export function calcResNet(
-  resCourant: YAcc,
-  resExcep: YAcc,
-  isParAnnee: YAcc,
-): YAcc {
+  resCourant: YearAcc,
+  resExcep: YearAcc,
+  isParAnnee: YearAcc,
+): YearAcc {
   return {
     y1: resCourant.y1 + resExcep.y1 - isParAnnee.y1,
     y2: resCourant.y2 + resExcep.y2 - isParAnnee.y2,

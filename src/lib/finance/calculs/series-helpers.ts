@@ -22,13 +22,17 @@ export const FR_MONTHS = [
 
 // ── Constructeurs ─────────────────────────────────────────────────────────────
 
-/** Crée une série de 12 zéros. */
-export function zeroSeries(): MonthlySeries {
-  return Array(12).fill(0) as MonthlySeries;
+/**
+ * Crée une série de 12 zéros mutables.
+ * Retourne `number[]` (mutable) pour permettre l'accumulation interne.
+ * Les consommateurs reçoivent la valeur via `MonthlySeries` (readonly) à la frontière publique.
+ */
+export function zeroSeries(): number[] {
+  return Array(12).fill(0);
 }
 
-/** Crée un `MonthlyAcc` initialisé à zéro pour les 3 exercices. */
-export function emptyAcc(): MonthlyAcc {
+/** Crée un accumulateur mensuel mutable initialisé à zéro pour les 3 exercices. */
+export function emptyAcc(): Record<YearKey, number[]> {
   return { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
 }
 
@@ -46,7 +50,7 @@ export function subSeries(a: MonthlySeries, b: MonthlySeries): MonthlySeries {
 
 /** Addition de N séries (équivalent de sumSeries étendu). */
 export function sumAll(...series: MonthlySeries[]): MonthlySeries {
-  return series.reduce((acc, s) => sumSeries(acc, s), zeroSeries());
+  return series.reduce((acc, s) => sumSeries(acc, s), zeroSeries() as MonthlySeries);
 }
 
 /** Somme annuelle d'une série mensuelle. */
@@ -196,5 +200,5 @@ export function chargeExplMonthly(
 
 /** Ajoute in-place une série à un accumulateur `MonthlyAcc` sur la clé donnée. */
 export function addSeriesInPlace(acc: MonthlyAcc, yk: YearKey, s: MonthlySeries): void {
-  for (let i = 0; i < 12; i++) acc[yk][i]! += s[i] ?? 0;
+  for (let i = 0; i < 12; i++) (acc[yk] as number[])[i]! += s[i] ?? 0;
 }

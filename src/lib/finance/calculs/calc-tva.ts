@@ -139,15 +139,15 @@ export function calcTVA(
   const tvaCollectee: Yk3Series = {
     y1: actifsActifs.reduce(
       (s, a) => sumSeries(s, seasonalMonthly(n(a.montantN) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N")),
-      zeroSeries(),
+      zeroSeries() as MonthlySeries,
     ),
     y2: actifsActifs.reduce(
       (s, a) => sumSeries(s, seasonalMonthly(n(a.montantN1) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N1")),
-      zeroSeries(),
+      zeroSeries() as MonthlySeries,
     ),
     y3: actifsActifs.reduce(
       (s, a) => sumSeries(s, seasonalMonthly(n(a.montantN2) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N2")),
-      zeroSeries(),
+      zeroSeries() as MonthlySeries,
     ),
   };
 
@@ -157,9 +157,9 @@ export function calcTVA(
   // La ΔStock est calculée mois par mois via la série cumulative RCA, ce qui
   // garantit la cohérence avec le BFR, la trésorerie et le bilan.
   //
-  // ponctuelN[0] (stock initial y0) est exclu du flux Y1 : sa TVA est déjà
-  // imputée à `creditInitial` (position ouverture) et ne doit pas être
-  // re-comptabilisée dans la déduction Y1.
+  // ponctuelN[0] (stock initial y0) est inclus dans le flux TVA Y1.
+  // Zeroeiser p1tva[0] créerait un cut-off de (sfFinal_nom − sfFinal_tva) × taux
+  // reporté sur Y2. La TVA sur stock d'ouverture est gérée séparément via `creditInitial`.
   let tvaAchatsY1: MonthlySeries = zeroSeries();
   let tvaAchatsY2: MonthlySeries = zeroSeries();
   let tvaAchatsY3: MonthlySeries = zeroSeries();
@@ -188,8 +188,6 @@ export function calcTVA(
     tvaAchatsY1 = sumSeries(tvaAchatsY1, rY1.achatsEffSeries.map((v) => v * taux) as MonthlySeries);
     tvaAchatsY2 = sumSeries(tvaAchatsY2, rY2.achatsEffSeries.map((v) => v * taux) as MonthlySeries);
     tvaAchatsY3 = sumSeries(tvaAchatsY3, rY3.achatsEffSeries.map((v) => v * taux) as MonthlySeries);
-
-    void rY3;
   }
 
   const tvaDeductibleAchats: Yk3Series = {
@@ -202,15 +200,15 @@ export function calcTVA(
   const tvaDeductibleCharges: Yk3Series = {
     y1: allChargesActif.reduce(
       (s, c) => sumSeries(s, chargeExplMonthly(n(c.montantN) * (n(c.tauxTVA ?? 20) / 100), { frequence: c.frequence as string, detailCalc: c.detailCalc }, "N")),
-      zeroSeries(),
+      zeroSeries() as MonthlySeries,
     ),
     y2: allChargesActif.reduce(
       (s, c) => sumSeries(s, chargeExplMonthly(n(c.montantN1) * (n(c.tauxTVA ?? 20) / 100), { frequence: c.frequence as string, detailCalc: c.detailCalc }, "N1")),
-      zeroSeries(),
+      zeroSeries() as MonthlySeries,
     ),
     y3: allChargesActif.reduce(
       (s, c) => sumSeries(s, chargeExplMonthly(n(c.montantN2) * (n(c.tauxTVA ?? 20) / 100), { frequence: c.frequence as string, detailCalc: c.detailCalc }, "N2")),
-      zeroSeries(),
+      zeroSeries() as MonthlySeries,
     ),
   };
 
@@ -248,19 +246,19 @@ export function calcTVA(
         (dateAcq.getFullYear() - exBorne1.getFullYear()) * 12 +
         (dateAcq.getMonth() - exBorne1.getMonth()),
       ));
-      tvaDeductibleImmos.y1[mi] = (tvaDeductibleImmos.y1[mi] ?? 0) + tva;
+      (tvaDeductibleImmos.y1 as number[])[mi] = ((tvaDeductibleImmos.y1 as number[])[mi] ?? 0) + tva;
     } else if (yk === "y2") {
       const mi = Math.min(11, Math.max(0,
         (dateAcq.getFullYear() - exBorne2.getFullYear()) * 12 +
         (dateAcq.getMonth() - exBorne2.getMonth()),
       ));
-      tvaDeductibleImmos.y2[mi] = (tvaDeductibleImmos.y2[mi] ?? 0) + tva;
+      (tvaDeductibleImmos.y2 as number[])[mi] = ((tvaDeductibleImmos.y2 as number[])[mi] ?? 0) + tva;
     } else if (yk === "y3") {
       const mi = Math.min(11, Math.max(0,
         (dateAcq.getFullYear() - exBorne3.getFullYear()) * 12 +
         (dateAcq.getMonth() - exBorne3.getMonth()),
       ));
-      tvaDeductibleImmos.y3[mi] = (tvaDeductibleImmos.y3[mi] ?? 0) + tva;
+      (tvaDeductibleImmos.y3 as number[])[mi] = ((tvaDeductibleImmos.y3 as number[])[mi] ?? 0) + tva;
     }
   }
 

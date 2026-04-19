@@ -81,7 +81,9 @@ function normalizeCharge(
       y3: n(r.montantN2),
     },
     frequence: ((r.frequence ?? "MENSUELLE").toUpperCase() as FrequenceCharge),
-    moisPaiement: r.moisPaiement ?? 1,
+    // Fix H3 : clamp [1, 12] pour rejeter les valeurs hors-plage (0, 13…)
+    // qui fausseraient le calcul du BFR.
+    moisPaiement: Math.min(12, Math.max(1, r.moisPaiement ?? 1)),
     tva: n(r.tva ?? 20),
     detailCalc,
   });

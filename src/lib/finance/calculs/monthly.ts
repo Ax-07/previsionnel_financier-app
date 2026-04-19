@@ -32,8 +32,13 @@ export const FR_MONTHS = [
   "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc",
 ] as const;
 
-export function zeroSeries(): MonthlySeries {
-  return Array(12).fill(0) as MonthlySeries;
+/**
+ * Crée une série de 12 zéros mutables.
+ * Retourne `number[]` (mutable) pour permettre l'accumulation interne.
+ * Les consommateurs reçoivent la valeur via `MonthlySeries` (readonly) à la frontière publique.
+ */
+export function zeroSeries(): number[] {
+  return Array(12).fill(0);
 }
 
 export function sumSeries(a: MonthlySeries, b: MonthlySeries): MonthlySeries {
@@ -45,7 +50,7 @@ export function subSeries(a: MonthlySeries, b: MonthlySeries): MonthlySeries {
 }
 
 export function sumAll(...series: MonthlySeries[]): MonthlySeries {
-  return series.reduce((acc, s) => sumSeries(acc, s), zeroSeries());
+  return series.reduce((acc, s) => sumSeries(acc, s), zeroSeries() as MonthlySeries);
 }
 
 export function totalOf(s: MonthlySeries): number {
@@ -199,8 +204,8 @@ export function chargeExplMonthly(
   return distributeByFrequency(montant, row.frequence, row.moisPaiement);
 }
 
-/** Accumule les séries d'un tableau de lignes dans un MonthlyAcc. */
-function addSeries(acc: MonthlyAcc, yk: YearKey, s: MonthlySeries): void {
+/** Accumule les séries d'un tableau de lignes dans un accumulateur mutable. */
+function addSeries(acc: Record<YearKey, number[]>, yk: YearKey, s: MonthlySeries): void {
   for (let i = 0; i < 12; i++) acc[yk][i]! += s[i] ?? 0;
 }
 
@@ -352,7 +357,7 @@ export function buildMonthlyCalc(
 
   // ── Helpers locaux ────────────────────────────────────────────────────────
 
-  function emptyAcc(): MonthlyAcc {
+  function emptyAcc(): Record<YearKey, number[]> {
     return { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
   }
 
@@ -381,36 +386,39 @@ export function buildMonthlyCalc(
 
   // ── CA ────────────────────────────────────────────────────────────────────
 
-  const caAcc = emptyAcc();
-  const caByActivity: { libelle: string; series: MonthlyAcc }[] = [];
-  const caByType = {
-    productionVendue: emptyAcc(),
-    prestationServices: emptyAcc(),
-    ventesMarchandises: emptyAcc(),
-  };
-
-  for (const a of data.activites) {
-    if (a.actif === false) continue;
-    const actSeries: MonthlyAcc = {
-      y1: withSaisonnalite(n(a.montantN), a.saisonnaliteCA, "N"),
-      y2: withSaisonnalite(n(a.montantN1), a.saisonnaliteCA, "N1"),
-      y3: withSaisonnalite(n(a.montantN2), a.saisonnaliteCA, "N2"),
+  function buildMonthlyCa() {
+    const caAcc = emptyAcc();
+    const caByActivity: { libelle: string; series: MonthlyAcc }[] = [];
+    const caByType = {
+      productionVendue: emptyAcc(),
+      prestationServices: emptyAcc(),
+      ventesMarchandises: emptyAcc(),
     };
-    addSeries(caAcc, "y1", actSeries.y1);
-    addSeries(caAcc, "y2", actSeries.y2);
-    addSeries(caAcc, "y3", actSeries.y3);
-    caByActivity.push({ libelle: a.libelle, series: actSeries });
-
-    const typeKey =
-      a.typeActivite === "PRODUCTION_VENDUE"
-        ? "productionVendue"
-        : a.typeActivite === "PRESTATION_SERVICES"
-          ? "prestationServices"
-          : "ventesMarchandises";
-    addSeries(caByType[typeKey], "y1", actSeries.y1);
-    addSeries(caByType[typeKey], "y2", actSeries.y2);
-    addSeries(caByType[typeKey], "y3", actSeries.y3);
+    for (const a of data.activites) {
+      if (a.actif === false) continue;
+      const actSeries: MonthlyAcc = {
+        y1: withSaisonnalite(n(a.montantN), a.saisonnaliteCA, "N"),
+        y2: withSaisonnalite(n(a.montantN1), a.saisonnaliteCA, "N1"),
+        y3: withSaisonnalite(n(a.montantN2), a.saisonnaliteCA, "N2"),
+      };
+      addSeries(caAcc, "y1", actSeries.y1);
+      addSeries(caAcc, "y2", actSeries.y2);
+      addSeries(caAcc, "y3", actSeries.y3);
+      caByActivity.push({ libelle: a.libelle, series: actSeries });
+      const typeKey =
+        a.typeActivite === "PRODUCTION_VENDUE"
+          ? "productionVendue"
+          : a.typeActivite === "PRESTATION_SERVICES"
+            ? "prestationServices"
+            : "ventesMarchandises";
+      addSeries(caByType[typeKey], "y1", actSeries.y1);
+      addSeries(caByType[typeKey], "y2", actSeries.y2);
+      addSeries(caByType[typeKey], "y3", actSeries.y3);
+    }
+    return { caAcc, caByActivity, caByType };
   }
+
+  const { caAcc, caByActivity, caByType } = buildMonthlyCa();
 
   // ── Achats & stocks ───────────────────────────────────────────────────────
   //
@@ -423,15 +431,6 @@ export function buildMonthlyCalc(
   //
   // Tout repose sur les séries mensuelles réelles — aucun raccourci annuel.
 
-  const achatsConsommesAcc = emptyAcc();  // PRIMAL
-  const achatsByActivity: { libelle: string; series: MonthlyAcc }[] = [];
-
-  // Séries mensuelles globales accumulées (somme de toutes les activités)
-  const stockInitialAccSeries: MonthlyAcc = emptyAcc();
-  const stockFinalAccSeries: MonthlyAcc = emptyAcc();
-  const achatsEffectuesAccSeries: MonthlyAcc = emptyAcc();
-
-  // Drill-down par activité (séries mensuelles)
   type ActivityStockData = {
     libelle: string;
     sfFinalY1: number; sfFinalY2: number; sfFinalY3: number;
@@ -439,113 +438,117 @@ export function buildMonthlyCalc(
     siSeriesY2: MonthlySeries; sfSeriesY2: MonthlySeries;
     siSeriesY3: MonthlySeries; sfSeriesY3: MonthlySeries;
   };
-  const activityStocks: ActivityStockData[] = [];
 
-  for (const a of data.activites) {
-    if (a.actif === false || a.typeActivite === "PRESTATION_SERVICES") continue;
-    const taux = Math.max(0, 1 - n(a.tauxMarge) / 100);
-    const stocks = n(a.stocks ?? 0);
-    const aN = n(a.montantN) * taux;
-    const aN1 = n(a.montantN1) * taux;
-    const aN2 = n(a.montantN2) * taux;
+  function buildMonthlyAchatsStocks() {
+    const achatsConsommesAcc = emptyAcc();
+    const achatsByActivity: { libelle: string; series: MonthlyAcc }[] = [];
+    const stockInitialAccSeries = emptyAcc();
+    const stockFinalAccSeries = emptyAcc();
+    const achatsEffectuesAccSeries = emptyAcc();
+    const activityStocks: ActivityStockData[] = [];
 
-    // Achats ponctuels HT par mois
-    const ponctuelSeries: MonthlyAcc = {
-      y1: ponctuelMonthly(a.achatsStockPonctuel, "N"),
-      y2: ponctuelMonthly(a.achatsStockPonctuel, "N1"),
-      y3: ponctuelMonthly(a.achatsStockPonctuel, "N2"),
-    };
-    const ponctuelTotal = totalOf(ponctuelSeries.y1) + totalOf(ponctuelSeries.y2) + totalOf(ponctuelSeries.y3);
-
-    // Achats consommés (primal) : CA × coef distribué selon saisonnaliteAchats
-    const consommesSeries: MonthlyAcc = {
-      y1: withSaisonnalite(aN, a.saisonnaliteAchats, "N"),
-      y2: withSaisonnalite(aN1, a.saisonnaliteAchats, "N1"),
-      y3: withSaisonnalite(aN2, a.saisonnaliteAchats, "N2"),
-    };
-    addSeries(achatsConsommesAcc, "y1", consommesSeries.y1);
-    addSeries(achatsConsommesAcc, "y2", consommesSeries.y2);
-    addSeries(achatsConsommesAcc, "y3", consommesSeries.y3);
-
-    // ── Formule RCA cumulative — N → N+1 → N+2 (continuité inter-exercices) ──
-    const rY1 = computeStocksAchatsSeries(consommesSeries.y1, ponctuelSeries.y1, stocks, 0);
-    const rY2 = computeStocksAchatsSeries(consommesSeries.y2, ponctuelSeries.y2, stocks, rY1.sfFinal);
-    const rY3 = computeStocksAchatsSeries(consommesSeries.y3, ponctuelSeries.y3, stocks, rY2.sfFinal);
-
-    // Accumulation dans les séries globales
-    for (let j = 0; j < 12; j++) {
-      stockInitialAccSeries.y1[j] = (stockInitialAccSeries.y1[j] ?? 0) + (rY1.siSeries[j] ?? 0);
-      stockInitialAccSeries.y2[j] = (stockInitialAccSeries.y2[j] ?? 0) + (rY2.siSeries[j] ?? 0);
-      stockInitialAccSeries.y3[j] = (stockInitialAccSeries.y3[j] ?? 0) + (rY3.siSeries[j] ?? 0);
-      stockFinalAccSeries.y1[j] = (stockFinalAccSeries.y1[j] ?? 0) + (rY1.sfSeries[j] ?? 0);
-      stockFinalAccSeries.y2[j] = (stockFinalAccSeries.y2[j] ?? 0) + (rY2.sfSeries[j] ?? 0);
-      stockFinalAccSeries.y3[j] = (stockFinalAccSeries.y3[j] ?? 0) + (rY3.sfSeries[j] ?? 0);
-      achatsEffectuesAccSeries.y1[j] = (achatsEffectuesAccSeries.y1[j] ?? 0) + (rY1.achatsEffSeries[j] ?? 0);
-      achatsEffectuesAccSeries.y2[j] = (achatsEffectuesAccSeries.y2[j] ?? 0) + (rY2.achatsEffSeries[j] ?? 0);
-      achatsEffectuesAccSeries.y3[j] = (achatsEffectuesAccSeries.y3[j] ?? 0) + (rY3.achatsEffSeries[j] ?? 0);
+    for (const a of data.activites) {
+      if (a.actif === false || a.typeActivite === "PRESTATION_SERVICES") continue;
+      const taux = Math.max(0, 1 - n(a.tauxMarge) / 100);
+      const stocks = n(a.stocks ?? 0);
+      const aN = n(a.montantN) * taux;
+      const aN1 = n(a.montantN1) * taux;
+      const aN2 = n(a.montantN2) * taux;
+      const ponctuelSeries: MonthlyAcc = {
+        y1: ponctuelMonthly(a.achatsStockPonctuel, "N"),
+        y2: ponctuelMonthly(a.achatsStockPonctuel, "N1"),
+        y3: ponctuelMonthly(a.achatsStockPonctuel, "N2"),
+      };
+      const ponctuelTotal = totalOf(ponctuelSeries.y1) + totalOf(ponctuelSeries.y2) + totalOf(ponctuelSeries.y3);
+      const consommesSeries: MonthlyAcc = {
+        y1: withSaisonnalite(aN, a.saisonnaliteAchats, "N"),
+        y2: withSaisonnalite(aN1, a.saisonnaliteAchats, "N1"),
+        y3: withSaisonnalite(aN2, a.saisonnaliteAchats, "N2"),
+      };
+      addSeries(achatsConsommesAcc, "y1", consommesSeries.y1);
+      addSeries(achatsConsommesAcc, "y2", consommesSeries.y2);
+      addSeries(achatsConsommesAcc, "y3", consommesSeries.y3);
+      const rY1 = computeStocksAchatsSeries(consommesSeries.y1, ponctuelSeries.y1, stocks, 0);
+      const rY2 = computeStocksAchatsSeries(consommesSeries.y2, ponctuelSeries.y2, stocks, rY1.sfFinal);
+      const rY3 = computeStocksAchatsSeries(consommesSeries.y3, ponctuelSeries.y3, stocks, rY2.sfFinal);
+      for (let j = 0; j < 12; j++) {
+        stockInitialAccSeries.y1[j] = (stockInitialAccSeries.y1[j] ?? 0) + (rY1.siSeries[j] ?? 0);
+        stockInitialAccSeries.y2[j] = (stockInitialAccSeries.y2[j] ?? 0) + (rY2.siSeries[j] ?? 0);
+        stockInitialAccSeries.y3[j] = (stockInitialAccSeries.y3[j] ?? 0) + (rY3.siSeries[j] ?? 0);
+        stockFinalAccSeries.y1[j] = (stockFinalAccSeries.y1[j] ?? 0) + (rY1.sfSeries[j] ?? 0);
+        stockFinalAccSeries.y2[j] = (stockFinalAccSeries.y2[j] ?? 0) + (rY2.sfSeries[j] ?? 0);
+        stockFinalAccSeries.y3[j] = (stockFinalAccSeries.y3[j] ?? 0) + (rY3.sfSeries[j] ?? 0);
+        achatsEffectuesAccSeries.y1[j] = (achatsEffectuesAccSeries.y1[j] ?? 0) + (rY1.achatsEffSeries[j] ?? 0);
+        achatsEffectuesAccSeries.y2[j] = (achatsEffectuesAccSeries.y2[j] ?? 0) + (rY2.achatsEffSeries[j] ?? 0);
+        achatsEffectuesAccSeries.y3[j] = (achatsEffectuesAccSeries.y3[j] ?? 0) + (rY3.achatsEffSeries[j] ?? 0);
+      }
+      if (aN !== 0 || aN1 !== 0 || aN2 !== 0 || ponctuelTotal !== 0) {
+        activityStocks.push({
+          libelle: a.libelle,
+          sfFinalY1: rY1.sfFinal, sfFinalY2: rY2.sfFinal, sfFinalY3: rY3.sfFinal,
+          siSeriesY1: rY1.siSeries, sfSeriesY1: rY1.sfSeries,
+          siSeriesY2: rY2.siSeries, sfSeriesY2: rY2.sfSeries,
+          siSeriesY3: rY3.siSeries, sfSeriesY3: rY3.sfSeries,
+        });
+        achatsByActivity.push({
+          libelle: `Achats – ${a.libelle}`,
+          series: { y1: rY1.achatsEffSeries, y2: rY2.achatsEffSeries, y3: rY3.achatsEffSeries },
+        });
+      }
     }
 
-    // Drill-down par activité (séries mensuelles)
-    if (aN !== 0 || aN1 !== 0 || aN2 !== 0 || ponctuelTotal !== 0) {
-      activityStocks.push({
-        libelle: a.libelle,
-        sfFinalY1: rY1.sfFinal, sfFinalY2: rY2.sfFinal, sfFinalY3: rY3.sfFinal,
-        siSeriesY1: rY1.siSeries, sfSeriesY1: rY1.sfSeries,
-        siSeriesY2: rY2.siSeries, sfSeriesY2: rY2.sfSeries,
-        siSeriesY3: rY3.siSeries, sfSeriesY3: rY3.sfSeries,
-      });
-      achatsByActivity.push({
-        libelle: `Achats – ${a.libelle}`,
-        series: { y1: rY1.achatsEffSeries, y2: rY2.achatsEffSeries, y3: rY3.achatsEffSeries },
-      });
-    }
+    const stockInitialByActivity = activityStocks.map((s) => ({
+      libelle: s.libelle,
+      series: { y1: s.siSeriesY1, y2: s.siSeriesY2, y3: s.siSeriesY3 } as MonthlyAcc,
+    }));
+    const stockFinalByActivity = activityStocks.map((s) => ({
+      libelle: s.libelle,
+      series: { y1: s.sfSeriesY1, y2: s.sfSeriesY2, y3: s.sfSeriesY3 } as MonthlyAcc,
+    }));
+    const varStockByActivity = activityStocks.map((s) => ({
+      libelle: s.libelle,
+      series: {
+        y1: s.sfSeriesY1.map((sf, j) => sf - (s.siSeriesY1[j] ?? 0)) as MonthlySeries,
+        y2: s.sfSeriesY2.map((sf, j) => sf - (s.siSeriesY2[j] ?? 0)) as MonthlySeries,
+        y3: s.sfSeriesY3.map((sf, j) => sf - (s.siSeriesY3[j] ?? 0)) as MonthlySeries,
+      } as MonthlyAcc,
+    }));
+    const varStockAcc: MonthlyAcc = {
+      y1: stockFinalAccSeries.y1.map((sf, j) => sf - (stockInitialAccSeries.y1[j] ?? 0)) as MonthlySeries,
+      y2: stockFinalAccSeries.y2.map((sf, j) => sf - (stockInitialAccSeries.y2[j] ?? 0)) as MonthlySeries,
+      y3: stockFinalAccSeries.y3.map((sf, j) => sf - (stockInitialAccSeries.y3[j] ?? 0)) as MonthlySeries,
+    };
+    const margeGlobaleAcc: MonthlyAcc = {
+      y1: caAcc.y1.map((v, i) => v - (achatsConsommesAcc.y1[i] ?? 0)),
+      y2: caAcc.y2.map((v, i) => v - (achatsConsommesAcc.y2[i] ?? 0)),
+      y3: caAcc.y3.map((v, i) => v - (achatsConsommesAcc.y3[i] ?? 0)),
+    };
+    return {
+      achatsConsommesAcc,
+      achatsByActivity,
+      stockInitialAcc: stockInitialAccSeries as MonthlyAcc,
+      stockFinalAcc: stockFinalAccSeries as MonthlyAcc,
+      achatsEffectuesAcc: achatsEffectuesAccSeries as MonthlyAcc,
+      stockInitialByActivity,
+      stockFinalByActivity,
+      varStockByActivity,
+      varStockAcc,
+      margeGlobaleAcc,
+    };
   }
 
-  // ── Drill-down stock par activité (séries mensuelles réelles) ─────────────
-  const stockInitialByActivity = activityStocks.map((s) => ({
-    libelle: s.libelle,
-    series: {
-      y1: s.siSeriesY1,
-      y2: s.siSeriesY2,
-      y3: s.siSeriesY3,
-    } as MonthlyAcc,
-  }));
-  const stockFinalByActivity = activityStocks.map((s) => ({
-    libelle: s.libelle,
-    series: {
-      y1: s.sfSeriesY1,
-      y2: s.sfSeriesY2,
-      y3: s.sfSeriesY3,
-    } as MonthlyAcc,
-  }));
-  const varStockByActivity = activityStocks.map((s) => ({
-    libelle: s.libelle,
-    series: {
-      y1: s.sfSeriesY1.map((sf, j) => sf - (s.siSeriesY1[j] ?? 0)) as MonthlySeries,
-      y2: s.sfSeriesY2.map((sf, j) => sf - (s.siSeriesY2[j] ?? 0)) as MonthlySeries,
-      y3: s.sfSeriesY3.map((sf, j) => sf - (s.siSeriesY3[j] ?? 0)) as MonthlySeries,
-    } as MonthlyAcc,
-  }));
-  // ── Agrégats mensuels globaux ─────────────────────────────────────────────
-  // Séries mensuelles réelles — pas de `uniform()` / raccourci annuel.
-  const stockInitialAcc: MonthlyAcc = stockInitialAccSeries;
-  const stockFinalAcc: MonthlyAcc = stockFinalAccSeries;
-  const varStockAcc: MonthlyAcc = {
-    y1: stockFinalAccSeries.y1.map((sf, j) => sf - (stockInitialAccSeries.y1[j] ?? 0)) as MonthlySeries,
-    y2: stockFinalAccSeries.y2.map((sf, j) => sf - (stockInitialAccSeries.y2[j] ?? 0)) as MonthlySeries,
-    y3: stockFinalAccSeries.y3.map((sf, j) => sf - (stockInitialAccSeries.y3[j] ?? 0)) as MonthlySeries,
-  };
-
-  // achatsEffectués : séries cumulatives RCA (cohérentes avec l'onglet saisie)
-  const achatsEffectuesAcc = achatsEffectuesAccSeries;
-
-  // ── Marges ────────────────────────────────────────────────────────────────
-
-  const margeGlobaleAcc: MonthlyAcc = {
-    y1: caAcc.y1.map((v, i) => v - (achatsConsommesAcc.y1[i] ?? 0)),
-    y2: caAcc.y2.map((v, i) => v - (achatsConsommesAcc.y2[i] ?? 0)),
-    y3: caAcc.y3.map((v, i) => v - (achatsConsommesAcc.y3[i] ?? 0)),
-  };
+  const {
+    achatsConsommesAcc,
+    achatsByActivity,
+    stockInitialAcc,
+    stockFinalAcc,
+    achatsEffectuesAcc,
+    stockInitialByActivity,
+    stockFinalByActivity,
+    varStockByActivity,
+    varStockAcc,
+    margeGlobaleAcc,
+  } = buildMonthlyAchatsStocks();
 
   // ── Charges d'exploitation ────────────────────────────────────────────────
 
@@ -599,83 +602,76 @@ export function buildMonthlyCalc(
     return acc;
   }
 
-  const salairesBrutsAcc = simpleUniform(data.salaries);
-  const chargesPatronalesAcc: MonthlyAcc = (() => {
-    const acc = emptyAcc();
-    for (const r of data.salaries) {
-      if (r.actif === false) continue;
-      addSeries(acc, "y1", uniform(n(r.montantN) * (n(r.tauxCotPat) / 100)));
-      addSeries(acc, "y2", uniform(n(r.montantN1) * (n(r.tauxCotPat) / 100)));
-      addSeries(acc, "y3", uniform(n(r.montantN2) * (n(r.tauxCotPat) / 100)));
+  function buildMonthlyPersonnel() {
+    const salairesBrutsAcc = simpleUniform(data.salaries);
+    const chargesPatronalesAcc: MonthlyAcc = (() => {
+      const acc = emptyAcc();
+      for (const r of data.salaries) {
+        if (r.actif === false) continue;
+        addSeries(acc, "y1", uniform(n(r.montantN) * (n(r.tauxCotPat) / 100)));
+        addSeries(acc, "y2", uniform(n(r.montantN1) * (n(r.tauxCotPat) / 100)));
+        addSeries(acc, "y3", uniform(n(r.montantN2) * (n(r.tauxCotPat) / 100)));
+      }
+      return acc;
+    })();
+    const remuDirigeantAcc = simpleUniform(data.dirigeants);
+    const cotisationsTNSAcc = simpleUniform(data.cotisationsTNS);
+    const taxesSalairesAcc = simpleUniform(data.taxesSalaires);
+    const chargesPersonnelAcc = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+    for (const yk of ["y1", "y2", "y3"] as YearKey[]) {
+      for (let i = 0; i < 12; i++) {
+        chargesPersonnelAcc[yk][i] =
+          (salairesBrutsAcc[yk][i] ?? 0) +
+          (chargesPatronalesAcc[yk][i] ?? 0) +
+          (remuDirigeantAcc[yk][i] ?? 0) +
+          (cotisationsTNSAcc[yk][i] ?? 0) +
+          (taxesSalairesAcc[yk][i] ?? 0);
+      }
     }
-    return acc;
-  })();
-  const remuDirigeantAcc = simpleUniform(data.dirigeants);
-  const cotisationsTNSAcc = simpleUniform(data.cotisationsTNS);
-  const taxesSalairesAcc = simpleUniform(data.taxesSalaires);
-
-  const chargesPersonnelAcc: MonthlyAcc = {
-    y1: zeroSeries(),
-    y2: zeroSeries(),
-    y3: zeroSeries(),
-  };
-  for (const yk of ["y1", "y2", "y3"] as YearKey[]) {
-    for (let i = 0; i < 12; i++) {
-      chargesPersonnelAcc[yk][i] =
-        (salairesBrutsAcc[yk][i] ?? 0) +
-        (chargesPatronalesAcc[yk][i] ?? 0) +
-        (remuDirigeantAcc[yk][i] ?? 0) +
-        (cotisationsTNSAcc[yk][i] ?? 0) +
-        (taxesSalairesAcc[yk][i] ?? 0);
-    }
+    return { salairesBrutsAcc, chargesPatronalesAcc, remuDirigeantAcc, cotisationsTNSAcc, taxesSalairesAcc, chargesPersonnelAcc };
   }
+
+  const {
+    salairesBrutsAcc,
+    chargesPatronalesAcc,
+    remuDirigeantAcc,
+    cotisationsTNSAcc,
+    taxesSalairesAcc,
+    chargesPersonnelAcc,
+  } = buildMonthlyPersonnel();
 
   // ── SIG ───────────────────────────────────────────────────────────────────
 
-  const subventionsAcc = simpleUniform(data.subventionsExploitation);
-
-  const valeurAjouteeAcc: MonthlyAcc = {
-    y1: margeGlobaleAcc.y1.map(
-      (v, i) => v - (chargesExternesAcc.y1[i] ?? 0),
-    ),
-    y2: margeGlobaleAcc.y2.map(
-      (v, i) => v - (chargesExternesAcc.y2[i] ?? 0),
-    ),
-    y3: margeGlobaleAcc.y3.map(
-      (v, i) => v - (chargesExternesAcc.y3[i] ?? 0),
-    ),
-  };
-
-  const ebeAcc: MonthlyAcc = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
-  for (const yk of ["y1", "y2", "y3"] as YearKey[]) {
-    for (let i = 0; i < 12; i++) {
-      ebeAcc[yk][i] =
-        (valeurAjouteeAcc[yk][i] ?? 0) -
-        (impotsTaxesAcc[yk][i] ?? 0) -
-        (chargesPersonnelAcc[yk][i] ?? 0) +
-        (subventionsAcc[yk][i] ?? 0);
+  function buildMonthlySig() {
+    const subventionsAcc = simpleUniform(data.subventionsExploitation);
+    const valeurAjouteeAcc: MonthlyAcc = {
+      y1: margeGlobaleAcc.y1.map((v, i) => v - (chargesExternesAcc.y1[i] ?? 0)),
+      y2: margeGlobaleAcc.y2.map((v, i) => v - (chargesExternesAcc.y2[i] ?? 0)),
+      y3: margeGlobaleAcc.y3.map((v, i) => v - (chargesExternesAcc.y3[i] ?? 0)),
+    };
+    const ebeAcc = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+    for (const yk of ["y1", "y2", "y3"] as YearKey[]) {
+      for (let i = 0; i < 12; i++) {
+        ebeAcc[yk][i] =
+          (valeurAjouteeAcc[yk][i] ?? 0) -
+          (impotsTaxesAcc[yk][i] ?? 0) -
+          (chargesPersonnelAcc[yk][i] ?? 0) +
+          (subventionsAcc[yk][i] ?? 0);
+      }
     }
+    return { subventionsAcc, valeurAjouteeAcc, ebeAcc };
   }
 
-  // ── Amortissements & provisions ───────────────────────────────────────────
-  //
-  // Quand moisDebut > 0, l'exercice y1 couvre la partie "fin" de l'année civile
-  // anneeDebut (pFin = moisDebut/12 de l'exercice y1) ET la partie "début" de
-  // anneeDebut+1 (pDeb = 1-pFin).
-  //
-  // Convention mensuelle : on répartit d'abord par mois pour chaque année
-  // civile, puis on affecte chaque mois au bon exercice fiscal.
-  //
-  //  Année civile anneeDebut   → mois [moisDebut .. 11]  appartiennent à y1
-  //  Année civile anneeDebut+1 → mois [0 .. moisDebut-1] appartiennent à y1
-  //                             mois [moisDebut .. 11]  appartiennent à y2
-  //  etc.
+  const { subventionsAcc, valeurAjouteeAcc, ebeAcc } = buildMonthlySig();
 
-  const dotationsAmortAcc = emptyAcc();
-  const dotationsParImmo: {
-    immo: { id: string; libelle: string; nature: string };
-    series: MonthlyAcc;
-  }[] = [];
+  // ── Amortissements, provisions, autres produits & résultat d'exploitation ──
+
+  function buildMonthlyAmortEtResultatExpl() {
+    const dotationsAmortAcc = emptyAcc();
+    const dotationsParImmo: {
+      immo: { id: string; libelle: string; nature: string };
+      series: MonthlyAcc;
+    }[] = [];
 
   for (const immo of data.immobilisations) {
     if (immo.actif === false) continue;
@@ -755,164 +751,158 @@ export function buildMonthlyCalc(
     });
   }
 
-  const dotationsProvisionsAcc = simpleUniform(data.provisions);
-  const reprisesAcc = simpleUniform(data.reprisesProduits);
+    const dotationsProvisionsAcc = simpleUniform(data.provisions);
+    const reprisesAcc = simpleUniform(data.reprisesProduits);
 
-  // ── Autres produits / charges exploitation ────────────────────────────────
+    const commissionsTotalAcc = simpleUniform(data.activiteCommissions);
 
-  const commissionsTotalAcc = simpleUniform(data.activiteCommissions);
-
-  // Prod immobilisées : date unique → exercice + mois exacts
-  const prodImmoAcc = emptyAcc();
-  for (const p of data.productionsImmobilisees) {
-    if (p.actif === false) continue;
-    const m = n(p.montant);
-    if (m === 0) continue;
-    if (p.date) {
-      const dateStr = typeof p.date === "object" ? (p.date as Date).toISOString() : String(p.date);
-      const r = ykAndMonthIdx(dateStr);
-      if (r) {
-        prodImmoAcc[r.yk][r.idx]! += m;
-        continue;
+    const prodImmoAcc = emptyAcc();
+    for (const p of data.productionsImmobilisees) {
+      if (p.actif === false) continue;
+      const m = n(p.montant);
+      if (m === 0) continue;
+      if (p.date) {
+        const dateStr = typeof p.date === "object" ? (p.date as Date).toISOString() : String(p.date);
+        const r = ykAndMonthIdx(dateStr);
+        if (r) {
+          prodImmoAcc[r.yk][r.idx]! += m;
+          continue;
+        }
       }
+      addSeries(prodImmoAcc, "y1", uniform(m));
     }
-    // Sans date → répartir sur y1 uniformément
-    addSeries(prodImmoAcc, "y1", uniform(m));
-  }
 
-  const transfertsAcc = simpleUniform(data.transfertsProduits);
-  const autresProdGestionAcc = simpleUniform(data.gestionCouranteProduits);
-  const autresChargesGestionAcc = simpleUniform(data.chargesGestionCourante);
+    const transfertsAcc = simpleUniform(data.transfertsProduits);
+    const autresProdGestionAcc = simpleUniform(data.gestionCouranteProduits);
+    const autresChargesGestionAcc = simpleUniform(data.chargesGestionCourante);
 
   // ── Résultat d'exploitation ───────────────────────────────────────────────
 
-  const resExplAcc: MonthlyAcc = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
-  for (const yk of ["y1", "y2", "y3"] as YearKey[]) {
-    for (let i = 0; i < 12; i++) {
-      resExplAcc[yk][i] =
-        (ebeAcc[yk][i] ?? 0) -
-        (dotationsAmortAcc[yk][i] ?? 0) -
-        (dotationsProvisionsAcc[yk][i] ?? 0) +
-        (reprisesAcc[yk][i] ?? 0) +
-        (commissionsTotalAcc[yk][i] ?? 0) +
-        (prodImmoAcc[yk][i] ?? 0) +
-        (transfertsAcc[yk][i] ?? 0) +
-        (autresProdGestionAcc[yk][i] ?? 0) -
-        (autresChargesGestionAcc[yk][i] ?? 0);
+    const resExplAcc = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+    for (const yk of ["y1", "y2", "y3"] as YearKey[]) {
+      for (let i = 0; i < 12; i++) {
+        resExplAcc[yk][i] =
+          (ebeAcc[yk][i] ?? 0) -
+          (dotationsAmortAcc[yk][i] ?? 0) -
+          (dotationsProvisionsAcc[yk][i] ?? 0) +
+          (reprisesAcc[yk][i] ?? 0) +
+          (commissionsTotalAcc[yk][i] ?? 0) +
+          (prodImmoAcc[yk][i] ?? 0) +
+          (transfertsAcc[yk][i] ?? 0) +
+          (autresProdGestionAcc[yk][i] ?? 0) -
+          (autresChargesGestionAcc[yk][i] ?? 0);
+      }
     }
+    return {
+      dotationsAmortAcc, dotationsParImmo, dotationsProvisionsAcc, reprisesAcc,
+      commissionsTotalAcc, prodImmoAcc, transfertsAcc,
+      autresProdGestionAcc, autresChargesGestionAcc, resExplAcc,
+    };
   }
 
-  // ── Financier ─────────────────────────────────────────────────────────────
+  const {
+    dotationsAmortAcc, dotationsParImmo, dotationsProvisionsAcc, reprisesAcc,
+    commissionsTotalAcc, prodImmoAcc, transfertsAcc,
+    autresProdGestionAcc, autresChargesGestionAcc, resExplAcc,
+  } = buildMonthlyAmortEtResultatExpl();
 
-  const produitsFinanciersAcc = simpleUniform(data.financiersProduits);
+  // ── Financier, résultats & CAF ────────────────────────────────────────────
 
-  // Intérêts emprunts : placement exact dans le mois de l'échéance
-  const interetsEmpruntsAcc = emptyAcc();
-  for (const emprunt of data.emprunts) {
-    for (const ligne of emprunt.lignesEcheancier) {
+  function buildMonthlyFinancierEtResultats() {
+    const produitsFinanciersAcc = simpleUniform(data.financiersProduits);
+
+    const interetsEmpruntsAcc = emptyAcc();
+    for (const emprunt of data.emprunts) {
+      for (const ligne of emprunt.lignesEcheancier) {
+        const dateStr =
+          ligne.dateEcheance instanceof Date
+            ? ligne.dateEcheance.toISOString()
+            : String(ligne.dateEcheance ?? "");
+        if (!dateStr) continue;
+        const r = ykAndMonthIdx(dateStr);
+        if (r) {
+          interetsEmpruntsAcc[r.yk][r.idx]! +=
+            n(ligne.interesMois) + n(ligne.assuranceMois);
+        }
+      }
+    }
+
+    const fraisDossierAcc = emptyAcc();
+    for (const emprunt of data.emprunts) {
+      const frais = n(emprunt.fraisDossier ?? 0);
+      if (frais <= 0) continue;
       const dateStr =
-        ligne.dateEcheance instanceof Date
-          ? ligne.dateEcheance.toISOString()
-          : String(ligne.dateEcheance ?? "");
+        emprunt.dateDéblocage instanceof Date
+          ? emprunt.dateDéblocage.toISOString()
+          : String(emprunt.dateDéblocage ?? "");
       if (!dateStr) continue;
       const r = ykAndMonthIdx(dateStr);
       if (r) {
-        interetsEmpruntsAcc[r.yk][r.idx]! +=
-          n(ligne.interesMois) + n(ligne.assuranceMois);
+        fraisDossierAcc[r.yk][r.idx]! += frais;
       }
     }
-  }
 
-  // Frais de dossier : charge ponctuelle à la date de déblocage
-  // Source unique : emprunt.fraisDossier (champ direct DB).
-  const fraisDossierAcc = emptyAcc();
-  for (const emprunt of data.emprunts) {
-    const frais = n(emprunt.fraisDossier ?? 0);
-    if (frais <= 0) continue;
-    const dateStr =
-      emprunt.dateDéblocage instanceof Date
-        ? emprunt.dateDéblocage.toISOString()
-        : String(emprunt.dateDéblocage ?? "");
-    if (!dateStr) continue;
-    const r = ykAndMonthIdx(dateStr);
-    if (r) {
-      fraisDossierAcc[r.yk][r.idx]! += frais;
+    const autresChargesFinancieresAcc = simpleUniform(data.chargesFinancieres);
+    const chargesFinancieresAcc: MonthlyAcc = {
+      y1: sumSeries(sumSeries(interetsEmpruntsAcc.y1, fraisDossierAcc.y1), autresChargesFinancieresAcc.y1),
+      y2: sumSeries(sumSeries(interetsEmpruntsAcc.y2, fraisDossierAcc.y2), autresChargesFinancieresAcc.y2),
+      y3: sumSeries(sumSeries(interetsEmpruntsAcc.y3, fraisDossierAcc.y3), autresChargesFinancieresAcc.y3),
+    };
+    const resFinAcc: MonthlyAcc = {
+      y1: produitsFinanciersAcc.y1.map((v, i) => v - (chargesFinancieresAcc.y1[i] ?? 0)),
+      y2: produitsFinanciersAcc.y2.map((v, i) => v - (chargesFinancieresAcc.y2[i] ?? 0)),
+      y3: produitsFinanciersAcc.y3.map((v, i) => v - (chargesFinancieresAcc.y3[i] ?? 0)),
+    };
+    const resCourantAcc: MonthlyAcc = {
+      y1: resExplAcc.y1.map((v, i) => v + (resFinAcc.y1[i] ?? 0)),
+      y2: resExplAcc.y2.map((v, i) => v + (resFinAcc.y2[i] ?? 0)),
+      y3: resExplAcc.y3.map((v, i) => v + (resFinAcc.y3[i] ?? 0)),
+    };
+    const produitsExcepAcc = simpleUniform(data.exceptionnelsProduits);
+    const chargesExcepAcc = simpleUniform(data.chargesExceptionnelles);
+    const resExcepAcc: MonthlyAcc = {
+      y1: produitsExcepAcc.y1.map((v, i) => v - (chargesExcepAcc.y1[i] ?? 0)),
+      y2: produitsExcepAcc.y2.map((v, i) => v - (chargesExcepAcc.y2[i] ?? 0)),
+      y3: produitsExcepAcc.y3.map((v, i) => v - (chargesExcepAcc.y3[i] ?? 0)),
+    };
+    const isSeries: MonthlyAcc = {
+      y1: uniform(isParAnnee.y1),
+      y2: uniform(isParAnnee.y2),
+      y3: uniform(isParAnnee.y3),
+    };
+    const resNetAcc = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+    for (const yk of ["y1", "y2", "y3"] as YearKey[]) {
+      for (let i = 0; i < 12; i++) {
+        resNetAcc[yk][i] =
+          (resCourantAcc[yk][i] ?? 0) +
+          (resExcepAcc[yk][i] ?? 0) -
+          (isSeries[yk][i] ?? 0);
+      }
     }
-  }
-
-  const autresChargesFinancieresAcc = simpleUniform(data.chargesFinancieres);
-  const chargesFinancieresAcc: MonthlyAcc = {
-    y1: sumSeries(sumSeries(interetsEmpruntsAcc.y1, fraisDossierAcc.y1), autresChargesFinancieresAcc.y1),
-    y2: sumSeries(sumSeries(interetsEmpruntsAcc.y2, fraisDossierAcc.y2), autresChargesFinancieresAcc.y2),
-    y3: sumSeries(sumSeries(interetsEmpruntsAcc.y3, fraisDossierAcc.y3), autresChargesFinancieresAcc.y3),
-  };
-
-  const resFinAcc: MonthlyAcc = {
-    y1: produitsFinanciersAcc.y1.map(
-      (v, i) => v - (chargesFinancieresAcc.y1[i] ?? 0),
-    ),
-    y2: produitsFinanciersAcc.y2.map(
-      (v, i) => v - (chargesFinancieresAcc.y2[i] ?? 0),
-    ),
-    y3: produitsFinanciersAcc.y3.map(
-      (v, i) => v - (chargesFinancieresAcc.y3[i] ?? 0),
-    ),
-  };
-
-  // ── Résultats ─────────────────────────────────────────────────────────────
-
-  const resCourantAcc: MonthlyAcc = {
-    y1: resExplAcc.y1.map((v, i) => v + (resFinAcc.y1[i] ?? 0)),
-    y2: resExplAcc.y2.map((v, i) => v + (resFinAcc.y2[i] ?? 0)),
-    y3: resExplAcc.y3.map((v, i) => v + (resFinAcc.y3[i] ?? 0)),
-  };
-
-  const produitsExcepAcc = simpleUniform(data.exceptionnelsProduits);
-  const chargesExcepAcc = simpleUniform(data.chargesExceptionnelles);
-  const resExcepAcc: MonthlyAcc = {
-    y1: produitsExcepAcc.y1.map(
-      (v, i) => v - (chargesExcepAcc.y1[i] ?? 0),
-    ),
-    y2: produitsExcepAcc.y2.map(
-      (v, i) => v - (chargesExcepAcc.y2[i] ?? 0),
-    ),
-    y3: produitsExcepAcc.y3.map(
-      (v, i) => v - (chargesExcepAcc.y3[i] ?? 0),
-    ),
-  };
-
-  // ── IS : calculé annuellement, réparti uniformément ───────────────────────
-
-  const isSeries: MonthlyAcc = {
-    y1: uniform(isParAnnee.y1),
-    y2: uniform(isParAnnee.y2),
-    y3: uniform(isParAnnee.y3),
-  };
-
-  // ── Résultat net ──────────────────────────────────────────────────────────
-
-  const resNetAcc: MonthlyAcc = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
-  for (const yk of ["y1", "y2", "y3"] as YearKey[]) {
-    for (let i = 0; i < 12; i++) {
-      resNetAcc[yk][i] =
-        (resCourantAcc[yk][i] ?? 0) +
-        (resExcepAcc[yk][i] ?? 0) -
-        (isSeries[yk][i] ?? 0);
+    const cafAcc = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+    for (const yk of ["y1", "y2", "y3"] as YearKey[]) {
+      for (let i = 0; i < 12; i++) {
+        cafAcc[yk][i] =
+          (resNetAcc[yk][i] ?? 0) +
+          (dotationsAmortAcc[yk][i] ?? 0) +
+          (dotationsProvisionsAcc[yk][i] ?? 0) -
+          (reprisesAcc[yk][i] ?? 0);
+      }
     }
+    return {
+      produitsFinanciersAcc, interetsEmpruntsAcc, fraisDossierAcc,
+      autresChargesFinancieresAcc, chargesFinancieresAcc, resFinAcc,
+      resCourantAcc, produitsExcepAcc, chargesExcepAcc, resExcepAcc,
+      isSeries, resNetAcc, cafAcc,
+    };
   }
 
-  // ── CAF ───────────────────────────────────────────────────────────────────
-
-  const cafAcc: MonthlyAcc = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
-  for (const yk of ["y1", "y2", "y3"] as YearKey[]) {
-    for (let i = 0; i < 12; i++) {
-      cafAcc[yk][i] =
-        (resNetAcc[yk][i] ?? 0) +
-        (dotationsAmortAcc[yk][i] ?? 0) +
-        (dotationsProvisionsAcc[yk][i] ?? 0) -
-        (reprisesAcc[yk][i] ?? 0);
-    }
-  }
+  const {
+    produitsFinanciersAcc, interetsEmpruntsAcc, fraisDossierAcc,
+    autresChargesFinancieresAcc, chargesFinancieresAcc, resFinAcc,
+    resCourantAcc, produitsExcepAcc, chargesExcepAcc, resExcepAcc,
+    isSeries, resNetAcc, cafAcc,
+  } = buildMonthlyFinancierEtResultats();
 
   // Supprimer la variable inutilisée pour éviter l'avertissement TS
   void pFin;
