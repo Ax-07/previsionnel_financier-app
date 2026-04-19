@@ -63,7 +63,7 @@ const defaultInput: SimulationInput = {
     statut: "non_cadre",
     typeContrat: "CDI",
     heuresContrat: 151.66669,
-    brutMensuel: 2000,
+    brutMensuel: 1823.03,
     tauxPAS: 0,
     modePAS: "neutre",
   },

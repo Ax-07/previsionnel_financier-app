@@ -1,28 +1,24 @@
 import { create } from "zustand";
-import { loadScenarioData } from "@/app/actions/load-scenario-data";
-import type { ScenarioFinData } from "@/app/actions/load-scenario-data";
+import { loadSaisieData } from "@/app/actions/load-saisie-data";
+import type { SaisieFormData } from "@/app/actions/load-saisie-data";
 import type { DataStatus } from "@/lib/types/data-state";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 /** @deprecated Utiliser `DataStatus` depuis `@/lib/types/data-state` */
-export type ScenarioDataStatus = DataStatus;
+export type SaisieDataStatus = DataStatus;
 
-interface ScenarioDataEntry {
-  data: ScenarioFinData;
+interface SaisieDataEntry {
+  data: SaisieFormData;
   fetchedAt: number;
 }
 
-interface ScenarioDataState {
-  cache: Record<string, ScenarioDataEntry>;
-  status: Record<string, ScenarioDataStatus>;
+interface SaisieDataState {
+  cache: Record<string, SaisieDataEntry>;
+  status: Record<string, SaisieDataStatus>;
   errors: Record<string, string>;
 
-  getData: (dossierId: string) => ScenarioFinData | null;
-  getStatus: (dossierId: string) => ScenarioDataStatus;
-  getError: (dossierId: string) => string | null;
-
-  /** Charge les données si pas encore chargées (no-op si status === "success") */
+  /** Charge les données si pas encore chargées (no-op si déjà en cache) */
   load: (dossierId: string) => Promise<void>;
   /** Force le rechargement même si déjà en cache (point d'invalidation unique) */
   reload: (dossierId: string) => Promise<void>;
@@ -31,19 +27,15 @@ interface ScenarioDataState {
 
 // ── Store ─────────────────────────────────────────────────────────────────────
 
-export const useScenarioDataStore = create<ScenarioDataState>((set, get) => ({
+export const useSaisieDataStore = create<SaisieDataState>((set, get) => ({
   cache: {},
   status: {},
   errors: {},
 
-  getData: (dossierId) => get().cache[dossierId]?.data ?? null,
-  getStatus: (dossierId) => get().status[dossierId] ?? "idle",
-  getError: (dossierId) => get().errors[dossierId] ?? null,
-
   load: async (dossierId) => {
     const { status, cache } = get();
     if (status[dossierId] === "loading") return;
-    if (cache[dossierId]) return; // déjà en cache
+    if (cache[dossierId]) return;
 
     set((s) => ({
       status: { ...s.status, [dossierId]: "loading" },
@@ -51,7 +43,7 @@ export const useScenarioDataStore = create<ScenarioDataState>((set, get) => ({
     }));
 
     try {
-      const data = await loadScenarioData(dossierId);
+      const data = await loadSaisieData(dossierId);
       set((s) => ({
         cache: { ...s.cache, [dossierId]: { data, fetchedAt: Date.now() } },
         status: { ...s.status, [dossierId]: "success" },
@@ -75,7 +67,7 @@ export const useScenarioDataStore = create<ScenarioDataState>((set, get) => ({
     }));
 
     try {
-      const data = await loadScenarioData(dossierId);
+      const data = await loadSaisieData(dossierId);
       set((s) => ({
         cache: { ...s.cache, [dossierId]: { data, fetchedAt: Date.now() } },
         status: { ...s.status, [dossierId]: "success" },
@@ -91,12 +83,9 @@ export const useScenarioDataStore = create<ScenarioDataState>((set, get) => ({
 
   clear: (dossierId) => {
     set((s) => {
-      const cache = { ...s.cache };
-      const status = { ...s.status };
-      const errors = { ...s.errors };
-      delete cache[dossierId];
-      delete status[dossierId];
-      delete errors[dossierId];
+      const { [dossierId]: _cache, ...cache } = s.cache;
+      const { [dossierId]: _status, ...status } = s.status;
+      const { [dossierId]: _errors, ...errors } = s.errors;
       return { cache, status, errors };
     });
   },
