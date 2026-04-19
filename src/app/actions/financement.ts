@@ -12,21 +12,10 @@ import {
   type EmpruntWithEcheancier,
 } from "@/lib/schemas/financement";
 import { calculerEcheancier } from "@/lib/calcul/echeancier";
-
-export type ActionResult =
-  | { success: true; message: string; id?: string }
-  | { success: false; error: string };
+import type { ActionResult } from "@/app/actions/types";
+import { isPrismaError } from "@/lib/utils/prisma-error";
 
 // ── Helpers internes ─────────────────────────────────────────────────────────
-
-function isPrismaError(err: unknown, code: string): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "code" in err &&
-    (err as { code: string }).code === code
-  );
-}
 
 function buildLignesEcheancier(empruntId: string, data: EmpruntRow) {
   const lignes: LigneEcheancier[] = calculerEcheancier({
@@ -130,6 +119,13 @@ export async function upsertApport(
 
 export async function deleteApport(id: string, dossierId: string): Promise<ActionResult> {
   try {
+    // Vérifier que l'apport appartient bien au dossier (IDOR)
+    const apport = await prisma.apport.findFirst({
+      where: { id, scenario: { dossierId } },
+      select: { id: true },
+    });
+    if (!apport) return { success: false, error: "Apport introuvable." };
+
     await prisma.apport.delete({ where: { id } });
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Apport supprimé." };
@@ -252,6 +248,13 @@ export async function upsertEmprunt(
 
 export async function deleteEmprunt(id: string, dossierId: string): Promise<ActionResult> {
   try {
+    // Vérifier que l'emprunt appartient bien au dossier (IDOR)
+    const emprunt = await prisma.emprunt.findFirst({
+      where: { id, scenario: { dossierId } },
+      select: { id: true },
+    });
+    if (!emprunt) return { success: false, error: "Emprunt introuvable." };
+
     await prisma.emprunt.delete({ where: { id } });
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Emprunt supprimé." };

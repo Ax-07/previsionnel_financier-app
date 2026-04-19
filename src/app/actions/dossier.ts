@@ -8,6 +8,8 @@ import {
   type UpdateDossierValues,
 } from "@/lib/schemas/dossier";
 import { recalculerTousLesPlans } from "@/app/actions/investissement";
+import { isPrismaError } from "@/lib/utils/prisma-error";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 // ── Types partagés ────────────────────────────────────────────────────────────
@@ -78,15 +80,7 @@ export type CreateDossierResult =
   | { success: true; dossierId: string }
   | { success: false; error: string };
 
-/** Duck-typing pour les erreurs Prisma (sans import fragile) */
-function isPrismaError(err: unknown, code: string): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "code" in err &&
-    (err as { code: string }).code === code
-  );
-}
+
 
 /**
  * Récupère ou crée un cabinet de démonstration.
@@ -236,5 +230,46 @@ export async function updateDossier(
     console.error("[updateDossier]", err);
     if (isPrismaError(err, "P2025")) return { success: false, error: "Dossier introuvable." };
     return { success: false, error: err instanceof Error ? err.message : "Erreur inattendue." };
+  }
+}
+
+// ── Suppression d'un dossier ──────────────────────────────────────────────────
+
+export type DeleteDossierResult =
+  | { success: true }
+  | { success: false; error: string };
+
+/**
+ * Supprime définitivement un dossier et toutes ses données associées.
+ * Les AuditLogs conservent une trace (dossierId mis à null).
+ * Cascade Prisma : Scenario → toutes les entités métier enfants.
+ */
+export async function deleteDossier(
+  dossierId: string
+): Promise<DeleteDossierResult> {
+  try {
+    // Vérification d'existence avant suppression
+    const dossier = await prisma.dossier.findUnique({
+      where: { id: dossierId },
+      select: { id: true },
+    });
+
+    if (!dossier) {
+      return { success: false, error: "Dossier introuvable." };
+    }
+
+    await prisma.dossier.delete({ where: { id: dossierId } });
+
+    revalidatePath("/previsionnel");
+    return { success: true };
+  } catch (err) {
+    console.error("[deleteDossier]", err);
+    if (isPrismaError(err, "P2025")) {
+      return { success: false, error: "Dossier introuvable." };
+    }
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Erreur inattendue.",
+    };
   }
 }

@@ -10,10 +10,7 @@ import {
   type AjustementFiscalRow,
   type ParametresISData,
 } from "@/lib/schemas/impots-fiscaux";
-
-export type ActionResult =
-  | { success: true; message: string }
-  | { success: false; error: string };
+import type { ActionResult } from "@/app/actions/types";
 
 // ── Réintégrations fiscales ───────────────────────────────────────────────────
 

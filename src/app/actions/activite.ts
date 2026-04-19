@@ -13,21 +13,11 @@ import {
   type ProductionImmobiliseeRow,
   type SubventionExploitationRow,
 } from "@/lib/schemas/activite";
-
-export type ActionResult =
-  | { success: true; message: string; id?: string }
-  | { success: false; error: string };
+import type { ActionResult } from "@/app/actions/types";
+import { isPrismaError } from "@/lib/utils/prisma-error";
+import { validateRows } from "@/lib/utils/validate-rows";
 
 // ── Helpers internes ─────────────────────────────────────────────────────────
-
-function isPrismaError(err: unknown, code: string): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "code" in err &&
-    (err as { code: string }).code === code
-  );
-}
 
 function secteurToTypeActivite(secteur: ActiviteRow["secteur"]) {
   switch (secteur) {
@@ -44,19 +34,6 @@ function typeActiviteToSecteur(type: string): ActiviteRow["secteur"] {
     case "VENTE_MARCHANDISES": return "NEGOCE";
     default:                   return "SERVICE";
   }
-}
-
-function validateRows<T>(
-  rows: T[],
-  parser: { safeParse: (v: unknown) => { success: boolean; error?: { issues: Array<{ message: string }> } } }
-): string | null {
-  for (const row of rows) {
-    const result = parser.safeParse(row);
-    if (!result.success) {
-      return result.error?.issues[0]?.message ?? "Données invalides";
-    }
-  }
-  return null;
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -179,6 +156,13 @@ export async function saveActivites(
 
 export async function deleteActivite(activiteId: string, dossierId: string): Promise<ActionResult> {
   try {
+    // Vérifier que l'activité appartient bien au dossier (IDOR)
+    const activite = await prisma.activite.findFirst({
+      where: { id: activiteId, scenario: { dossierId } },
+      select: { id: true },
+    });
+    if (!activite) return { success: false, error: "Activité introuvable" };
+
     await prisma.activite.delete({ where: { id: activiteId } });
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Activité supprimée" };

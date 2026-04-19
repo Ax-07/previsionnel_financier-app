@@ -2,6 +2,9 @@
 
 import { Decimal } from "@prisma/client/runtime/client";
 import { fetchScenarioData } from "@/lib/finance/fetch-scenario";
+// TODO(auth) : importer assertDossierAccess et le resolver de session Better Auth
+// import { assertDossierAccess } from "@/lib/finance/fetch-scenario";
+// import { auth } from "@/lib/auth";
 
 export type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 
@@ -28,6 +31,10 @@ function serializeDecimals<T>(data: T): T {
 }
 
 export async function loadScenarioData(dossierId: string) {
+  // TODO(auth) : décommenter une fois Better Auth configuré
+  // const session = await auth();
+  // if (!session?.user?.id) throw new Error("Non authentifié");
+  // await assertDossierAccess(dossierId, session.user.id);
   const data = await fetchScenarioData(dossierId);
   return serializeDecimals(data);
 }

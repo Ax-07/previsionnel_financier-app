@@ -9,10 +9,7 @@ import {
   type TableauLibreLigneRow,
   type DetailMensuelRow,
 } from "@/lib/schemas/tableau-libre";
-
-export type ActionResult =
-  | { success: true; message: string }
-  | { success: false; error: string };
+import type { ActionResult } from "@/app/actions/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

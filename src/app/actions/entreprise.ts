@@ -6,20 +6,8 @@ import {
   entrepriseSchema,
   type EntrepriseFormValues,
 } from "@/lib/schemas/entreprise";
-
-export type ActionResult =
-  | { success: true; message: string }
-  | { success: false; error: string };
-
-/** Détecte une erreur Prisma par code (duck-typing, sans import fragile) */
-function isPrismaError(err: unknown, code: string): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "code" in err &&
-    (err as { code: string }).code === code
-  );
-}
+import type { ActionResult } from "@/app/actions/types";
+import { isPrismaError } from "@/lib/utils/prisma-error";
 
 /**
  * Récupère les paramètres entreprise du scénario par défaut d'un dossier.

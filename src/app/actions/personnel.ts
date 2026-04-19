@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { prisma, Prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 import {
   ligneSalarieSchema,
@@ -18,39 +18,8 @@ import {
   type ParamsGlobauxTNS,
 } from "@/lib/schemas/personnel";
 import { calculerMontantsTNS, detecterACRE, remuTNSBase, trouverBrutPourNet } from "@/lib/calcul/taux-tns";
-
-export type ActionResult =
-  | { success: true; message: string }
-  | { success: false; error: string };
-
-// ── Helpers internes ─────────────────────────────────────────────────────────
-
-function validateRows<T>(
-  rows: T[],
-  parser: {
-    safeParse: (v: unknown) => {
-      success: boolean;
-      error?: { issues: Array<{ message: string; path: PropertyKey[] }> };
-    };
-  },
-): string | null {
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i]!;
-    const result = parser.safeParse(row);
-    if (!result.success) {
-      const issue = result.error?.issues[0];
-      const field = (issue?.path ?? [])
-        .filter((p): p is string | number => typeof p === "string" || typeof p === "number")
-        .join(".");
-      const msg = issue?.message ?? "Données invalides";
-      const label = (row as Record<string, unknown>)["libelle"];
-      const rowName =
-        typeof label === "string" && label.trim() ? label.trim() : `ligne ${i + 1}`;
-      return field ? `« ${rowName} » — ${field} : ${msg}` : `« ${rowName} » : ${msg}`;
-    }
-  }
-  return null;
-}
+import type { ActionResult } from "@/app/actions/types";
+import { validateRows } from "@/lib/utils/validate-rows";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // LIGNES SALARIÉS
@@ -113,8 +82,7 @@ export async function saveLignesSalaries(
       });
       return Promise.all(
         rows.map((r, i) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data: any = {
+          const data: Omit<Prisma.LigneSalarieUncheckedCreateInput, "id"> = {
             libelle: r.libelle,
             actif: r.actif ?? true,
             hypothese: r.hypothese,
@@ -130,9 +98,9 @@ export async function saveLignesSalaries(
             hasCommission: r.hasCommission ?? false,
             hasPrime: r.hasPrime ?? false,
             cotisationConges: r.cotisationConges ?? false,
-            detailMensuelN: r.detailMensuelN ?? null,
-            detailMensuelN1: r.detailMensuelN1 ?? null,
-            detailMensuelN2: r.detailMensuelN2 ?? null,
+            detailMensuelN: r.detailMensuelN ?? Prisma.DbNull,
+            detailMensuelN1: r.detailMensuelN1 ?? Prisma.DbNull,
+            detailMensuelN2: r.detailMensuelN2 ?? Prisma.DbNull,
             ordre: i,
             scenarioId,
           };
@@ -214,8 +182,7 @@ export async function saveLignesDirigeants(
       });
       return Promise.all(
         rows.map((r, i) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data: any = {
+          const data: Omit<Prisma.LigneDirigeantUncheckedCreateInput, "id"> = {
             libelle: r.libelle,
             actif: r.actif ?? true,
             hypothese: r.hypothese,
@@ -227,9 +194,9 @@ export async function saveLignesDirigeants(
             exonerationTNS: r.exonerationTNS || null,
             conjointCollaborateur: r.conjointCollaborateur,
             tauxFixe: r.tauxFixe,
-            detailMensuelN: r.detailMensuelN ?? null,
-            detailMensuelN1: r.detailMensuelN1 ?? null,
-            detailMensuelN2: r.detailMensuelN2 ?? null,
+            detailMensuelN: r.detailMensuelN ?? Prisma.DbNull,
+            detailMensuelN1: r.detailMensuelN1 ?? Prisma.DbNull,
+            detailMensuelN2: r.detailMensuelN2 ?? Prisma.DbNull,
             ordre: i,
             scenarioId,
           };

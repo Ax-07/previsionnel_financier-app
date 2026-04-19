@@ -14,23 +14,12 @@ import {
 } from "@/lib/schemas/investissement";
 import { calculerPlanAmortissement } from "@/lib/calcul/amortissement";
 import { calcCession } from "@/lib/calcul/cession";
-
-export type ActionResult =
-  | { success: true; message: string; id?: string }
-  | { success: false; error: string };
+import type { ActionResult } from "@/app/actions/types";
+import { isPrismaError } from "@/lib/utils/prisma-error";
 
 type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
 // ── Helpers internes ─────────────────────────────────────────────────────────
-
-function isPrismaError(err: unknown, code: string): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "code" in err &&
-    (err as { code: string }).code === code
-  );
-}
 
 async function getDossierProjection(
   dossierId: string
@@ -197,6 +186,13 @@ export async function upsertImmobilisation(
 
 export async function deleteImmobilisation(id: string, dossierId: string): Promise<ActionResult> {
   try {
+    // Vérifier que l'immobilisation appartient bien au dossier (IDOR)
+    const immo = await prisma.immobilisation.findFirst({
+      where: { id, scenario: { dossierId } },
+      select: { id: true },
+    });
+    if (!immo) return { success: false, error: "Immobilisation introuvable." };
+
     await prisma.immobilisation.delete({ where: { id } });
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Immobilisation supprimée." };
@@ -304,6 +300,13 @@ export async function upsertCession(
 
 export async function deleteCession(id: string, dossierId: string): Promise<ActionResult> {
   try {
+    // Vérifier que la cession appartient bien au dossier (IDOR)
+    const cession = await prisma.cessionImmobilisation.findFirst({
+      where: { id, scenario: { dossierId } },
+      select: { id: true },
+    });
+    if (!cession) return { success: false, error: "Cession introuvable." };
+
     await prisma.cessionImmobilisation.delete({ where: { id } });
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Cession supprimée." };
@@ -408,6 +411,13 @@ export async function upsertCreditBail(
 
 export async function deleteCreditBail(id: string, dossierId: string): Promise<ActionResult> {
   try {
+    // Vérifier que le crédit-bail appartient bien au dossier (IDOR)
+    const cb = await prisma.creditBail.findFirst({
+      where: { id, scenario: { dossierId } },
+      select: { id: true },
+    });
+    if (!cb) return { success: false, error: "Crédit-bail introuvable." };
+
     await prisma.creditBail.delete({ where: { id } });
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
     return { success: true, message: "Crédit-bail supprimé." };

@@ -3,32 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
 import { uniteDOeuvreSchema, type UniteDOeuvreRow } from "@/lib/schemas/unites-oeuvre";
-
-export type ActionResult =
-  | { success: true; message: string }
-  | { success: false; error: string };
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function validateRows(rows: UniteDOeuvreRow[]): string | null {
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i]!;
-    const result = uniteDOeuvreSchema.safeParse(row);
-    if (!result.success) {
-      const issue = result.error?.issues[0];
-      const field = (issue?.path ?? [])
-        .filter((p): p is string | number => typeof p === "string" || typeof p === "number")
-        .join(".");
-      const msg = issue?.message ?? "Données invalides";
-      const rowName =
-        typeof row.libelle === "string" && row.libelle.trim()
-          ? row.libelle.trim()
-          : `unité ${i + 1}`;
-      return field ? `« ${rowName} » — ${field} : ${msg}` : `« ${rowName} » : ${msg}`;
-    }
-  }
-  return null;
-}
+import type { ActionResult } from "@/app/actions/types";
+import { validateRows } from "@/lib/utils/validate-rows";
 
 // ── Fetch ─────────────────────────────────────────────────────────────────────
 
@@ -94,7 +70,7 @@ export async function saveUnitesDOeuvre(
   rows: UniteDOeuvreRow[]
 ): Promise<ActionResult & { rows?: UniteDOeuvreRow[] }> {
   try {
-    const err = validateRows(rows);
+    const err = validateRows(rows, uniteDOeuvreSchema);
     if (err) return { success: false, error: err };
 
     const scenarioId = await getOrCreateDefaultScenario(dossierId);

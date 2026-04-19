@@ -11,46 +11,8 @@ import {
   type AutreProduitDateRow,
   type AutreProduitConstateRow,
 } from "@/lib/schemas/autres-produits";
-
-export type ActionResult =
-  | { success: true; message: string }
-  | { success: false; error: string };
-
-// ── Helpers internes ─────────────────────────────────────────────────────────
-
-function validateRows<T>(
-  rows: T[],
-  parser: {
-    safeParse: (v: unknown) => {
-      success: boolean;
-      error?: { issues: Array<{ message: string; path: PropertyKey[] }> };
-    };
-  }
-): string | null {
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i]!;
-    const result = parser.safeParse(row);
-    if (!result.success) {
-      const issue = result.error?.issues[0];
-      const field = (issue?.path ?? [])
-        .filter(
-          (p): p is string | number =>
-            typeof p === "string" || typeof p === "number"
-        )
-        .join(".");
-      const msg = issue?.message ?? "Données invalides";
-      const label = (row as Record<string, unknown>)["libelle"];
-      const rowName =
-        typeof label === "string" && label.trim()
-          ? label.trim()
-          : `ligne ${i + 1}`;
-      return field
-        ? `« ${rowName} » — ${field} : ${msg}`
-        : `« ${rowName} » : ${msg}`;
-    }
-  }
-  return null;
-}
+import type { ActionResult } from "@/app/actions/types";
+import { validateRows } from "@/lib/utils/validate-rows";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // REPRISES SUR PROVISIONS
