@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "debug:bilan": "tsx --tsconfig tsconfig.json scripts/debug-bilan.ts"
+    "debug:bilan": "tsx --tsconfig tsconfig.json scripts/debug-bilan.ts",
+    "seed:restaurant": "tsx --tsconfig tsconfig.json scripts/seed-restaurant.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
