@@ -34,8 +34,9 @@ import {
   DUREES_PROJECTION,
 } from "@/lib/schemas/dossier";
 import { createDossier } from "@/app/actions/dossier";
+import { cn } from "@/lib/utils";
 
-export function NouveauDossierDialog() {
+export const NouveauDossierDialog: React.FC<React.ComponentProps<typeof DialogTrigger>> = ({className, ...props}) => {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
 
@@ -81,7 +82,7 @@ export function NouveauDossierDialog() {
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1.5">
+        <Button size="sm" variant="outline" className={cn("gap-1.5", className)} {...props}>
           <PlusIcon className="size-4" />
           <span className="hidden sm:inline">Nouveau dossier</span>
         </Button>
