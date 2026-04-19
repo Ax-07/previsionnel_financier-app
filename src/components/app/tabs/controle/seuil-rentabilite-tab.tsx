@@ -1,21 +1,34 @@
 "use client";
 
 import { Fragment, useCallback } from "react";
-import { RefreshCwIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, formatPct } from "@/lib/utils";
 import {
   type BreakEvenData,
   type BreakEvenRow,
 } from "@/lib/finance/calculs/seuil";
-import type { YearKey } from "@/lib/finance/utils";
+import { YEAR_KEYS_3 } from "@/lib/finance/utils";
 import { useSeuilRentabiliteData } from "@/hooks/controle/use-seuil-rentabilite-data";
 import { useScenarioDataStore } from "@/stores/scenario-data-store";
+import { ControlTabActionBar } from "./shared/control-tab-action-bar";
+import { ControlTabContent } from "./shared/control-tab-content";
+import { KpiCard } from "@/components/ui/kpi-card";
+import {
+  ControlTabTable,
+  ControlTabTableHeader,
+  ControlTabTableBody,
+  ControlTabTableRow,
+  ControlTabTableHead,
+  ControlTabTableCell,
+  ANNUAL_REM,
+  annualTableMinWidth,
+} from "./shared/control-tab-table";
+import { ControlTabContainer } from "./shared/control-tab-container";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const YEAR_KEYS: YearKey[] = ["y1", "y2", "y3"];
+const TABLE_MIN_WIDTH = annualTableMinWidth(3, ANNUAL_REM.amtSm, ANNUAL_REM.pct);
+// 1 col label + 3 × (montant + %) = 7 colonnes
+const COL_COUNT = 7;
 
 const frFmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
@@ -38,29 +51,21 @@ function formatAmount(amount: number, isJours: boolean, isTaux: boolean): string
   return frFmt.format(Math.round(amount));
 }
 
-function formatPct(pct: number | null): string {
-  if (pct === null) return "";
-  return `${pct.toFixed(1)} %`;
-}
-
 // ── En-tête ───────────────────────────────────────────────────────────────────
 
 function BreakEvenHeader({ yearLabels }: { yearLabels: BreakEvenData["yearLabels"] }) {
   return (
-    <div
-      className={cn(
-        "sticky top-0 z-10 grid h-10 items-center border-b bg-background font-semibold text-sm",
-        "grid-cols-[1fr_repeat(3,minmax(0,120px)_minmax(0,68px))]",
-      )}
-    >
-      <div className="px-3">Désignation</div>
-      {YEAR_KEYS.map((yk) => (
-        <Fragment key={yk}>
-          <div className="pr-3 text-right">{yearLabels[yk]}</div>
-          <div className="pr-2 text-right text-xs text-muted-foreground font-normal">%</div>
-        </Fragment>
-      ))}
-    </div>
+    <ControlTabTableHeader>
+      <ControlTabTableRow>
+        <ControlTabTableHead colType="label">Désignation</ControlTabTableHead>
+        {YEAR_KEYS_3.map((yk) => (
+          <Fragment key={yk}>
+            <ControlTabTableHead colType="amtSm">{yearLabels[yk]}</ControlTabTableHead>
+            <ControlTabTableHead colType="pct" className="text-muted-foreground/70 font-normal">%</ControlTabTableHead>
+          </Fragment>
+        ))}
+      </ControlTabTableRow>
+    </ControlTabTableHeader>
   );
 }
 
@@ -70,90 +75,77 @@ function BreakEvenRowItem({ row }: { row: BreakEvenRow }) {
   const isSection   = row.style === "section";
   const isSeparator = row.style === "separator";
   const isHighlight = row.style === "highlight";
-  const isSubtotal  = row.style === "subtotal";
   const isIndent    = row.style === "indent";
   const isJours     = JOURS_KEYS.has(row.key);
   const isTaux      = TAUX_KEYS.has(row.key);
 
+  // Ligne séparateur : <tr><td colSpan> avec trait tireté
   if (isSeparator) {
-    return <div className="h-3 border-b border-dashed border-muted" />;
+    return (
+      <tr>
+        <td colSpan={COL_COUNT} className="h-3 border-b border-dashed border-muted p-0" />
+      </tr>
+    );
   }
 
+  // Ligne section : bandeau pleine largeur, cellules années vides
   if (isSection) {
     return (
-      <div className="grid h-8 items-center border-b bg-muted/50 grid-cols-[1fr_repeat(3,minmax(0,120px)_minmax(0,68px))] px-3">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <ControlTabTableRow variant="section">
+        <ControlTabTableCell colType="label">
           {row.label}
-        </span>
-        {YEAR_KEYS.map((yk) => (
+        </ControlTabTableCell>
+        {YEAR_KEYS_3.map((yk) => (
           <Fragment key={yk}>
-            <div />
-            <div />
+            <ControlTabTableCell colType="amtSm" />
+            <ControlTabTableCell colType="pct" />
           </Fragment>
         ))}
-      </div>
+      </ControlTabTableRow>
     );
   }
 
   return (
-    <div
-      className={cn(
-        "grid items-center border-b transition-colors",
-        "grid-cols-[1fr_repeat(3,minmax(0,120px)_minmax(0,68px))]",
-        "min-h-10",
-        isHighlight && "bg-primary/10 font-bold text-primary",
-        isSubtotal  && "bg-muted/30 font-semibold",
-        !isHighlight && !isSubtotal && "hover:bg-muted/20",
-      )}
-    >
+    <ControlTabTableRow variant={row.style}>
       {/* Libellé */}
-      <div
-        className={cn(
-          "flex items-center gap-1.5 px-3 py-2.5",
-          isIndent && "pl-8",
-        )}
-      >
-        {row.sign && (
-          <span
-            className={cn(
-              "w-3 shrink-0 text-center font-mono text-xs tabular-nums",
-              isHighlight ? "text-primary/70" : "text-muted-foreground",
-            )}
-          >
-            {row.sign}
-          </span>
-        )}
-        <span className="text-sm leading-tight">{row.label}</span>
-      </div>
+      <ControlTabTableCell colType="label" depth={isIndent ? 1 : 0}>
+        <div className="flex items-center gap-1.5">
+          {row.sign && (
+            <span
+              className={cn(
+                "w-3 shrink-0 text-center font-mono text-xs tabular-nums",
+                isHighlight ? "text-highlight-foreground/70" : "text-muted-foreground",
+              )}
+            >
+              {row.sign}
+            </span>
+          )}
+          <span className="truncate text-sm leading-tight">{row.label}</span>
+        </div>
+      </ControlTabTableCell>
 
       {/* Valeurs */}
-      {YEAR_KEYS.map((yk) => {
+      {YEAR_KEYS_3.map((yk) => {
         const val  = row.values[yk];
         const isNeg = val.amount !== null && val.amount < 0;
         return (
           <Fragment key={`${row.key}_${yk}`}>
-            {/* Montant */}
-            <div
-              className={cn(
-                "pr-3 py-2.5 text-right text-sm tabular-nums",
-                isNeg && !isHighlight && "text-destructive",
-              )}
+            <ControlTabTableCell
+              colType="amtSm"
+              negative={isNeg && !isHighlight}
             >
               {formatAmount(val.amount ?? 0, isJours, isTaux)}
-            </div>
-            {/* % */}
-            <div
-              className={cn(
-                "pr-2 py-2.5 text-right text-xs tabular-nums text-muted-foreground",
-                isHighlight && "text-primary/70",
-              )}
+            </ControlTabTableCell>
+            <ControlTabTableCell
+              colType="pct"
+              className={cn(isHighlight && "text-highlight-foreground/70")}
             >
               {row.showPct ? formatPct(val.pct) : ""}
-            </div>
+            </ControlTabTableCell>
           </Fragment>
         );
       })}
-    </div>
+    </ControlTabTableRow>
   );
 }
 
@@ -165,72 +157,55 @@ interface SeuilRentabiliteTabProps {
 
 export default function SeuilRentabiliteTab({ dossierId }: SeuilRentabiliteTabProps) {
   const { data, status, error } = useSeuilRentabiliteData(dossierId);
-  const isPending = status === "loading";
 
   const handleRefresh = useCallback(() => {
     useScenarioDataStore.getState().reload(dossierId);
   }, [dossierId]);
 
   return (
-    <div className="flex h-full flex-col">
-      {/* ── Barre d'actions ──────────────────────────────────────────────── */}
-      <div className="flex shrink-0 items-center justify-between border-b bg-muted/20 px-4 py-2">
-        <div className="flex items-center gap-3">
-          <h2 className="font-semibold text-sm">Seuil de rentabilité</h2>
-          {data && (
-            <Badge variant="secondary" className="text-xs">
-              Lecture seule
-            </Badge>
-          )}
+    <ControlTabContainer>
+      <ControlTabActionBar
+        title="Seuil de rentabilité"
+        hasData={!!data}
+        isPending={status === "loading"}
+        onRefresh={handleRefresh}
+      />
+
+      {/* ── KPI cards ────────────────────────────────────────────────────────── */}
+      {data && (
+        <div className="shrink-0 flex gap-3 flex-wrap mx-auto">
+          {YEAR_KEYS_3.map((yk) => {
+            const amount = data.rows.find((r) => r.key === "seuil_eco")?.values[yk]?.amount ?? 0;
+            return (
+              <KpiCard
+                key={yk}
+                label={`Seuil de rentabilité — ${data.yearLabels[yk]}`}
+                value={amount}
+                variant="neutral"
+              />
+            );
+          })}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isPending}
-          className="gap-1.5"
-        >
-          <RefreshCwIcon className={cn("size-3.5", isPending && "animate-spin")} />
-          {isPending ? "Calcul…" : "Actualiser"}
-        </Button>
-      </div>
+      )}
 
-      {/* ── Contenu ──────────────────────────────────────────────────────── */}
-      <div className="min-h-0 flex-1 overflow-auto">
-        {/* Erreur */}
-        {error && (
-          <div className="m-4 rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-            {error}
-          </div>
-        )}
-
-        {/* Chargement */}
-        {isPending && !data && (
-          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-            Calcul du seuil de rentabilité…
-          </div>
-        )}
-
-        {/* Tableau */}
-        {data && data.rows.length > 0 && (
-          <div className="min-w-175">
+      <ControlTabContent
+        status={status}
+        error={error}
+        loadingMessage="Calcul du seuil de rentabilité…"
+        dataLoaded={!!data}
+        hasRows={!!data && data.rows.length > 0}
+      >
+        {data && (
+          <ControlTabTable style={{ minWidth: TABLE_MIN_WIDTH }}>
             <BreakEvenHeader yearLabels={data.yearLabels} />
-            {data.rows.map((row) => (
-              <BreakEvenRowItem key={row.key} row={row} />
-            ))}
-          </div>
+            <ControlTabTableBody>
+              {data.rows.map((row) => (
+                <BreakEvenRowItem key={row.key} row={row} />
+              ))}
+            </ControlTabTableBody>
+          </ControlTabTable>
         )}
-
-        {/* État vide */}
-        {data && data.rows.length === 0 && (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-            <p className="text-sm">Aucune donnée disponible.</p>
-            <p className="text-xs">
-              Renseignez les onglets de saisie puis actualisez.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+      </ControlTabContent>
+    </ControlTabContainer>
   );
 }

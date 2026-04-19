@@ -1,32 +1,30 @@
 "use client";
 
 import { Fragment, useCallback } from "react";
-import { RefreshCwIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import type { YearKey } from "@/lib/finance/utils";
+import { cn, formatAmount, formatPct } from "@/lib/utils";
+import { YEAR_KEYS_3 } from "@/lib/finance/utils";
 import { useSyntheseData } from "@/hooks/controle/use-synthese-data";
 import type { SyntheseData, SynthRow } from "@/hooks/controle/use-synthese-data";
 import { useScenarioDataStore } from "@/stores/scenario-data-store";
+import { ControlTabActionBar } from "./shared/control-tab-action-bar";
+import { ControlTabContent } from "./shared/control-tab-content";
+import {
+  ControlTabTable,
+  ControlTabTableHeader,
+  ControlTabTableBody,
+  ControlTabTableRow,
+  ControlTabTableHead,
+  ControlTabTableCell,
+  ANNUAL_REM,
+  annualTableMinWidth,
+} from "./shared/control-tab-table";
+import { ControlTabContainer } from "./shared/control-tab-container";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
-const YEAR_KEYS: YearKey[] = ["y1", "y2", "y3"];
+const TABLE_MIN_WIDTH = annualTableMinWidth(3, ANNUAL_REM.amtSm, ANNUAL_REM.pct);
 
 // ── Helpers de formatage ──────────────────────────────────────────────────────
-
-const frFmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-
-function formatAmount(amount: number): string {
-  if (amount === 0) return "—";
-  return frFmt.format(Math.round(amount));
-}
-
-function formatPct(pct: number | null): string {
-  if (pct === null) return "";
-  return `${pct.toFixed(1)} %`;
-}
 
 function formatTaux(amount: number): string {
   if (amount === 0) return "—";
@@ -48,29 +46,13 @@ function SynthRowItem({ row }: SynthRowProps) {
   const isSection = row.style === "section";
   const isHighlight = row.style === "highlight";
 
-  const rowClass = cn(
-    "grid h-9 items-center border-b transition-colors",
-    "grid-cols-[1fr_repeat(3,minmax(0,120px)_minmax(0,68px))]",
-    isSection &&
-      "bg-muted/60 font-semibold uppercase tracking-wide text-xs text-muted-foreground",
-    isHighlight && "bg-primary/10 font-bold text-primary",
-    !isSection && !isHighlight && "hover:bg-muted/20",
-  );
-
   return (
-    <div className={rowClass}>
-      {/* Libellé */}
-      <div
-        className={cn(
-          "truncate px-4 py-1 text-sm leading-tight",
-          isSection && "text-xs",
-        )}
-      >
+    <ControlTabTableRow variant={row.style}>
+      <ControlTabTableCell colType="label" className={cn(isSection && "text-xs")}>
         {row.label}
-      </div>
+      </ControlTabTableCell>
 
-      {/* Valeurs par exercice */}
-      {YEAR_KEYS.map((yk) => {
+      {YEAR_KEYS_3.map((yk) => {
         const val = row.values[yk];
         const isNeg = val.amount !== null && val.amount < 0;
 
@@ -87,32 +69,32 @@ function SynthRowItem({ row }: SynthRowProps) {
 
         return (
           <Fragment key={`${row.key}_${yk}`}>
-            {/* Montant */}
-            <div
+            <ControlTabTableCell
+              colType="amtSm"
               className={cn(
-                "pr-3 text-right text-sm tabular-nums",
+                "text-right text-sm",
                 isNeg && !isHighlight && !row.isTaux && "text-destructive",
                 isSection && "text-xs text-muted-foreground",
                 row.isTaux && "text-muted-foreground font-medium",
               )}
             >
               {displayAmount}
-            </div>
-            {/* % */}
-            <div
+            </ControlTabTableCell>
+            <ControlTabTableCell
+              colType="pct"
               className={cn(
-                "pr-2 text-right text-xs tabular-nums text-muted-foreground",
-                isHighlight && "text-primary/70",
+                "text-right text-xs text-muted-foreground",
+                isHighlight && "text-highlight-foreground/70",
               )}
             >
               {!isSection && row.showPct && val.pct !== null
                 ? formatPct(val.pct)
                 : ""}
-            </div>
+            </ControlTabTableCell>
           </Fragment>
         );
       })}
-    </div>
+    </ControlTabTableRow>
   );
 }
 
@@ -124,22 +106,19 @@ function SyntheseHeader({
   yearLabels: SyntheseData["yearLabels"];
 }) {
   return (
-    <div
-      className={cn(
-        "sticky top-0 z-10 grid h-10 items-center border-b bg-background font-semibold text-sm",
-        "grid-cols-[1fr_repeat(3,minmax(0,120px)_minmax(0,68px))]",
-      )}
-    >
-      <div className="px-4">Désignation</div>
-      {YEAR_KEYS.map((yk) => (
-        <Fragment key={yk}>
-          <div className="pr-3 text-right">{yearLabels[yk]}</div>
-          <div className="pr-2 text-right text-xs font-normal text-muted-foreground">
-            %
-          </div>
-        </Fragment>
-      ))}
-    </div>
+    <ControlTabTableHeader>
+      <ControlTabTableRow>
+        <ControlTabTableHead colType="label">Désignation</ControlTabTableHead>
+        {YEAR_KEYS_3.map((yk) => (
+          <Fragment key={yk}>
+            <ControlTabTableHead colType="amtSm">{yearLabels[yk]}</ControlTabTableHead>
+            <ControlTabTableHead colType="pct" className="text-xs font-normal text-primary-foreground/70">
+              %
+            </ControlTabTableHead>
+          </Fragment>
+        ))}
+      </ControlTabTableRow>
+    </ControlTabTableHeader>
   );
 }
 
@@ -151,74 +130,40 @@ interface SyntheseTabProps {
 
 export default function SyntheseTab({ dossierId }: SyntheseTabProps) {
   const { data, status, error } = useSyntheseData(dossierId);
-  const isPending = status === "loading";
 
   const handleRefresh = useCallback(() => {
     useScenarioDataStore.getState().reload(dossierId);
   }, [dossierId]);
 
   return (
-    <div className="flex h-full flex-col">
-      {/* ── Barre d'actions ──────────────────────────────────────────────── */}
-      <div className="flex shrink-0 items-center justify-between border-b bg-muted/20 px-4 py-2">
-        <div className="flex items-center gap-3">
-          <h2 className="font-semibold text-sm">Synthèse</h2>
-          {data && (
-            <Badge variant="secondary" className="text-xs">
-              Lecture seule
-            </Badge>
-          )}
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isPending}
-          className="gap-1.5"
-        >
-          <RefreshCwIcon
-            className={cn("size-3.5", isPending && "animate-spin")}
-          />
-          {isPending ? "Calcul…" : "Actualiser"}
-        </Button>
-      </div>
+    <ControlTabContainer>
+      <ControlTabActionBar
+        title="Synthèse"
+        hasData={!!data}
+        isPending={status === "loading"}
+        onRefresh={handleRefresh}
+      />
 
-      {/* ── Contenu ──────────────────────────────────────────────────────── */}
-      <div className="min-h-0 flex-1 overflow-auto">
-        {/* Erreur */}
-        {error && (
-          <div className="m-4 rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-            {error}
+      <ControlTabContent
+        status={status}
+        error={error}
+        loadingMessage="Calcul de la synthèse en cours…"
+        dataLoaded={!!data}
+        hasRows={!!data && data.rows.length > 0}
+      >
+        {data && (
+          <div style={{ minWidth: TABLE_MIN_WIDTH }}>
+            <ControlTabTable>
+              <SyntheseHeader yearLabels={data.yearLabels} />
+              <ControlTabTableBody>
+                {data.rows.map((row) => (
+                  <SynthRowItem key={row.key} row={row} />
+                ))}
+              </ControlTabTableBody>
+            </ControlTabTable>
           </div>
         )}
-
-        {/* Chargement */}
-        {isPending && !data && (
-          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-            Calcul de la synthèse en cours…
-          </div>
-        )}
-
-        {/* Tableau */}
-        {data && data.rows.length > 0 && (
-          <div className="min-w-175">
-            <SyntheseHeader yearLabels={data.yearLabels} />
-            {data.rows.map((row) => (
-              <SynthRowItem key={row.key} row={row} />
-            ))}
-          </div>
-        )}
-
-        {/* État vide */}
-        {data && data.rows.length === 0 && (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-            <p className="text-sm">Aucune donnée disponible.</p>
-            <p className="text-xs">
-              Renseignez les onglets de saisie puis actualisez.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+      </ControlTabContent>
+    </ControlTabContainer>
   );
 }

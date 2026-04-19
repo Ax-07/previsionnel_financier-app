@@ -1,18 +1,30 @@
 "use client";
 
 import { useCallback } from "react";
-import { RefreshCwIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { ControlTabActionBar } from "./shared/control-tab-action-bar";
+import { ControlTabContent } from "./shared/control-tab-content";
 import { type RatiosData, type RatioRow } from "@/lib/finance/aggregations/ratios";
-import type { YearKey } from "@/lib/finance/utils";
+import { YEAR_KEYS_3 } from "@/lib/finance/utils";
 import { useRatiosData } from "@/hooks/controle/use-ratios-data";
 import { useScenarioDataStore } from "@/stores/scenario-data-store";
+import { KpiCard } from "@/components/ui/kpi-card";
+import {
+  ControlTabTable,
+  ControlTabTableHeader,
+  ControlTabTableBody,
+  ControlTabTableRow,
+  ControlTabTableHead,
+  ControlTabTableCell,
+  SectionBannerRow,
+  ANNUAL_REM,
+  annualTableMinWidth,
+} from "./shared/control-tab-table";
+import { ControlTabContainer } from "./shared/control-tab-container";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const YEAR_KEYS: YearKey[] = ["y1", "y2", "y3"];
+const TABLE_MIN_WIDTH = annualTableMinWidth(3, ANNUAL_REM.value);
 
 /** Clés par section pour les séparateurs visuels */
 const SECTIONS: Array<{ label: string; keys: string[] }> = [
@@ -29,6 +41,9 @@ const SECTIONS: Array<{ label: string; keys: string[] }> = [
     keys: ["capacite_remboursement"],
   },
 ];
+
+// 1 label + 3 valeurs = 4 colonnes
+const COL_COUNT = 4;
 
 const frFmtCache = new Map<number, Intl.NumberFormat>();
 
@@ -51,26 +66,14 @@ function formatValue(value: number | null, decimals: number, unit: string): stri
 
 function RatiosHeader({ yearLabels }: { yearLabels: RatiosData["yearLabels"] }) {
   return (
-    <div className="sticky top-0 z-10 grid h-10 items-center border-b bg-background font-semibold text-sm grid-cols-[1fr_repeat(3,minmax(0,180px))]">
-      <div className="px-4">Désignation</div>
-      {YEAR_KEYS.map((yk) => (
-        <div key={yk} className="pr-4 text-right">
-          {yearLabels[yk]}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Bandeau de section ────────────────────────────────────────────────────────
-
-function SectionBanner({ label }: { label: string }) {
-  return (
-    <div className="grid grid-cols-[1fr_repeat(3,minmax(0,180px))] border-b bg-muted/50 px-4 py-1.5">
-      <span className="col-span-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-    </div>
+    <ControlTabTableHeader>
+      <ControlTabTableRow>
+        <ControlTabTableHead colType="label">Désignation</ControlTabTableHead>
+        {YEAR_KEYS_3.map((yk) => (
+          <ControlTabTableHead key={yk} colType="value">{yearLabels[yk]}</ControlTabTableHead>
+        ))}
+      </ControlTabTableRow>
+    </ControlTabTableHeader>
   );
 }
 
@@ -78,30 +81,24 @@ function SectionBanner({ label }: { label: string }) {
 
 function RatioRowItem({ row }: { row: RatioRow }) {
   return (
-    <div
-      className={cn(
-        "grid items-center border-b transition-colors",
-        "grid-cols-[1fr_repeat(3,minmax(0,180px))]",
-        "min-h-10 hover:bg-muted/20",
-      )}
-    >
-      <div className="px-4 py-2.5 text-sm leading-tight">{row.label}</div>
-      {YEAR_KEYS.map((yk) => {
+    <ControlTabTableRow className="group hover:bg-muted/20">
+      <ControlTabTableCell colType="label">{row.label}</ControlTabTableCell>
+      {YEAR_KEYS_3.map((yk) => {
         const val = row.values[yk].value;
         const isNull = val === null;
         return (
-          <div
+          <ControlTabTableCell
             key={`${row.key}_${yk}`}
+            colType="value"
             className={cn(
-              "pr-4 py-2.5 text-right text-sm tabular-nums",
               isNull && "text-muted-foreground italic",
             )}
           >
             {formatValue(val, row.decimals, row.unit)}
-          </div>
+          </ControlTabTableCell>
         );
       })}
-    </div>
+    </ControlTabTableRow>
   );
 }
 
@@ -113,7 +110,6 @@ interface RatiosTabProps {
 
 export default function RatiosTab({ dossierId }: RatiosTabProps) {
   const { data, status, error } = useRatiosData(dossierId);
-  const isPending = status === "loading";
 
   const handleRefresh = useCallback(() => {
     useScenarioDataStore.getState().reload(dossierId);
@@ -128,70 +124,58 @@ export default function RatiosTab({ dossierId }: RatiosTabProps) {
         .filter((r): r is RatioRow => r !== undefined);
       if (sectionRows.length === 0) return [];
       return [
-        <SectionBanner key={`section_${section.label}`} label={section.label} />,
+        <SectionBannerRow key={`section_${section.label}`} label={section.label} colSpan={COL_COUNT} />,
         ...sectionRows.map((row) => <RatioRowItem key={row.key} row={row} />),
       ];
     });
   }
 
   return (
-    <div className="flex h-full flex-col">
-      {/* ── Barre d'actions ──────────────────────────────────────────────── */}
-      <div className="flex shrink-0 items-center justify-between border-b bg-muted/20 px-4 py-2">
-        <div className="flex items-center gap-3">
-          <h2 className="font-semibold text-sm">Ratios financiers</h2>
-          {data && (
-            <Badge variant="secondary" className="text-xs">
-              Lecture seule
-            </Badge>
-          )}
+    <ControlTabContainer>
+      <ControlTabActionBar
+        title="Ratios financiers"
+        hasData={!!data}
+        isPending={status === "loading"}
+        onRefresh={handleRefresh}
+      />
+
+      {/* ── KPI cards ────────────────────────────────────────────────────────── */}
+      {data && (
+        <div className="shrink-0 flex gap-3 flex-wrap mx-auto">
+          {YEAR_KEYS_3.map((yk) => {
+            const value = data.rows.find((r) => r.key === "autonomie_lt")?.values[yk]?.value ?? 0;
+            return (
+              <KpiCard
+                key={yk}
+                label={`Autonomie financière — ${data.yearLabels[yk]}`}
+                value={value}
+                variant={value >= 0 ? "positive" : "negative"}
+                unit="%"
+                decimals={1}
+              />
+            );
+          })}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isPending}
-          className="gap-1.5"
-        >
-          <RefreshCwIcon className={cn("size-3.5", isPending && "animate-spin")} />
-          {isPending ? "Calcul…" : "Actualiser"}
-        </Button>
-      </div>
+      )}
 
-      {/* ── Contenu ──────────────────────────────────────────────────────── */}
-      <div className="min-h-0 flex-1 overflow-auto">
-        {/* Erreur */}
-        {error && (
-          <div className="m-4 rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-            {error}
+      <ControlTabContent
+        status={status}
+        error={error}
+        loadingMessage="Calcul des ratios financiers…"
+        dataLoaded={!!data}
+        hasRows={!!data && data.rows.length > 0}
+      >
+        {data && (
+          <div style={{ minWidth: TABLE_MIN_WIDTH }}>
+            <ControlTabTable>
+              <RatiosHeader yearLabels={data.yearLabels} />
+              <ControlTabTableBody>
+                {renderRows(data.rows)}
+              </ControlTabTableBody>
+            </ControlTabTable>
           </div>
         )}
-
-        {/* Chargement */}
-        {isPending && !data && (
-          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-            Calcul des ratios financiers…
-          </div>
-        )}
-
-        {/* Tableau */}
-        {data && data.rows.length > 0 && (
-          <div className="min-w-150">
-            <RatiosHeader yearLabels={data.yearLabels} />
-            {renderRows(data.rows)}
-          </div>
-        )}
-
-        {/* État vide */}
-        {data && data.rows.length === 0 && (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-            <p className="text-sm">Aucune donnée disponible.</p>
-            <p className="text-xs">
-              Renseignez les onglets de saisie puis actualisez.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+      </ControlTabContent>
+    </ControlTabContainer>
   );
 }

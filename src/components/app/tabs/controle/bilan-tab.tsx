@@ -1,107 +1,85 @@
 "use client";
 
 import { useCallback } from "react";
-import { RefreshCwIcon, AlertTriangleIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertTriangleIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, formatAmount } from "@/lib/utils";
 import { type BilanData, type BilanRow } from "@/lib/finance/aggregations/bilan";
-import type { YearKey as BilanYearKey } from "@/lib/finance/utils";
+import { YEAR_KEYS_3 } from "@/lib/finance/utils";
 import { useBilanData } from "@/hooks/controle/use-bilan-data";
 import { useScenarioDataStore } from "@/stores/scenario-data-store";
+import { ControlTabActionBar } from "./shared/control-tab-action-bar";
+import { ControlTabContent } from "./shared/control-tab-content";
+import { KpiCard } from "@/components/ui/kpi-card";
+import {
+  ControlTabTable,
+  ControlTabTableHeader,
+  ControlTabTableBody,
+  ControlTabTableRow,
+  ControlTabTableHead,
+  ControlTabTableCell,
+  SectionBannerRow,
+  ANNUAL_REM,
+  annualTableMinWidth,
+} from "./shared/control-tab-table";
+import { ControlTabContainer } from "./shared/control-tab-container";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const YEAR_KEYS: BilanYearKey[] = ["y1", "y2", "y3"];
-
-const frFmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-
-function formatAmount(amount: number): string {
-  if (amount === 0) return "—";
-  return frFmt.format(Math.round(amount));
-}
+const TABLE_MIN_WIDTH = annualTableMinWidth(3, ANNUAL_REM.amtLg);
+// 1 label + 3 montants = 4 colonnes
+const COL_COUNT = 4;
 
 // ── En-tête ───────────────────────────────────────────────────────────────────
 
 function BilanHeader({ yearLabels }: { yearLabels: BilanData["yearLabels"] }) {
   return (
-    <div className="sticky top-0 z-10 grid h-10 items-center border-b bg-background font-semibold text-sm grid-cols-[1fr_repeat(3,minmax(0,140px))]">
-      <div className="px-4">Désignation</div>
-      {YEAR_KEYS.map((yk) => (
-        <div key={yk} className="pr-4 text-right">
-          {yearLabels[yk]}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Ligne de section ──────────────────────────────────────────────────────────
-
-function BilanSectionRow({ label }: { label: string }) {
-  return (
-    <div className="grid grid-cols-[1fr_repeat(3,minmax(0,140px))] border-b bg-muted/50">
-      <div className="col-span-4 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
-    </div>
+    <ControlTabTableHeader>
+      <ControlTabTableRow>
+        <ControlTabTableHead colType="label">Désignation</ControlTabTableHead>
+        {YEAR_KEYS_3.map((yk) => (
+          <ControlTabTableHead key={yk} colType="amtLg">
+            {yearLabels[yk]}
+          </ControlTabTableHead>
+        ))}
+      </ControlTabTableRow>
+    </ControlTabTableHeader>
   );
 }
 
 // ── Ligne de données ──────────────────────────────────────────────────────────
 
 function BilanRowItem({ row }: { row: BilanRow }) {
-  const isHighlight = row.style === "highlight";
-  const isSubtotal = row.style === "subtotal";
-  const isIndent = row.style === "indent";
-
   if (
     row.hideIfZero &&
-    YEAR_KEYS.every((yk) => row.values[yk].amount === 0)
+    YEAR_KEYS_3.every((yk) => row.values[yk].amount === 0)
   ) {
     return null;
   }
 
-  return (
-    <div
-      className={cn(
-        "grid items-center border-b transition-colors",
-        "grid-cols-[1fr_repeat(3,minmax(0,140px))]",
-        "min-h-10",
-        isHighlight && "bg-primary/10 font-bold text-primary",
-        isSubtotal && "bg-muted/30 font-semibold",
-        isIndent && "bg-muted/10",
-        !isHighlight && !isSubtotal && "hover:bg-muted/20",
-      )}
-    >
-      {/* Libellé */}
-      <div
-        className={cn(
-          "flex items-center px-4 py-2.5",
-          isIndent && "pl-8 text-muted-foreground",
-        )}
-      >
-        <span className="text-sm leading-tight">{row.label}</span>
-      </div>
+  const isIndent = row.style === "indent";
 
-      {/* Valeurs */}
-      {YEAR_KEYS.map((yk) => {
+  return (
+    <ControlTabTableRow variant={row.style}>
+      <ControlTabTableCell colType="label" depth={isIndent ? 1 : 0}>
+        {row.label}
+      </ControlTabTableCell>
+      {YEAR_KEYS_3.map((yk) => {
         const val = row.values[yk];
-        const isNeg = val.amount < 0;
         return (
-          <div
+          <ControlTabTableCell
             key={`${row.key}_${yk}`}
+            colType="amtLg"
             className={cn(
-              "pr-4 py-2.5 text-right text-sm tabular-nums",
-              isNeg && !isHighlight && "text-destructive",
+              val.amount < 0 && row.style !== "highlight" && "text-destructive",
               isIndent && "text-muted-foreground",
             )}
           >
             {formatAmount(val.amount)}
-          </div>
+          </ControlTabTableCell>
         );
       })}
-    </div>
+    </ControlTabTableRow>
   );
 }
 
@@ -114,7 +92,7 @@ function EquilibreAlert({
   equilibre: BilanData["equilibre"];
   yearLabels: BilanData["yearLabels"];
 }) {
-  const desequilibres = YEAR_KEYS.filter((yk) => !equilibre[yk]);
+  const desequilibres = YEAR_KEYS_3.filter((yk) => !equilibre[yk]);
   if (desequilibres.length === 0) return null;
 
   return (
@@ -138,95 +116,70 @@ interface BilanTabProps {
 
 export default function BilanTab({ dossierId }: BilanTabProps) {
   const { data, status, error } = useBilanData(dossierId);
-  const isPending = status === "loading";
 
   const handleRefresh = useCallback(() => {
     useScenarioDataStore.getState().reload(dossierId);
   }, [dossierId]);
 
   return (
-    <div className="flex h-full flex-col">
-      {/* ── Barre d'actions ──────────────────────────────────────────────── */}
-      <div className="flex shrink-0 items-center justify-between border-b bg-muted/20 px-4 py-2">
-        <div className="flex items-center gap-3">
-          <h2 className="font-semibold text-sm">Bilan prévisionnel</h2>
-          {data && (
-            <Badge variant="secondary" className="text-xs">
-              Lecture seule
-            </Badge>
-          )}
-          {data &&
-            YEAR_KEYS.every((yk) => data.equilibre[yk]) && (
-              <Badge
-                variant="outline"
-                className="gap-1 text-xs text-emerald-600 border-emerald-600/50"
-              >
-                Actif = Passif
-              </Badge>
-            )}
+    <ControlTabContainer>
+      <ControlTabActionBar
+        title="Bilan prévisionnel"
+        hasData={!!data}
+        isPending={status === "loading"}
+        onRefresh={handleRefresh}
+      >
+        {data && YEAR_KEYS_3.every((yk) => data.equilibre[yk]) && (
+          <Badge variant="outline" className="gap-1 text-xs text-emerald-600 border-emerald-600/50">
+            Actif = Passif
+          </Badge>
+        )}
+      </ControlTabActionBar>
+
+      {/* ── KPI cards ────────────────────────────────────────────────────────── */}
+      {data && (
+        <div className="shrink-0 flex gap-3 flex-wrap mx-auto">
+          {YEAR_KEYS_3.map((yk) => {
+            const amount = data.rows.find((r) => r.key === "capitaux_propres")?.values[yk]?.amount ?? 0;
+            return (
+              <KpiCard
+                key={yk}
+                label={`Capitaux propres — ${data.yearLabels[yk]}`}
+                value={amount}
+                variant={amount >= 0 ? "positive" : "negative"}
+              />
+            );
+          })}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isPending}
-          className="gap-1.5"
-        >
-          <RefreshCwIcon
-            className={cn("size-3.5", isPending && "animate-spin")}
-          />
-          {isPending ? "Calcul…" : "Actualiser"}
-        </Button>
-      </div>
+      )}
 
-      {/* ── Contenu ──────────────────────────────────────────────────────── */}
-      <div className="min-h-0 flex-1 overflow-auto">
-        {/* Erreur */}
-        {error && (
-          <div className="m-4 rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-            {error}
-          </div>
-        )}
-
-        {/* Chargement */}
-        {isPending && !data && (
-          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-            Calcul du bilan prévisionnel…
-          </div>
-        )}
-
-        {/* Alerte déséquilibre */}
+      <ControlTabContent
+        status={status}
+        error={error}
+        loadingMessage="Calcul du bilan prévisionnel…"
+        dataLoaded={!!data}
+        hasRows={!!data && data.rows.length > 0}
+        prependContent={
+          data && (
+            <EquilibreAlert equilibre={data.equilibre} yearLabels={data.yearLabels} />
+          )
+        }
+      >
         {data && (
-          <EquilibreAlert
-            equilibre={data.equilibre}
-            yearLabels={data.yearLabels}
-          />
-        )}
-
-        {/* Tableau */}
-        {data && data.rows.length > 0 && (
-          <div className="min-w-150">
+          <ControlTabTable style={{ minWidth: TABLE_MIN_WIDTH }}>
             <BilanHeader yearLabels={data.yearLabels} />
-            {data.rows.map((row) =>
-              row.style === "section" ? (
-                <BilanSectionRow key={row.key} label={row.label} />
-              ) : (
-                <BilanRowItem key={row.key} row={row} />
-              ),
-            )}
-          </div>
+            <ControlTabTableBody>
+              {data.rows.map((row) =>
+                row.style === "section" ? (
+                  <SectionBannerRow key={row.key} label={row.label} colSpan={COL_COUNT} />
+                ) : (
+                  <BilanRowItem key={row.key} row={row} />
+                ),
+              )}
+            </ControlTabTableBody>
+          </ControlTabTable>
         )}
-
-        {/* État vide */}
-        {data && data.rows.length === 0 && (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-            <p className="text-sm">Aucune donnée disponible.</p>
-            <p className="text-xs">
-              Renseignez les onglets de saisie puis actualisez.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+      </ControlTabContent>
+    </ControlTabContainer>
   );
 }

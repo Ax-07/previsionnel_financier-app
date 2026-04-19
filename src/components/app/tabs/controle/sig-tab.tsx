@@ -1,33 +1,34 @@
 "use client";
 
-import { Fragment, useCallback, useState } from "react";
-import { ChevronDownIcon, ChevronRightIcon, RefreshCwIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Fragment, useCallback } from "react";
+import { formatAmount, formatPct } from "@/lib/utils";
 import { type SigData, type SigNode } from "@/lib/finance/aggregations/sig";
-import type { YearKey } from "@/lib/finance/utils";
+import { YEAR_KEYS_3 } from "@/lib/finance/utils";
 import { useSigData } from "@/hooks/controle/use-sig-data";
 import { useScenarioDataStore } from "@/stores/scenario-data-store";
+import { KpiCard } from "@/components/ui/kpi-card";
+import { ControlTabActionBar } from "./shared/control-tab-action-bar";
+import { ControlTabContent } from "./shared/control-tab-content";
+import {
+  ControlTabTable,
+  ControlTabTableHeader,
+  ControlTabTableBody,
+  ControlTabTableRow,
+  ControlTabTableHead,
+  ControlTabTableCell,
+  ControlTabLabelCell,
+  useExpandableRows,
+  ANNUAL_REM,
+  annualTableMinWidth,
+} from "./shared/control-tab-table";
+import { ControlTabContainer } from "./shared/control-tab-container";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const YEAR_KEYS: YearKey[] = ["y1", "y2", "y3"];
-
-const frFmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-
-function formatAmount(amount: number): string {
-  if (amount === 0) return "—";
-  return frFmt.format(Math.round(amount));
-}
-
-function formatPct(pct: number | null): string {
-  if (pct === null) return "";
-  return `${pct.toFixed(1)} %`;
-}
+const TABLE_MIN_WIDTH = annualTableMinWidth(3, ANNUAL_REM.amtSm, ANNUAL_REM.pct);
 
 function isAllZero(node: SigNode): boolean {
-  return YEAR_KEYS.every((k) => node.values[k].amount === 0);
+  return YEAR_KEYS_3.every((k) => node.values[k].amount === 0);
 }
 
 // ── Composant ligne ───────────────────────────────────────────────────────────
@@ -35,105 +36,55 @@ function isAllZero(node: SigNode): boolean {
 interface SigRowProps {
   node: SigNode;
   depth: number;
-  expandedKeys: Set<string>;
+  isExpanded: (key: string) => boolean;
   onToggle: (key: string) => void;
 }
 
-function SigRow({ node, depth, expandedKeys, onToggle }: SigRowProps) {
+function SigRow({ node, depth, isExpanded, onToggle }: SigRowProps) {
   const hasChildren = (node.children?.length ?? 0) > 0;
-  const isExpanded = expandedKeys.has(node.key);
   const isSection = node.style === "section";
-  const isTotal = node.style === "total";
-  const isHighlight = node.style === "highlight";
 
   if (node.hideIfZero && isAllZero(node)) return null;
 
-  const rowClass = cn(
-    "grid h-9 items-center border-b transition-colors",
-    "grid-cols-[1fr_repeat(3,minmax(0,120px)_minmax(0,68px))]",
-    isSection &&
-      "bg-muted/60 font-semibold uppercase tracking-wide text-xs text-muted-foreground",
-    isTotal && "bg-muted/30 font-semibold",
-    isHighlight && "bg-primary/10 font-bold text-primary",
-    !isSection && !isTotal && !isHighlight && "hover:bg-muted/20",
-  );
-
   return (
     <>
-      <div className={rowClass}>
-        {/* Libellé */}
-        <div
-          className={cn(
-            "flex items-center gap-1 truncate px-3 py-1",
-            depth === 1 && "pl-6",
-            depth === 2 && "pl-10",
-            depth > 2 && "pl-14",
-          )}
-        >
-          {hasChildren && !isSection ? (
-            <button
-              type="button"
-              onClick={() => onToggle(node.key)}
-              className="flex shrink-0 items-center text-muted-foreground hover:text-foreground"
-              aria-label={isExpanded ? "Replier" : "Déplier"}
-              aria-expanded={isExpanded}
-            >
-              {isExpanded ? (
-                <ChevronDownIcon className="size-3.5" />
-              ) : (
-                <ChevronRightIcon className="size-3.5" />
-              )}
-            </button>
-          ) : (
-            <span className="size-3.5 shrink-0" />
-          )}
-          <span
-            className={cn(
-              "truncate text-sm leading-tight",
-              isSection && "text-xs",
-            )}
-          >
-            {node.label}
-          </span>
-        </div>
-
-        {/* Valeurs par exercice */}
-        {YEAR_KEYS.map((yk) => {
+      <ControlTabTableRow variant={node.style}>
+        <ControlTabTableCell colType="label" depth={depth}>
+          <ControlTabLabelCell
+            label={node.label}
+            style={isSection ? "section" : undefined}
+            hasChildren={hasChildren && !isSection}
+            isExpanded={isExpanded(node.key)}
+            onToggle={hasChildren && !isSection ? () => onToggle(node.key) : undefined}
+          />
+        </ControlTabTableCell>
+        {YEAR_KEYS_3.map((yk) => {
           const val = node.values[yk];
           const isNeg = val.amount < 0;
           return (
             <Fragment key={`${node.key}_${yk}`}>
-              <div
-                className={cn(
-                  "pr-3 text-right text-sm tabular-nums",
-                  isNeg && !isHighlight && "text-destructive",
-                  isSection && "text-xs text-muted-foreground",
-                )}
+              <ControlTabTableCell
+                colType="amtSm"
+                negative={!isSection && isNeg}
               >
                 {isSection ? "" : formatAmount(val.amount)}
-              </div>
-              <div
-                className={cn(
-                  "pr-2 text-right text-xs tabular-nums text-muted-foreground",
-                  isHighlight && "text-primary/70",
-                )}
-              >
+              </ControlTabTableCell>
+              <ControlTabTableCell colType="pct" className="text-muted-foreground">
                 {isSection ? "" : val.pct !== null ? formatPct(val.pct) : ""}
-              </div>
+              </ControlTabTableCell>
             </Fragment>
           );
         })}
-      </div>
+      </ControlTabTableRow>
 
-      {/* Enfants (si déplié) */}
       {hasChildren &&
-        isExpanded &&
+        isExpanded(node.key) &&
         node.children!.map((child) => (
           <SigRow
             key={child.key}
             node={child}
             depth={depth + 1}
-            expandedKeys={expandedKeys}
+            isExpanded={isExpanded}
             onToggle={onToggle}
           />
         ))}
@@ -145,20 +96,17 @@ function SigRow({ node, depth, expandedKeys, onToggle }: SigRowProps) {
 
 function SigHeader({ yearLabels }: { yearLabels: SigData["yearLabels"] }) {
   return (
-    <div
-      className={cn(
-        "sticky top-0 z-10 grid h-10 items-center border-b bg-background font-semibold text-sm",
-        "grid-cols-[1fr_repeat(3,minmax(0,120px)_minmax(0,68px))]",
-      )}
-    >
-      <div className="px-3">Désignation</div>
-      {YEAR_KEYS.map((yk) => (
-        <Fragment key={yk}>
-          <div className="pr-3 text-right">{yearLabels[yk]}</div>
-          <div className="pr-2 text-right text-xs text-muted-foreground font-normal">%</div>
-        </Fragment>
-      ))}
-    </div>
+    <ControlTabTableHeader>
+      <ControlTabTableRow>
+        <ControlTabTableHead colType="label">Désignation</ControlTabTableHead>
+        {YEAR_KEYS_3.map((yk) => (
+          <Fragment key={yk}>
+            <ControlTabTableHead colType="amtSm">{yearLabels[yk]}</ControlTabTableHead>
+            <ControlTabTableHead colType="pct" className="text-muted-foreground/70 font-normal">%</ControlTabTableHead>
+          </Fragment>
+        ))}
+      </ControlTabTableRow>
+    </ControlTabTableHeader>
   );
 }
 
@@ -170,91 +118,68 @@ interface SigTabProps {
 
 export default function SigTab({ dossierId }: SigTabProps) {
   const { data, status, error } = useSigData(dossierId);
-  const isPending = status === "loading";
-
-  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+  const { isExpanded, toggle } = useExpandableRows();
 
   const handleRefresh = useCallback(() => {
     useScenarioDataStore.getState().reload(dossierId);
   }, [dossierId]);
 
-  const handleToggle = useCallback((key: string) => {
-    setExpandedKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }, []);
+  // Calcul des KPIs depuis les totaux des lignes synthèse
+  const findRow = (key: string) => data?.nodes.find((r) => r.key === key);
+  const ca = findRow("prod_exercice")?.values.y1.amount ?? 0;
+  const marge = findRow("marge_prod")?.values.y1.amount ?? 0;
+  const va = findRow("va")?.values.y1.amount ?? 0;
+  const ebe = findRow("ebe")?.values.y1.amount ?? 0;
+  const resExplo = findRow("res_expl")?.values.y1.amount ?? 0;
+  const resCourant = findRow("res_courant")?.values.y1.amount ?? 0;
+  const resNet = findRow("res_net")?.values.y1.amount ?? 0;
+  const caf = findRow("caf")?.values.y1.amount ?? 0;
 
   return (
-    <div className="flex h-full flex-col">
-      {/* ── Barre d'actions ──────────────────────────────────────────────── */}
-      <div className="flex shrink-0 items-center justify-between border-b bg-muted/20 px-4 py-2">
-        <div className="flex items-center gap-3">
-          <h2 className="font-semibold text-sm">
-            Soldes Intermédiaires de Gestion
-          </h2>
-          {data && (
-            <Badge variant="secondary" className="text-xs">
-              Lecture seule
-            </Badge>
-          )}
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isPending}
-          className="gap-1.5"
-        >
-          <RefreshCwIcon className={cn("size-3.5", isPending && "animate-spin")} />
-          {isPending ? "Calcul…" : "Actualiser"}
-        </Button>
+    <ControlTabContainer>
+      <ControlTabActionBar
+        title="Soldes Intermédiaires de Gestion"
+        hasData={!!data}
+        isPending={status === "loading"}
+        onRefresh={handleRefresh}
+      />
+
+      {/* ── KPI cards ────────────────────────────────────────────────────── */}
+      <div className="shrink-0 flex gap-3 flex-wrap mx-auto">
+        <KpiCard label="CA" value={ca} variant="neutral" />
+        <KpiCard label="Marge brute" value={marge} variant={marge >= 0 ? "positive" : "negative"} />
+        <KpiCard label="Valeur ajoutée" value={va} variant={va >= 0 ? "positive" : "negative"} />
+        <KpiCard label="EBE" value={ebe} variant={ebe >= 0 ? "positive" : "negative"} />
+        <KpiCard label="Résultat d'exploitation" value={resExplo} variant={resExplo >= 0 ? "positive" : "negative"} />
+        <KpiCard label="Résultat courant" value={resCourant} variant={resCourant >= 0 ? "positive" : "negative"} />
+        <KpiCard label="Résultat net" value={resNet} variant={resNet >= 0 ? "positive" : "negative"} />
+        <KpiCard label="CAF" value={caf} variant={caf >= 0 ? "positive" : "negative"} />
       </div>
 
-      {/* ── Contenu ──────────────────────────────────────────────────────── */}
-      <div className="min-h-0 flex-1 overflow-auto">
-        {/* Erreur */}
-        {error && (
-          <div className="m-4 rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-            {error}
-          </div>
-        )}
-
-        {/* Chargement */}
-        {isPending && !data && (
-          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-            Calcul des soldes intermédiaires de gestion…
-          </div>
-        )}
-
-        {/* Tableau */}
-        {data && data.nodes.length > 0 && (
-          <div className="min-w-175">
+      <ControlTabContent
+        status={status}
+        error={error}
+        loadingMessage="Calcul des soldes intermédiaires de gestion…"
+        dataLoaded={!!data}
+        hasRows={!!data && data.nodes.length > 0}
+      >
+        {data && (
+          <ControlTabTable style={{ minWidth: TABLE_MIN_WIDTH }}>
             <SigHeader yearLabels={data.yearLabels} />
-            {data.nodes.map((node) => (
-              <SigRow
-                key={node.key}
-                node={node}
-                depth={0}
-                expandedKeys={expandedKeys}
-                onToggle={handleToggle}
-              />
-            ))}
-          </div>
+            <ControlTabTableBody>
+              {data.nodes.map((node) => (
+                <SigRow
+                  key={node.key}
+                  node={node}
+                  depth={0}
+                  isExpanded={isExpanded}
+                  onToggle={toggle}
+                />
+              ))}
+            </ControlTabTableBody>
+          </ControlTabTable>
         )}
-
-        {/* État vide */}
-        {data && data.nodes.length === 0 && (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-            <p className="text-sm">Aucune donnée disponible.</p>
-            <p className="text-xs">
-              Renseignez les onglets de saisie puis actualisez.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+      </ControlTabContent>
+    </ControlTabContainer>
   );
 }

@@ -1,55 +1,50 @@
 "use client";
 
-import { Fragment, useCallback, useState } from "react";
-import { ChevronDownIcon, ChevronRightIcon, RefreshCwIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { useCallback } from "react";
+import { formatAmount } from "@/lib/utils";
 import {
   type PfData,
   type PfRow,
 } from "@/lib/finance/aggregations/plan-financement";
-import type { YearKey4 as PfYearKey } from "@/lib/finance/utils";
+import { YEAR_KEYS_4 } from "@/lib/finance/utils";
 import { usePlanFinancementData } from "@/hooks/controle/use-plan-financement-data";
 import { useScenarioDataStore } from "@/stores/scenario-data-store";
-import { ChartPanel } from "./dashboard-kpi-tab/chart-tooltip";
-import { PfChart } from "../../../charts/pf-chart";
+import { ControlTabActionBar } from "./shared/control-tab-action-bar";
+import { ControlTabContent } from "./shared/control-tab-content";
+import { KpiCard } from "@/components/ui/kpi-card";
+import {
+  ControlTabTable,
+  ControlTabTableHeader,
+  ControlTabTableBody,
+  ControlTabTableRow,
+  ControlTabTableHead,
+  ControlTabTableCell,
+  ControlTabLabelCell,
+  SectionBannerRow,
+  useExpandableRows,
+  ANNUAL_REM,
+  annualTableMinWidth,
+} from "./shared/control-tab-table";
+import { ControlTabContainer } from "./shared/control-tab-container";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const YEAR_KEYS: PfYearKey[] = ["y0", "y1", "y2", "y3"];
-
-const frFmt = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-
-function formatAmount(amount: number): string {
-  if (amount === 0) return "—";
-  return frFmt.format(Math.round(amount));
-}
+const TABLE_MIN_WIDTH = annualTableMinWidth(4, ANNUAL_REM.amtMd);
+// 1 label + 4 montants = 5 colonnes
+const COL_COUNT = 5;
 
 // ── En-tête ───────────────────────────────────────────────────────────────────
 
 function PfHeader({ yearLabels }: { yearLabels: PfData["yearLabels"] }) {
   return (
-    <div className="sticky top-0 z-10 grid h-10 items-center border-b bg-background font-semibold text-sm grid-cols-[1fr_repeat(4,minmax(0,130px))]">
-      <div className="px-4">Désignation</div>
-      {YEAR_KEYS.map((yk) => (
-        <div key={yk} className="pr-4 text-right">
-          {yearLabels[yk]}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Ligne section ─────────────────────────────────────────────────────────────
-
-function PfSectionRow({ label }: { label: string }) {
-  return (
-    <div className="grid grid-cols-[1fr_repeat(4,minmax(0,130px))] border-b bg-muted/50">
-      <div className="col-span-5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
-    </div>
+    <ControlTabTableHeader>
+      <ControlTabTableRow>
+        <ControlTabTableHead colType="label">Désignation</ControlTabTableHead>
+        {YEAR_KEYS_4.map((yk) => (
+          <ControlTabTableHead key={yk} colType="amtMd">{yearLabels[yk]}</ControlTabTableHead>
+        ))}
+      </ControlTabTableRow>
+    </ControlTabTableHeader>
   );
 }
 
@@ -58,106 +53,65 @@ function PfSectionRow({ label }: { label: string }) {
 interface PfRowItemProps {
   row: PfRow;
   depth?: number;
-  expandedKeys: Set<string>;
+  isExpanded: (key: string) => boolean;
   onToggle: (key: string) => void;
 }
 
-function PfRowItem({ row, depth = 0, expandedKeys, onToggle }: PfRowItemProps) {
+function PfRowItem({ row, depth = 0, isExpanded, onToggle }: PfRowItemProps) {
   const isHighlight = row.style === "highlight";
-  const isSubtotal = row.style === "subtotal";
   const hasChildren = !!row.children && row.children.length > 0;
-  const isExpanded = expandedKeys.has(row.key);
 
   if (
     row.hideIfZero &&
-    YEAR_KEYS.every((yk) => row.values[yk].amount === 0) &&
+    YEAR_KEYS_4.every((yk) => row.values[yk].amount === 0) &&
     (!hasChildren || row.children!.every((c) =>
-      YEAR_KEYS.every((yk) => c.values[yk].amount === 0)
+      YEAR_KEYS_4.every((yk) => c.values[yk].amount === 0)
     ))
   ) {
     return null;
   }
 
   return (
-    <Fragment>
-      <div
-        className={cn(
-          "grid items-center border-b transition-colors",
-          "grid-cols-[1fr_repeat(4,minmax(0,130px))]",
-          "min-h-10",
-          isHighlight && "bg-primary/10 font-bold text-primary",
-          isSubtotal && "bg-muted/30 font-semibold",
-          !isHighlight && !isSubtotal && "hover:bg-muted/20",
-        )}
-      >
-        {/* Libellé */}
-        <div
-          className={cn(
-            "flex items-center gap-1 px-4 py-2.5",
-            depth === 1 && "pl-8",
-            depth >= 2 && "pl-12",
-          )}
-        >
-          {hasChildren ? (
-            <button
-              type="button"
-              onClick={() => onToggle(row.key)}
-              className="flex shrink-0 items-center text-muted-foreground hover:text-foreground"
-              aria-label={isExpanded ? "Replier" : "Déplier"}
-            >
-              {isExpanded ? (
-                <ChevronDownIcon className="size-3.5" />
-              ) : (
-                <ChevronRightIcon className="size-3.5" />
-              )}
-            </button>
-          ) : (
-            <span className="size-3.5 shrink-0" />
-          )}
-          {row.sign && (
-            <span
-              className={cn(
-                "shrink-0 font-mono text-xs tabular-nums w-3 text-center",
-                isHighlight ? "text-primary/70" : "text-muted-foreground",
-              )}
-            >
-              {row.sign}
-            </span>
-          )}
-          <span className="text-sm leading-tight">{row.label}</span>
-        </div>
+    <>
+      <ControlTabTableRow variant={row.style} className="group">
+        <ControlTabTableCell colType="label" depth={depth}>
+          <ControlTabLabelCell
+            label={row.label}
+            style={row.style}
+            sign={row.sign}
+            hasChildren={hasChildren}
+            isExpanded={isExpanded(row.key)}
+            onToggle={() => onToggle(row.key)}
+          />
+        </ControlTabTableCell>
 
-        {/* Valeurs */}
-        {YEAR_KEYS.map((yk) => {
+        {YEAR_KEYS_4.map((yk) => {
           const val = row.values[yk];
           const isNeg = val.amount < 0;
           return (
-            <div
+            <ControlTabTableCell
               key={`${row.key}_${yk}`}
-              className={cn(
-                "pr-4 py-2.5 text-right text-sm tabular-nums",
-                isNeg && !isHighlight && "text-destructive",
-              )}
+              colType="amtMd"
+              negative={isNeg && !isHighlight}
             >
               {formatAmount(val.amount)}
-            </div>
+            </ControlTabTableCell>
           );
         })}
-      </div>
+      </ControlTabTableRow>
 
-      {/* Enfants (si déplié) */}
-      {hasChildren && isExpanded &&
+      {hasChildren && isExpanded(row.key) &&
         row.children!.map((child) => (
           <PfRowItem
             key={child.key}
             row={child}
             depth={depth + 1}
-            expandedKeys={expandedKeys}
+            isExpanded={isExpanded}
             onToggle={onToggle}
           />
         ))
       }
-    </Fragment>
+    </>
   );
 }
 
@@ -170,96 +124,67 @@ interface PlanFinancementTabProps {
 export default function PlanFinancementTab({
   dossierId,
 }: PlanFinancementTabProps) {
-  const { data, chartPoints, status, error } = usePlanFinancementData(dossierId);
-  const isPending = status === "loading";
-
-  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+  const { data, status, error } = usePlanFinancementData(dossierId);
+  const { isExpanded, toggle } = useExpandableRows();
 
   const handleRefresh = useCallback(() => {
     useScenarioDataStore.getState().reload(dossierId);
   }, [dossierId]);
 
-  const handleToggle = useCallback((key: string) => {
-    setExpandedKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }, []);
-
   return (
-    <div className="flex h-full flex-col">
-      {/* ── Barre d'actions ──────────────────────────────────────────────── */}
-      <div className="flex shrink-0 items-center justify-between border-b bg-muted/20 px-4 py-2">
-        <div className="flex items-center gap-3">
-          <h2 className="font-semibold text-sm">Plan de financement</h2>
-          {data && (
-            <Badge variant="secondary" className="text-xs">
-              Lecture seule
-            </Badge>
-          )}
+    <ControlTabContainer>
+      <ControlTabActionBar
+        title="Plan de financement"
+        hasData={!!data}
+        isPending={status === "loading"}
+        onRefresh={handleRefresh}
+      />
+
+      {/* ── KPI cards ────────────────────────────────────────────────────────── */}
+      {data && (
+        <div className="shrink-0 flex gap-3 flex-wrap mx-auto">
+          {(["y1", "y2", "y3"] as const).map((yk) => {
+            const amount = data.rows.find((r) => r.key === "solde_tresorerie")?.values[yk]?.amount ?? 0;
+            return (
+              <KpiCard
+                key={yk}
+                label={`Solde de trésorerie — ${data.yearLabels[yk]}`}
+                value={amount}
+                variant={amount >= 0 ? "positive" : "negative"}
+              />
+            );
+          })}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isPending}
-          className="gap-1.5"
-        >
-          <RefreshCwIcon
-            className={cn("size-3.5", isPending && "animate-spin")}
-          />
-          {isPending ? "Calcul…" : "Actualiser"}
-        </Button>
-      </div>
+      )}
 
-      {/* ── Contenu ──────────────────────────────────────────────────────── */}
-        <div className="min-h-0 flex-1">
-          {/* Erreur */}
-          {error && (
-            <div className="m-4 rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-              {error}
-            </div>
-          )}
-
-          {/* Chargement */}
-          {isPending && !data && (
-            <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-              Calcul du plan de financement…
-            </div>
-          )}
-
-          {/* Tableau */}
-          {data && data.rows.length > 0 && (
-            <div className="min-w-75">
-              <PfHeader yearLabels={data.yearLabels} />
+      <ControlTabContent
+        status={status}
+        error={error}
+        loadingMessage="Calcul du plan de financement…"
+        dataLoaded={!!data}
+        hasRows={!!data && data.rows.length > 0}
+      >
+        {data && (
+          <ControlTabTable style={{ minWidth: TABLE_MIN_WIDTH }}>
+            <PfHeader yearLabels={data.yearLabels} />
+            <ControlTabTableBody>
               {data.rows.map((row) =>
                 row.style === "section" ? (
-                  <PfSectionRow key={row.key} label={row.label} />
+                  <SectionBannerRow key={row.key} label={row.label} colSpan={COL_COUNT} />
                 ) : (
                   <PfRowItem
                     key={row.key}
                     row={row}
                     depth={0}
-                    expandedKeys={expandedKeys}
-                    onToggle={handleToggle}
+                    isExpanded={isExpanded}
+                    onToggle={toggle}
                   />
                 ),
               )}
-            </div>
-          )}
-
-          {/* État vide */}
-          {data && data.rows.length === 0 && (
-            <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-              <p className="text-sm">Aucune donnée disponible.</p>
-              <p className="text-xs">
-                Renseignez les onglets de saisie puis actualisez.
-              </p>
-            </div>
-          )}
-        </div>
-    </div>
+            </ControlTabTableBody>
+          </ControlTabTable>
+        )}
+      </ControlTabContent>
+    </ControlTabContainer>
   );
 }
