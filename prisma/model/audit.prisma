@@ -11,7 +11,7 @@ model AuditLog {
   createdAt     DateTime   @default(now())
   utilisateurId String
   dossierId     String?
-  dossier       Dossier?   @relation(fields: [dossierId], references: [id])
+  dossier       Dossier?   @relation(fields: [dossierId], references: [id], onDelete: SetNull)
   utilisateur   User       @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
   @@index([entiteType, entiteId])
