@@ -21,7 +21,7 @@ import { fetchScenarioData } from "@/lib/finance/fetch-scenario";
 import { buildFinCalc } from "@/lib/finance/calculs";
 import { buildTableauFinancementRows } from "@/lib/finance/aggregations/tableau-financement";
 import type { TfRow as FinRow } from "@/lib/finance/aggregations/tableau-financement";
-import { buildToKeyY0 } from "@/lib/finance/aggregations/financement-helpers";
+import { buildToKeyY0 } from "@/lib/finance/aggregations/helpers/financement-helpers";
 import { n } from "@/lib/finance/utils";
 import type { YearKey4 as FinKey } from "@/lib/finance/utils";
 

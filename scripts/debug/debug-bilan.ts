@@ -45,7 +45,7 @@ const eq = (a: number, b: number) => Math.abs(a - b) < 1;
 type YAcc = { y1: number; y2: number; y3: number };
 const zero: YAcc = { y1: 0, y2: 0, y3: 0 };
 /** Somme les 12 valeurs mensuelles d'une série. */
-const sumSerie = (s: number[]) => s.reduce((a, b) => a + (b ?? 0), 0);
+const sumSerie = (s: readonly number[]) => s.reduce((a, b) => a + (b ?? 0), 0);
 
 function row(
   label: string,

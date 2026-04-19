@@ -25,13 +25,13 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Ratio | Unité | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | --- | ---: | ---: | ---: |
-| Délai des stocks de matières | jours | 15,5 | 15,2 | 15,2 |
-| Délai des dettes fournisseurs | jours | 28,3 | 29,6 | 29,6 |
-| Autonomie financière à long terme | % | 28,9 | 39,1 | 50,8 |
-| Solvabilité à moyen terme | % | 140,7 | 164,2 | 203,3 |
-| Solvabilité à court terme | % | 334,6 | 384,7 | 471,1 |
-| Taux d'endettement | % | 245,7 | 155,7 | 96,8 |
-| Capacité de remboursement | années | 5,32 | 3,74 | 2,45 |
+| Délai des stocks de matières | jours | 15,6 | 15,2 | 15,2 |
+| Délai des dettes fournisseurs | jours | 28,4 | 29,6 | 29,6 |
+| Autonomie financière à long terme | % | 29,4 | 38,0 | 48,9 |
+| Solvabilité à moyen terme | % | 141,7 | 161,4 | 195,6 |
+| Solvabilité à court terme | % | 320,9 | 342,9 | 406,7 |
+| Taux d'endettement | % | 239,6 | 163,0 | 104,6 |
+| Capacité de remboursement | années | 6,27 | 4,22 | 2,65 |
 
 
 ## 2. Valeurs intermédiaires (bases de calcul)
@@ -39,19 +39,19 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Indicateur | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| Achats annuels bruts (€) | 30 931,45 | 32 478,02 | 34 101,92 |
-| Achats consommés (€) | 29 559,16 | 32 497,06 | 34 034,26 |
-| Stocks matières (€) | 1 372,29 | 1 353,25 | 1 420,91 |
-| Dettes fournisseurs (€) | 2 508,87 | 2 634,88 | 2 766,62 |
-| Dettes exploitation (€) | 7 409,41 | 7 840,60 | 8 183,70 |
-| Capital restant dû (€) | 61 907,74 | 52 735,31 | 43 189,17 |
-| Total dettes (€) | 69 317,15 | 60 575,91 | 51 372,87 |
-| Immo nette fin exercice (€) | 72 737,79 | 69 320,59 | 65 903,39 |
-| Trésorerie nette (€) | 23 423,08 | 28 807,49 | 37 136,14 |
-| Actif circulant (€) | 24 795,37 | 30 160,74 | 38 557,05 |
-| Total actif (€) | 97 533,16 | 99 481,33 | 104 460,45 |
-| Capitaux propres (€) | 28 216,01 | 38 905,43 | 53 087,57 |
-| CAF (€) | 11 633,21 | 14 106,62 | 17 599,34 |
+| Achats annuels bruts (€) | 29 164,95 | 30 623,20 | 32 154,36 |
+| Achats consommés (€) | 27 866,24 | 30 645,94 | 32 090,56 |
+| Stocks matières (€) | 1 298,71 | 1 275,97 | 1 339,76 |
+| Dettes fournisseurs (€) | 2 366,41 | 2 485,38 | 2 609,65 |
+| Dettes exploitation (€) | 6 961,12 | 7 501,28 | 7 824,27 |
+| Capital restant dû (€) | 53 063,76 | 45 201,68 | 37 019,26 |
+| Total dettes (€) | 60 024,88 | 52 702,96 | 44 843,53 |
+| Immo nette fin exercice (€) | 62 737,79 | 59 320,59 | 55 903,39 |
+| Trésorerie nette (€) | 21 009,05 | 24 447,02 | 30 484,76 |
+| Actif circulant (€) | 22 307,76 | 25 722,98 | 31 824,52 |
+| Total actif (€) | 85 045,55 | 85 043,58 | 87 727,91 |
+| Capitaux propres (€) | 25 048,48 | 32 340,62 | 42 884,38 |
+| CAF (€) | 8 465,68 | 10 709,33 | 13 960,96 |
 
 
 ## 3. Vérifications de cohérence
@@ -59,38 +59,38 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | # | Vérification | Statut | Détail |
 | --- | --- | --- | --- |
-| 1 | [2026–2027] Délai stocks = stocks×365 / achatsConsommés | ❌ | `15,5 ≟ 16,9 j` |
-| 2 | [2026–2027] Délai fournisseurs = dettesFourn×365 / achatsAnnuels | ❌ | `28,3 ≟ 29,6 j` |
-| 3 | [2026–2027] Autonomie LT = capitauxPropres×100 / totalActif | ✅ | `28,9 ≟ 28,9 %` |
-| 4 | [2026–2027] Solvabilité MT = totalActif×100 / totalDettes | ✅ | `140,7 ≟ 140,7 %` |
-| 5 | [2026–2027] Solvabilité CT = actifCirculant×100 / detteExpl | ✅ | `334,6 ≟ 334,6 %` |
-| 6 | [2026–2027] Taux endettement = totalDettes×100 / capitauxPropres | ✅ | `245,7 ≟ 245,7 %` |
-| 7 | [2026–2027] Capacité remboursement = capitalRestantDu / CAF | ✅ | `5,32 ≟ 5,32 ans` |
+| 1 | [2026–2027] Délai stocks = stocks×365 / achatsConsommés | ❌ | `15,6 ≟ 17,0 j` |
+| 2 | [2026–2027] Délai fournisseurs = dettesFourn×365 / achatsAnnuels | ❌ | `28,4 ≟ 29,6 j` |
+| 3 | [2026–2027] Autonomie LT = capitauxPropres×100 / totalActif | ✅ | `29,4 ≟ 29,5 %` |
+| 4 | [2026–2027] Solvabilité MT = totalActif×100 / totalDettes | ❌ | `141,7 ≟ 141,7 %` |
+| 5 | [2026–2027] Solvabilité CT = actifCirculant×100 / detteExpl | ❌ | `320,9 ≟ 320,5 %` |
+| 6 | [2026–2027] Taux endettement = totalDettes×100 / capitauxPropres | ✅ | `239,6 ≟ 239,6 %` |
+| 7 | [2026–2027] Capacité remboursement = capitalRestantDu / CAF | ✅ | `6,27 ≟ 6,27 ans` |
 | 8 | [2027–2028] Délai stocks = stocks×365 / achatsConsommés | ❌ | `15,2 ≟ 15,2 j` |
 | 9 | [2027–2028] Délai fournisseurs = dettesFourn×365 / achatsAnnuels | ❌ | `29,6 ≟ 29,6 j` |
-| 10 | [2027–2028] Autonomie LT = capitauxPropres×100 / totalActif | ✅ | `39,1 ≟ 39,1 %` |
-| 11 | [2027–2028] Solvabilité MT = totalActif×100 / totalDettes | ✅ | `164,2 ≟ 164,2 %` |
-| 12 | [2027–2028] Solvabilité CT = actifCirculant×100 / detteExpl | ✅ | `384,7 ≟ 384,7 %` |
-| 13 | [2027–2028] Taux endettement = totalDettes×100 / capitauxPropres | ✅ | `155,7 ≟ 155,7 %` |
-| 14 | [2027–2028] Capacité remboursement = capitalRestantDu / CAF | ✅ | `3,74 ≟ 3,74 ans` |
+| 10 | [2027–2028] Autonomie LT = capitauxPropres×100 / totalActif | ✅ | `38,0 ≟ 38,0 %` |
+| 11 | [2027–2028] Solvabilité MT = totalActif×100 / totalDettes | ✅ | `161,4 ≟ 161,4 %` |
+| 12 | [2027–2028] Solvabilité CT = actifCirculant×100 / detteExpl | ✅ | `342,9 ≟ 342,9 %` |
+| 13 | [2027–2028] Taux endettement = totalDettes×100 / capitauxPropres | ✅ | `163,0 ≟ 163,0 %` |
+| 14 | [2027–2028] Capacité remboursement = capitalRestantDu / CAF | ✅ | `4,22 ≟ 4,22 ans` |
 | 15 | [2028–2029] Délai stocks = stocks×365 / achatsConsommés | ❌ | `15,2 ≟ 15,2 j` |
 | 16 | [2028–2029] Délai fournisseurs = dettesFourn×365 / achatsAnnuels | ❌ | `29,6 ≟ 29,6 j` |
-| 17 | [2028–2029] Autonomie LT = capitauxPropres×100 / totalActif | ✅ | `50,8 ≟ 50,8 %` |
-| 18 | [2028–2029] Solvabilité MT = totalActif×100 / totalDettes | ✅ | `203,3 ≟ 203,3 %` |
-| 19 | [2028–2029] Solvabilité CT = actifCirculant×100 / detteExpl | ✅ | `471,1 ≟ 471,1 %` |
-| 20 | [2028–2029] Taux endettement = totalDettes×100 / capitauxPropres | ✅ | `96,8 ≟ 96,8 %` |
-| 21 | [2028–2029] Capacité remboursement = capitalRestantDu / CAF | ✅ | `2,45 ≟ 2,45 ans` |
-| 22 | [2026–2027] Actif circulant = stocks + max(0, trésorerie) | ✅ | `24 795,37 ≟ 24 795,37` |
-| 23 | [2026–2027] Total actif = immo nette + actif circulant | ✅ | `97 533,16 ≟ 97 533,16` |
-| 24 | [2026–2027] Total dettes = capital restant dû + dettes exploitation | ✅ | `69 317,15 ≟ 69 317,15` |
-| 25 | [2027–2028] Actif circulant = stocks + max(0, trésorerie) | ✅ | `30 160,74 ≟ 30 160,74` |
-| 26 | [2027–2028] Total actif = immo nette + actif circulant | ✅ | `99 481,33 ≟ 99 481,33` |
-| 27 | [2027–2028] Total dettes = capital restant dû + dettes exploitation | ✅ | `60 575,91 ≟ 60 575,91` |
-| 28 | [2028–2029] Actif circulant = stocks + max(0, trésorerie) | ✅ | `38 557,05 ≟ 38 557,05` |
-| 29 | [2028–2029] Total actif = immo nette + actif circulant | ✅ | `104 460,45 ≟ 104 460,45` |
-| 30 | [2028–2029] Total dettes = capital restant dû + dettes exploitation | ✅ | `51 372,87 ≟ 51 372,87` |
+| 17 | [2028–2029] Autonomie LT = capitauxPropres×100 / totalActif | ✅ | `48,9 ≟ 48,9 %` |
+| 18 | [2028–2029] Solvabilité MT = totalActif×100 / totalDettes | ✅ | `195,6 ≟ 195,6 %` |
+| 19 | [2028–2029] Solvabilité CT = actifCirculant×100 / detteExpl | ✅ | `406,7 ≟ 406,7 %` |
+| 20 | [2028–2029] Taux endettement = totalDettes×100 / capitauxPropres | ✅ | `104,6 ≟ 104,6 %` |
+| 21 | [2028–2029] Capacité remboursement = capitalRestantDu / CAF | ✅ | `2,65 ≟ 2,65 ans` |
+| 22 | [2026–2027] Actif circulant = stocks + max(0, trésorerie) | ✅ | `22 307,76 ≟ 22 307,76` |
+| 23 | [2026–2027] Total actif = immo nette + actif circulant | ✅ | `85 045,55 ≟ 85 045,55` |
+| 24 | [2026–2027] Total dettes = capital restant dû + dettes exploitation | ✅ | `60 024,88 ≟ 60 024,88` |
+| 25 | [2027–2028] Actif circulant = stocks + max(0, trésorerie) | ✅ | `25 722,98 ≟ 25 722,98` |
+| 26 | [2027–2028] Total actif = immo nette + actif circulant | ✅ | `85 043,58 ≟ 85 043,58` |
+| 27 | [2027–2028] Total dettes = capital restant dû + dettes exploitation | ✅ | `52 702,96 ≟ 52 702,96` |
+| 28 | [2028–2029] Actif circulant = stocks + max(0, trésorerie) | ✅ | `31 824,52 ≟ 31 824,52` |
+| 29 | [2028–2029] Total actif = immo nette + actif circulant | ✅ | `87 727,91 ≟ 87 727,91` |
+| 30 | [2028–2029] Total dettes = capital restant dû + dettes exploitation | ✅ | `44 843,53 ≟ 44 843,53` |
 
-**Total : 24 OK, 6 KO sur 30 vérifications.**
+**Total : 22 OK, 8 KO sur 30 vérifications.**
 
 
 ## 4. Détail achats et stocks par activité
@@ -98,8 +98,8 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Activité | Coef TTC | Stock (j) | Montant N (€) | Montant N+1 (€) | Montant N+2 (€) |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Vente pizza | 0.2700 | 15 | 98 750,00 | 103 687,50 | 108 871,88 |
-| Vente boisson | 0.3500 | 15 | 8 000,00 | 8 400,00 | 8 820,00 |
+| Vente pizza | 0.2700 | 15 | 94 800,00 | 99 540,00 | 104 517,00 |
+| Vente boisson | 0.3500 | 15 | 6 000,00 | 6 300,00 | 6 615,00 |
 | Vente alcool | 0.3500 | 15 | 4 197,00 | 4 406,85 | 4 627,19 |
 
 
@@ -108,9 +108,9 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Exercice | Achats annuels bruts (€) | Stocks (€) | Achats consommés (€) |
 | --- | ---: | ---: | ---: |
-| 2026–2027 | 30 931,45 | 1 372,29 | 29 559,16 |
-| 2027–2028 | 32 478,02 | 1 353,25 | 32 497,06 |
-| 2028–2029 | 34 101,92 | 1 420,91 | 34 034,26 |
+| 2026–2027 | 29 164,95 | 1 298,71 | 27 866,24 |
+| 2027–2028 | 30 623,20 | 1 275,97 | 30 645,94 |
+| 2028–2029 | 32 154,36 | 1 339,76 | 32 090,56 |
 
 
 ## 5. Récapitulatif
@@ -118,12 +118,12 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Ratio | Unité | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | --- | ---: | ---: | ---: |
-| **Délai des stocks de matières** | jours | **15,5** | **15,2** | **15,2** |
-| **Délai des dettes fournisseurs** | jours | **28,3** | **29,6** | **29,6** |
-| **Autonomie financière à long terme** | % | **28,9** | **39,1** | **50,8** |
-| **Solvabilité à moyen terme** | % | **140,7** | **164,2** | **203,3** |
-| **Solvabilité à court terme** | % | **334,6** | **384,7** | **471,1** |
-| **Taux d'endettement** | % | **245,7** | **155,7** | **96,8** |
-| **Capacité de remboursement** | années | **5,32** | **3,74** | **2,45** |
+| **Délai des stocks de matières** | jours | **15,6** | **15,2** | **15,2** |
+| **Délai des dettes fournisseurs** | jours | **28,4** | **29,6** | **29,6** |
+| **Autonomie financière à long terme** | % | **29,4** | **38,0** | **48,9** |
+| **Solvabilité à moyen terme** | % | **141,7** | **161,4** | **195,6** |
+| **Solvabilité à court terme** | % | **320,9** | **342,9** | **406,7** |
+| **Taux d'endettement** | % | **239,6** | **163,0** | **104,6** |
+| **Capacité de remboursement** | années | **6,27** | **4,22** | **2,65** |
 
-**Score : 24/30 checks OK — ⚠ 6 anomalie(s) détectée(s)**
+**Score : 22/30 checks OK — ⚠ 8 anomalie(s) détectée(s)**

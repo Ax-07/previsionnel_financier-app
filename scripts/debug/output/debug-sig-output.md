@@ -30,73 +30,67 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Désignation | 2026–2027 € | 2026–2027 % CA | 2027–2028 € | 2027–2028 % CA | 2028–2029 € | 2028–2029 % CA |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| **MARGE SUR PRODUCTION** | 110 947,00 | 100.0 % | 116 494,35 | 100.0 % | 122 319,07 | 100.0 % |
-| Production vendue | 110 947,00 | 100.0 % | 116 494,35 | 100.0 % | 122 319,07 | 100.0 % |
-| \  Vente pizza | 98 750,00 | 89.0 % | 103 687,50 | 89.0 % | 108 871,88 | 89.0 % |
-| \  Vente boisson | 8 000,00 | 7.2 % | 8 400,00 | 7.2 % | 8 820,00 | 7.2 % |
-| \  Vente alcool | 4 197,00 | 3.8 % | 4 406,85 | 3.8 % | 4 627,19 | 3.8 % |
-| **Production de l'exercice** | 110 947,00 | 100.0 % | 116 494,35 | 100.0 % | 122 319,07 | 100.0 % |
-| Achats effectués de matières | 32 303,74 | 29.1 % | 32 458,99 | 27.9 % | 34 169,59 | 27.9 % |
-| \  Achats – Vente pizza | 27 773,44 | 25.0 % | 28 051,17 | 24.1 % | 29 453,73 | 24.1 % |
-| \  Achats – Vente boisson | 2 916,67 | 2.6 % | 2 945,83 | 2.5 % | 3 093,13 | 2.5 % |
-| \  Achats – Vente alcool | 1 530,16 | 1.4 % | 1 545,46 | 1.3 % | 1 622,73 | 1.3 % |
-| **\  Achats consommés de matières** | 30 931,45 | 27.9 % | 32 478,02 | 27.9 % | 34 101,92 | 27.9 % |
-| **Marge sur production** | 80 015,55 | 72.1 % | 84 016,33 | 72.1 % | 88 217,15 | 72.1 % |
-| **MARGE GLOBALE (CA)** | 110 947,00 | 100.0 % | 116 494,35 | 100.0 % | 122 319,07 | 100.0 % |
-| Chiffre d'affaires | 110 947,00 | 100.0 % | 116 494,35 | 100.0 % | 122 319,07 | 100.0 % |
-| \  Vente pizza | 98 750,00 | 89.0 % | 103 687,50 | 89.0 % | 108 871,88 | 89.0 % |
-| \  Vente boisson | 8 000,00 | 7.2 % | 8 400,00 | 7.2 % | 8 820,00 | 7.2 % |
-| \  Vente alcool | 4 197,00 | 3.8 % | 4 406,85 | 3.8 % | 4 627,19 | 3.8 % |
-| **Ventes + Production réelle** | 110 947,00 | 100.0 % | 116 494,35 | 100.0 % | 122 319,07 | 100.0 % |
-| Achats consommés | 30 931,45 | 27.9 % | 32 478,02 | 27.9 % | 34 101,92 | 27.9 % |
-| **Marge globale** | 80 015,55 | 72.1 % | 84 016,33 | 72.1 % | 88 217,15 | 72.1 % |
-| **VALEUR AJOUTÉE** | 43 568,55 | 39.3 % | 47 426,89 | 40.7 % | 51 087,56 | 41.8 % |
-| Fournitures consommables | 7 494,25 | 6.8 % | 7 681,46 | 6.6 % | 7 874,29 | 6.4 % |
-| \  Embalages | 1 244,25 | 1.1 % | 1 306,46 | 1.1 % | 1 371,79 | 1.1 % |
-| \  Electricité | 4 500,00 | 4.1 % | 4 590,00 | 3.9 % | 4 681,80 | 3.8 % |
+| **CHIFFRE D'AFFAIRES** | 104 997,00 | 100.0 % | 110 246,85 | 100.0 % | 115 759,19 | 100.0 % |
+| Production vendue | 104 997,00 | 100.0 % | 110 246,85 | 100.0 % | 115 759,19 | 100.0 % |
+| \  Vente pizza | 94 800,00 | 90.3 % | 99 540,00 | 90.3 % | 104 517,00 | 90.3 % |
+| \  Vente boisson | 6 000,00 | 5.7 % | 6 300,00 | 5.7 % | 6 615,00 | 5.7 % |
+| \  Vente alcool | 4 197,00 | 4.0 % | 4 406,85 | 4.0 % | 4 627,19 | 4.0 % |
+| **Production de l'exercice** | 104 997,00 | 100.0 % | 110 246,85 | 100.0 % | 115 759,19 | 100.0 % |
+| **MARGE SUR PRODUCTION** | 75 832,05 | 72.2 % | 79 623,65 | 72.2 % | 83 604,83 | 72.2 % |
+| Achats effectués de matières | 30 463,66 | 29.0 % | 30 600,46 | 27.8 % | 32 218,15 | 27.8 % |
+| \  Achats – Vente pizza | 26 704,17 | 25.4 % | 26 887,46 | 24.4 % | 28 275,58 | 24.4 % |
+| \  Achats – Vente boisson | 2 208,37 | 2.1 % | 2 188,50 | 2.0 % | 2 319,84 | 2.0 % |
+| \  Achats – Vente alcool | 1 551,12 | 1.5 % | 1 524,49 | 1.4 % | 1 622,73 | 1.4 % |
+| Variation de stocks d'approvisionnement | -1 298,71 | -1.2 % | 22,74 | 0.0 % | -63,80 | -0.1 % |
+| **Achats consommés de matières** | 29 164,95 | 27.8 % | 30 623,20 | 27.8 % | 32 154,36 | 27.8 % |
+| **Marge sur production** | 75 832,05 | 72.2 % | 79 623,65 | 72.2 % | 83 604,83 | 72.2 % |
+| **VALEUR AJOUTÉE** | 39 385,05 | 37.5 % | 43 034,21 | 39.0 % | 46 475,24 | 40.1 % |
+| Fournitures consommables | 7 494,25 | 7.1 % | 7 681,46 | 7.0 % | 7 874,29 | 6.8 % |
+| \  Embalages | 1 244,25 | 1.2 % | 1 306,46 | 1.2 % | 1 371,79 | 1.2 % |
+| \  Electricité | 4 500,00 | 4.3 % | 4 590,00 | 4.2 % | 4 681,80 | 4.0 % |
 | \  Eau | 250,00 | 0.2 % | 255,00 | 0.2 % | 260,10 | 0.2 % |
 | \  Petit équimement | 450,00 | 0.4 % | 459,00 | 0.4 % | 468,18 | 0.4 % |
-| \  Produits d'entretiens | 600,00 | 0.5 % | 612,00 | 0.5 % | 624,24 | 0.5 % |
+| \  Produits d'entretiens | 600,00 | 0.6 % | 612,00 | 0.6 % | 624,24 | 0.5 % |
 | \  Fournitures administratives | 450,00 | 0.4 % | 459,00 | 0.4 % | 468,18 | 0.4 % |
-| Services extérieurs | 28 952,75 | 26.1 % | 28 907,98 | 24.8 % | 29 255,30 | 23.9 % |
+| Services extérieurs | 28 952,75 | 27.6 % | 28 907,98 | 26.2 % | 29 255,30 | 25.3 % |
 | \  Vetements de travail | 100,00 | 0.1 % | 100,00 | 0.1 % | 100,00 | 0.1 % |
 | \  Commission CB | 658,00 | 0.6 % | 677,74 | 0.6 % | 698,07 | 0.6 % |
-| \  offerts | 2 468,75 | 2.2 % | 2 592,19 | 2.2 % | 2 721,80 | 2.2 % |
-| \  Location immobilière | 15 126,00 | 13.6 % | 15 126,00 | 13.0 % | 15 126,00 | 12.4 % |
+| \  offerts | 2 468,75 | 2.4 % | 2 592,19 | 2.4 % | 2 721,80 | 2.4 % |
+| \  Location immobilière | 15 126,00 | 14.4 % | 15 126,00 | 13.7 % | 15 126,00 | 13.1 % |
 | \  Location TPE + pp | 231,00 | 0.2 % | 235,62 | 0.2 % | 240,33 | 0.2 % |
-| \  Frais de télécommunication | 480,00 | 0.4 % | 600,00 | 0.5 % | 600,00 | 0.5 % |
-| \  Primes d'assurances | 1 400,00 | 1.3 % | 1 428,00 | 1.2 % | 1 456,56 | 1.2 % |
-| \  Entretiens et réparations | 1 600,00 | 1.4 % | 1 632,00 | 1.4 % | 1 664,64 | 1.4 % |
-| \  Honoraires comptable et juridiques | 2 800,00 | 2.5 % | 2 856,00 | 2.5 % | 2 913,12 | 2.4 % |
-| \  Honoraires juridiques | 600,00 | 0.5 % | 630,00 | 0.5 % | 661,50 | 0.5 % |
-| \  Publicité, publications | 1 000,00 | 0.9 % | 500,00 | 0.4 % | 500,00 | 0.4 % |
-| \  Frais divers | 500,00 | 0.5 % | 510,00 | 0.4 % | 520,20 | 0.4 % |
+| \  Frais de télécommunication | 480,00 | 0.5 % | 600,00 | 0.5 % | 600,00 | 0.5 % |
+| \  Primes d'assurances | 1 400,00 | 1.3 % | 1 428,00 | 1.3 % | 1 456,56 | 1.3 % |
+| \  Entretiens et réparations | 1 600,00 | 1.5 % | 1 632,00 | 1.5 % | 1 664,64 | 1.4 % |
+| \  Honoraires comptable et juridiques | 2 800,00 | 2.7 % | 2 856,00 | 2.6 % | 2 913,12 | 2.5 % |
+| \  Honoraires juridiques | 600,00 | 0.6 % | 630,00 | 0.6 % | 661,50 | 0.6 % |
+| \  Publicité, publications | 1 000,00 | 1.0 % | 500,00 | 0.5 % | 500,00 | 0.4 % |
+| \  Frais divers | 500,00 | 0.5 % | 510,00 | 0.5 % | 520,20 | 0.4 % |
 | \  Déplacements | 200,00 | 0.2 % | 200,00 | 0.2 % | 200,00 | 0.2 % |
-| \  Abonnement logiciel de caisse (airkitchen) | 810,00 | 0.7 % | 810,00 | 0.7 % | 810,00 | 0.7 % |
-| \  Services bancaires | 584,00 | 0.5 % | 595,68 | 0.5 % | 607,59 | 0.5 % |
+| \  Abonnement logiciel de caisse (airkitchen) | 810,00 | 0.8 % | 810,00 | 0.7 % | 810,00 | 0.7 % |
+| \  Services bancaires | 584,00 | 0.6 % | 595,68 | 0.5 % | 607,59 | 0.5 % |
 | \  Frais titre restaurant | 395,00 | 0.4 % | 414,75 | 0.4 % | 435,49 | 0.4 % |
-| **Charges externes (Total)** | 36 447,00 | 32.9 % | 36 589,44 | 31.4 % | 37 129,59 | 30.4 % |
-| **Valeur ajoutée** | 43 568,55 | 39.3 % | 47 426,89 | 40.7 % | 51 087,56 | 41.8 % |
-| **EXCÉDENT BRUT D'EXPLOITATION** | 16 882,30 | 15.2 % | 18 764,21 | 16.1 % | 22 424,88 | 18.3 % |
-| Impôts et taxes | 1 623,00 | 1.5 % | 1 978,00 | 1.7 % | 1 978,00 | 1.6 % |
-| \  CFE | 1 128,00 | 1.0 % | 1 128,00 | 1.0 % | 1 128,00 | 0.9 % |
-| \  Taxe foncière | 495,00 | 0.4 % | 850,00 | 0.7 % | 850,00 | 0.7 % |
+| **Charges externes (Total)** | 36 447,00 | 34.7 % | 36 589,44 | 33.2 % | 37 129,59 | 32.1 % |
+| **Valeur ajoutée** | 39 385,05 | 37.5 % | 43 034,21 | 39.0 % | 46 475,24 | 40.1 % |
+| **EXCÉDENT BRUT D'EXPLOITATION** | 12 698,80 | 12.1 % | 14 371,53 | 13.0 % | 17 812,56 | 15.4 % |
 | Salaires bruts (Salariés) | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
 | Charges sociales (Salariés) | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
-| Rémunération du dirigeant | 18 000,00 | 16.2 % | 18 000,00 | 15.5 % | 18 000,00 | 14.7 % |
-| \  Rémunération gérant | 18 000,00 | 16.2 % | 18 000,00 | 15.5 % | 18 000,00 | 14.7 % |
-| Cotisations TNS | 7 063,25 | 6.4 % | 8 684,68 | 7.5 % | 8 684,68 | 7.1 % |
+| Rémunération du dirigeant | 18 000,00 | 17.1 % | 18 000,00 | 16.3 % | 18 000,00 | 15.5 % |
+| \  Rémunération gérant | 18 000,00 | 17.1 % | 18 000,00 | 16.3 % | 18 000,00 | 15.5 % |
+| Cotisations TNS | 7 063,25 | 6.7 % | 8 684,68 | 7.9 % | 8 684,68 | 7.5 % |
 | \  Maladie-maternité | 193,95 | 0.2 % | 323,04 | 0.3 % | 323,04 | 0.3 % |
 | \  Indemnités journalières (IJ) | 96,12 | 0.1 % | 98,73 | 0.1 % | 98,73 | 0.1 % |
-| \  Retraite (base + compl) + invalidité-décès | 4 168,86 | 3.8 % | 5 384,92 | 4.6 % | 5 384,92 | 4.4 % |
-| \  CSG/CRDS | 1 861,63 | 1.7 % | 2 053,48 | 1.8 % | 2 053,48 | 1.7 % |
+| \  Retraite (base + compl) + invalidité-décès | 4 168,86 | 4.0 % | 5 384,92 | 4.9 % | 5 384,92 | 4.7 % |
+| \  CSG/CRDS | 1 861,63 | 1.8 % | 2 053,48 | 1.9 % | 2 053,48 | 1.8 % |
 | \  CFP (forfait PASS) | 742,69 | 0.7 % | 824,51 | 0.7 % | 824,51 | 0.7 % |
-| **Charges de personnel (Total)** | 25 063,25 | 22.6 % | 26 684,68 | 22.9 % | 26 684,68 | 21.8 % |
-| **Excédent brut d'exploitation** | 16 882,30 | 15.2 % | 18 764,21 | 16.1 % | 22 424,88 | 18.3 % |
-| **RÉSULTATS** | 8 216,01 | 7.4 % | 10 689,42 | 9.2 % | 14 182,15 | 11.6 % |
-| Dotations aux amortissements | 3 417,20 | 3.1 % | 3 417,20 | 2.9 % | 3 417,20 | 2.8 % |
-| \  Immobilisations corporelles | 3 417,20 | 3.1 % | 3 417,20 | 2.9 % | 3 417,20 | 2.8 % |
-| \  \  Fond de commerce (materiel) | 3 106,00 | 2.8 % | 3 106,00 | 2.7 % | 3 106,00 | 2.5 % |
+| **Charges de personnel (Total)** | 25 063,25 | 23.9 % | 26 684,68 | 24.2 % | 26 684,68 | 23.1 % |
+| Impôts et taxes | 1 623,00 | 1.5 % | 1 978,00 | 1.8 % | 1 978,00 | 1.7 % |
+| \  CFE | 1 128,00 | 1.1 % | 1 128,00 | 1.0 % | 1 128,00 | 1.0 % |
+| \  Taxe foncière | 495,00 | 0.5 % | 850,00 | 0.8 % | 850,00 | 0.7 % |
+| **Excédent brut d'exploitation** | 12 698,80 | 12.1 % | 14 371,53 | 13.0 % | 17 812,56 | 15.4 % |
+| **RÉSULTATS** | 5 048,48 | 4.8 % | 7 292,14 | 6.6 % | 10 543,76 | 9.1 % |
+| Dotations aux amortissements | 3 417,20 | 3.3 % | 3 417,20 | 3.1 % | 3 417,20 | 3.0 % |
+| \  Immobilisations corporelles | 3 417,20 | 3.3 % | 3 417,20 | 3.1 % | 3 417,20 | 3.0 % |
+| \  \  Fond de commerce (materiel) | 3 106,00 | 3.0 % | 3 106,00 | 2.8 % | 3 106,00 | 2.7 % |
 | \  \  Enseigne et communication | 100,00 | 0.1 % | 100,00 | 0.1 % | 100,00 | 0.1 % |
 | \  \  Caisse enregistreuse (airkitchen) | 88,90 | 0.1 % | 88,90 | 0.1 % | 88,90 | 0.1 % |
 | \  \  Meuble pizza | 122,30 | 0.1 % | 122,30 | 0.1 % | 122,30 | 0.1 % |
@@ -110,13 +104,13 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | \  \  Fond de commerce | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
 | \  Immobilisations financières | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
 | \  \  Frais de garantie "BPI" | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
-| **Résultat d'exploitation** | 13 465,10 | 12.1 % | 15 347,01 | 13.2 % | 19 007,68 | 15.5 % |
-| Charges financières | 3 799,21 | 3.4 % | 2 771,22 | 2.4 % | 2 322,80 | 1.9 % |
-| **Résultat financier** | -3 799,21 | -3.4 % | -2 771,22 | -2.4 % | -2 322,80 | -1.9 % |
-| **Résultat courant** | 9 665,89 | 8.7 % | 12 575,79 | 10.8 % | 16 684,88 | 13.6 % |
-| Impôt sur les bénéfices (IS) | 1 449,88 | 1.3 % | 1 886,37 | 1.6 % | 2 502,73 | 2.0 % |
-| **Résultat de l'exercice** | 8 216,01 | 7.4 % | 10 689,42 | 9.2 % | 14 182,15 | 11.6 % |
-| **Capacité d'autofinancement (CAF)** | 11 633,21 | 10.5 % | 14 106,62 | 12.1 % | 17 599,34 | 14.4 % |
+| **Résultat d'exploitation** | 9 281,60 | 8.8 % | 10 954,33 | 9.9 % | 14 395,36 | 12.4 % |
+| Charges financières | 3 342,21 | 3.2 % | 2 375,35 | 2.2 % | 1 990,94 | 1.7 % |
+| **Résultat financier** | -3 342,21 | -3.2 % | -2 375,35 | -2.2 % | -1 990,94 | -1.7 % |
+| **Résultat courant** | 5 939,39 | 5.7 % | 8 578,98 | 7.8 % | 12 404,42 | 10.7 % |
+| Impôt sur les bénéfices (IS) | 890,91 | 0.8 % | 1 286,85 | 1.2 % | 1 860,66 | 1.6 % |
+| **Résultat de l'exercice** | 5 048,48 | 4.8 % | 7 292,14 | 6.6 % | 10 543,76 | 9.1 % |
+| Capacité d'autofinancement (CAF) | 8 465,68 | 8.1 % | 10 709,33 | 9.7 % | 13 960,96 | 12.1 % |
 
 
 ## 2. SIG — Synthèse des grands soldes
@@ -124,33 +118,33 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Désignation | 2026–2027 € | 2026–2027 % CA | 2027–2028 € | 2027–2028 % CA | 2028–2029 € | 2028–2029 % CA |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| ****Chiffre d'affaires (CA)**** | 110 947,00 | 100.0 % | 116 494,35 | 100.0 % | 122 319,07 | 100.0 % |
-|   Achats effectués | 32 303,74 | 29.1 % | 32 458,99 | 27.9 % | 34 169,59 | 27.9 % |
-|   Achats consommés | 30 931,45 | 27.9 % | 32 478,02 | 27.9 % | 34 101,92 | 27.9 % |
-| ****Marge globale**** | 80 015,55 | 72.1 % | 84 016,33 | 72.1 % | 88 217,15 | 72.1 % |
-|   Fournitures consommables | 7 494,25 | 6.8 % | 7 681,46 | 6.6 % | 7 874,29 | 6.4 % |
-|   Services extérieurs | 28 952,75 | 26.1 % | 28 907,98 | 24.8 % | 29 255,30 | 23.9 % |
-|   Charges externes (Total) | 36 447,00 | 32.9 % | 36 589,44 | 31.4 % | 37 129,59 | 30.4 % |
-| ****Valeur ajoutée (VA)**** | 43 568,55 | 39.3 % | 47 426,89 | 40.7 % | 51 087,56 | 41.8 % |
+| ****Chiffre d'affaires (CA)**** | 104 997,00 | 100.0 % | 110 246,85 | 100.0 % | 115 759,19 | 100.0 % |
+|   Achats effectués | 30 463,66 | 29.0 % | 30 600,46 | 27.8 % | 32 218,15 | 27.8 % |
+|   Achats consommés | 29 164,95 | 27.8 % | 30 623,20 | 27.8 % | 32 154,36 | 27.8 % |
+| ****Marge globale**** | 75 832,05 | 72.2 % | 79 623,65 | 72.2 % | 83 604,83 | 72.2 % |
+|   Fournitures consommables | 7 494,25 | 7.1 % | 7 681,46 | 7.0 % | 7 874,29 | 6.8 % |
+|   Services extérieurs | 28 952,75 | 27.6 % | 28 907,98 | 26.2 % | 29 255,30 | 25.3 % |
+|   Charges externes (Total) | 36 447,00 | 34.7 % | 36 589,44 | 33.2 % | 37 129,59 | 32.1 % |
+| ****Valeur ajoutée (VA)**** | 39 385,05 | 37.5 % | 43 034,21 | 39.0 % | 46 475,24 | 40.1 % |
 |   Subventions exploitation | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
-|   Impôts et taxes | 1 623,00 | 1.5 % | 1 978,00 | 1.7 % | 1 978,00 | 1.6 % |
-|   Charges de personnel (Total) | 25 063,25 | 22.6 % | 26 684,68 | 22.9 % | 26 684,68 | 21.8 % |
+|   Impôts et taxes | 1 623,00 | 1.5 % | 1 978,00 | 1.8 % | 1 978,00 | 1.7 % |
+|   Charges de personnel (Total) | 25 063,25 | 23.9 % | 26 684,68 | 24.2 % | 26 684,68 | 23.1 % |
 |     Salaires bruts (Salariés) | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
 |     Charges sociales (Salariés) | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
-|     Rémunération dirigeant | 18 000,00 | 16.2 % | 18 000,00 | 15.5 % | 18 000,00 | 14.7 % |
-|     Cotisations TNS | 7 063,25 | 6.4 % | 8 684,68 | 7.5 % | 8 684,68 | 7.1 % |
-| ****EBE**** | 16 882,30 | 15.2 % | 18 764,21 | 16.1 % | 22 424,88 | 18.3 % |
-|   Dotations amortissements | 3 417,20 | 3.1 % | 3 417,20 | 2.9 % | 3 417,20 | 2.8 % |
+|     Rémunération dirigeant | 18 000,00 | 17.1 % | 18 000,00 | 16.3 % | 18 000,00 | 15.5 % |
+|     Cotisations TNS | 7 063,25 | 6.7 % | 8 684,68 | 7.9 % | 8 684,68 | 7.5 % |
+| ****EBE**** | 12 698,80 | 12.1 % | 14 371,53 | 13.0 % | 17 812,56 | 15.4 % |
+|   Dotations amortissements | 3 417,20 | 3.3 % | 3 417,20 | 3.1 % | 3 417,20 | 3.0 % |
 |   Dotations provisions | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
 |   Reprises sur provisions | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
-| ****Résultat d'exploitation**** | 13 465,10 | 12.1 % | 15 347,01 | 13.2 % | 19 007,68 | 15.5 % |
-|   Charges financières | 3 799,21 | 3.4 % | 2 771,22 | 2.4 % | 2 322,80 | 1.9 % |
+| ****Résultat d'exploitation**** | 9 281,60 | 8.8 % | 10 954,33 | 9.9 % | 14 395,36 | 12.4 % |
+|   Charges financières | 3 342,21 | 3.2 % | 2 375,35 | 2.2 % | 1 990,94 | 1.7 % |
 |   Produits financiers | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
-| ****Résultat financier**** | -3 799,21 | -3.4 % | -2 771,22 | -2.4 % | -2 322,80 | -1.9 % |
-| ****Résultat courant**** | 9 665,89 | 8.7 % | 12 575,79 | 10.8 % | 16 684,88 | 13.6 % |
-|   Impôt sur les bénéfices (IS) | 1 449,88 | 1.3 % | 1 886,37 | 1.6 % | 2 502,73 | 2.0 % |
-| ****Résultat de l'exercice**** | 8 216,01 | 7.4 % | 10 689,42 | 9.2 % | 14 182,15 | 11.6 % |
-| ****CAF**** | 11 633,21 | 10.5 % | 14 106,62 | 12.1 % | 17 599,34 | 14.4 % |
+| ****Résultat financier**** | -3 342,21 | -3.2 % | -2 375,35 | -2.2 % | -1 990,94 | -1.7 % |
+| ****Résultat courant**** | 5 939,39 | 5.7 % | 8 578,98 | 7.8 % | 12 404,42 | 10.7 % |
+|   Impôt sur les bénéfices (IS) | 890,91 | 0.8 % | 1 286,85 | 1.2 % | 1 860,66 | 1.6 % |
+| ****Résultat de l'exercice**** | 5 048,48 | 4.8 % | 7 292,14 | 6.6 % | 10 543,76 | 9.1 % |
+| ****CAF**** | 8 465,68 | 8.1 % | 10 709,33 | 9.7 % | 13 960,96 | 12.1 % |
 
 
 ## 3. Vérifications de cohérence des soldes
@@ -158,30 +152,30 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Check | Statut | Détail |
 | --- | :---: | --- |
-| Marge globale = CA − Achats consommés (2026–2027) | ✅ | 80 015,55 ≟ 80 015,55 |
-| Marge globale = CA − Achats consommés (2027–2028) | ✅ | 84 016,33 ≟ 84 016,33 |
-| Marge globale = CA − Achats consommés (2028–2029) | ✅ | 88 217,15 ≟ 88 217,15 |
-| VA = Marge globale − Charges externes + Subventions (2026–2027) | ✅ | 43 568,55 ≟ 43 568,55 |
-| VA = Marge globale − Charges externes + Subventions (2027–2028) | ✅ | 47 426,89 ≟ 47 426,89 |
-| VA = Marge globale − Charges externes + Subventions (2028–2029) | ✅ | 51 087,56 ≟ 51 087,56 |
-| EBE = VA − Impôts/taxes − Charges personnel (2026–2027) | ✅ | 16 882,30 ≟ 16 882,30 |
-| EBE = VA − Impôts/taxes − Charges personnel (2027–2028) | ✅ | 18 764,21 ≟ 18 764,21 |
-| EBE = VA − Impôts/taxes − Charges personnel (2028–2029) | ✅ | 22 424,88 ≟ 22 424,88 |
-| Résultat expl = EBE − Dot.amort − Dot.prov + Reprises (2026–2027) | ✅ | 13 465,10 ≟ 13 465,10 |
-| Résultat expl = EBE − Dot.amort − Dot.prov + Reprises (2027–2028) | ✅ | 15 347,01 ≟ 15 347,01 |
-| Résultat expl = EBE − Dot.amort − Dot.prov + Reprises (2028–2029) | ✅ | 19 007,68 ≟ 19 007,68 |
-| Résultat financier = Prod.fin − Chg.fin (2026–2027) | ✅ | -3 799,21 ≟ -3 799,21 |
-| Résultat financier = Prod.fin − Chg.fin (2027–2028) | ✅ | -2 771,22 ≟ -2 771,22 |
-| Résultat financier = Prod.fin − Chg.fin (2028–2029) | ✅ | -2 322,80 ≟ -2 322,80 |
-| Résultat courant = Résultat expl + Résultat fin (2026–2027) | ✅ | 9 665,89 ≟ 9 665,89 |
-| Résultat courant = Résultat expl + Résultat fin (2027–2028) | ✅ | 12 575,79 ≟ 12 575,79 |
-| Résultat courant = Résultat expl + Résultat fin (2028–2029) | ✅ | 16 684,88 ≟ 16 684,88 |
-| Résultat net = Résultat courant − IS + Résultat excep. (2026–2027) | ✅ | 8 216,01 ≟ 8 216,01 |
-| Résultat net = Résultat courant − IS + Résultat excep. (2027–2028) | ✅ | 10 689,42 ≟ 10 689,42 |
-| Résultat net = Résultat courant − IS + Résultat excep. (2028–2029) | ✅ | 14 182,15 ≟ 14 182,15 |
-| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2026–2027) | ✅ | 11 633,21 ≟ 11 633,21 |
-| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2027–2028) | ✅ | 14 106,62 ≟ 14 106,62 |
-| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2028–2029) | ✅ | 17 599,34 ≟ 17 599,34 |
+| Marge globale = CA − Achats consommés (2026–2027) | ✅ | 75 832,05 ≟ 75 832,05 |
+| Marge globale = CA − Achats consommés (2027–2028) | ✅ | 79 623,65 ≟ 79 623,65 |
+| Marge globale = CA − Achats consommés (2028–2029) | ✅ | 83 604,83 ≟ 83 604,83 |
+| VA = Marge globale − Charges externes + Subventions (2026–2027) | ✅ | 39 385,05 ≟ 39 385,05 |
+| VA = Marge globale − Charges externes + Subventions (2027–2028) | ✅ | 43 034,21 ≟ 43 034,21 |
+| VA = Marge globale − Charges externes + Subventions (2028–2029) | ✅ | 46 475,24 ≟ 46 475,24 |
+| EBE = VA − Impôts/taxes − Charges personnel (2026–2027) | ✅ | 12 698,80 ≟ 12 698,80 |
+| EBE = VA − Impôts/taxes − Charges personnel (2027–2028) | ✅ | 14 371,53 ≟ 14 371,53 |
+| EBE = VA − Impôts/taxes − Charges personnel (2028–2029) | ✅ | 17 812,56 ≟ 17 812,56 |
+| Résultat expl = EBE − Dot.amort − Dot.prov + Reprises (2026–2027) | ✅ | 9 281,60 ≟ 9 281,60 |
+| Résultat expl = EBE − Dot.amort − Dot.prov + Reprises (2027–2028) | ✅ | 10 954,33 ≟ 10 954,33 |
+| Résultat expl = EBE − Dot.amort − Dot.prov + Reprises (2028–2029) | ✅ | 14 395,36 ≟ 14 395,36 |
+| Résultat financier = Prod.fin − Chg.fin (2026–2027) | ✅ | -3 342,21 ≟ -3 342,21 |
+| Résultat financier = Prod.fin − Chg.fin (2027–2028) | ✅ | -2 375,35 ≟ -2 375,35 |
+| Résultat financier = Prod.fin − Chg.fin (2028–2029) | ✅ | -1 990,94 ≟ -1 990,94 |
+| Résultat courant = Résultat expl + Résultat fin (2026–2027) | ✅ | 5 939,39 ≟ 5 939,39 |
+| Résultat courant = Résultat expl + Résultat fin (2027–2028) | ✅ | 8 578,98 ≟ 8 578,98 |
+| Résultat courant = Résultat expl + Résultat fin (2028–2029) | ✅ | 12 404,42 ≟ 12 404,42 |
+| Résultat net = Résultat courant − IS + Résultat excep. (2026–2027) | ✅ | 5 048,48 ≟ 5 048,48 |
+| Résultat net = Résultat courant − IS + Résultat excep. (2027–2028) | ✅ | 7 292,14 ≟ 7 292,14 |
+| Résultat net = Résultat courant − IS + Résultat excep. (2028–2029) | ✅ | 10 543,76 ≟ 10 543,76 |
+| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2026–2027) | ✅ | 8 465,68 ≟ 8 465,68 |
+| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2027–2028) | ✅ | 10 709,33 ≟ 10 709,33 |
+| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2028–2029) | ✅ | 13 960,96 ≟ 13 960,96 |
 | Charges personnel = Salaires + Chg.pat + Rému.dir + Cotis.TNS (2026–2027) | ✅ | 25 063,25 ≟ 25 063,25 |
 | Charges personnel = Salaires + Chg.pat + Rému.dir + Cotis.TNS (2027–2028) | ✅ | 26 684,68 ≟ 26 684,68 |
 | Charges personnel = Salaires + Chg.pat + Rému.dir + Cotis.TNS (2028–2029) | ✅ | 26 684,68 ≟ 26 684,68 |
@@ -192,11 +186,11 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Activité | Type | 2026–2027 € | 2026–2027 % CA | 2027–2028 € | 2027–2028 % CA | 2028–2029 € | 2028–2029 % CA |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Vente pizza | PRODUCTION_VENDUE | 98 750,00 | 89.0 % | 103 687,50 | 89.0 % | 108 871,88 | 89.0 % |
-| Vente boisson | PRODUCTION_VENDUE | 8 000,00 | 7.2 % | 8 400,00 | 7.2 % | 8 820,00 | 7.2 % |
-| Vente alcool | PRODUCTION_VENDUE | 4 197,00 | 3.8 % | 4 406,85 | 3.8 % | 4 627,19 | 3.8 % |
+| Vente pizza | PRODUCTION_VENDUE | 94 800,00 | 90.3 % | 99 540,00 | 90.3 % | 104 517,00 | 90.3 % |
+| Vente boisson | PRODUCTION_VENDUE | 6 000,00 | 5.7 % | 6 300,00 | 5.7 % | 6 615,00 | 5.7 % |
+| Vente alcool | PRODUCTION_VENDUE | 4 197,00 | 4.0 % | 4 406,85 | 4.0 % | 4 627,19 | 4.0 % |
 
-| ****Total CA**** | 110 947,00 | 116 494,35 | 122 319,07 |
+| ****Total CA**** | 104 997,00 | 110 246,85 | 115 759,19 |
 
 
 ## 5. Drill-down — Charges
@@ -299,8 +293,8 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Provision pour frais de greffe et journal (constitution société) | INCORPOREL | 0,00 | 0,00 | 0,00 |
 | Enseigne et communication | CORPOREL | 100,00 | 100,00 | 100,00 |
 | Droit d'enregistrement | INCORPOREL | 0,00 | 0,00 | 0,00 |
-| Fond de commerce | INCORPOREL | 0,00 | 0,00 | 0,00 |
 | Caisse enregistreuse (airkitchen) | CORPOREL | 88,90 | 88,90 | 88,90 |
+| Fond de commerce | INCORPOREL | 0,00 | 0,00 | 0,00 |
 | Meuble pizza | CORPOREL | 122,30 | 122,30 | 122,30 |
 | Frais de garantie "BPI" | FINANCIER | 0,00 | 0,00 | 0,00 |
 
@@ -312,7 +306,7 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Désignation | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| ****CA annuel**** | 110 947,00 | 116 494,35 | 122 319,07 |
+| ****CA annuel**** | 104 997,00 | 110 246,85 | 115 759,19 |
 
 *Note : la série mensuelle du CA n'est pas exposée dans `FinCalcResult`. Voir le tableau de trésorerie pour le détail mensuel des encaissements.*
 
@@ -333,17 +327,17 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Indicateur | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| CA | 110 947,00 | 116 494,35 | 122 319,07 |
-| Achats consommés | 30 931,45 | 32 478,02 | 34 101,92 |
-| Marge globale | 80 015,55 | 84 016,33 | 88 217,15 |
+| CA | 104 997,00 | 110 246,85 | 115 759,19 |
+| Achats consommés | 29 164,95 | 30 623,20 | 32 154,36 |
+| Marge globale | 75 832,05 | 79 623,65 | 83 604,83 |
 | Charges externes | 36 447,00 | 36 589,44 | 37 129,59 |
-| Valeur ajoutée | 43 568,55 | 47 426,89 | 51 087,56 |
+| Valeur ajoutée | 39 385,05 | 43 034,21 | 46 475,24 |
 | Charges personnel | 25 063,25 | 26 684,68 | 26 684,68 |
-| EBE | 16 882,30 | 18 764,21 | 22 424,88 |
+| EBE | 12 698,80 | 14 371,53 | 17 812,56 |
 | Dotations amort. | 3 417,20 | 3 417,20 | 3 417,20 |
-| Résultat exploitation | 13 465,10 | 15 347,01 | 19 007,68 |
-| Résultat financier | -3 799,21 | -2 771,22 | -2 322,80 |
-| Résultat courant | 9 665,89 | 12 575,79 | 16 684,88 |
-| IS | 1 449,88 | 1 886,37 | 2 502,73 |
-| Résultat net | 8 216,01 | 10 689,42 | 14 182,15 |
-| CAF | 11 633,21 | 14 106,62 | 17 599,34 |
+| Résultat exploitation | 9 281,60 | 10 954,33 | 14 395,36 |
+| Résultat financier | -3 342,21 | -2 375,35 | -1 990,94 |
+| Résultat courant | 5 939,39 | 8 578,98 | 12 404,42 |
+| IS | 890,91 | 1 286,85 | 1 860,66 |
+| Résultat net | 5 048,48 | 7 292,14 | 10 543,76 |
+| CAF | 8 465,68 | 10 709,33 | 13 960,96 |

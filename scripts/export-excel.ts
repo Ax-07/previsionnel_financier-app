@@ -447,7 +447,7 @@ function writeSheetActivites(wb: ExcelJS.Workbook, data: SFD, mc: MonthlyCalcRes
   // ── Helper : écrire une ligne mensuelle formatée ──────────────────────────
   function addMonthRow(
     label: string,
-    values: number[],       // 12 valeurs mensuelles (ou moins)
+    values: readonly number[],  // 12 valeurs mensuelles (ou moins)
     total: number,
     fmt: string,
     bg?: string,
@@ -466,7 +466,7 @@ function writeSheetActivites(wb: ExcelJS.Workbook, data: SFD, mc: MonthlyCalcRes
   }
 
   // ── Helper : calculer le total d'une série de 12 mois ─────────────────────
-  function sum12(arr: number[]): number {
+  function sum12(arr: readonly number[]): number {
     return arr.slice(0, 12).reduce((s, v) => s + v, 0);
   }
 

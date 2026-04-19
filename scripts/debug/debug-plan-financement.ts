@@ -22,7 +22,7 @@ import { buildFinCalc } from "@/lib/finance/calculs";
 import { calcBfr } from "@/lib/finance/calculs/bfr";
 import { buildPlanFinancementRows } from "@/lib/finance/aggregations/plan-financement";
 import type { PfRow } from "@/lib/finance/aggregations/plan-financement";
-import { buildToKeyY0 } from "@/lib/finance/aggregations/financement-helpers";
+import { buildToKeyY0 } from "@/lib/finance/aggregations/helpers/financement-helpers";
 import { n } from "@/lib/finance/utils";
 import type { YearKey4 as FinKey } from "@/lib/finance/utils";
 

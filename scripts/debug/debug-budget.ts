@@ -20,9 +20,9 @@ import { prisma } from "@/lib/prisma";
 import { fetchScenarioData } from "@/lib/finance/fetch-scenario";
 import { buildFinCalc } from "@/lib/finance/calculs";
 import { buildMonthlyCalc, totalOf } from "@/lib/finance/calculs/monthly";
-import { buildBudgetTree } from "@/app/actions/controle/budget/build-tree";
-import { buildBudgetMonthLabels } from "@/app/actions/controle/budget/helpers";
-import type { BudgetNode } from "@/app/actions/controle/budget/types";
+import { buildBudgetTree } from "@/lib/finance/aggregations/budget/build-tree";
+import { buildBudgetMonthLabels } from "@/lib/finance/aggregations/budget/helpers";
+import type { BudgetNode } from "@/lib/finance/aggregations/budget/types";
 import type { YearKey } from "@/lib/finance/utils";
 
 // ─── Utilitaires d'affichage ─────────────────────────────────────────────────
