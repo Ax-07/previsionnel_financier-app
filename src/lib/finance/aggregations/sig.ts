@@ -1,12 +1,12 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import type { FinCalcResult } from "@/lib/finance/calculs";
-import { buildSigRows } from "./sig/build-rows";
-import { buildSigTree } from "./sig/build-tree";
+import { buildSigRows } from "./sig/drilldown";
+import { buildSigTree } from "./sig/build-rows";
 import type { SigData } from "./sig/types";
 
 export type { SigValue, SigNode, SigData } from "./sig/types";
-export { buildSigRows } from "./sig/build-rows";
-export { buildSigTree } from "./sig/build-tree";
+export { buildSigRows } from "./sig/drilldown";
+export { buildSigTree } from "./sig/build-rows";
 
 /**
  * Construit le SIG complet (drill-down + arbre de nœuds).

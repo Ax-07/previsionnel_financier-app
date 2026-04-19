@@ -1,9 +1,7 @@
 import type { YearKey } from "@/lib/finance/utils";
+import type { PctValue } from "@/lib/finance/aggregations/helpers/shared-helpers";
 
-export interface CRYearValue {
-  amount: number;
-  pct: number | null; // % du CA
-}
+export type CRYearValue = PctValue;
 
 export interface CRNode {
   key: string;

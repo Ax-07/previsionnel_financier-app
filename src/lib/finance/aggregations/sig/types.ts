@@ -1,9 +1,7 @@
 import type { YearKey } from "@/lib/finance/utils";
+import type { PctValue } from "@/lib/finance/aggregations/helpers/shared-helpers";
 
-export interface SigValue {
-  amount: number;
-  pct: number | null; // % du CA
-}
+export type SigValue = PctValue;
 
 export interface SigNode {
   key: string;
@@ -11,7 +9,7 @@ export interface SigNode {
   values: Record<YearKey, SigValue>;
   children?: SigNode[];
   /** Niveau d'affichage */
-  style: "normal" | "total" | "highlight" | "section";
+  style: "normal" | "total" | "highlight" | "section" | "caf";
   hideIfZero?: boolean;
 }
 

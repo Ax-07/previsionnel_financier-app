@@ -15,6 +15,8 @@
 
 import { n } from "@/lib/finance/utils";
 import type { YearKey4 } from "@/lib/finance/utils";
+import type { FinCalcResult } from "@/lib/finance/calculs";
+import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 
 // ── Alias local ───────────────────────────────────────────────────────────────
 
@@ -23,9 +25,9 @@ export type FinKey = YearKey4;
 
 // ── Helpers de construction des lignes ───────────────────────────────────────
 
-export interface FinRowValue {
-  amount: number;
-}
+import type { AmountValue } from "@/lib/finance/aggregations/helpers/shared-helpers";
+
+export type FinRowValue = AmountValue;
 
 export interface FinRow {
   key: string;
@@ -235,4 +237,83 @@ export function buildSubventionsInvestData(
     result[k] += n(subv.montant);
   }
   return result;
+}
+
+// ── Base partagée Plan / Tableau de financement ───────────────────────────────
+
+/**
+ * Données calculées communes au Plan de Financement et au Tableau de Financement.
+ * Centralise les calculs pour éviter le copier-coller entre les deux builders.
+ */
+export interface FinancementBaseResult {
+  yearLabels: Record<FinKey, string>;
+  caf: Record<FinKey, number>;
+  apportsCapital: Record<FinKey, number>;
+  apportsCC: Record<FinKey, number>;
+  nouveauxEmprunts: Record<FinKey, number>;
+  remboursementCapital: Record<FinKey, number>;
+  immoIncorporelles: Record<FinKey, number>;
+  immoCorporelles: Record<FinKey, number>;
+  immoFinancieres: Record<FinKey, number>;
+  totalImmo: Record<FinKey, number>;
+  immoIncorporellesChildren: FinRow[];
+  immoCorporellesChildren: FinRow[];
+  immoFinancieresChildren: FinRow[];
+  subventionsInvest: Record<FinKey, number>;
+  /** Total des ressources = apports + CC + emprunts + CAF + subventions. */
+  totalRessources: Record<FinKey, number>;
+}
+
+/**
+ * Calcule les données communes au Plan de Financement et au Tableau de Financement.
+ *
+ * Les deux builders appellent cette fonction puis ajoutent leur présentation
+ * spécifique (BESOINS/RESSOURCES/TRÉSORERIE pour le plan, RESSOURCES/EMPLOIS/FR
+ * pour le tableau). Toute modification métier commune s'applique une seule fois ici.
+ */
+export function buildFinancementBase(
+  data: ScenarioFinData,
+  fc: FinCalcResult,
+): FinancementBaseResult {
+  const { dateDemarrage, apports, subventions, emprunts, immobilisations } = data;
+  const yearLabels: Record<FinKey, string> = { y0: "Initial", ...fc.yearLabels };
+  const toKey = buildToKeyY0(dateDemarrage, fc.exBorne1, fc.exBorne2, fc.exBorne3);
+
+  const { apportsCapital, apportsCC } = buildApportsData(apports, subventions, toKey);
+  const { nouveauxEmprunts, remboursementCapital } = buildEmpruntsData(emprunts, toKey);
+  const {
+    immoIncorporelles,
+    immoCorporelles,
+    immoFinancieres,
+    totalImmo,
+    immoIncorporellesChildren,
+    immoCorporellesChildren,
+    immoFinancieresChildren,
+  } = buildImmoData(immobilisations, toKey);
+  const subventionsInvest = buildSubventionsInvestData(subventions, toKey);
+  const caf: Record<FinKey, number> = { y0: 0, y1: fc.caf.y1, y2: fc.caf.y2, y3: fc.caf.y3 };
+  const totalRessources: Record<FinKey, number> = {
+    y0: apportsCapital.y0 + apportsCC.y0 + nouveauxEmprunts.y0 + caf.y0 + subventionsInvest.y0,
+    y1: apportsCapital.y1 + apportsCC.y1 + nouveauxEmprunts.y1 + caf.y1 + subventionsInvest.y1,
+    y2: apportsCapital.y2 + apportsCC.y2 + nouveauxEmprunts.y2 + caf.y2 + subventionsInvest.y2,
+    y3: apportsCapital.y3 + apportsCC.y3 + nouveauxEmprunts.y3 + caf.y3 + subventionsInvest.y3,
+  };
+
+  return {
+    yearLabels,
+    caf,
+    apportsCapital,
+    apportsCC,
+    nouveauxEmprunts,
+    remboursementCapital,
+    immoIncorporelles,
+    immoCorporelles,
+    immoFinancieres,
+    totalImmo,
+    immoIncorporellesChildren,
+    immoCorporellesChildren,
+    immoFinancieresChildren,
+    subventionsInvest,
+    totalRessources,
+  };
 }
