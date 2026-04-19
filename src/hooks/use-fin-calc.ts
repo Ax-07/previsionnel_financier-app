@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import { useScenarioDataStore } from "@/stores/scenario-data-store";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataStatus } from "@/lib/types/data-state";
 import { buildFinCalc } from "@/lib/finance/calculs";
 import type { FinCalcResult } from "@/lib/finance/calculs";
 import type { ScenarioFinData } from "@/app/actions/load-scenario-data";
@@ -12,7 +12,7 @@ import type { ScenarioFinData } from "@/app/actions/load-scenario-data";
 export interface FinCalcState {
   data: ScenarioFinData | null;
   fc: FinCalcResult | null;
-  status: ScenarioDataStatus;
+  status: DataStatus;
   error: string | null;
 }
 

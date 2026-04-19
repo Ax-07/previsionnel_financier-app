@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useActiviteStore } from "@/stores/activite-store";
-import { numVal } from "@/lib/utils";
 
 // ── Types exportés ────────────────────────────────────────────────────────────
 
@@ -309,17 +308,21 @@ export function useActiviteCalculs({
   }, [dossierId, currentIndex]);
 
   // ── Calculs séquentiels N → N+1 → N+2 (continuité inter-exercices) ───────
-  const calculs = (() => {
+  const stocksJoursCible = activite?.stocks ?? 0;
+  const tauxMarge = activite?.tauxMarge ?? 0;
+  const montantN = activite?.montantN ?? 0;
+  const montantN1 = activite?.montantN1 ?? 0;
+  const montantN2 = activite?.montantN2 ?? 0;
+
+  const calculs = useMemo(() => {
     const result = {} as CalculsParExercice;
     let prevSF = 0;
-    const stocksJoursCible = activite?.stocks ?? 0;
-    const tauxMarge = activite?.tauxMarge ?? 0;
 
     for (const ex of ["N", "N1", "N2"] as ExerciceKey[]) {
       const montant =
-        ex === "N" ? (activite?.montantN ?? 0)
-        : ex === "N1" ? (activite?.montantN1 ?? 0)
-        : (activite?.montantN2 ?? 0);
+        ex === "N" ? montantN
+        : ex === "N1" ? montantN1
+        : montantN2;
 
       const saison = saisonnalite[ex];
       const saisonAch = syncSaisonnalite ? saison : saisonnaliteAchats[ex];
@@ -369,41 +372,47 @@ export function useActiviteCalculs({
     }
 
     return result;
-  })();
+  }, [saisonnalite, saisonnaliteAchats, achatsStockPonctuel, syncSaisonnalite, exercicesConfig, stocksJoursCible, tauxMarge, montantN, montantN1, montantN2]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
-  function handleSaisonnalite(ex: ExerciceKey, idx: number, val: number) {
-    const updated = [...saisonnalite[ex]];
-    updated[idx] = val;
-    const next = { ...saisonnalite, [ex]: updated };
-    setSaisonnalite(next);
-    if (syncSaisonnalite) {
-      setSaisonnaliteAchats(next);
-      updateActivite(dossierId, currentIndex, { saisonnaliteCA: next, saisonnaliteAchats: next });
-    } else {
-      updateActivite(dossierId, currentIndex, { saisonnaliteCA: next });
-    }
-  }
+  const handleSaisonnalite = useCallback((ex: ExerciceKey, idx: number, val: number) => {
+    setSaisonnalite((prev) => {
+      const updated = [...prev[ex]];
+      updated[idx] = val;
+      const next = { ...prev, [ex]: updated };
+      if (syncSaisonnalite) {
+        setSaisonnaliteAchats(next);
+        updateActivite(dossierId, currentIndex, { saisonnaliteCA: next, saisonnaliteAchats: next });
+      } else {
+        updateActivite(dossierId, currentIndex, { saisonnaliteCA: next });
+      }
+      return next;
+    });
+  }, [syncSaisonnalite, dossierId, currentIndex, updateActivite]);
 
-  function handleSaisonnaliteAchats(ex: ExerciceKey, idx: number, val: number) {
-    const updated = [...saisonnaliteAchats[ex]];
-    updated[idx] = val;
-    const next = { ...saisonnaliteAchats, [ex]: updated };
-    setSaisonnaliteAchats(next);
-    updateActivite(dossierId, currentIndex, { saisonnaliteAchats: next });
-  }
+  const handleSaisonnaliteAchats = useCallback((ex: ExerciceKey, idx: number, val: number) => {
+    setSaisonnaliteAchats((prev) => {
+      const updated = [...prev[ex]];
+      updated[idx] = val;
+      const next = { ...prev, [ex]: updated };
+      updateActivite(dossierId, currentIndex, { saisonnaliteAchats: next });
+      return next;
+    });
+  }, [dossierId, currentIndex, updateActivite]);
 
-  function handleAchatPonctuel(ex: ExerciceKey, idx: number, val: number) {
-    const updated = [...achatsStockPonctuel[ex]];
-    updated[idx] = val;
-    const next = { ...achatsStockPonctuel, [ex]: updated };
-    setAchatsStockPonctuel(next);
-    updateActivite(dossierId, currentIndex, { achatsStockPonctuel: next });
-  }
+  const handleAchatPonctuel = useCallback((ex: ExerciceKey, idx: number, val: number) => {
+    setAchatsStockPonctuel((prev) => {
+      const updated = [...prev[ex]];
+      updated[idx] = val;
+      const next = { ...prev, [ex]: updated };
+      updateActivite(dossierId, currentIndex, { achatsStockPonctuel: next });
+      return next;
+    });
+  }, [dossierId, currentIndex, updateActivite]);
 
-  function handleImportFrom(sourceIdx: number) {
-    const source = draft.activites[sourceIdx];
+  const handleImportFrom = useCallback((sourceIdx: number) => {
+    const source = getDraft(dossierId).activites[sourceIdx];
     if (!source) return;
     const srcCA = source.saisonnaliteCA as Record<string, number[]> | undefined | null;
     const srcAchats = source.saisonnaliteAchats as Record<string, number[]> | undefined | null;
@@ -422,46 +431,55 @@ export function useActiviteCalculs({
     setSaisonnalite(nextCA);
     setSaisonnaliteAchats(nextAchats);
     updateActivite(dossierId, currentIndex, { saisonnaliteCA: nextCA, saisonnaliteAchats: nextAchats });
-  }
+  }, [dossierId, currentIndex, exercicesConfig, syncSaisonnalite, getDraft, updateActivite]);
 
-  function toggleSyncSaisonnalite() {
-    const next = !syncSaisonnalite;
-    setSyncSaisonnalite(next);
-    if (next) {
-      setSaisonnaliteAchats(saisonnalite);
-      updateActivite(dossierId, currentIndex, { saisonnaliteAchats: saisonnalite });
-    }
-  }
+  const toggleSyncSaisonnalite = useCallback(() => {
+    setSyncSaisonnalite((prev) => {
+      const next = !prev;
+      if (next) {
+        setSaisonnalite((curSaison) => {
+          setSaisonnaliteAchats(curSaison);
+          updateActivite(dossierId, currentIndex, { saisonnaliteAchats: curSaison });
+          return curSaison;
+        });
+      }
+      return next;
+    });
+  }, [dossierId, currentIndex, updateActivite]);
 
-  function reporterSaisonnaliteCA(source: ExerciceKey, targets: ExerciceKey[]) {
-    let nextCA = { ...saisonnalite };
-    let nextAchats = { ...saisonnaliteAchats };
-    for (const target of targets) {
-      const resampled = resampleSaisonnalite(saisonnalite[source], exercicesConfig[target].duree);
-      nextCA = { ...nextCA, [target]: resampled };
-      nextAchats = syncSaisonnalite
-        ? { ...nextAchats, [target]: resampled }
-        : {
-            ...nextAchats,
-            [target]: resampleSaisonnalite(saisonnaliteAchats[source], exercicesConfig[target].duree),
-          };
-    }
-    setSaisonnalite(nextCA);
-    setSaisonnaliteAchats(nextAchats);
-    updateActivite(dossierId, currentIndex, { saisonnaliteCA: nextCA, saisonnaliteAchats: nextAchats });
-  }
+  const reporterSaisonnaliteCA = useCallback((source: ExerciceKey, targets: ExerciceKey[]) => {
+    setSaisonnalite((prevCA) => {
+      let nextCA = { ...prevCA };
+      let nextAchats = { ...saisonnaliteAchats };
+      for (const target of targets) {
+        const resampled = resampleSaisonnalite(prevCA[source], exercicesConfig[target].duree);
+        nextCA = { ...nextCA, [target]: resampled };
+        nextAchats = syncSaisonnalite
+          ? { ...nextAchats, [target]: resampled }
+          : {
+              ...nextAchats,
+              [target]: resampleSaisonnalite(saisonnaliteAchats[source], exercicesConfig[target].duree),
+            };
+      }
+      setSaisonnaliteAchats(nextAchats);
+      updateActivite(dossierId, currentIndex, { saisonnaliteCA: nextCA, saisonnaliteAchats: nextAchats });
+      return nextCA;
+    });
+  }, [dossierId, currentIndex, exercicesConfig, syncSaisonnalite, saisonnaliteAchats, updateActivite]);
 
-  function reporterSaisonnaliteAchats(source: ExerciceKey, targets: ExerciceKey[]) {
-    let next = { ...saisonnaliteAchats };
-    for (const target of targets) {
-      next = {
-        ...next,
-        [target]: resampleSaisonnalite(saisonnaliteAchats[source], exercicesConfig[target].duree),
-      };
-    }
-    setSaisonnaliteAchats(next);
-    updateActivite(dossierId, currentIndex, { saisonnaliteAchats: next });
-  }
+  const reporterSaisonnaliteAchats = useCallback((source: ExerciceKey, targets: ExerciceKey[]) => {
+    setSaisonnaliteAchats((prev) => {
+      let next = { ...prev };
+      for (const target of targets) {
+        next = {
+          ...next,
+          [target]: resampleSaisonnalite(prev[source], exercicesConfig[target].duree),
+        };
+      }
+      updateActivite(dossierId, currentIndex, { saisonnaliteAchats: next });
+      return next;
+    });
+  }, [dossierId, currentIndex, exercicesConfig, updateActivite]);
 
   return {
     calculs,

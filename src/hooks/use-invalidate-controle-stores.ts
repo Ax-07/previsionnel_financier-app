@@ -1,15 +1,9 @@
 /**
- * Hook utilitaire : recharge les données brutes du dossier depuis la DB,
- * ce qui déclenche automatiquement le recalcul client de tous les onglets.
- *
- * À appeler après chaque sauvegarde réussie dans les onglets de saisie.
+ * @deprecated Renommé en `useReloadScenarioData` dans `use-reload-scenario-data.ts`.
+ * Ce fichier est conservé temporairement pour la compatibilité des imports existants.
  */
-import { useCallback } from "react";
-import { useScenarioDataStore } from "@/stores/scenario-data-store";
+import { useReloadScenarioData } from "./use-reload-scenario-data";
 
-export function useInvalidateControleStores() {
-  return useCallback((dossierId: string) => {
-    useScenarioDataStore.getState().reload(dossierId);
-  }, []);
-}
+/** @deprecated Utiliser `useReloadScenarioData` à la place. */
+export const useInvalidateControleStores = useReloadScenarioData;
 
