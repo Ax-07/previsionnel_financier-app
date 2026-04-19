@@ -20,7 +20,7 @@
 import { registerConvention } from "@/lib/paie/conventions/registry";
 import type { ConventionRuleSet } from "@/lib/paie/conventions/types";
 
-const AIDE_DOMICILE_2941: ConventionRuleSet = {
+export const AIDE_DOMICILE_2941: ConventionRuleSet = {
   // ── 13e mois (dès 3 ans d'ancienneté) ────────────────────────────────────
   tauxTreizieme: 1 / 12,
 
@@ -78,16 +78,7 @@ const AIDE_DOMICILE_2941: ConventionRuleSet = {
       tauxEmployeur: 0.0080,
       deductible: true,
     },
-    {
-      code: "bad_mutuelle_sal",
-      libelle: "Mutuelle Aide à domicile salarié (Chorum)",
-      famille: "prevoyance_mutuelle",
-      organisme: "Chorum (Groupe Matmut)",
-      assiette: "brut",
-      tauxSalarie: 0.0060,
-      tauxEmployeur: 0.0060,
-      deductible: false,
-    },
+
   ],
 
   // ── Maintien maladie (0j carence dès 1 an) ───────────────────────────────
@@ -118,5 +109,3 @@ const AIDE_DOMICILE_2941: ConventionRuleSet = {
 
 // Auto-enregistrement à l'import
 registerConvention("2941", AIDE_DOMICILE_2941);
-
-export { AIDE_DOMICILE_2941 };

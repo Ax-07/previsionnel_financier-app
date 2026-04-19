@@ -15,10 +15,7 @@ import {
   REMUN_MIN_APPRENTISSAGE_2026,
 } from "@/lib/paie/params/2026";
 import type { LigneCotisation, FamilleCotisation, SalarieInput } from "@/lib/paie/types";
-
-function round2(v: number): number {
-  return Math.round(v * 100) / 100;
-}
+import { roundMontant, roundAssiette } from "@/lib/paie/engine/arrondi";
 
 /**
  * Retourne la tranche d'âge pour la grille de rémunération minimale.
@@ -39,7 +36,7 @@ export function remunMinApprenti(
 ): number {
   const key = `${annee}_${trancheAge(age)}`;
   const fraction = REMUN_MIN_APPRENTISSAGE_2026[key] ?? 1;
-  return round2(fraction * PARAMS_2026.smicMensuel);
+  return roundMontant(fraction * PARAMS_2026.smicMensuel);
 }
 
 /**
@@ -81,7 +78,7 @@ export function exonerationsApprenti(
     if (!codesExoSalariales.has(l.code)) continue;
     if (l.montantSalarie === 0) continue;
 
-    const montantExo = round2(l.montantSalarie * fractionExo);
+    const montantExo = roundMontant(l.montantSalarie * fractionExo);
     if (montantExo === 0) continue;
 
     exonerations.push({
@@ -89,7 +86,7 @@ export function exonerationsApprenti(
       libelle: `Exonération apprentissage — ${l.libelle}`,
       famille: "exoneration" as FamilleCotisation,
       organisme: "Urssaf",
-      assiette: round2(l.assiette * fractionExo),
+      assiette: roundAssiette(l.assiette * fractionExo),
       tranche: l.tranche,
       tauxSalarie: -l.tauxSalarie,
       tauxEmployeur: 0,

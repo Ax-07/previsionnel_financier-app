@@ -19,7 +19,7 @@
 import { registerConvention } from "@/lib/paie/conventions/registry";
 import type { ConventionRuleSet } from "@/lib/paie/conventions/types";
 
-const RESTAURATION_COLLECTIVE_1266: ConventionRuleSet = {
+export const RESTAURATION_COLLECTIVE_1266: ConventionRuleSet = {
   primes: [
     {
       code: "rcoll_prime_anciennete",
@@ -40,7 +40,7 @@ const RESTAURATION_COLLECTIVE_1266: ConventionRuleSet = {
     { code: "N1", libelle: "Niveau I",   tauxHoraire: 12.02, salaireMinimumMensuel: 1823.03, revenuMinimumAnnuel: 23443.16 },
     { code: "N2", libelle: "Niveau II",  tauxHoraire: 12.02, salaireMinimumMensuel: 1823.03, revenuMinimumAnnuel: 23561.46 },
     { code: "N3", libelle: "Niveau III", tauxHoraire: 12.10, salaireMinimumMensuel: 1835.17, revenuMinimumAnnuel: 23857.21 },
-    { code: "N4", libelle: "Niveau IV",  tauxHoraire: 1230, salaireMinimumMensuel: 1865.50, revenuMinimumAnnuel: 24251.50 },
+    { code: "N4", libelle: "Niveau IV",  tauxHoraire: 12.30, salaireMinimumMensuel: 1865.50, revenuMinimumAnnuel: 24251.50 },
     { code: "N5", libelle: "Niveau V",   tauxHoraire: 12.96, salaireMinimumMensuel: 1965.60, revenuMinimumAnnuel: 25552.80 },
     { code: "N6", libelle: "Niveau VI",  tauxHoraire: 13.46, salaireMinimumMensuel: 2041.43, revenuMinimumAnnuel: 26538.59 },
     { code: "N7", libelle: "Niveau VII", tauxHoraire: 14.30, salaireMinimumMensuel: 2168.83, revenuMinimumAnnuel: 28194.79 },
@@ -60,16 +60,7 @@ const RESTAURATION_COLLECTIVE_1266: ConventionRuleSet = {
       tauxEmployeur: 0.0090,
       deductible: true,
     },
-    {
-      code: "rcoll_mutuelle_sal",
-      libelle: "Mutuelle Restauration collective salarié",
-      famille: "prevoyance_mutuelle",
-      organisme: "Klésia",
-      assiette: "brut",
-      tauxSalarie: 0.0060,
-      tauxEmployeur: 0.0060,
-      deductible: false,
-    },
+
   ],
 
   // ── Maintien maladie (carence réduite 3j dès 1 an) ───────────────────
@@ -92,5 +83,3 @@ const RESTAURATION_COLLECTIVE_1266: ConventionRuleSet = {
 
 // Auto-enregistrement à l'import
 registerConvention("1266", RESTAURATION_COLLECTIVE_1266);
-
-export { RESTAURATION_COLLECTIVE_1266 };

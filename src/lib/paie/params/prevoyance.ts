@@ -17,6 +17,7 @@
  */
 
 import type { LigneCotisation } from "@/lib/paie/types";
+import { roundMontant } from "@/lib/paie/engine/arrondi";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -61,6 +62,27 @@ export interface PrevoyanceConfig {
   garanties: GarantiePrevoyance[];
 }
 
+/**
+ * Configuration de la mutuelle obligatoire (complémentaire santé — ANI 2013).
+ *
+ * La mutuelle est un forfait mensuel fixe, indépendant du salaire brut.
+ * L'employeur doit prendre en charge au minimum 50 % du montant total (art. L911-7 CSS).
+ */
+export interface MutuelleConfig {
+  /** Montant mensuel total de la mutuelle en euros (ex. 60 pour 60 €/mois) */
+  montantMensuel: number;
+  /** Part employeur en décimal (0.50 à 1.00, défaut 0.50 = 50 %) */
+  partEmployeur: number;
+  /** Organisme assureur (ex. "AG2R La Mondiale", "Harmonie Mutuelle") */
+  organisme?: string;
+  /**
+   * La part salariale est-elle déductible de l'assiette fiscale ?
+   * Oui pour les contrats responsables remplissant les conditions de l'art. 83 CGI.
+   * Défaut : true.
+   */
+  deductible?: boolean;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Presets — configurations types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,20 +91,13 @@ export interface PrevoyanceConfig {
  * Mutuelle minimale légale (ANI 2013) :
  *   - Panier minimum UNOCAM
  *   - Part employeur ≥ 50 % de la cotisation totale
- * Ces taux sont indicatifs et varient selon l'organisme.
+ * Montant indicatif — varie selon l'organisme et le contrat.
  */
-export const PRESET_MUTUELLE_MINIMALE: PrevoyanceConfig = {
-  garanties: [
-    {
-      code: "MUTUELLE_OBLIGATOIRE",
-      libelle: "Mutuelle d'entreprise obligatoire",
-      organisme: "Organisme désigné",
-      tauxSalarie: 0.0075,  // 0,75 %
-      tauxEmployeur: 0.0075, // 0,75 % (50/50 — minimum ANI)
-      deductible: true,
-      type: "mutuelle",
-    },
-  ],
+export const PRESET_MUTUELLE_MINIMALE: MutuelleConfig = {
+  montantMensuel: 60,
+  partEmployeur: 0.50,
+  organisme: "Organisme désigné",
+  deductible: true,
 };
 
 /**
@@ -108,10 +123,6 @@ export const PRESET_PREVOYANCE_CADRE: PrevoyanceConfig = {
 // Calcul des lignes de bulletin
 // ─────────────────────────────────────────────────────────────────────────────
 
-function round2(v: number): number {
-  return Math.round(v * 100) / 100;
-}
-
 /**
  * Calcule les lignes de cotisations prévoyance/mutuelle pour un bulletin.
  *
@@ -124,8 +135,8 @@ export function buildLignesPrevoyance(
   config: PrevoyanceConfig,
 ): LigneCotisation[] {
   return config.garanties.map((g): LigneCotisation => {
-    const montantSalarie = round2(brutSoumis * g.tauxSalarie);
-    const montantEmployeur = round2(brutSoumis * g.tauxEmployeur);
+    const montantSalarie = roundMontant(brutSoumis * g.tauxSalarie);
+    const montantEmployeur = roundMontant(brutSoumis * g.tauxEmployeur);
 
     return {
       code: g.code,
@@ -136,10 +147,40 @@ export function buildLignesPrevoyance(
       tranche: "totalite",
       tauxSalarie: g.tauxSalarie,
       tauxEmployeur: g.tauxEmployeur,
-      montantSalarie: -montantSalarie,
+      montantSalarie: montantSalarie,
       montantEmployeur,
       deductible: g.deductible,
       regleCode: `PREVOYANCE_${g.code}`,
     };
   });
+}
+
+/**
+ * Construit la ligne de bulletin pour la mutuelle obligatoire (forfait mensuel fixe).
+ *
+ * Contrairement à la prévoyance (calculée en % du brut), la mutuelle est un montant
+ * fixe mensuel réparti entre employeur et salarié selon la part employeur configurée.
+ *
+ * @param config - Configuration mutuelle (montant, répartition, organisme)
+ * @returns Ligne de bulletin pour la mutuelle
+ */
+export function buildLigneMutuelle(config: MutuelleConfig): LigneCotisation {
+  const partEmp = Math.max(0.50, Math.min(1, config.partEmployeur));
+  const montantEmployeur = roundMontant(config.montantMensuel * partEmp);
+  const montantSalarie = roundMontant(config.montantMensuel - montantEmployeur);
+
+  return {
+    code: "MUTUELLE_OBLIGATOIRE",
+    libelle: "Complémentaire santé obligatoire",
+    famille: "prevoyance_mutuelle",
+    organisme: config.organisme ?? "Organisme désigné",
+    assiette: config.montantMensuel,
+    tranche: "fixe",
+    tauxSalarie: config.montantMensuel > 0 ? montantSalarie / config.montantMensuel : 0,
+    tauxEmployeur: config.montantMensuel > 0 ? montantEmployeur / config.montantMensuel : 0,
+    montantSalarie,
+    montantEmployeur,
+    deductible: config.deductible ?? true,
+    regleCode: "ANI_2013_MUTUELLE",
+  };
 }

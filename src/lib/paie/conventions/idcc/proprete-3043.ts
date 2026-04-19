@@ -22,7 +22,7 @@
 import { registerConvention } from "@/lib/paie/conventions/registry";
 import type { ConventionRuleSet } from "@/lib/paie/conventions/types";
 
-const PROPRETE_3043: ConventionRuleSet = {
+export const PROPRETE_3043: ConventionRuleSet = {
   primes: [
     {
       code: "proprete_indemnite_salissure",
@@ -97,16 +97,7 @@ const PROPRETE_3043: ConventionRuleSet = {
       tauxEmployeur: 0.0075,
       deductible: true,
     },
-    {
-      code: "proprete_mutuelle_sal",
-      libelle: "Mutuelle Propreté salarié",
-      famille: "prevoyance_mutuelle",
-      organisme: "Humanis",
-      assiette: "brut",
-      tauxSalarie: 0.0060,
-      tauxEmployeur: 0.0060,
-      deductible: false,
-    },
+
   ],
 
   // ── Maintien AT/MP (accord branche) ──────────────────────────────
@@ -129,5 +120,3 @@ const PROPRETE_3043: ConventionRuleSet = {
 
 // Auto-enregistrement à l'import
 registerConvention("3043", PROPRETE_3043);
-
-export { PROPRETE_3043 };

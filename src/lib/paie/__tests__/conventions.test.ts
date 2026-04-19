@@ -57,9 +57,9 @@ describe("CAS-C01 — HCR IDCC 1979", () => {
     expect(rs).toBeDefined();
   });
 
-  it("injecte 2 lignes de prévoyance/mutuelle", () => {
+  it("injecte 1 ligne de prévoyance", () => {
     const rs = ConventionRuleResolver.resolve("1979");
-    expect(rs.lignesAdditionnelles).toHaveLength(2);
+    expect(rs.lignesAdditionnelles).toHaveLength(1);
   });
 
   it("contient une ligne prévoyance AG2R", () => {
@@ -92,22 +92,22 @@ describe("CAS-C02 — BTP IDCC 1597", () => {
     expect(rs).toBeDefined();
   });
 
-  it("injecte les lignes de prévoyance PRO BTP", () => {
+  it("injecte la prévoyance PRO BTP", () => {
     const rs = ConventionRuleResolver.resolve("1597");
-    const mutuelle = rs.lignesAdditionnelles?.find(
-      (l) => l.code === "btp_mutuelle_sal"
+    const prev = rs.lignesAdditionnelles?.find(
+      (l) => l.code === "btp_prevoyance_sal"
     );
-    expect(mutuelle).toBeDefined();
-    expect(mutuelle?.organisme).toContain("PRO BTP");
+    expect(prev).toBeDefined();
+    expect(prev?.organisme).toContain("PRO BTP");
   });
 
   it("a une politique de maintien AT/MP enregistrée", () => {
     expect(listConventionsWithMaintenance()).toContain("1597");
   });
 
-  it("a 2 lignes additionnelles (prévoyance + mutuelle)", () => {
+  it("a 1 ligne additionnelle (prévoyance)", () => {
     const rs = ConventionRuleResolver.resolve("1597");
-    expect(rs.lignesAdditionnelles).toHaveLength(2);
+    expect(rs.lignesAdditionnelles).toHaveLength(1);
   });
 });
 
@@ -133,11 +133,9 @@ describe("CAS-C03 — Métallurgie IDCC 3248", () => {
     expect(listConventionsWithMaintenance()).toContain("3248");
   });
 
-  it("expose 3 lignes additionnelles (prévoyance + mutuelle + APEC)", () => {
-    // Pour la métallurgie il y a 2 lignes (prévoyance + mutuelle)
-    // APEC n'est pas dans prévoyance obligatoire de métallurgie
+  it("expose 1 ligne additionnelle (prévoyance)", () => {
     const rs = ConventionRuleResolver.resolve("3248");
-    expect(rs.lignesAdditionnelles?.length).toBeGreaterThanOrEqual(2);
+    expect(rs.lignesAdditionnelles?.length).toBe(1);
   });
 });
 
@@ -150,13 +148,13 @@ describe("CAS-C04 — Transport routier IDCC 16", () => {
     expect(rs).toBeDefined();
   });
 
-  it("injecte la mutuelle Klésia", () => {
+  it("injecte la prévoyance Klésia", () => {
     const rs = ConventionRuleResolver.resolve("16");
-    const mutuelle = rs.lignesAdditionnelles?.find(
-      (l) => l.code === "transport_mutuelle_sal"
+    const prev = rs.lignesAdditionnelles?.find(
+      (l) => l.code === "transport_prevoyance_sal"
     );
-    expect(mutuelle).toBeDefined();
-    expect(mutuelle?.organisme).toContain("Klésia");
+    expect(prev).toBeDefined();
+    expect(prev?.organisme).toContain("Klésia");
   });
 
   it("a une politique de maintien maladie enregistrée", () => {
@@ -173,9 +171,9 @@ describe("CAS-C05 — Syntec IDCC 1486", () => {
     expect(rs).toBeDefined();
   });
 
-  it("injecte 3 lignes (prévoyance + mutuelle + APEC)", () => {
+  it("injecte 2 lignes (prévoyance + APEC)", () => {
     const rs = ConventionRuleResolver.resolve("1486");
-    expect(rs.lignesAdditionnelles).toHaveLength(3);
+    expect(rs.lignesAdditionnelles).toHaveLength(2);
   });
 
   it("contient la cotisation APEC sur assiette TA+TB", () => {
@@ -201,9 +199,9 @@ describe("CAS-C06 — Sécurité privée IDCC 1351", () => {
     expect(rs).toBeDefined();
   });
 
-  it("injecte 2 lignes de prévoyance/mutuelle Malakoff", () => {
+  it("injecte 1 ligne de prévoyance Malakoff", () => {
     const rs = ConventionRuleResolver.resolve("1351");
-    expect(rs.lignesAdditionnelles).toHaveLength(2);
+    expect(rs.lignesAdditionnelles).toHaveLength(1);
   });
 
   it("a une politique de maintien AT/MP (6 mois ancienneté)", () => {
@@ -267,12 +265,13 @@ describe("CAS-C09 — Restauration collective IDCC 1266", () => {
     expect(rs).toBeDefined();
   });
 
-  it("injecte la mutuelle Klésia", () => {
+  it("injecte la prévoyance Klésia", () => {
     const rs = ConventionRuleResolver.resolve("1266");
-    const mutuelle = rs.lignesAdditionnelles?.find(
-      (l) => l.code === "rcoll_mutuelle_sal"
+    const prev = rs.lignesAdditionnelles?.find(
+      (l) => l.code === "rcoll_prevoyance_sal"
     );
-    expect(mutuelle?.organisme).toBe("Klésia");
+    expect(prev).toBeDefined();
+    expect(prev?.organisme).toBe("Klésia");
   });
 
   it("a une politique de maintien maladie (3j carence dès 1 an)", () => {

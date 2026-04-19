@@ -78,6 +78,13 @@ export const TAUX_URSSAF_2026 = {
 
   /** CRDS — salarié sur assiette CSG */
   crds: { employeur: 0, salarie: 0.005 },
+
+  /** Taxe d'apprentissage — employeur sur totalité (0,44 % part principale + 0,09 % solde = 0,68 %) */
+  taxeApprentissage: { employeur: 0.0068, salarie: 0 },
+
+  /** Contribution à la formation professionnelle — employeur sur totalité */
+  formationProfessionnelleInf11: { employeur: 0.0055, salarie: 0 },  // < 11 salariés : 0,55 %
+  formationProfessionnelleSup11: { employeur: 0.01, salarie: 0 },    // ≥ 11 salariés : 1,00 %
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────

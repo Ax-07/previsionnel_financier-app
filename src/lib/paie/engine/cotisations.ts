@@ -22,6 +22,7 @@ import type {
   EntrepriseInput,
 } from "@/lib/paie/types";
 import type { AssiettesResult } from "@/lib/paie/engine/assiettes";
+import { roundMontant, roundAssiette } from "@/lib/paie/engine/arrondi";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Utilitaire interne : construction d'une ligne
@@ -44,19 +45,15 @@ function ligne(
     libelle,
     famille,
     organisme,
-    assiette: round2(assiette),
+    assiette: roundAssiette(assiette),
     tranche,
     tauxSalarie,
     tauxEmployeur,
-    montantSalarie: round2(assiette * tauxSalarie),
-    montantEmployeur: round2(assiette * tauxEmployeur),
+    montantSalarie: roundMontant(assiette * tauxSalarie),
+    montantEmployeur: roundMontant(assiette * tauxEmployeur),
     deductible,
     regleCode,
   };
-}
-
-function round2(v: number): number {
-  return Math.round(v * 100) / 100;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -70,6 +67,7 @@ function cotisationsUrssaf(
   const { brutSoumis, pmssProratise, assietteCsg } = a;
   const plafond4Pass = Math.min(brutSoumis, 4 * PARAMS_2026.passMensuel);
   const estGrand = entreprise.effectif >= 50;
+  const estSup11 = entreprise.effectif >= 11;
 
   return [
     // Assurance maladie
@@ -288,6 +286,40 @@ function cotisationsUrssaf(
           ),
         ]
       : []),
+
+    // Taxe d'apprentissage — employeur sur totalité
+    ligne(
+      "TAXE_APPRENTISSAGE_PAT",
+      "Taxe d'apprentissage",
+      "taxe_apprentissage",
+      "Urssaf",
+      brutSoumis,
+      "totalite",
+      TAUX_URSSAF_2026.taxeApprentissage.salarie,
+      TAUX_URSSAF_2026.taxeApprentissage.employeur,
+      false,
+      "URSSAF_TAXE_APPRENTISSAGE_2026",
+    ),
+
+    // Contribution à la formation professionnelle — employeur, taux conditionnel selon effectif
+    ligne(
+      "FORMATION_PRO_PAT",
+      estSup11
+        ? "Formation professionnelle (≥ 11 salariés)"
+        : "Formation professionnelle (< 11 salariés)",
+      "formation_professionnelle",
+      "Urssaf",
+      brutSoumis,
+      "totalite",
+      0,
+      estSup11
+        ? TAUX_URSSAF_2026.formationProfessionnelleSup11.employeur
+        : TAUX_URSSAF_2026.formationProfessionnelleInf11.employeur,
+      false,
+      estSup11
+        ? "URSSAF_FORMATION_PRO_SUP11_2026"
+        : "URSSAF_FORMATION_PRO_INF11_2026",
+    ),
   ];
 }
 

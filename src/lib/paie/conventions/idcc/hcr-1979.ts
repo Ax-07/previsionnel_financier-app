@@ -22,7 +22,7 @@
 import { registerConvention } from "@/lib/paie/conventions/registry";
 import type { ConventionRuleSet } from "@/lib/paie/conventions/types";
 
-const HCR_1979: ConventionRuleSet = {
+export const HCR_1979: ConventionRuleSet = {
     // ── Primes ──────────────────────────────────────────────────────────────
     primes: [
         {
@@ -75,16 +75,7 @@ const HCR_1979: ConventionRuleSet = {
             tauxEmployeur: 0.0060, // 0.60 % brut
             deductible: true,
         },
-        {
-            code: "hcr_mutuelle_sal",
-            libelle: "Mutuelle HCR salarié (AG2R)",
-            famille: "prevoyance_mutuelle",
-            organisme: "AG2R La Mondiale",
-            assiette: "brut",
-            tauxSalarie: 0.0050,
-            tauxEmployeur: 0.0050,
-            deductible: false,
-        },
+
     ],
 
     // ── Majorations heures supplémentaires HCR (dérogatoire au légal) ────────
@@ -112,5 +103,3 @@ const HCR_1979: ConventionRuleSet = {
 
 // Auto-enregistrement à l'import
 registerConvention("1979", HCR_1979);
-
-export { HCR_1979 };

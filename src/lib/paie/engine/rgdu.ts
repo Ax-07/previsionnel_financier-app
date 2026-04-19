@@ -10,13 +10,7 @@
 import { PARAMS_2026, RGDU_2026 } from "@/lib/paie/params/2026";
 import type { LigneCotisation, SalarieInput, EntrepriseInput } from "@/lib/paie/types";
 import type { AssiettesResult } from "@/lib/paie/engine/assiettes";
-
-function round4(v: number): number {
-  return Math.round(v * 10000) / 10000;
-}
-function round2(v: number): number {
-  return Math.round(v * 100) / 100;
-}
+import { roundMontant, roundCoeff, roundAssiette } from "@/lib/paie/engine/arrondi";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Éligibilité
@@ -38,9 +32,10 @@ export function estEligibleRGDU(
 ): boolean {
   if (salarié.typeContrat === "stage") return false;
 
-  // Annualisation du brut mensuel pour comparaison avec le seuil
+  // SMIC annuel = SMIC horaire × heures contractuelles × 12 (Urssaf)
+  const smicAnnuel = PARAMS_2026.smicHoraire * salarié.heuresContrat * 12;
   const brutAnnuelRef = brutMensuelEffectif * 12;
-  const smicAnnuelCalc = PARAMS_2026.smicAnnuel * facteurProrata;
+  const smicAnnuelCalc = smicAnnuel * facteurProrata;
   const seuil = RGDU_2026.facteurSortie * smicAnnuelCalc;
 
   return brutAnnuelRef < seuil;
@@ -54,15 +49,17 @@ export function estEligibleRGDU(
  * Calcule le coefficient de réduction RGDU.
  *
  * Formule :
- *   coefficient = T_min + T_delta × [0,5 × (3 × SMIC_annuel / remun_annuelle - 1)] ^ P
+ *   coefficient = T_min + (T_delta × [0,5 × (3 × SMIC_annuel / remun_annuelle - 1)] ^ P)
  *
  * Le résultat est arrondi à 4 décimales et plafonné au coefficient maximum.
  */
 export function calcCoeffRGDU(
   brutMensuelEffectif: number,
   estGrandEntreprise: boolean,
+  heuresContrat: number,
 ): number {
-  const smicAnnuel = PARAMS_2026.smicAnnuel;
+  // SMIC annuel = SMIC horaire × heures contractuelles × 12 (Urssaf)
+  const smicAnnuel = PARAMS_2026.smicHoraire * heuresContrat * 12;
   const remunAnnuelle = brutMensuelEffectif * 12;
 
   const { tMin, p, facteurSortie } = RGDU_2026;
@@ -74,7 +71,7 @@ export function calcCoeffRGDU(
   if (facteur <= 0) return 0; // au-dessus du seuil de sortie
 
   const coeff = tMin + tDelta * Math.pow(facteur, p);
-  return round4(Math.min(coeff, coeffMax));
+  return roundCoeff(Math.min(coeff, coeffMax));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -91,7 +88,7 @@ export function calcMontantRGDU(
 ): number {
   const remunAnnuelle = brutMensuelEffectif * 12;
   const rgduAnnuel = remunAnnuelle * coefficient;
-  return round2(rgduAnnuel / 12);
+  return roundMontant(rgduAnnuel / 12);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -113,7 +110,7 @@ export function calcRGDU(
   if (!estEligibleRGDU(salarié, brutSoumis, facteurProrata)) return null;
 
   const estGrand = entreprise.effectif >= 50;
-  const coefficient = calcCoeffRGDU(brutSoumis, estGrand);
+  const coefficient = calcCoeffRGDU(brutSoumis, estGrand, salarié.heuresContrat);
 
   if (coefficient <= 0) return null;
 
@@ -126,7 +123,7 @@ export function calcRGDU(
     libelle: `Réduction générale dégressive (coefficient ${coefficient.toFixed(4)})`,
     famille: "rgdu",
     organisme: "Urssaf",
-    assiette: round2(brutSoumis),
+    assiette: roundAssiette(brutSoumis),
     tranche: "totalite",
     tauxSalarie: 0,
     tauxEmployeur: -coefficient,

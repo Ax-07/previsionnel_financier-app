@@ -31,10 +31,10 @@ import { calculerComplementEmployeur } from "@/lib/paie/absence/employer-top-up-
 import { PARAMS_IJSS_2026 } from "@/lib/paie/params/ijss-2026";
 
 /**
- * Taux approximatif de cotisations salariales pour l'estimation du net maintenu.
- * En réalité calculé par le moteur de cotisations — ici approximation standard.
+ * Taux approximatif par défaut de cotisations salariales pour l'estimation du net maintenu.
+ * Utilisé en fallback si `LeaveCalculInput.tauxCotisationsSalarie` n'est pas fourni.
  */
-const TAUX_COTISATIONS_SALARIE_APPROX = 0.22;
+const TAUX_COTISATIONS_SALARIE_DEFAUT = 0.22;
 
 export const LeaveAndBenefitsEngine = {
   /**
@@ -44,7 +44,14 @@ export const LeaveAndBenefitsEngine = {
    * @returns      ResultatAbsence
    */
   calculate(input: LeaveCalculInput): ResultatAbsence {
-    const { absence, brutMensuelTheorique, conventionCode, tauxPAS = 0, passAnnuel } = input;
+    const {
+      absence,
+      brutMensuelTheorique,
+      conventionCode,
+      tauxPAS = 0,
+      passAnnuel,
+      tauxCotisationsSalarie = TAUX_COTISATIONS_SALARIE_DEFAUT,
+    } = input;
 
     // ── 1. Calcul IJSS ────────────────────────────────────────────────────────
     const resultIjss = calcIjss(absence, brutMensuelTheorique, passAnnuel);
@@ -95,7 +102,7 @@ export const LeaveAndBenefitsEngine = {
     // ── 5. Complément employeur ───────────────────────────────────────────────
     const topUp = calculerComplementEmployeur({
       maintienBrutTotal,
-      tauxCotisationsSalarie: TAUX_COTISATIONS_SALARIE_APPROX,
+      tauxCotisationsSalarie,
       ijssNetteTotal: resultIjss.ijNetteTotal,
       subrogation: absence.subrogation,
       tauxPAS,

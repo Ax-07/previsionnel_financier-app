@@ -16,7 +16,7 @@
 import { registerConvention } from "@/lib/paie/conventions/registry";
 import type { ConventionRuleSet } from "@/lib/paie/conventions/types";
 
-const BTP_1597: ConventionRuleSet = {
+export const BTP_1597: ConventionRuleSet = {
   // ── Primes / indemnités ───────────────────────────────────────────────────
   primes: [
     {
@@ -52,16 +52,7 @@ const BTP_1597: ConventionRuleSet = {
       tauxEmployeur: 0.0120, // 1.20 %
       deductible: true,
     },
-    {
-      code: "btp_mutuelle_sal",
-      libelle: "Mutuelle BTP salarié (PRO BTP)",
-      famille: "prevoyance_mutuelle",
-      organisme: "PRO BTP",
-      assiette: "brut",
-      tauxSalarie: 0.0060,
-      tauxEmployeur: 0.0060,
-      deductible: false,
-    },
+
   ],
 
   // ── Maintien conventionnel ────────────────────────────────────────────────
@@ -89,5 +80,3 @@ const BTP_1597: ConventionRuleSet = {
 
 // Auto-enregistrement à l'import
 registerConvention("1597", BTP_1597);
-
-export { BTP_1597 };

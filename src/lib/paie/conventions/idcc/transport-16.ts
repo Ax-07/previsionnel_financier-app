@@ -17,7 +17,7 @@
 import { registerConvention } from "@/lib/paie/conventions/registry";
 import type { ConventionRuleSet } from "@/lib/paie/conventions/types";
 
-const TRANSPORT_16: ConventionRuleSet = {
+export const TRANSPORT_16: ConventionRuleSet = {
   // ── 13e mois / prime annuelle ─────────────────────────────────────────────
   tauxTreizieme: 1 / 12, // prime de fin d'année = 1 mois
 
@@ -57,16 +57,7 @@ const TRANSPORT_16: ConventionRuleSet = {
       tauxEmployeur: 0.0090,
       deductible: true,
     },
-    {
-      code: "transport_mutuelle_sal",
-      libelle: "Mutuelle Transport salarié (Klésia)",
-      famille: "prevoyance_mutuelle",
-      organisme: "Klésia",
-      assiette: "brut",
-      tauxSalarie: 0.0065,
-      tauxEmployeur: 0.0065,
-      deductible: false,
-    },
+
   ],
 
   // ── Maintien maladie ──────────────────────────────────────────────────────
@@ -85,5 +76,3 @@ const TRANSPORT_16: ConventionRuleSet = {
 
 // Auto-enregistrement à l'import
 registerConvention("16", TRANSPORT_16);
-
-export { TRANSPORT_16 };

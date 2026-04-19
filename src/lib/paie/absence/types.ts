@@ -181,6 +181,12 @@ export interface LeaveCalculInput {
   tauxPAS?: number;
   /** Plafond annuel Sécurité Sociale 2026 */
   passAnnuel: number;
+  /**
+   * Taux réel de cotisations salariales (0–1). Utilisé pour estimer le net
+   * maintenu lors du calcul du complément employeur.
+   * Si absent, le moteur utilise l'approximation standard de 22 %.
+   */
+  tauxCotisationsSalarie?: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

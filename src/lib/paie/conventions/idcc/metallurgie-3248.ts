@@ -17,7 +17,7 @@
 import { registerConvention } from "@/lib/paie/conventions/registry";
 import type { ConventionRuleSet } from "@/lib/paie/conventions/types";
 
-const METALLURGIE_3248: ConventionRuleSet = {
+export const METALLURGIE_3248: ConventionRuleSet = {
   // ── 13e mois ───────────────────────────────────────────────────────────────
   // 1/12 du brut annuel ≈ un mois de salaire en fin d'année
   tauxTreizieme: 1 / 12,
@@ -53,16 +53,7 @@ const METALLURGIE_3248: ConventionRuleSet = {
       tauxEmployeur: 0.0110,
       deductible: true,
     },
-    {
-      code: "metal_mutuelle_sal",
-      libelle: "Mutuelle Métallurgie salarié",
-      famille: "prevoyance_mutuelle",
-      organisme: "Malakoff Humanis",
-      assiette: "brut",
-      tauxSalarie: 0.0070,
-      tauxEmployeur: 0.0070,
-      deductible: false,
-    },
+
   ],
 
   // ── Maintien maladie (art. 61 CCN 3248) ──────────────────────────────────
@@ -90,5 +81,3 @@ const METALLURGIE_3248: ConventionRuleSet = {
 
 // Auto-enregistrement à l'import
 registerConvention("3248", METALLURGIE_3248);
-
-export { METALLURGIE_3248 };

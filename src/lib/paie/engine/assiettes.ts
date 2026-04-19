@@ -300,12 +300,27 @@ export function buildAssiettes(
   salarié: SalarieInput,
   entreprise: EntrepriseInput,
 ): AssiettesResult {
-  void entreprise; // réservé pour futurs paramètres d'entreprise (mutuelle, prévoyance)
   const salaireBase = calcSalaireBase(salarié);
   const heuresSup = calcHeuresSup(salarié);
   const brutSoumis = calcBrutSoumis(salarié);
   const pmssProratise = calcPMSSProratise(salarié);
-  const assietteCsg = calcAssietteCsg(brutSoumis);
+
+  // Part patronale mutuelle / prévoyance complémentaire :
+  // ajoutée à l'assiette CSG/CRDS à 100 % (sans l'abattement de 98,25 %)
+  let partPatronaleComplementaire = 0;
+
+  if (entreprise.mutuelle) {
+    const partEmp = Math.max(0.50, Math.min(1, entreprise.mutuelle.partEmployeur));
+    partPatronaleComplementaire += roundAssiette(entreprise.mutuelle.montantMensuel * partEmp);
+  }
+
+  if (entreprise.prevoyance) {
+    for (const g of entreprise.prevoyance.garanties) {
+      partPatronaleComplementaire += roundAssiette(brutSoumis * g.tauxEmployeur);
+    }
+  }
+
+  const assietteCsg = calcAssietteCsg(brutSoumis) + partPatronaleComplementaire;
   const { baseT1, baseT2 } = calcTranchesArrco(brutSoumis, pmssProratise);
   const facteurProrata = calcFacteurProrata(salarié);
 

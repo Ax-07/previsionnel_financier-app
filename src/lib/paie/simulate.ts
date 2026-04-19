@@ -20,13 +20,14 @@ import type { LigneCotisation } from "@/lib/paie/types";
 import type { LigneConventionnelle } from "@/lib/paie/overrides/types";
 import type { AssiettesResult } from "@/lib/paie/engine/assiettes";
 import { buildAssiettes, calcAssietteCsg, calcTranchesArrco, calcHeuresSupMultiTranches, calcHeuresSupLignesDetail } from "@/lib/paie/engine/assiettes";
+import { roundMontant, roundAssiette } from "@/lib/paie/engine/arrondi";
 import { calcCotisations } from "@/lib/paie/engine/cotisations";
 import { calcRGDU } from "@/lib/paie/engine/rgdu";
 import { buildTotaux } from "@/lib/paie/engine/fiscal";
 import { exonerationsApprenti } from "@/lib/paie/profiles/apprenti";
 import { filtrerLignesStage } from "@/lib/paie/profiles/stage";
 import { cotisationAlsaceMoselle } from "@/lib/paie/profiles/alsace-moselle";
-import { buildLignesPrevoyance } from "@/lib/paie/params/prevoyance";
+import { buildLignesPrevoyance, buildLigneMutuelle } from "@/lib/paie/params/prevoyance";
 import { ProfileEngine } from "@/lib/paie/profiles/profile-engine";
 import { RuleOverrideEngine } from "@/lib/paie/overrides/rule-override-engine";
 import { ConventionRuleResolver } from "@/lib/paie/overrides/convention-rule-resolver";
@@ -37,15 +38,21 @@ import {
   calcExonerationHSIR,
   calcReductionHSCotSal,
   buildLigneReductionHSCotSal,
+  calcDeductionForfaitaireHS,
+  buildLigneDeductionForfaitaireHS,
 } from "@/lib/paie/engine/exoneration-hs";
+import { simulationInputSchema } from "@/lib/paie/schemas/simulation-input.schema";
 
 /**
  * Simule un bulletin de paie complet à partir des paramètres d'entrée.
  *
  * Fonction pure et déterministe : mêmes entrées = même sortie.
  * Les 48 tests existants (Lots 0–4) continuent de passer sans modification.
+ *
+ * @throws {ZodError} si les entrées sont invalides (brutMensuel < 0, heuresContrat ≤ 0, etc.)
  */
 export function simulate(input: SimulationInput): SimulationResultat {
+  simulationInputSchema.parse(input);
   const { salarié, entreprise } = input;
   const ctx = createPipelineContext(input);
 
@@ -131,9 +138,14 @@ export function simulate(input: SimulationInput): SimulationResultat {
     lignes = [...lignes, ...cotisationAlsaceMoselle(assiettes.brutSoumis)];
   }
 
-  // Prévoyance / mutuelle complémentaire
+  // Prévoyance complémentaire (taux sur brut)
   if (entreprise.prevoyance) {
     lignes = [...lignes, ...buildLignesPrevoyance(assiettes.brutSoumis, entreprise.prevoyance)];
+  }
+
+  // Mutuelle obligatoire (forfait mensuel fixe — ANI 2013)
+  if (entreprise.mutuelle) {
+    lignes = [...lignes, buildLigneMutuelle(entreprise.mutuelle)];
   }
 
   // Lignes additionnelles conventionnelles (Lot 6)
@@ -170,16 +182,30 @@ export function simulate(input: SimulationInput): SimulationResultat {
   if (reductionHSCotSal > 0) {
     ctx.lignes = [...ctx.lignes, buildLigneReductionHSCotSal(reductionHSCotSal, remHS)];
   }
+
+  // Déduction forfaitaire patronale HS (art. L241-18 CSS)
+  const heuresHS = salarié.heuresSupplementaires ?? 0;
+  const deductionForfaitaireHS = calcDeductionForfaitaireHS(heuresHS, entreprise.effectif);
+  if (deductionForfaitaireHS > 0) {
+    ctx.lignes = [...ctx.lignes, buildLigneDeductionForfaitaireHS(deductionForfaitaireHS, heuresHS)];
+  }
   // ── Étape 9 : Absences / indemnisations spécialisées ───────────────────────
   // Lot 5 : si un absencement avancé est fourni, le moteur d'absence complète le calcul
   let absenceDetail: import("@/lib/paie/absence/types").ResultatAbsence | undefined;
   if (salarié.absenceEvent) {
+    // Taux réel de cotisations salariales calculé depuis les lignes du bulletin
+    const totalCotSal = ctx.lignes.reduce((sum, l) => sum + Math.abs(l.montantSalarie), 0);
+    const tauxCotSalReel = assiettes.brutSoumis > 0
+      ? totalCotSal / assiettes.brutSoumis
+      : undefined;
+
     absenceDetail = LeaveAndBenefitsEngine.calculate({
       absence: salarié.absenceEvent,
       brutMensuelTheorique: salarié.brutMensuel,
       conventionCode: salarié.conventionCode,
       tauxPAS: salarié.tauxPAS,
       passAnnuel: PARAMS_2026.passAnnuel,
+      tauxCotisationsSalarie: tauxCotSalReel,
     });
   }
 
@@ -219,7 +245,6 @@ function ligneConventionnelleToLigneCotisation(
   lc: LigneConventionnelle,
   a: AssiettesResult,
 ): LigneCotisation {
-  const r2 = (v: number) => Math.round(v * 100) / 100;
 
   let baseNumerique: number;
   let tranche: string;
@@ -245,19 +270,19 @@ function ligneConventionnelleToLigneCotisation(
   const montantSalarie =
     lc.assiette === "fixe"
       ? (lc.montantFixeSalarie ?? 0)
-      : r2(baseNumerique * lc.tauxSalarie);
+      : roundMontant(baseNumerique * lc.tauxSalarie);
 
   const montantEmployeur =
     lc.assiette === "fixe"
       ? (lc.montantFixeEmployeur ?? 0)
-      : r2(baseNumerique * lc.tauxEmployeur);
+      : roundMontant(baseNumerique * lc.tauxEmployeur);
 
   return {
     code: lc.code,
     libelle: lc.libelle,
     famille: lc.famille,
     organisme: lc.organisme,
-    assiette: r2(baseNumerique),
+    assiette: roundAssiette(baseNumerique),
     tranche,
     tauxSalarie: lc.tauxSalarie,
     tauxEmployeur: lc.tauxEmployeur,

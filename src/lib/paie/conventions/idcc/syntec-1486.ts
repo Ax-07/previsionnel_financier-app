@@ -18,7 +18,7 @@
 import { registerConvention } from "@/lib/paie/conventions/registry";
 import type { ConventionRuleSet } from "@/lib/paie/conventions/types";
 
-const SYNTEC_1486: ConventionRuleSet = {
+export const SYNTEC_1486: ConventionRuleSet = {
   // ── Prime de vacances (10 % brut annuel, versée en juin) ──────────────────
   tauxPrimeVacances: 0.10,
 
@@ -62,16 +62,7 @@ const SYNTEC_1486: ConventionRuleSet = {
       tauxEmployeur: 0.0150,
       deductible: true,
     },
-    {
-      code: "syntec_mutuelle_sal",
-      libelle: "Mutuelle Syntec salarié (AG2R)",
-      famille: "prevoyance_mutuelle",
-      organisme: "AG2R La Mondiale",
-      assiette: "brut",
-      tauxSalarie: 0.0090,
-      tauxEmployeur: 0.0090,
-      deductible: false,
-    },
+
     {
       code: "syntec_apec_sal",
       libelle: "Cotisation APEC cadres salarié",
@@ -113,5 +104,3 @@ const SYNTEC_1486: ConventionRuleSet = {
 
 // Auto-enregistrement à l'import
 registerConvention("1486", SYNTEC_1486);
-
-export { SYNTEC_1486 };

@@ -16,7 +16,7 @@
 import { registerConvention } from "@/lib/paie/conventions/registry";
 import type { ConventionRuleSet } from "@/lib/paie/conventions/types";
 
-const COMMERCE_1245: ConventionRuleSet = {
+export const COMMERCE_1245: ConventionRuleSet = {
   // ── Primes ────────────────────────────────────────────────────────────────
   primes: [
     {
@@ -53,16 +53,7 @@ const COMMERCE_1245: ConventionRuleSet = {
       tauxEmployeur: 0.0090,
       deductible: true,
     },
-    {
-      code: "commerce_mutuelle_sal",
-      libelle: "Mutuelle Commerce détail salarié",
-      famille: "prevoyance_mutuelle",
-      organisme: "Malakoff Humanis",
-      assiette: "brut",
-      tauxSalarie: 0.0058,
-      tauxEmployeur: 0.0058,
-      deductible: false,
-    },
+
   ],
 
   // Pas de surcharge de maintien spécifique (légal s'applique)
@@ -70,5 +61,3 @@ const COMMERCE_1245: ConventionRuleSet = {
 
 // Auto-enregistrement à l'import
 registerConvention("1245", COMMERCE_1245);
-
-export { COMMERCE_1245 };

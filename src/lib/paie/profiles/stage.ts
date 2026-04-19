@@ -12,6 +12,7 @@
  */
 
 import { PARAMS_2026 } from "@/lib/paie/params/2026";
+import { roundMontant, roundAssiette } from "@/lib/paie/engine/arrondi";
 import type { LigneCotisation, SalarieInput } from "@/lib/paie/types";
 
 /**
@@ -36,6 +37,8 @@ export const CODES_EXCLUS_STAGE = new Set([
   "FNAL_PAT",
   "DIAL_SOC_PAT",
   "ATMP_PAT",
+  "TAXE_APPRENTISSAGE_PAT",
+  "FORMATION_PRO_PAT",
 ]);
 
 /**
@@ -43,9 +46,9 @@ export const CODES_EXCLUS_STAGE = new Set([
  * gratifStageHoraire × heuresLegalesMensuelles.
  */
 export function seuilFranchiseStage(): number {
-  return Math.round(
-    PARAMS_2026.gratifStageHoraire * PARAMS_2026.heuresLegalesMensuelles * 100,
-  ) / 100;
+  return roundMontant(
+    PARAMS_2026.gratifStageHoraire * PARAMS_2026.heuresLegalesMensuelles,
+  );
 }
 
 /**
@@ -78,12 +81,12 @@ export function filtrerLignesStage(
         l.famille === "csg_non_deductible" ||
         l.famille === "crds"
       ) {
-        const nouvelleAssiette = Math.round(l.assiette * fractionExcedent * 100) / 100;
+        const nouvelleAssiette = roundAssiette(l.assiette * fractionExcedent);
         return {
           ...l,
           assiette: nouvelleAssiette,
-          montantSalarie: Math.round(nouvelleAssiette * l.tauxSalarie * 100) / 100,
-          montantEmployeur: Math.round(nouvelleAssiette * l.tauxEmployeur * 100) / 100,
+          montantSalarie: roundMontant(nouvelleAssiette * l.tauxSalarie),
+          montantEmployeur: roundMontant(nouvelleAssiette * l.tauxEmployeur),
         };
       }
       return l;

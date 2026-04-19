@@ -18,7 +18,7 @@
 import { registerConvention } from "@/lib/paie/conventions/registry";
 import type { ConventionRuleSet } from "@/lib/paie/conventions/types";
 
-const SECURITE_PRIVEE_1351: ConventionRuleSet = {
+export const SECURITE_PRIVEE_1351: ConventionRuleSet = {
   // ── Classifications ────────────────────────────────────────────────────────
   niveauxClassification: [
     { code: "AS1",  libelle: "Agent de sécurité coeff. 130",         salaireMinimumMensuel: 1766.92, coefficient: 130 },
@@ -42,16 +42,7 @@ const SECURITE_PRIVEE_1351: ConventionRuleSet = {
       tauxEmployeur: 0.0085,
       deductible: true,
     },
-    {
-      code: "securite_mutuelle_sal",
-      libelle: "Mutuelle Sécurité privée salarié",
-      famille: "prevoyance_mutuelle",
-      organisme: "Malakoff Humanis",
-      assiette: "brut",
-      tauxSalarie: 0.0055,
-      tauxEmployeur: 0.0055,
-      deductible: false,
-    },
+
   ],
 
   // ── Maintien maladie ──────────────────────────────────────────────────────
@@ -72,5 +63,3 @@ const SECURITE_PRIVEE_1351: ConventionRuleSet = {
 
 // Auto-enregistrement à l'import
 registerConvention("1351", SECURITE_PRIVEE_1351);
-
-export { SECURITE_PRIVEE_1351 };

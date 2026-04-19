@@ -3,10 +3,7 @@
  */
 
 import type { LigneCotisation, SalarieInput } from "@/lib/paie/types";
-
-function round2(v: number): number {
-  return Math.round(v * 100) / 100;
-}
+import { roundMontant, roundEuro } from "@/lib/paie/engine/arrondi";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Net social
@@ -22,7 +19,7 @@ export function calcNetSocial(
   lignes: LigneCotisation[],
 ): number {
   const totalSal = lignes.reduce((s, l) => s + l.montantSalarie, 0);
-  return round2(brutSoumis - totalSal);
+  return roundMontant(brutSoumis - totalSal);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -55,7 +52,7 @@ export function calcNetImposable(
     }
   }
 
-  return round2(brutSoumis - deductible + nonDeductibleSal - exonerationHSIR);
+  return roundMontant(brutSoumis - deductible + nonDeductibleSal - exonerationHSIR);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,7 +69,7 @@ export function calcPAS(
 ): number {
   const taux = salarié.tauxPAS ?? 0;
   if (taux <= 0) return 0;
-  return round2(netImposable * taux);
+  return roundEuro(netImposable * taux);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -92,7 +89,7 @@ export function calcNetAPayer(
   avantagesEnNature: number,
   pas: number,
 ): number {
-  return round2(netSocial - avantagesEnNature - pas);
+  return roundMontant(netSocial - avantagesEnNature - pas);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -110,7 +107,7 @@ export function calcCoutEmployeur(
   lignes: LigneCotisation[],
 ): number {
   const totalPat = lignes.reduce((s, l) => s + l.montantEmployeur, 0);
-  return round2(brutSoumis + totalPat);
+  return roundMontant(brutSoumis + totalPat);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -135,14 +132,14 @@ export function buildTotaux(
   salarié: SalarieInput,
   exonerationHSIR = 0,
 ): TotauxFiscaux {
-  const totalCotisationsSalariales = round2(
+  const totalCotisationsSalariales = roundMontant(
     lignes.reduce((s, l) => s + l.montantSalarie, 0),
   );
   const rgduLigne = lignes.find((l) => l.code === "RGDU");
   const montantRGDU = rgduLigne ? Math.abs(rgduLigne.montantEmployeur) : 0;
 
   const cotisationsHorsRgdu = lignes.filter((l) => l.code !== "RGDU");
-  const totalCotisationsPatronales = round2(
+  const totalCotisationsPatronales = roundMontant(
     cotisationsHorsRgdu.reduce((s, l) => s + l.montantEmployeur, 0),
   );
 
@@ -155,7 +152,7 @@ export function buildTotaux(
 
   const tauxCotisationsPatronalesEffectif =
     brutSoumis > 0
-      ? round2((totalCotisationsPatronales / brutSoumis) * 100)
+      ? roundMontant((totalCotisationsPatronales / brutSoumis) * 100)
       : 0;
 
   return {

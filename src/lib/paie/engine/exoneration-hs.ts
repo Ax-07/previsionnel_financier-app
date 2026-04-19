@@ -14,10 +14,7 @@
 
 import type { LigneCotisation } from "@/lib/paie/types";
 import { TAUX_URSSAF_2026, TAUX_ARRCO_2026 } from "@/lib/paie/params/2026";
-
-function round2(v: number): number {
-  return Math.round(v * 100) / 100;
-}
+import { roundMontant } from "@/lib/paie/engine/arrondi";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constantes légales
@@ -53,7 +50,7 @@ export const TAUX_MAX_REDUCTION_HS_COT_SAL = 0.1131;
 export function calcExonerationHSIR(remHS: number, cumulAvant = 0): number {
   if (remHS <= 0) return 0;
   const resteDisponible = Math.max(0, PLAFOND_EXO_HS_IR_ANNUEL - cumulAvant);
-  return round2(Math.min(remHS, resteDisponible));
+  return roundMontant(Math.min(remHS, resteDisponible));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -100,7 +97,7 @@ export function calcReductionHSCotSal(
 
   const cotSalHsTheorique = cotVieillessePlaf + cotVieillesseDeplaf + cotArrcoT1 + cotCegT1;
 
-  return round2(Math.min(cotSalHsTheorique, remHS * TAUX_MAX_REDUCTION_HS_COT_SAL));
+  return roundMontant(Math.min(cotSalHsTheorique, remHS * TAUX_MAX_REDUCTION_HS_COT_SAL));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -133,5 +130,64 @@ export function buildLigneReductionHSCotSal(
     montantEmployeur: 0,
     deductible:       false,      // réduction sociale, non déductible fiscalement
     regleCode:        "L241-17_CSS",
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Déduction forfaitaire patronale HS (art. L241-18 CSS)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Montant forfaitaire par heure supplémentaire, selon l'effectif de l'entreprise.
+ *
+ * - < 20 salariés  : 1,50 € / heure sup (art. L241-18 CSS, al. 1)
+ * - 20–249 salariés : 0,50 € / heure sup (loi 2022-1158 pouvoir d'achat, al. 2)
+ * - ≥ 250 salariés : 0 € (non éligible)
+ */
+export function montantForfaitaireParHeureHS(effectif: number): number {
+  if (effectif < 20)  return 1.50;
+  if (effectif < 250) return 0.50;
+  return 0;
+}
+
+/**
+ * Calcule la déduction forfaitaire patronale sur les heures supplémentaires.
+ *
+ * @param heuresSupplementaires - Nombre d'heures supplémentaires réalisées ce mois
+ * @param effectif              - Effectif de l'entreprise
+ * @returns Montant de la déduction patronale (positif, à déduire des charges patronales)
+ */
+export function calcDeductionForfaitaireHS(
+  heuresSupplementaires: number,
+  effectif: number,
+): number {
+  if (heuresSupplementaires <= 0) return 0;
+  const forfait = montantForfaitaireParHeureHS(effectif);
+  if (forfait <= 0) return 0;
+  return roundMontant(heuresSupplementaires * forfait);
+}
+
+/**
+ * Construit la ligne de bulletin pour la déduction forfaitaire patronale HS.
+ *
+ * Montant négatif côté employeur = crédit patronal (réduction charges).
+ */
+export function buildLigneDeductionForfaitaireHS(
+  deduction: number,
+  heuresSupplementaires: number,
+): LigneCotisation {
+  return {
+    code:             "DEDUCTION_FORFAITAIRE_HS",
+    libelle:          "Déduction forfaitaire patronale HS",
+    famille:          "exoneration",
+    organisme:        "Urssaf",
+    assiette:         heuresSupplementaires,
+    tranche:          "totalite",
+    tauxSalarie:      0,
+    tauxEmployeur:    0,
+    montantSalarie:   0,
+    montantEmployeur: -deduction, // négatif = crédit employeur
+    deductible:       false,
+    regleCode:        "L241-18_CSS",
   };
 }

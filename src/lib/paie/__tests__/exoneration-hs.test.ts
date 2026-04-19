@@ -11,6 +11,8 @@ import {
   calcReductionHSCotSal,
   PLAFOND_EXO_HS_IR_ANNUEL,
   TAUX_MAX_REDUCTION_HS_COT_SAL,
+  montantForfaitaireParHeureHS,
+  calcDeductionForfaitaireHS,
 } from "@/lib/paie/engine/exoneration-hs";
 import { simulate } from "@/lib/paie/simulate";
 import "@/lib/paie/conventions";
@@ -170,5 +172,119 @@ describe("simulate — exonérations HS", () => {
     const ligneExo = r.lignes.find((l) => l.code === "EXONERATION_HS_COT_SAL");
     expect(ligneExo).toBeDefined();
     expect(Math.abs(ligneExo!.montantSalarie)).toBeCloseTo(r.reductionHSCotSal, 1);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Déduction forfaitaire patronale HS (art. L241-18 CSS)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("montantForfaitaireParHeureHS", () => {
+  it("< 20 salariés → 1,50 €/h", () => {
+    expect(montantForfaitaireParHeureHS(1)).toBe(1.50);
+    expect(montantForfaitaireParHeureHS(19)).toBe(1.50);
+  });
+
+  it("20–249 salariés → 0,50 €/h", () => {
+    expect(montantForfaitaireParHeureHS(20)).toBe(0.50);
+    expect(montantForfaitaireParHeureHS(100)).toBe(0.50);
+    expect(montantForfaitaireParHeureHS(249)).toBe(0.50);
+  });
+
+  it("≥ 250 salariés → 0 (non éligible)", () => {
+    expect(montantForfaitaireParHeureHS(250)).toBe(0);
+    expect(montantForfaitaireParHeureHS(1000)).toBe(0);
+  });
+});
+
+describe("calcDeductionForfaitaireHS", () => {
+  it("retourne 0 si pas d'heures sup", () => {
+    expect(calcDeductionForfaitaireHS(0, 5)).toBe(0);
+  });
+
+  it("retourne 0 pour une entreprise ≥ 250", () => {
+    expect(calcDeductionForfaitaireHS(10, 300)).toBe(0);
+  });
+
+  it("< 20 sal : 10 HS → 15 €", () => {
+    expect(calcDeductionForfaitaireHS(10, 5)).toBe(15);
+  });
+
+  it("20–249 sal : 10 HS → 5 €", () => {
+    expect(calcDeductionForfaitaireHS(10, 50)).toBe(5);
+  });
+
+  it("< 20 sal : 4 HS → 6 €", () => {
+    expect(calcDeductionForfaitaireHS(4, 10)).toBe(6);
+  });
+});
+
+describe("simulate — déduction forfaitaire patronale HS", () => {
+  const baseInputPetite: SimulationInput = {
+    salarié: {
+      statut: "non_cadre",
+      typeContrat: "CDI",
+      heuresContrat: 151.66669,
+      brutMensuel: 2_000,
+      heuresSupplementaires: 10,
+      tauxPAS: 0.075,
+    },
+    entreprise: {
+      effectif: 5,
+      tauxATMP: 0.021,
+    },
+  };
+
+  it("ligne DEDUCTION_FORFAITAIRE_HS présente pour entreprise < 20 sal", () => {
+    const r = simulate(baseInputPetite);
+    const ligne = r.lignes.find((l) => l.code === "DEDUCTION_FORFAITAIRE_HS");
+    expect(ligne).toBeDefined();
+    expect(ligne!.montantEmployeur).toBe(-15); // 10 h × 1,50 €
+    expect(ligne!.montantSalarie).toBe(0);
+  });
+
+  it("ligne DEDUCTION_FORFAITAIRE_HS pour entreprise 20–249 sal", () => {
+    const input: SimulationInput = {
+      ...baseInputPetite,
+      entreprise: { ...baseInputPetite.entreprise, effectif: 50 },
+    };
+    const r = simulate(input);
+    const ligne = r.lignes.find((l) => l.code === "DEDUCTION_FORFAITAIRE_HS");
+    expect(ligne).toBeDefined();
+    expect(ligne!.montantEmployeur).toBe(-5); // 10 h × 0,50 €
+  });
+
+  it("pas de ligne pour entreprise ≥ 250 sal", () => {
+    const input: SimulationInput = {
+      ...baseInputPetite,
+      entreprise: { ...baseInputPetite.entreprise, effectif: 300 },
+    };
+    const r = simulate(input);
+    const ligne = r.lignes.find((l) => l.code === "DEDUCTION_FORFAITAIRE_HS");
+    expect(ligne).toBeUndefined();
+  });
+
+  it("pas de ligne sans heures supplémentaires", () => {
+    const input: SimulationInput = {
+      ...baseInputPetite,
+      salarié: { ...baseInputPetite.salarié, heuresSupplementaires: 0 },
+    };
+    const r = simulate(input);
+    const ligne = r.lignes.find((l) => l.code === "DEDUCTION_FORFAITAIRE_HS");
+    expect(ligne).toBeUndefined();
+  });
+
+  it("déduction réduit le coût employeur total", () => {
+    const avecHS = simulate(baseInputPetite);
+    const sansHS: SimulationInput = {
+      ...baseInputPetite,
+      salarié: { ...baseInputPetite.salarié, heuresSupplementaires: 0 },
+    };
+    const sansDeduc = simulate(sansHS);
+    // Le coût employeur avec HS inclut la déduction forfaitaire
+    const ligneDeduc = avecHS.lignes.find((l) => l.code === "DEDUCTION_FORFAITAIRE_HS");
+    expect(ligneDeduc).toBeDefined();
+    // La déduction est bien négative côté employeur (crédit)
+    expect(ligneDeduc!.montantEmployeur).toBeLessThan(0);
   });
 });

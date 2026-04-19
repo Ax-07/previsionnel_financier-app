@@ -131,11 +131,16 @@ export interface EntrepriseInput {
   /** Taux versement mobilité (ex. 0.03 pour 3 %) */
   tauxMobilite?: number;
   /**
-   * Configuration mutuelle / prévoyance complémentaire (optionnel).
+   * Configuration prévoyance complémentaire (optionnel).
    * Si présent, les lignes correspondantes sont ajoutées au bulletin.
    * Importer `PrevoyanceConfig` depuis `@/lib/paie/params/prevoyance`.
    */
   prevoyance?: import("@/lib/paie/params/prevoyance").PrevoyanceConfig;
+  /**
+   * Configuration mutuelle obligatoire (complémentaire santé — ANI 2013).
+   * Forfait mensuel fixe avec répartition employeur/salarié (minimum 50 % employeur).
+   */
+  mutuelle?: import("@/lib/paie/params/prevoyance").MutuelleConfig;
 }
 
 /** Paramètres d'une simulation complète */
@@ -172,7 +177,9 @@ export type FamilleCotisation =
   | "exoneration"
   | "rgdu"
   | "prevoyance_mutuelle"
-  | "prevoyance_prevoyance";
+  | "prevoyance_prevoyance"
+  | "taxe_apprentissage"
+  | "formation_professionnelle";
 
 /** Détail d'une ligne de bulletin */
 export interface LigneCotisation {
