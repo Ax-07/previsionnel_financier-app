@@ -4,13 +4,9 @@ import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
 import { buildBfrRows } from "@/lib/finance/aggregations/bfr";
 import type { BfrData } from "@/lib/finance/aggregations/bfr";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataState } from "@/lib/types/data-state";
 
-export interface BfrDataState {
-  data: BfrData | null;
-  status: ScenarioDataStatus;
-  error: string | null;
-}
+export type BfrDataState = DataState<BfrData>;
 
 export function useBfrData(dossierId: string): BfrDataState {
   const { data, fc, status, error } = useFinCalc(dossierId);

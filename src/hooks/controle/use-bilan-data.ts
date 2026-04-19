@@ -4,13 +4,9 @@ import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
 import { buildBilanRows } from "@/lib/finance/aggregations/bilan";
 import type { BilanData } from "@/lib/finance/aggregations/bilan";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataState } from "@/lib/types/data-state";
 
-export interface BilanDataState {
-  data: BilanData | null;
-  status: ScenarioDataStatus;
-  error: string | null;
-}
+export type BilanDataState = DataState<BilanData>;
 
 export function useBilanData(dossierId: string): BilanDataState {
   const { data, fc, status, error } = useFinCalc(dossierId);

@@ -2,15 +2,16 @@
 
 import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
-import { useSigData } from "@/hooks/controle/use-sig-data";
-import { useTresorerieData, type TresorerieRow } from "@/hooks/controle/use-tresorerie-data";
+import { useTresorerieData } from "@/hooks/controle/use-tresorerie-data";
 import { useSeuilRentabiliteData } from "@/hooks/controle/use-seuil-rentabilite-data";
 import { usePlanFinancementData } from "@/hooks/controle/use-plan-financement-data";
 import type { PfChartPoint } from "@/hooks/controle/use-plan-financement-data";
-import type { SigNode } from "@/lib/finance/aggregations/sig";
-import type { BreakEvenRow } from "@/lib/finance/calculs/seuil";
 import type { YearKey } from "@/lib/finance/utils";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataState } from "@/lib/types/data-state";
+import {
+  extractBreakEvenAmt,
+  extractTresoMonthly,
+} from "@/lib/finance/aggregations/helpers/extract";
 
 // ── Types charts ──────────────────────────────────────────────────────────────
 
@@ -69,36 +70,9 @@ export interface DashboardChartData {
   planFinancement: PfChartPoint[];
 }
 
-export interface DashboardChartsState {
-  data: DashboardChartData | null;
-  status: ScenarioDataStatus;
-  error: string | null;
-}
+export type DashboardChartsState = DataState<DashboardChartData>;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function extractSig(nodes: SigNode[], key: string): Record<YearKey, number> {
-  const node = nodes.find((n) => n.key === key);
-  if (!node) return { y1: 0, y2: 0, y3: 0 };
-  return { y1: node.values.y1.amount, y2: node.values.y2.amount, y3: node.values.y3.amount };
-}
-
-function extractBreakEven(rows: BreakEvenRow[], key: string): Record<YearKey, number> {
-  const row = rows.find((r) => r.key === key);
-  if (!row) return { y1: 0, y2: 0, y3: 0 };
-  return { y1: row.values.y1.amount ?? 0, y2: row.values.y2.amount ?? 0, y3: row.values.y3.amount ?? 0 };
-}
-
-function extractMonthly(rows: TresorerieRow[], key: string): Record<YearKey, number[]> {
-  const row = rows.find((r) => r.key === key);
-  const zero = new Array(12).fill(0) as number[];
-  if (!row) return { y1: zero, y2: zero, y3: zero };
-  return {
-    y1: Array.from(row.values.y1.months),
-    y2: Array.from(row.values.y2.months),
-    y3: Array.from(row.values.y3.months),
-  };
-}
 
 const MONTH_SHORT = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 function monthLabel(moisDemarrage: number, idx: number): string {
@@ -109,32 +83,31 @@ function monthLabel(moisDemarrage: number, idx: number): string {
 
 export function useDashboardChartsData(dossierId: string): DashboardChartsState {
   const { fc, status, error } = useFinCalc(dossierId);
-  const { data: sigData }   = useSigData(dossierId);
   const { data: tresoData } = useTresorerieData(dossierId);
   const { data: seuilData } = useSeuilRentabiliteData(dossierId);
   const { chartPoints: planFinancement } = usePlanFinancementData(dossierId);
 
   const result = useMemo<DashboardChartData | null>(() => {
-    if (!fc || !sigData || !tresoData || !seuilData || !planFinancement) return null;
+    if (!fc || !tresoData || !seuilData || !planFinancement) return null;
 
     const moisDeb  = fc.moisDebut ?? 0;
     const yearKeys: YearKey[] = ["y1", "y2", "y3"];
 
-    // ── Extractions SIG & seuil ───────────────────────────────────────────────
-    const ca       = extractSig(sigData.nodes, "ca");
-    const ebe      = extractSig(sigData.nodes, "ebe");
-    const resNet   = extractSig(sigData.nodes, "res_net");
-    const seuilEco = extractBreakEven(seuilData.rows, "seuil_eco");
+    // ── Valeurs depuis FinCalcResult (source unique de vérité) ────────────────
+    const ca       = fc.ca;
+    const ebe      = fc.ebe;
+    const resNet   = fc.resNet;
+    const seuilEco = extractBreakEvenAmt(seuilData.rows, "seuil_eco");
 
     // ── Séries mensuelles ─────────────────────────────────────────────────────
-    const totalEncMonthly  = extractMonthly(tresoData.rows, "enc-total");
-    const totalDecMonthly  = extractMonthly(tresoData.rows, "dec-total");
-    const encProdVendue    = extractMonthly(tresoData.rows, "enc-ca");
-    const soldeFinalMth    = extractMonthly(tresoData.rows, "tres-solde-final");
-    const decAchatsMth     = extractMonthly(tresoData.rows, "dec-achats");
-    const decChargesExtMth = extractMonthly(tresoData.rows, "dec-charges-ext");
-    const decImpotsMth     = extractMonthly(tresoData.rows, "dec-impots");
-    const decPersonnelMth  = extractMonthly(tresoData.rows, "dec-personnel");
+    const totalEncMonthly  = extractTresoMonthly(tresoData.rows, "enc-total");
+    const totalDecMonthly  = extractTresoMonthly(tresoData.rows, "dec-total");
+    const encProdVendue    = extractTresoMonthly(tresoData.rows, "enc-ca");
+    const soldeFinalMth    = extractTresoMonthly(tresoData.rows, "tres-solde-final");
+    const decAchatsMth     = extractTresoMonthly(tresoData.rows, "dec-achats");
+    const decChargesExtMth = extractTresoMonthly(tresoData.rows, "dec-charges-ext");
+    const decImpotsMth     = extractTresoMonthly(tresoData.rows, "dec-impots");
+    const decPersonnelMth  = extractTresoMonthly(tresoData.rows, "dec-personnel");
 
     // Décaissements d'exploitation (hors immo, emprunts, TVA, IS)
     const decExpl = {
@@ -182,7 +155,7 @@ export function useDashboardChartsData(dossierId: string): DashboardChartsState 
 
     // Chart 2 — CA vs Charges vs EBE vs Résultat annuel
     const annuel: AnnuelBarPoint[] = yearKeys.map((yk) => ({
-      exercice: sigData.yearLabels[yk],
+      exercice: fc.yearLabels[yk],
       ca: Math.round(ca[yk]),
       charges: Math.round(
         fc.achatsConsommes[yk] +
@@ -222,7 +195,7 @@ export function useDashboardChartsData(dossierId: string): DashboardChartsState 
 
     // Chart 3 — Répartition des charges par exercice
     const chargesBreakdown: ChargesBreakdownPoint[] = yearKeys.map((yk) => ({
-      exercice: sigData.yearLabels[yk],
+      exercice: fc.yearLabels[yk],
       achats: Math.round(fc.achatsConsommes[yk]),
       chargesExternes: Math.round(fc.chargesExternes[yk]),
       personnel: Math.round(fc.chargesPersonnel.total[yk]),
@@ -236,7 +209,7 @@ export function useDashboardChartsData(dossierId: string): DashboardChartsState 
       const caVal    = Math.round(ca[yk]);
       const seuilVal = Math.round(seuilEco[yk]);
       return {
-        exercice: sigData.yearLabels[yk],
+        exercice: fc.yearLabels[yk],
         caRealise: caVal,
         seuilEco: seuilVal,
         excedent: caVal - seuilVal,
@@ -244,7 +217,7 @@ export function useDashboardChartsData(dossierId: string): DashboardChartsState 
     });
 
     return { tresorerie, annuel, monthly, chargesBreakdown, seuil, planFinancement };
-  }, [fc, sigData, tresoData, seuilData, planFinancement]);
+  }, [fc, tresoData, seuilData, planFinancement]);
 
   return { data: result, status, error };
 }

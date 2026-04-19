@@ -4,13 +4,9 @@ import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
 import { buildRatiosRows } from "@/lib/finance/aggregations/ratios";
 import type { RatiosData } from "@/lib/finance/aggregations/ratios";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataState } from "@/lib/types/data-state";
 
-export interface RatiosDataState {
-  data: RatiosData | null;
-  status: ScenarioDataStatus;
-  error: string | null;
-}
+export type RatiosDataState = DataState<RatiosData>;
 
 export function useRatiosData(dossierId: string): RatiosDataState {
   const { data, fc, status, error } = useFinCalc(dossierId);

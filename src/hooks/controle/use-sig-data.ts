@@ -4,13 +4,9 @@ import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
 import { buildSigData } from "@/lib/finance/aggregations/sig";
 import type { SigData } from "@/lib/finance/aggregations/sig";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataState } from "@/lib/types/data-state";
 
-export interface SigDataState {
-  data: SigData | null;
-  status: ScenarioDataStatus;
-  error: string | null;
-}
+export type SigDataState = DataState<SigData>;
 
 export function useSigData(dossierId: string): SigDataState {
   const { data, fc, status, error } = useFinCalc(dossierId);

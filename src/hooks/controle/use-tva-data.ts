@@ -6,15 +6,11 @@ import { buildMonthLabels } from "@/lib/finance/calculs/monthly";
 import { buildTVARows } from "@/lib/finance/aggregations/tva";
 import type { VATData } from "@/lib/finance/aggregations/tva";
 import type { YearKey } from "@/lib/finance/utils";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataState } from "@/lib/types/data-state";
 
 export type { VATValue, VATRowStyle, VATRow, VATData } from "@/lib/finance/aggregations/tva";
 
-export interface TvaDataState {
-  data: VATData | null;
-  status: ScenarioDataStatus;
-  error: string | null;
-}
+export type TvaDataState = DataState<VATData>;
 
 export function useTvaData(dossierId: string): TvaDataState {
   const { data, fc, status, error } = useFinCalc(dossierId);

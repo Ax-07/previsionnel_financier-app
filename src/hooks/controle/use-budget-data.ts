@@ -2,19 +2,15 @@
 
 import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
-import { buildBudgetTree } from "@/app/actions/controle/budget/build-tree";
-import { buildBudgetMonthLabels } from "@/app/actions/controle/budget/helpers";
-import type { BudgetData } from "@/app/actions/controle/budget/types";
+import { buildBudgetTree } from "@/lib/finance/aggregations/budget/build-tree";
+import { buildBudgetMonthLabels } from "@/lib/finance/aggregations/budget/helpers";
+import type { BudgetData } from "@/lib/finance/aggregations/budget/types";
 import type { YearKey } from "@/lib/finance/utils";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataState } from "@/lib/types/data-state";
 
-export type { BudgetValue, BudgetNode, BudgetNodeStyle, BudgetData } from "@/app/actions/controle/budget/types";
+export type { BudgetValue, BudgetNode, BudgetNodeStyle, BudgetData } from "@/lib/finance/aggregations/budget/types";
 
-export interface BudgetDataState {
-  data: BudgetData | null;
-  status: ScenarioDataStatus;
-  error: string | null;
-}
+export type BudgetDataState = DataState<BudgetData>;
 
 export function useBudgetData(dossierId: string): BudgetDataState {
   const { data, fc, status, error } = useFinCalc(dossierId);

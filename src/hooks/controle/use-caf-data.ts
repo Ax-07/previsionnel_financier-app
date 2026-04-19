@@ -4,13 +4,9 @@ import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
 import { buildCafRows } from "@/lib/finance/aggregations/caf";
 import type { CafData } from "@/lib/finance/aggregations/caf";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataState } from "@/lib/types/data-state";
 
-export interface CafDataState {
-  data: CafData | null;
-  status: ScenarioDataStatus;
-  error: string | null;
-}
+export type CafDataState = DataState<CafData>;
 
 export function useCafData(dossierId: string): CafDataState {
   const { data, fc, status, error } = useFinCalc(dossierId);

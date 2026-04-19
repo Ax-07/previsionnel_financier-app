@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
 import { buildPlanFinancementRows } from "@/lib/finance/aggregations/plan-financement";
 import type { PfData, PfRow } from "@/lib/finance/aggregations/plan-financement";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataState } from "@/lib/types/data-state";
 
 export interface PfChartPoint {
   periode: string;
@@ -24,11 +24,8 @@ export interface PfChartPoint {
   solde: number;
 }
 
-export interface PlanFinancementDataState {
-  data: PfData | null;
+export interface PlanFinancementDataState extends DataState<PfData> {
   chartPoints: PfChartPoint[];
-  status: ScenarioDataStatus;
-  error: string | null;
 }
 
 // ── Helper ────────────────────────────────────────────────────────────────

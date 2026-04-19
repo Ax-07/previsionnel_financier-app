@@ -4,13 +4,9 @@ import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
 import { buildCompteResultatRows } from "@/lib/finance/aggregations/compte-resultat";
 import type { CompteResultatData } from "@/lib/finance/aggregations/compte-resultat";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataState } from "@/lib/types/data-state";
 
-export interface CompteResultatDataState {
-  data: CompteResultatData | null;
-  status: ScenarioDataStatus;
-  error: string | null;
-}
+export type CompteResultatDataState = DataState<CompteResultatData>;
 
 export function useCompteResultatData(dossierId: string): CompteResultatDataState {
   const { data, fc, status, error } = useFinCalc(dossierId);

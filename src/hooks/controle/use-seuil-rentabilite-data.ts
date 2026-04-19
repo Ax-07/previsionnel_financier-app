@@ -4,13 +4,9 @@ import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
 import { calcSeuil } from "@/lib/finance/calculs/seuil";
 import type { BreakEvenData } from "@/lib/finance/calculs/seuil";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataState } from "@/lib/types/data-state";
 
-export interface SeuilRentabiliteDataState {
-  data: BreakEvenData | null;
-  status: ScenarioDataStatus;
-  error: string | null;
-}
+export type SeuilRentabiliteDataState = DataState<BreakEvenData>;
 
 export function useSeuilRentabiliteData(dossierId: string): SeuilRentabiliteDataState {
   const { data, fc, status, error } = useFinCalc(dossierId);

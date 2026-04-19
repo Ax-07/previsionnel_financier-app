@@ -14,15 +14,11 @@ import { calcDecaissements } from "@/lib/finance/calculs/decaissements";
 import { buildTresorerieRows } from "@/lib/finance/aggregations/tresorerie";
 import type { TresorerieData } from "@/lib/finance/tresorerie-types";
 import type { YearKey } from "@/lib/finance/utils";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataState } from "@/lib/types/data-state";
 
 export type { TresorerieValue, TresorerieRowStyle, TresorerieRow, TresorerieData } from "@/lib/finance/tresorerie-types";
 
-export interface TresorerieDataState {
-  data: TresorerieData | null;
-  status: ScenarioDataStatus;
-  error: string | null;
-}
+export type TresorerieDataState = DataState<TresorerieData>;
 
 export function useTresorerieData(
   dossierId: string,

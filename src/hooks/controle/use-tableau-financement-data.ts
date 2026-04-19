@@ -4,13 +4,9 @@ import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
 import { buildTableauFinancementRows } from "@/lib/finance/aggregations/tableau-financement";
 import type { TfData } from "@/lib/finance/aggregations/tableau-financement";
-import type { ScenarioDataStatus } from "@/stores/scenario-data-store";
+import type { DataState } from "@/lib/types/data-state";
 
-export interface TableauFinancementDataState {
-  data: TfData | null;
-  status: ScenarioDataStatus;
-  error: string | null;
-}
+export type TableauFinancementDataState = DataState<TfData>;
 
 export function useTableauFinancementData(dossierId: string): TableauFinancementDataState {
   const { data, fc, status, error } = useFinCalc(dossierId);
