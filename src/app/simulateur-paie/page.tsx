@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSimulateurStore } from "@/stores/simulateur-paie-store";
@@ -12,6 +12,7 @@ import { BulletinDisplay } from "@/components/simulateur/BulletinDisplay";
 import { FinancialSummary } from "@/components/simulateur/FinancialSummary";
 import { AnnualProjection } from "@/components/simulateur/AnnualProjection";
 import { ScenariosManager } from "@/components/simulateur/ScenariosManager";
+import { ContratResultats } from "@/components/simulateur/ContratResultats";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,10 +23,14 @@ import {
   DownloadIcon,
   PrinterIcon,
   BookmarkPlusIcon,
+  CalendarDaysIcon,
+  FileTextIcon,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import type { SimulationInput } from "@/lib/paie/types";
+import type { SimulationContratResultat } from "@/lib/paie/contrat/types";
+import { simulateContrat } from "@/lib/paie/contrat/simulate-contrat";
 import { downloadBulletinJSON } from "@/lib/paie/export/json";
 import { downloadBulletinCSV } from "@/lib/paie/export/csv";
 import { downloadBulletinPdf } from "@/lib/paie/export/pdf";
@@ -126,6 +131,41 @@ function SimulateurPageContent() {
     toast.success("Scénario sauvegardé.");
   }
 
+  // ── Mode page : bulletin unique vs période contrat ────────────────────
+  const [modeSimulateur, setModeSimulateur] = useState<"bulletin" | "contrat">("bulletin");
+
+  // ── Simulation contrat (multi-mois) ────────────────────────────────────
+  const [contratResultat, setContratResultat] = useState<SimulationContratResultat | null>(null);
+  const [contratLoading, setContratLoading] = useState(false);
+  const [contratError, setContratError] = useState<string | null>(null);
+
+  const handleSimulateContrat = useCallback(
+    (dateDebut: string, dateFin: string, joursCPPris: number) => {
+      if (!input) {
+        setContratError("Veuillez d'abord configurer les paramètres du salarié dans le formulaire.");
+        return;
+      }
+      setContratLoading(true);
+      setContratError(null);
+      try {
+        const result = simulateContrat({
+          baseInput: input,
+          periode: { dateDebut, dateFin },
+          joursCPPris,
+        });
+        setContratResultat(result);
+      } catch (err) {
+        setContratError(
+          err instanceof Error ? err.message : "Erreur lors de la simulation de la période.",
+        );
+        setContratResultat(null);
+      } finally {
+        setContratLoading(false);
+      }
+    },
+    [input],
+  );
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
 
@@ -168,6 +208,25 @@ function SimulateurPageContent() {
 
       <Separator className="mb-6" />
 
+      {/* ── Sélecteur de mode : bulletin unique vs période contrat ── */}
+      <div className="mb-6">
+        <Tabs
+          value={modeSimulateur}
+          onValueChange={(v) => setModeSimulateur(v as "bulletin" | "contrat")}
+        >
+          <TabsList>
+            <TabsTrigger value="bulletin" className="gap-1.5">
+              <FileTextIcon className="size-4" />
+              Bulletin unique
+            </TabsTrigger>
+            <TabsTrigger value="contrat" className="gap-1.5">
+              <CalendarDaysIcon className="size-4" />
+              Période de contrat
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
       {/* ── Disposition principale ── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_1fr]">
 
@@ -176,123 +235,173 @@ function SimulateurPageContent() {
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Paramètres
           </h2>
-          <SimulateurForm initialInput={initialInput} />
+          <SimulateurForm
+            initialInput={initialInput}
+            modeSimulateur={modeSimulateur}
+            onSimulateContrat={handleSimulateContrat}
+            contratLoading={contratLoading}
+            contratError={contratError}
+          />
         </div>
 
         {/* ── Colonne droite : résultats ── */}
         <div className="flex flex-col gap-4">
 
-          {/* Erreur */}
-          {erreur && (
-            <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              <AlertCircleIcon className="size-4 mt-0.5 shrink-0" />
-              <span>{erreur}</span>
-            </div>
-          )}
-
-          {/* Calcul en cours */}
-          {calcEnCours && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <LoaderCircleIcon className="size-4 animate-spin" />
-              Calcul en cours…
-            </div>
-          )}
-
-          {/* Pas encore de résultat */}
-          {!resultat && !erreur && !calcEnCours && (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center text-muted-foreground">
-              <CalculatorIcon className="size-12 mb-3 opacity-30" />
-              <p className="text-sm font-medium">Renseignez les paramètres</p>
-              <p className="text-xs mt-1">{"Les résultats s'affichent ici automatiquement"}</p>
-            </div>
-          )}
-
-          {/* Résultat */}
-          {resultat && (
-            <Tabs defaultValue="bulletin" className="w-full">
-              <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
-                <TabsList>
-                  <TabsTrigger value="bulletin">Bulletin</TabsTrigger>
-                  <TabsTrigger value="synthese">Synthèse</TabsTrigger>
-                  <TabsTrigger value="annuel">Coût annuel</TabsTrigger>
-                  <TabsTrigger value="scenarios">Scénarios</TabsTrigger>
-                </TabsList>
-
-                {/* Actions export */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs"
-                    onClick={handleSaveScenario}
-                    title="Sauvegarder comme scénario comparatif"
-                  >
-                    <BookmarkPlusIcon className="mr-1.5 size-3.5" />
-                    Scénario
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs"
-                    onClick={handleExportJson}
-                    title="Télécharger le bulletin en JSON"
-                  >
-                    <DownloadIcon className="mr-1.5 size-3.5" />
-                    JSON
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs"
-                    onClick={handleExportCsv}
-                    title="Télécharger les cotisations en CSV"
-                  >
-                    <DownloadIcon className="mr-1.5 size-3.5" />
-                    CSV
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs"
-                    onClick={handleExportPdf}
-                    disabled={pdfLoading}
-                    title="Imprimer / Exporter en PDF"
-                  >
-                    <PrinterIcon className="mr-1.5 size-3.5" />
-                    {pdfLoading ? "Génération…" : "PDF"}
-                  </Button>
+          {/* ═══════════════════════════════════════════════════════════════════
+              Mode Bulletin unique
+              ═══════════════════════════════════════════════════════════════════ */}
+          {modeSimulateur === "bulletin" && (
+            <>
+              {/* Erreur */}
+              {erreur && (
+                <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  <AlertCircleIcon className="size-4 mt-0.5 shrink-0" />
+                  <span>{erreur}</span>
                 </div>
-              </div>
+              )}
 
-              {/* Bulletin */}
-              <TabsContent value="bulletin">
-                <div className="rounded-xl border bg-card p-4">
-                  <BulletinDisplay resultat={resultat} input={input!} />
+              {/* Calcul en cours */}
+              {calcEnCours && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <LoaderCircleIcon className="size-4 animate-spin" />
+                  Calcul en cours…
                 </div>
-              </TabsContent>
+              )}
 
-              {/* Synthèse */}
-              <TabsContent value="synthese">
+              {/* Pas encore de résultat */}
+              {!resultat && !erreur && !calcEnCours && (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center text-muted-foreground">
+                  <CalculatorIcon className="size-12 mb-3 opacity-30" />
+                  <p className="text-sm font-medium">Renseignez les paramètres</p>
+                  <p className="text-xs mt-1">{"Les résultats s'affichent ici automatiquement"}</p>
+                </div>
+              )}
+
+              {/* Résultat */}
+              {resultat && (
+                <Tabs defaultValue="bulletin" className="w-full">
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
+                    <TabsList>
+                      <TabsTrigger value="bulletin">Bulletin</TabsTrigger>
+                      <TabsTrigger value="synthese">Synthèse</TabsTrigger>
+                      <TabsTrigger value="annuel">Coût annuel</TabsTrigger>
+                      <TabsTrigger value="scenarios">Scénarios</TabsTrigger>
+                    </TabsList>
+
+                    {/* Actions export */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={handleSaveScenario}
+                        title="Sauvegarder comme scénario comparatif"
+                      >
+                        <BookmarkPlusIcon className="mr-1.5 size-3.5" />
+                        Scénario
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={handleExportJson}
+                        title="Télécharger le bulletin en JSON"
+                      >
+                        <DownloadIcon className="mr-1.5 size-3.5" />
+                        JSON
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={handleExportCsv}
+                        title="Télécharger les cotisations en CSV"
+                      >
+                        <DownloadIcon className="mr-1.5 size-3.5" />
+                        CSV
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={handleExportPdf}
+                        disabled={pdfLoading}
+                        title="Imprimer / Exporter en PDF"
+                      >
+                        <PrinterIcon className="mr-1.5 size-3.5" />
+                        {pdfLoading ? "Génération…" : "PDF"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Bulletin */}
+                  <TabsContent value="bulletin">
+                    <div className="rounded-xl border bg-card p-4">
+                      <BulletinDisplay resultat={resultat} input={input!} />
+                    </div>
+                  </TabsContent>
+
+                  {/* Synthèse */}
+                  <TabsContent value="synthese">
+                    <div className="rounded-xl border bg-card p-4">
+                      <FinancialSummary
+                        resultat={resultat}
+                        onInjectPrevi={isFromPrevi ? handleInjectPrevi : undefined}
+                      />
+                    </div>
+                  </TabsContent>
+
+                  {/* Projection annuelle */}
+                  <TabsContent value="annuel">
+                    <AnnualProjection resultat={resultat} />
+                  </TabsContent>
+
+                  {/* Scénarios */}
+                  <TabsContent value="scenarios">
+                    <div className="rounded-xl border bg-card p-4">
+                      <ScenariosManager />
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              )}
+            </>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════════════════
+              Mode Période de contrat
+              ═══════════════════════════════════════════════════════════════════ */}
+          {modeSimulateur === "contrat" && (
+            <>
+              {/* Message d'aide */}
+              {!contratResultat && !contratError && !contratLoading && (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center text-muted-foreground">
+                  <CalendarDaysIcon className="size-12 mb-3 opacity-30" />
+                  <p className="text-sm font-medium">Simulation multi-mois</p>
+                  <p className="text-xs mt-1 max-w-sm">
+                    Configurez les paramètres du salarié, puis définissez la période de contrat
+                    pour générer les fiches de paie de chaque mois avec le suivi des congés payés.
+                  </p>
+                </div>
+              )}
+
+              {/* Chargement */}
+              {contratLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <LoaderCircleIcon className="size-4 animate-spin" />
+                  Génération des bulletins en cours…
+                </div>
+              )}
+
+              {/* Résultats contrat */}
+              {contratResultat && !contratLoading && (
                 <div className="rounded-xl border bg-card p-4">
-                  <FinancialSummary
-                    resultat={resultat}
-                    onInjectPrevi={isFromPrevi ? handleInjectPrevi : undefined}
+                  <ContratResultats
+                    resultat={contratResultat}
+                    estCDD={input?.salarié.typeContrat === "CDD"}
                   />
                 </div>
-              </TabsContent>
-
-              {/* Projection annuelle */}
-              <TabsContent value="annuel">
-                <AnnualProjection resultat={resultat} />
-              </TabsContent>
-
-              {/* Scénarios */}
-              <TabsContent value="scenarios">
-                <div className="rounded-xl border bg-card p-4">
-                  <ScenariosManager />
-                </div>
-              </TabsContent>
-            </Tabs>
+              )}
+            </>
           )}
         </div>
       </div>
