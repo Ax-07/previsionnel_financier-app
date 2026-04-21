@@ -13,7 +13,7 @@ export function useSigData(dossierId: string): SigDataState {
 
   const result = useMemo<SigData | null>(() => {
     if (!data || !fc) return null;
-    return buildSigData(data, fc, data.isIS);
+    return buildSigData(fc.filteredData, fc, fc.filteredData.isIS);
   }, [data, fc]);
 
   return { data: result, status, error };

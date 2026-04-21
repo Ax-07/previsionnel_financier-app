@@ -13,7 +13,7 @@ export function useTableauFinancementData(dossierId: string): TableauFinancement
 
   const result = useMemo<TfData | null>(() => {
     if (!data || !fc) return null;
-    return buildTableauFinancementRows(data, fc);
+    return buildTableauFinancementRows(fc.filteredData, fc);
   }, [data, fc]);
 
   return { data: result, status, error };

@@ -29,7 +29,7 @@ export function useTresorerieData(
   const result = useMemo<TresorerieData | null>(() => {
     if (!data || !fc) return null;
 
-    const { dateDemarrage, scenario } = data;
+    const { dateDemarrage, scenario } = fc.filteredData;
     const effectiveMoisPaiement =
       moisPaiementSalairesOverride ?? scenario.parametres?.moisPaiementSalaires ?? 1;
 
@@ -57,8 +57,8 @@ export function useTresorerieData(
     const delaiClients = scenario.parametres?.delaiPaiementClients ?? 30;
     const ctx = buildTemporelCtx(dateDemarrage, isFranchise, delaiClients);
 
-    const enc = calcEncaissements(data, ctx);
-    const dec = calcDecaissements(data, ctx, effectiveMoisPaiement, fc.isParAnnee, fc.tva);
+    const enc = calcEncaissements(fc.filteredData, ctx);
+    const dec = calcDecaissements(fc.filteredData, ctx, effectiveMoisPaiement, fc.isParAnnee, fc.tva);
 
     const variation = {
       y1: subSeries(enc.totalEnc.y1, dec.totalDec.y1),
@@ -81,7 +81,7 @@ export function useTresorerieData(
       y3: y3Sol.soldeFinal,
     };
 
-    const decAchatsRaw = calcAchatsRaw(data.activites, isFranchise);
+    const decAchatsRaw = calcAchatsRaw(fc.filteredData.activites, isFranchise);
     const encoursFournisseurs = calcEncoursFournisseurs(decAchatsRaw, dec.decAchats);
 
     const rows = buildTresorerieRows({

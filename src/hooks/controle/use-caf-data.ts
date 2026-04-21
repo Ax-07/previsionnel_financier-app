@@ -13,7 +13,7 @@ export function useCafData(dossierId: string): CafDataState {
 
   const result = useMemo<CafData | null>(() => {
     if (!data || !fc) return null;
-    return buildCafRows(data, fc);
+    return buildCafRows(fc.filteredData, fc);
   }, [data, fc]);
 
   return { data: result, status, error };

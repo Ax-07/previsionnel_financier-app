@@ -26,7 +26,7 @@ export function useBudgetData(dossierId: string): BudgetDataState {
       y3: buildBudgetMonthLabels(mc.moisDebut, mc.anneeDebut + 2),
     };
 
-    const nodes = buildBudgetTree(data, mc);
+    const nodes = buildBudgetTree(fc.filteredData, mc);
 
     return { yearLabels: fc.yearLabels, monthLabels, nodes };
   }, [data, fc]);

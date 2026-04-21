@@ -13,7 +13,7 @@ export function useBilanData(dossierId: string): BilanDataState {
 
   const result = useMemo<BilanData | null>(() => {
     if (!data || !fc) return null;
-    return buildBilanRows(data, fc);
+    return buildBilanRows(fc.filteredData, fc);
   }, [data, fc]);
 
   return { data: result, status, error };

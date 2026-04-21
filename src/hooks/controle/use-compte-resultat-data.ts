@@ -13,7 +13,7 @@ export function useCompteResultatData(dossierId: string): CompteResultatDataStat
 
   const result = useMemo<CompteResultatData | null>(() => {
     if (!data || !fc) return null;
-    return buildCompteResultatRows(data, fc, data.isIS);
+    return buildCompteResultatRows(fc.filteredData, fc, fc.filteredData.isIS);
   }, [data, fc]);
 
   return { data: result, status, error };

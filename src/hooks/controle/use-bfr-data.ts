@@ -13,7 +13,7 @@ export function useBfrData(dossierId: string): BfrDataState {
 
   const result = useMemo<BfrData | null>(() => {
     if (!data || !fc) return null;
-    return buildBfrRows(data, fc);
+    return buildBfrRows(fc.filteredData, fc);
   }, [data, fc]);
 
   return { data: result, status, error };

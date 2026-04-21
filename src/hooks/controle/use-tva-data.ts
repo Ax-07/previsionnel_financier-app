@@ -18,7 +18,7 @@ export function useTvaData(dossierId: string): TvaDataState {
   const result = useMemo<VATData | null>(() => {
     if (!data || !fc) return null;
 
-    const { dateDemarrage } = data;
+    const { dateDemarrage } = fc.filteredData;
     const anneeDebut = dateDemarrage.getFullYear();
     const moisDebut = dateDemarrage.getMonth();
 
@@ -43,7 +43,7 @@ export function useTvaData(dossierId: string): TvaDataState {
       return { yearLabels, monthLabels, rows: [], periodicite: "mensuel", isFranchise: true };
     }
 
-    const rows = buildTVARows(data, fc);
+    const rows = buildTVARows(fc.filteredData, fc);
 
     return { yearLabels, monthLabels, rows, periodicite, isFranchise };
   }, [data, fc]);

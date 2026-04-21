@@ -48,7 +48,7 @@ export function usePlanFinancementData(dossierId: string): PlanFinancementDataSt
 
   const pfData = useMemo<PfData | null>(() => {
     if (!data || !fc) return null;
-    return buildPlanFinancementRows(data, fc);
+    return buildPlanFinancementRows(fc.filteredData, fc);
   }, [data, fc]);
 
   const chartPoints = useMemo<PfChartPoint[]>(() => {

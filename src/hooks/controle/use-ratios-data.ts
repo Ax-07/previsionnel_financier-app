@@ -13,7 +13,7 @@ export function useRatiosData(dossierId: string): RatiosDataState {
 
   const result = useMemo<RatiosData | null>(() => {
     if (!data || !fc) return null;
-    return buildRatiosRows(data, fc);
+    return buildRatiosRows(fc.filteredData, fc);
   }, [data, fc]);
 
   return { data: result, status, error };

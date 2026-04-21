@@ -13,7 +13,7 @@ export function useSeuilRentabiliteData(dossierId: string): SeuilRentabiliteData
 
   const result = useMemo<BreakEvenData | null>(() => {
     if (!data || !fc) return null;
-    return calcSeuil(data, fc);
+    return calcSeuil(fc.filteredData, fc);
   }, [data, fc]);
 
   return { data: result, status, error };
