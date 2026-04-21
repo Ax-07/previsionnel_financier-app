@@ -132,7 +132,7 @@ function emptyFlux(type: DiversFluxDateRow["type"]): DiversFluxDateRow {
   return {
     libelle: "",
     actif: true,
-    hypothese: "",
+    hypothese: "COMMUNE",
     type,
     dateN: "",
     montantN: 0,
@@ -148,7 +148,7 @@ function emptyOperationCapital(type: DiversOperationCapitalRow["type"]): DiversO
   return {
     libelle: "",
     actif: true,
-    hypothese: "",
+    hypothese: "COMMUNE",
     type,
     date: "",
     montantN: 0,
@@ -162,7 +162,7 @@ function emptyPret(): DiversPretRow {
   return {
     libelle: "",
     actif: true,
-    hypothese: "",
+    hypothese: "COMMUNE",
     dateDebut: "",
     capital: 0,
     taux: 0,

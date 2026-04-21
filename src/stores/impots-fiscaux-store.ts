@@ -93,6 +93,7 @@ export const useImpotsFiscauxStore = create<ImpotsFiscauxState>()(
           const newRow: AjustementFiscalRow = {
             type: "REINTEGRATION",
             actif: true,
+            hypothese: "COMMUNE",
             libelle: "",
             montantN: 0,
             montantN1: 0,
@@ -185,6 +186,7 @@ export const useImpotsFiscauxStore = create<ImpotsFiscauxState>()(
           const newRow: AjustementFiscalRow = {
             type: "DEDUCTION",
             actif: true,
+            hypothese: "COMMUNE",
             libelle: "",
             montantN: 0,
             montantN1: 0,

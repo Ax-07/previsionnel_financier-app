@@ -91,6 +91,7 @@ function emptyDatee(categorie: "GESTION_COURANTE" | "FINANCIERE" | "EXCEPTIONNEL
   return {
     libelle: "",
     actif: true,
+    hypothese: "COMMUNE",
     categorie,
     dateN: "",
     montantN: 0,
