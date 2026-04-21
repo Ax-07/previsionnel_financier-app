@@ -31,8 +31,32 @@ import {
   PalmtreeIcon,
   EuroIcon,
   BriefcaseIcon,
+  DatabaseIcon,
 } from "lucide-react";
 import type { SimulationContratResultat, BulletinMensuel } from "@/lib/paie/contrat/types";
+import type { DetailMensuelExercice } from "@/lib/schemas/personnel";
+import { buildDetailFromContrat } from "@/lib/paie/contrat/build-detail-from-contrat";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Données injectées depuis la simulation de période vers le prévisionnel */
+export interface InjectDetailData {
+  detailMensuelN?: DetailMensuelExercice;
+  detailMensuelN1?: DetailMensuelExercice;
+  detailMensuelN2?: DetailMensuelExercice;
+  /** Total brut exercice N = Σ(effectif[i] × brutIndividuel[i]) */
+  montantN: number;
+  /** Total brut exercice N+1 */
+  montantN1: number;
+  /** Total brut exercice N+2 */
+  montantN2: number;
+  /** Taux patronal moyen sur la période (%) */
+  tauxCotPat: number;
+  /** Taux salarial moyen sur la période (%) */
+  tauxCotSal: number;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Props
@@ -41,6 +65,10 @@ import type { SimulationContratResultat, BulletinMensuel } from "@/lib/paie/cont
 interface ContratResultatsProps {
   resultat: SimulationContratResultat;
   estCDD: boolean;
+  /** Date de démarrage du dossier — nécessaire pour l'injection du détail mensuel */
+  dateDemarrage?: Date;
+  /** Callback d'injection du détail mensuel dans le prévisionnel */
+  onInjectDetail?: (data: InjectDetailData) => void;
 }
 
 import { formatEur as eur } from "@/lib/format";
@@ -56,9 +84,20 @@ const pct = (v: number) =>
 // Composant principal
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function ContratResultats({ resultat, estCDD }: ContratResultatsProps) {
+export function ContratResultats({ resultat, estCDD, dateDemarrage, onInjectDetail }: ContratResultatsProps) {
   const { totaux, bulletins, congesPayesFinal, periode } = resultat;
   const [bulletinOuvert, setBulletinOuvert] = useState<string | null>(null);
+
+  function handleInjectDetail() {
+    if (!dateDemarrage || !onInjectDetail) return;
+    const detail = buildDetailFromContrat(bulletins, dateDemarrage);
+    const { brutTotal, cotisationsPatronalesTotal, cotisationsSalarialesTotal } = totaux;
+    const tauxCotPat =
+      brutTotal > 0 ? parseFloat((cotisationsPatronalesTotal / brutTotal * 100).toFixed(2)) : 0;
+    const tauxCotSal =
+      brutTotal > 0 ? parseFloat((cotisationsSalarialesTotal / brutTotal * 100).toFixed(2)) : 0;
+    onInjectDetail({ ...detail, tauxCotPat, tauxCotSal });
+  }
 
   if (bulletins.length === 0) {
     return (
@@ -150,6 +189,33 @@ export function ContratResultats({ resultat, estCDD }: ContratResultatsProps) {
             Pour les {congesPayesFinal.soldeCP} jours acquis non pris
             (art. L1243-8 C.trav.) — incluse dans le brut du dernier mois et soumise à cotisations.
           </p>
+        </div>
+      )}
+
+      {/* ── Bouton injection détail mensuel ── */}
+      {onInjectDetail && dateDemarrage && (
+        <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2.5 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="font-semibold text-primary text-sm">Injection dans le prévisionnel</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Le brut réel de chaque mois sera reporté dans le détail mensuel du salarié.
+                {totaux.nbMois > 0 && (
+                  <> Total brut : <strong>{eur(totaux.brutTotal)}</strong>.</>
+                )}
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={handleInjectDetail}
+              className="shrink-0 border-primary/40 text-xs font-semibold text-primary hover:bg-primary/10"
+            >
+              <DatabaseIcon className="mr-1.5 size-3.5" />
+              Injecter le détail mensuel
+            </Button>
+          </div>
         </div>
       )}
 

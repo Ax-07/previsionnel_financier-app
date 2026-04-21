@@ -12,10 +12,17 @@ import { formatEur, formatPct } from "@/lib/format";
 // FinancialSummary
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Données injectées depuis le simulateur vers le prévisionnel (bulletin unique) */
+export interface InjectPreviData {
+  tauxCotPat: number;
+  tauxCotSal: number;
+  coutEmployeurMensuel: number;
+}
+
 interface FinancialSummaryProps {
   resultat: SimulationResultat;
   /** Afficher le bouton "Utiliser dans le prévisionnel" */
-  onInjectPrevi?: (tauxCotPat: number) => void;
+  onInjectPrevi?: (data: InjectPreviData) => void;
 }
 
 export function FinancialSummary({ resultat, onInjectPrevi }: FinancialSummaryProps) {
@@ -131,7 +138,13 @@ export function FinancialSummary({ resultat, onInjectPrevi }: FinancialSummaryPr
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => onInjectPrevi(parseFloat(tauxPatPct.toFixed(2)))}
+            onClick={() =>
+              onInjectPrevi({
+                tauxCotPat: parseFloat(tauxPatPct.toFixed(2)),
+                tauxCotSal: parseFloat((tauxSal * 100).toFixed(2)),
+                coutEmployeurMensuel: resultat.coutEmployeur,
+              })
+            }
             className="mt-2 w-full border-primary/40 text-xs font-semibold text-primary hover:bg-primary/10"
           >
             Injecter dans le prévisionnel
