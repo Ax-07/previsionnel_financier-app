@@ -7,7 +7,7 @@ model DiversFluxDate {
   id         String          @id @default(cuid())
   actif      Boolean         @default(true)
   libelle    String
-  hypothese  String?
+  hypothese  HypotheseType   @default(COMMUNE)
   type       TypeDiversFlux
   dateN      String?
   montantN   Decimal         @default(0) @db.Decimal(15, 2)
@@ -29,7 +29,7 @@ model DiversOperationCapital {
   id         String                  @id @default(cuid())
   actif      Boolean                 @default(true)
   libelle    String
-  hypothese  String?
+  hypothese  HypotheseType           @default(COMMUNE)
   type       TypeOperationCapital
   /// date unique utilisée pour la réduction de capital
   date       String?
@@ -50,7 +50,7 @@ model DiversPret {
   id          String                  @id @default(cuid())
   actif       Boolean                 @default(true)
   libelle     String
-  hypothese   String?
+  hypothese   HypotheseType           @default(COMMUNE)
   dateDebut   String?
   capital     Decimal                 @default(0) @db.Decimal(15, 2)
   taux        Decimal                 @default(0) @db.Decimal(7, 4)

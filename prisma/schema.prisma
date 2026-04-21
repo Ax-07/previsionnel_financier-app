@@ -6,3 +6,10 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum HypotheseType {
+  COMMUNE
+  PESSIMISTE
+  REALISTE
+  OPTIMISTE
+}

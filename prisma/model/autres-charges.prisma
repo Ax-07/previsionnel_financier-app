@@ -8,6 +8,7 @@ model AutreChargeProvision {
   actif      Boolean  @default(true)
   libelle    String
   nature     String   @default("")
+  hypothese  HypotheseType @default(COMMUNE)
   montantN   Decimal  @default(0) @db.Decimal(15, 2)
   montantN1  Decimal  @default(0) @db.Decimal(15, 2)
   montantN2  Decimal  @default(0) @db.Decimal(15, 2)
@@ -26,6 +27,7 @@ model AutreChargeDatee {
   actif      Boolean                   @default(true)
   libelle    String
   categorie  CategorieAutreChargeDatee @default(GESTION_COURANTE)
+  hypothese  HypotheseType             @default(COMMUNE)
   dateN      String?
   montantN   Decimal                   @default(0) @db.Decimal(15, 2)
   dateN1     String?
@@ -50,6 +52,7 @@ model AutreChargeBilan {
   libelle    String
   type       TypeAutreChargeBilan @default(CHARGE_CONSTATEE_AVANCE)
   nature     String               @default("")
+  hypothese  HypotheseType        @default(COMMUNE)
   montantN   Decimal              @default(0) @db.Decimal(15, 2)
   montantN1  Decimal              @default(0) @db.Decimal(15, 2)
   montantN2  Decimal              @default(0) @db.Decimal(15, 2)

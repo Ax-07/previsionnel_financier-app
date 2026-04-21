@@ -14,7 +14,7 @@ model Activite {
   actif                 Boolean                @default(true)
   evolutionN1           Decimal                @default(0) @db.Decimal(8, 4)
   evolutionN2           Decimal                @default(0) @db.Decimal(8, 4)
-  hypothese             String                 @default("normal")
+  hypothese             HypotheseType          @default(COMMUNE)
   montantN              Decimal                @default(0) @db.Decimal(15, 2)
   montantN1             Decimal                @default(0) @db.Decimal(15, 2)
   montantN2             Decimal                @default(0) @db.Decimal(15, 2)
@@ -87,6 +87,7 @@ model AutreProduit {
   montant     Decimal  @db.Decimal(15, 2)
   annee       Int
   description String?
+  hypothese   HypotheseType @default(COMMUNE)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   scenarioId  String
@@ -98,7 +99,7 @@ model AutreProduit {
 model ActiviteCommission {
   id                    String   @id @default(cuid())
   libelle               String
-  hypothese             String   @default("normal")
+  hypothese             HypotheseType @default(COMMUNE)
   montantN              Decimal  @default(0) @db.Decimal(15, 2)
   evolutionN1           Decimal  @default(0) @db.Decimal(8, 4)
   montantN1             Decimal  @default(0) @db.Decimal(15, 2)
@@ -123,7 +124,7 @@ model ProductionImmobilisee {
   id            String   @id @default(cuid())
   libelle       String
   nature        String   @default("CORPOREL")
-  hypothese     String   @default("normal")
+  hypothese     HypotheseType @default(COMMUNE)
   date          String   @default("")
   montant       Decimal  @default(0) @db.Decimal(15, 2)
   amortissement String   @default("LINEAIRE")
@@ -142,7 +143,7 @@ model ProductionImmobilisee {
 model SubventionExploitation {
   id         String   @id @default(cuid())
   libelle    String
-  hypothese  String   @default("normal")
+  hypothese  HypotheseType @default(COMMUNE)
   dateN      String?
   montantN   Decimal? @db.Decimal(15, 2)
   dateN1     String?

@@ -7,6 +7,7 @@ model LigneCotisationTNS {
   libelle    String
   actif      Boolean  @default(true)
   calcAuto   Boolean  @default(false)
+  hypothese  HypotheseType @default(COMMUNE)
   montantN   Decimal  @default(0) @db.Decimal(15, 2)
   montantN1  Decimal  @default(0) @db.Decimal(15, 2)
   montantN2  Decimal  @default(0) @db.Decimal(15, 2)
@@ -27,7 +28,7 @@ model LigneTaxeSalaire {
   id         String   @id @default(cuid())
   libelle    String
   actif      Boolean  @default(true)
-  hypothese  String   @default("normale")
+  hypothese  HypotheseType @default(COMMUNE)
   calcAuto   Boolean  @default(false)
   taux       Decimal  @default(0) @db.Decimal(8, 2)
   dateN      String?
@@ -54,7 +55,7 @@ model LigneChargePersonnel {
   id         String   @id @default(cuid())
   libelle    String
   actif      Boolean  @default(true)
-  hypothese  String   @default("normale")
+  hypothese  HypotheseType @default(COMMUNE)
   type       String   @default("AUTRE") // AUTRE | REMBOURSEMENT | PARTICIPATION
   calcAuto   Boolean  @default(false)
   dateN      String?
@@ -79,7 +80,7 @@ model LigneSalarie {
   id          String   @id @default(cuid())
   libelle     String
   actif       Boolean  @default(true)
-  hypothese   String   @default("normale")
+  hypothese   HypotheseType @default(COMMUNE)
   montantN    Decimal  @default(0) @db.Decimal(15, 2)
   evolutionN1 Decimal  @default(0) @db.Decimal(8, 2)
   montantN1   Decimal  @default(0) @db.Decimal(15, 2)
@@ -108,7 +109,7 @@ model LigneDirigeant {
   id                    String   @id @default(cuid())
   libelle               String
   actif                 Boolean  @default(true)
-  hypothese             String   @default("normale")
+  hypothese              HypotheseType @default(COMMUNE)
   montantN              Decimal  @default(0) @db.Decimal(15, 2)
   evolutionN1           Decimal  @default(0) @db.Decimal(8, 2)
   montantN1             Decimal  @default(0) @db.Decimal(15, 2)
@@ -144,6 +145,7 @@ model Salarie {
   tauxEvolutionAnnuel           Decimal       @default(0.00) @db.Decimal(5, 2)
   quotiteTravail                Decimal       @default(100.00) @db.Decimal(5, 2)
   description                   String?
+  hypothese                     HypotheseType @default(COMMUNE)
   ordre                         Int           @default(0)
   createdAt                     DateTime      @default(now())
   updatedAt                     DateTime      @updatedAt
@@ -182,6 +184,7 @@ model Dirigeant {
   tauxEvolutionAnnuel   Decimal         @default(0.00) @db.Decimal(5, 2)
   datePrisePoste        DateTime
   description           String?
+  hypothese             HypotheseType @default(COMMUNE)
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
   scenarioId            String

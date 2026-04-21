@@ -6,6 +6,7 @@ model Apport {
   dateApport   DateTime
   description  String?
   remboursable Boolean    @default(false)
+  hypothese    HypotheseType @default(COMMUNE)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   scenarioId   String
@@ -23,6 +24,7 @@ model Subvention {
   dateEncaissement DateTime?
   description      String?
   imposable        Boolean        @default(false)
+  hypothese         HypotheseType @default(COMMUNE)
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   scenarioId       String
@@ -45,6 +47,7 @@ model Emprunt {
   fraisDossier          Decimal               @default(0.00) @db.Decimal(15, 2)
   garanties             String?
   description           String?
+  hypothese              HypotheseType @default(COMMUNE)
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
   scenarioId            String

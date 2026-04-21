@@ -6,6 +6,7 @@ model AjustementFiscal {
   type      TypeAjustementFiscal
   actif     Boolean              @default(true)
   libelle   String               @default("")
+  hypothese  HypotheseType        @default(COMMUNE)
   montantN  Decimal              @default(0) @db.Decimal(15, 2)
   montantN1 Decimal              @default(0) @db.Decimal(15, 2)
   montantN2 Decimal              @default(0) @db.Decimal(15, 2)

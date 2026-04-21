@@ -10,6 +10,7 @@ model ChargeFixe {
   dateFin             DateTime?
   tauxIndexation      Decimal?          @default(0.00) @db.Decimal(5, 2)
   estChargeFinanciere Boolean           @default(false)
+  hypothese           HypotheseType     @default(COMMUNE)
   ordre               Int               @default(0)
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
@@ -31,6 +32,7 @@ model ChargeVariable {
   deductibleTVA   Boolean            @default(true)
   activiteId      String?
   tauxIndexation  Decimal?           @default(0.00) @db.Decimal(5, 2)
+  hypothese       HypotheseType      @default(COMMUNE)
   ordre           Int                @default(0)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
@@ -47,6 +49,7 @@ model AutreCharge {
   annee       Int
   tauxTVA     Decimal  @default(20.00) @db.Decimal(5, 2)
   description String?
+  hypothese   HypotheseType @default(COMMUNE)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   scenarioId  String
@@ -60,7 +63,7 @@ model ChargeExploitation {
   libelle        String
   categorie      CategorieChargeExploitation @default(FOURNITURE_CONSOMMABLE)
   actif          Boolean                     @default(true)
-  hypothese      String                      @default("normal")
+  hypothese      HypotheseType              @default(COMMUNE)
   montantN       Decimal                     @default(0) @db.Decimal(15, 2)
   evolutionN1    Decimal                     @default(0) @db.Decimal(6, 2)
   montantN1      Decimal                     @default(0) @db.Decimal(15, 2)
@@ -86,7 +89,7 @@ model ImpotTaxe {
   id               String   @id @default(cuid())
   libelle          String
   actif            Boolean  @default(true)
-  hypothese        String   @default("normal")
+  hypothese        HypotheseType @default(COMMUNE)
   dateN            String?
   montantN         Decimal  @default(0) @db.Decimal(15, 2)
   dateN1           String?

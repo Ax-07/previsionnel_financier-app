@@ -9,6 +9,7 @@ model UniteDOeuvre {
   typeUnite      TypeUniteOeuvre  @default(COUVERT)
   typeIndicateur TypeIndicateurUO @default(CHIFFRE_AFFAIRES)
   typeDuree      TypeDureeUO      @default(JOURS_AN)
+  hypothese      HypotheseType    @default(COMMUNE)
   ordre          Int              @default(0)
 
   // ── Exercice N ──────────────────────────────────────────────────────────────
