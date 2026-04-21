@@ -151,14 +151,14 @@ export type LigneCotisationTNSRow = z.infer<typeof ligneCotisationTNSSchema>;
 
 /** Lignes prédéfinies des cotisations TNS — libellés alignés avec calculerCotisations3AnsDepuisNet */
 export const COTISATIONS_TNS_DEFAUT: LigneCotisationTNSRow[] = [
-  { libelle: "Allocations familiales",                      actif: true, calcAuto: true,  montantN: 0, montantN1: 0, montantN2: 0 },
-  { libelle: "Maladie-maternité",                           actif: true, calcAuto: true,  montantN: 0, montantN1: 0, montantN2: 0 },
-  { libelle: "Indemnités journalières (IJ)",                actif: true, calcAuto: true,  montantN: 0, montantN1: 0, montantN2: 0 },
-  { libelle: "Retraite (base + compl) + invalidité-décès",  actif: true, calcAuto: true,  montantN: 0, montantN1: 0, montantN2: 0 },
-  { libelle: "CSG/CRDS",                                    actif: true, calcAuto: true,  montantN: 0, montantN1: 0, montantN2: 0 },
-  { libelle: "CFP (forfait PASS)",                          actif: true, calcAuto: true,  montantN: 0, montantN1: 0, montantN2: 0 },
-  { libelle: "Cotisations facultatives (Madelin)",          actif: true, calcAuto: false, montantN: 0, montantN1: 0, montantN2: 0 },
-  { libelle: "Cotisations facultatives (non Madelin)",      actif: true, calcAuto: false, montantN: 0, montantN1: 0, montantN2: 0 },
+  { libelle: "Allocations familiales",                      actif: true, hypothese: "COMMUNE", calcAuto: true,  montantN: 0, montantN1: 0, montantN2: 0 },
+  { libelle: "Maladie-maternité",                           actif: true, hypothese: "COMMUNE", calcAuto: true,  montantN: 0, montantN1: 0, montantN2: 0 },
+  { libelle: "Indemnités journalières (IJ)",                actif: true, hypothese: "COMMUNE", calcAuto: true,  montantN: 0, montantN1: 0, montantN2: 0 },
+  { libelle: "Retraite (base + compl) + invalidité-décès",  actif: true, hypothese: "COMMUNE", calcAuto: true,  montantN: 0, montantN1: 0, montantN2: 0 },
+  { libelle: "CSG/CRDS",                                    actif: true, hypothese: "COMMUNE", calcAuto: true,  montantN: 0, montantN1: 0, montantN2: 0 },
+  { libelle: "CFP (forfait PASS)",                          actif: true, hypothese: "COMMUNE", calcAuto: true,  montantN: 0, montantN1: 0, montantN2: 0 },
+  { libelle: "Cotisations facultatives (Madelin)",          actif: true, hypothese: "COMMUNE", calcAuto: false, montantN: 0, montantN1: 0, montantN2: 0 },
+  { libelle: "Cotisations facultatives (non Madelin)",      actif: true, hypothese: "COMMUNE", calcAuto: false, montantN: 0, montantN1: 0, montantN2: 0 },
 ];
 
 // ── Schéma LigneTaxeSalaire ───────────────────────────────────────────────────
