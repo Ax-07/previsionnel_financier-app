@@ -19,6 +19,7 @@ export interface UnitesDOeuvreState {
   addUnite: (dossierId: string) => void;
   updateUnite: (dossierId: string, index: number, data: Partial<UniteDOeuvreRow>) => void;
   removeUnite: (dossierId: string, index: number) => void;
+  duplicateUnite: (dossierId: string, index: number) => void;
   markSaved: (dossierId: string, rows: UniteDOeuvreRow[]) => void;
   clearDraft: (dossierId: string) => void;
 }
@@ -40,6 +41,7 @@ function emptyExercice() {
 function emptyUnite(ordre = 0): UniteDOeuvreRow {
   return {
     actif: true,
+    hypothese: "COMMUNE",
     libelle: "",
     typeUnite: "COUVERT",
     typeIndicateur: "CHIFFRE_AFFAIRES",
@@ -120,6 +122,20 @@ export const useUnitesDOeuvreStore = create<UnitesDOeuvreState>()(
             unites: d.unites.filter((_, i) => i !== index),
             hasUnsaved: true,
           });
+        });
+      },
+
+      duplicateUnite(dossierId, index) {
+        set((s) => {
+          const d = s.drafts[dossierId] ?? getEmptyDraft();
+          const source = d.unites[index];
+          if (!source) return s;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { id, ...rest } = source;
+          const clone = { ...rest, libelle: `${rest.libelle} (copie)` };
+          const rows = [...d.unites];
+          rows.splice(index + 1, 0, clone);
+          return patchDraft(s, dossierId, { unites: rows, hasUnsaved: true });
         });
       },
 

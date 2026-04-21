@@ -35,6 +35,7 @@ export interface AutresChargesState {
   addProvision: (dossierId: string) => void;
   updateProvision: (dossierId: string, index: number, data: Partial<AutreChargeProvisionRow>) => void;
   removeProvision: (dossierId: string, index: number) => void;
+  duplicateProvision: (dossierId: string, index: number) => void;
   markProvisionsSaved: (dossierId: string, rows: AutreChargeProvisionRow[]) => void;
 
   // Gestion courante
@@ -42,6 +43,7 @@ export interface AutresChargesState {
   addGestionCourante: (dossierId: string) => void;
   updateGestionCourante: (dossierId: string, index: number, data: Partial<AutreChargeDateeRow>) => void;
   removeGestionCourante: (dossierId: string, index: number) => void;
+  duplicateGestionCourante: (dossierId: string, index: number) => void;
   markGestionCouranteSaved: (dossierId: string, rows: AutreChargeDateeRow[]) => void;
 
   // Financières
@@ -49,6 +51,7 @@ export interface AutresChargesState {
   addFinanciere: (dossierId: string) => void;
   updateFinanciere: (dossierId: string, index: number, data: Partial<AutreChargeDateeRow>) => void;
   removeFinanciere: (dossierId: string, index: number) => void;
+  duplicateFinanciere: (dossierId: string, index: number) => void;
   markFinancieresSaved: (dossierId: string, rows: AutreChargeDateeRow[]) => void;
 
   // Exceptionnelles
@@ -56,6 +59,7 @@ export interface AutresChargesState {
   addExceptionnelle: (dossierId: string) => void;
   updateExceptionnelle: (dossierId: string, index: number, data: Partial<AutreChargeDateeRow>) => void;
   removeExceptionnelle: (dossierId: string, index: number) => void;
+  duplicateExceptionnelle: (dossierId: string, index: number) => void;
   markExceptionnellesSaved: (dossierId: string, rows: AutreChargeDateeRow[]) => void;
 
   // CCA
@@ -63,6 +67,7 @@ export interface AutresChargesState {
   addCCA: (dossierId: string) => void;
   updateCCA: (dossierId: string, index: number, data: Partial<AutreChargeBilanRow>) => void;
   removeCCA: (dossierId: string, index: number) => void;
+  duplicateCCA: (dossierId: string, index: number) => void;
   markCCASaved: (dossierId: string, rows: AutreChargeBilanRow[]) => void;
 
   // CAP
@@ -70,6 +75,7 @@ export interface AutresChargesState {
   addCAP: (dossierId: string) => void;
   updateCAP: (dossierId: string, index: number, data: Partial<AutreChargeBilanRow>) => void;
   removeCAP: (dossierId: string, index: number) => void;
+  duplicateCAP: (dossierId: string, index: number) => void;
   markCAPSaved: (dossierId: string, rows: AutreChargeBilanRow[]) => void;
 
   clearDraft: (dossierId: string) => void;
@@ -194,6 +200,17 @@ export const useAutresChargesStore = create<AutresChargesState>()(
           });
         });
       },
+      duplicateProvision(dossierId, index) {
+        set((s) => {
+          const d = s.drafts[dossierId] ?? getEmptyDraft();
+          const source = d.provisions[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.provisions];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return patchDraft(s, dossierId, { provisions: rows, hasUnsavedProvisions: true });
+        });
+      },
       markProvisionsSaved(dossierId, rows) {
         set((s) => patchDraft(s, dossierId, { provisions: rows, hasUnsavedProvisions: false }));
       },
@@ -228,6 +245,17 @@ export const useAutresChargesStore = create<AutresChargesState>()(
             gestionCourante: d.gestionCourante.filter((_, i) => i !== index),
             hasUnsavedGestionCourante: true,
           });
+        });
+      },
+      duplicateGestionCourante(dossierId, index) {
+        set((s) => {
+          const d = s.drafts[dossierId] ?? getEmptyDraft();
+          const source = d.gestionCourante[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.gestionCourante];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return patchDraft(s, dossierId, { gestionCourante: rows, hasUnsavedGestionCourante: true });
         });
       },
       markGestionCouranteSaved(dossierId, rows) {
@@ -266,6 +294,17 @@ export const useAutresChargesStore = create<AutresChargesState>()(
           });
         });
       },
+      duplicateFinanciere(dossierId, index) {
+        set((s) => {
+          const d = s.drafts[dossierId] ?? getEmptyDraft();
+          const source = d.financieres[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.financieres];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return patchDraft(s, dossierId, { financieres: rows, hasUnsavedFinancieres: true });
+        });
+      },
       markFinancieresSaved(dossierId, rows) {
         set((s) => patchDraft(s, dossierId, { financieres: rows, hasUnsavedFinancieres: false }));
       },
@@ -300,6 +339,17 @@ export const useAutresChargesStore = create<AutresChargesState>()(
             exceptionnelles: d.exceptionnelles.filter((_, i) => i !== index),
             hasUnsavedExceptionnelles: true,
           });
+        });
+      },
+      duplicateExceptionnelle(dossierId, index) {
+        set((s) => {
+          const d = s.drafts[dossierId] ?? getEmptyDraft();
+          const source = d.exceptionnelles[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.exceptionnelles];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return patchDraft(s, dossierId, { exceptionnelles: rows, hasUnsavedExceptionnelles: true });
         });
       },
       markExceptionnellesSaved(dossierId, rows) {
@@ -338,6 +388,17 @@ export const useAutresChargesStore = create<AutresChargesState>()(
           });
         });
       },
+      duplicateCCA(dossierId, index) {
+        set((s) => {
+          const d = s.drafts[dossierId] ?? getEmptyDraft();
+          const source = d.cca[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.cca];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return patchDraft(s, dossierId, { cca: rows, hasUnsavedCCA: true });
+        });
+      },
       markCCASaved(dossierId, rows) {
         set((s) => patchDraft(s, dossierId, { cca: rows, hasUnsavedCCA: false }));
       },
@@ -372,6 +433,17 @@ export const useAutresChargesStore = create<AutresChargesState>()(
             cap: d.cap.filter((_, i) => i !== index),
             hasUnsavedCAP: true,
           });
+        });
+      },
+      duplicateCAP(dossierId, index) {
+        set((s) => {
+          const d = s.drafts[dossierId] ?? getEmptyDraft();
+          const source = d.cap[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.cap];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return patchDraft(s, dossierId, { cap: rows, hasUnsavedCAP: true });
         });
       },
       markCAPSaved(dossierId, rows) {

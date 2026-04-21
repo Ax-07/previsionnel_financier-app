@@ -43,6 +43,7 @@ export interface DiversState {
   addRemboursementCC: (dossierId: string) => void;
   updateRemboursementCC: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
   removeRemboursementCC: (dossierId: string, index: number) => void;
+  duplicateRemboursementCC: (dossierId: string, index: number) => void;
   markRemboursementsCCSaved: (dossierId: string, rows: DiversFluxDateRow[]) => void;
 
   // --- Dividendes ---
@@ -50,6 +51,7 @@ export interface DiversState {
   addDividende: (dossierId: string) => void;
   updateDividende: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
   removeDividende: (dossierId: string, index: number) => void;
+  duplicateDividende: (dossierId: string, index: number) => void;
   markDividendesSaved: (dossierId: string, rows: DiversFluxDateRow[]) => void;
 
   // --- Déblocages participation ---
@@ -57,6 +59,7 @@ export interface DiversState {
   addDeblocageParticipation: (dossierId: string) => void;
   updateDeblocageParticipation: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
   removeDeblocageParticipation: (dossierId: string, index: number) => void;
+  duplicateDeblocageParticipation: (dossierId: string, index: number) => void;
   markDeblocagesParticipationSaved: (dossierId: string, rows: DiversFluxDateRow[]) => void;
 
   // --- Encaissements ---
@@ -64,6 +67,7 @@ export interface DiversState {
   addEncaissement: (dossierId: string) => void;
   updateEncaissement: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
   removeEncaissement: (dossierId: string, index: number) => void;
+  duplicateEncaissement: (dossierId: string, index: number) => void;
   markEncaissementsSaved: (dossierId: string, rows: DiversFluxDateRow[]) => void;
 
   // --- Décaissements ---
@@ -71,6 +75,7 @@ export interface DiversState {
   addDecaissement: (dossierId: string) => void;
   updateDecaissement: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
   removeDecaissement: (dossierId: string, index: number) => void;
+  duplicateDecaissement: (dossierId: string, index: number) => void;
   markDecaissementsSaved: (dossierId: string, rows: DiversFluxDateRow[]) => void;
 
   // --- Augmentations de capital ---
@@ -78,6 +83,7 @@ export interface DiversState {
   addAugmentationCapital: (dossierId: string) => void;
   updateAugmentationCapital: (dossierId: string, index: number, data: Partial<DiversOperationCapitalRow>) => void;
   removeAugmentationCapital: (dossierId: string, index: number) => void;
+  duplicateAugmentationCapital: (dossierId: string, index: number) => void;
   markAugmentationsCapitalSaved: (dossierId: string, rows: DiversOperationCapitalRow[]) => void;
 
   // --- Réductions de capital ---
@@ -85,6 +91,7 @@ export interface DiversState {
   addReductionCapital: (dossierId: string) => void;
   updateReductionCapital: (dossierId: string, index: number, data: Partial<DiversOperationCapitalRow>) => void;
   removeReductionCapital: (dossierId: string, index: number) => void;
+  duplicateReductionCapital: (dossierId: string, index: number) => void;
   markReductionsCapitalSaved: (dossierId: string, rows: DiversOperationCapitalRow[]) => void;
 
   // --- Prêts inter-entreprises ---
@@ -92,6 +99,7 @@ export interface DiversState {
   addPret: (dossierId: string) => void;
   updatePret: (dossierId: string, index: number, data: Partial<DiversPretRow>) => void;
   removePret: (dossierId: string, index: number) => void;
+  duplicatePret: (dossierId: string, index: number) => void;
   markPretsSaved: (dossierId: string, rows: DiversPretRow[]) => void;
 
   clearDraft: (dossierId: string) => void;
@@ -230,6 +238,21 @@ export const useDiversStore = create<DiversState>()(
             },
           };
         }),
+      duplicateRemboursementCC: (dossierId, index) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const source = d.remboursementsCC[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.remboursementsCC];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, remboursementsCC: rows, hasUnsavedRemboursementsCC: true },
+            },
+          };
+        }),
       markRemboursementsCCSaved: (dossierId, rows) =>
         set((s) => ({
           drafts: {
@@ -273,6 +296,21 @@ export const useDiversStore = create<DiversState>()(
             drafts: {
               ...s.drafts,
               [dossierId]: { ...d, dividendes: d.dividendes.filter((_, i) => i !== index), hasUnsavedDividendes: true },
+            },
+          };
+        }),
+      duplicateDividende: (dossierId, index) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const source = d.dividendes[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.dividendes];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, dividendes: rows, hasUnsavedDividendes: true },
             },
           };
         }),
@@ -322,6 +360,21 @@ export const useDiversStore = create<DiversState>()(
             },
           };
         }),
+      duplicateDeblocageParticipation: (dossierId, index) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const source = d.deblocagesParticipation[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.deblocagesParticipation];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, deblocagesParticipation: rows, hasUnsavedDeblocagesParticipation: true },
+            },
+          };
+        }),
       markDeblocagesParticipationSaved: (dossierId, rows) =>
         set((s) => ({
           drafts: {
@@ -365,6 +418,21 @@ export const useDiversStore = create<DiversState>()(
             drafts: {
               ...s.drafts,
               [dossierId]: { ...d, encaissements: d.encaissements.filter((_, i) => i !== index), hasUnsavedEncaissements: true },
+            },
+          };
+        }),
+      duplicateEncaissement: (dossierId, index) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const source = d.encaissements[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.encaissements];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, encaissements: rows, hasUnsavedEncaissements: true },
             },
           };
         }),
@@ -414,6 +482,21 @@ export const useDiversStore = create<DiversState>()(
             },
           };
         }),
+      duplicateDecaissement: (dossierId, index) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const source = d.decaissements[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.decaissements];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, decaissements: rows, hasUnsavedDecaissements: true },
+            },
+          };
+        }),
       markDecaissementsSaved: (dossierId, rows) =>
         set((s) => ({
           drafts: {
@@ -457,6 +540,21 @@ export const useDiversStore = create<DiversState>()(
             drafts: {
               ...s.drafts,
               [dossierId]: { ...d, augmentationsCapital: d.augmentationsCapital.filter((_, i) => i !== index), hasUnsavedAugmentationsCapital: true },
+            },
+          };
+        }),
+      duplicateAugmentationCapital: (dossierId, index) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const source = d.augmentationsCapital[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.augmentationsCapital];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, augmentationsCapital: rows, hasUnsavedAugmentationsCapital: true },
             },
           };
         }),
@@ -506,6 +604,21 @@ export const useDiversStore = create<DiversState>()(
             },
           };
         }),
+      duplicateReductionCapital: (dossierId, index) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const source = d.reductionsCapital[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.reductionsCapital];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, reductionsCapital: rows, hasUnsavedReductionsCapital: true },
+            },
+          };
+        }),
       markReductionsCapitalSaved: (dossierId, rows) =>
         set((s) => ({
           drafts: {
@@ -549,6 +662,21 @@ export const useDiversStore = create<DiversState>()(
             drafts: {
               ...s.drafts,
               [dossierId]: { ...d, prets: d.prets.filter((_, i) => i !== index), hasUnsavedPrets: true },
+            },
+          };
+        }),
+      duplicatePret: (dossierId, index) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const source = d.prets[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.prets];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, prets: rows, hasUnsavedPrets: true },
             },
           };
         }),

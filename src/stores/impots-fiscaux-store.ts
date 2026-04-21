@@ -26,6 +26,7 @@ export interface ImpotsFiscauxState {
   addReintegration: (dossierId: string) => void;
   updateReintegration: (dossierId: string, index: number, data: Partial<AjustementFiscalRow>) => void;
   removeReintegration: (dossierId: string, index: number) => void;
+  duplicateReintegration: (dossierId: string, index: number) => void;
   markReintegrationsSaved: (dossierId: string) => void;
 
   // ── Déductions ────────────────────────────────────────────────────────────
@@ -33,6 +34,7 @@ export interface ImpotsFiscauxState {
   addDeduction: (dossierId: string) => void;
   updateDeduction: (dossierId: string, index: number, data: Partial<AjustementFiscalRow>) => void;
   removeDeduction: (dossierId: string, index: number) => void;
+  duplicateDeduction: (dossierId: string, index: number) => void;
   markDeductionsSaved: (dossierId: string) => void;
 
   // ── Paramètres IS ─────────────────────────────────────────────────────────
@@ -135,6 +137,24 @@ export const useImpotsFiscauxStore = create<ImpotsFiscauxState>()(
           };
         }),
 
+      duplicateReintegration: (dossierId, index) =>
+        set((s) => {
+          const draft = s.drafts[dossierId] ?? emptyDraft();
+          const source = draft.reintegrations[index];
+          if (!source) return s;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { id, ...rest } = source;
+          const clone = { ...rest, libelle: `${rest.libelle} (copie)` };
+          const rows = [...draft.reintegrations];
+          rows.splice(index + 1, 0, clone);
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...draft, reintegrations: rows, hasUnsavedReintegrations: true },
+            },
+          };
+        }),
+
       markReintegrationsSaved: (dossierId) =>
         set((s) => ({
           drafts: {
@@ -205,6 +225,24 @@ export const useImpotsFiscauxStore = create<ImpotsFiscauxState>()(
                 deductions: draft.deductions.filter((_, i) => i !== index),
                 hasUnsavedDeductions: true,
               },
+            },
+          };
+        }),
+
+      duplicateDeduction: (dossierId, index) =>
+        set((s) => {
+          const draft = s.drafts[dossierId] ?? emptyDraft();
+          const source = draft.deductions[index];
+          if (!source) return s;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { id, ...rest } = source;
+          const clone = { ...rest, libelle: `${rest.libelle} (copie)` };
+          const rows = [...draft.deductions];
+          rows.splice(index + 1, 0, clone);
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...draft, deductions: rows, hasUnsavedDeductions: true },
             },
           };
         }),

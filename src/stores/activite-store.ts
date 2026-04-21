@@ -36,6 +36,7 @@ export interface ActiviteState {
   addActivite: (dossierId: string) => void;
   updateActivite: (dossierId: string, index: number, data: Partial<ActiviteRow>) => void;
   removeActivite: (dossierId: string, index: number) => void;
+  duplicateActivite: (dossierId: string, index: number) => void;
   markActivitesSaved: (dossierId: string) => void;
 
   // ── Setters Activités commissionnées ───────────────────────────────────────
@@ -43,6 +44,7 @@ export interface ActiviteState {
   addActiviteCommission: (dossierId: string) => void;
   updateActiviteCommission: (dossierId: string, index: number, data: Partial<ActiviteCommissionRow>) => void;
   removeActiviteCommission: (dossierId: string, index: number) => void;
+  duplicateActiviteCommission: (dossierId: string, index: number) => void;
   markCommissionsSaved: (dossierId: string) => void;
 
   // ── Setters Productions immobilisées ───────────────────────────────────────
@@ -50,6 +52,7 @@ export interface ActiviteState {
   addProductionImmobilisee: (dossierId: string) => void;
   updateProductionImmobilisee: (dossierId: string, index: number, data: Partial<ProductionImmobiliseeRow>) => void;
   removeProductionImmobilisee: (dossierId: string, index: number) => void;
+  duplicateProductionImmobilisee: (dossierId: string, index: number) => void;
   markProductionsSaved: (dossierId: string) => void;
 
   // ── Setters Subventions d'exploitation ─────────────────────────────────────
@@ -57,6 +60,7 @@ export interface ActiviteState {
   addSubventionExploitation: (dossierId: string) => void;
   updateSubventionExploitation: (dossierId: string, index: number, data: Partial<SubventionExploitationRow>) => void;
   removeSubventionExploitation: (dossierId: string, index: number) => void;
+  duplicateSubventionExploitation: (dossierId: string, index: number) => void;
   markSubventionsSaved: (dossierId: string) => void;
 
   // ── Reset ──────────────────────────────────────────────────────────────────
@@ -69,7 +73,7 @@ function createEmptyActivite(): ActiviteRow {
   return {
     libelle: "",
     secteur: "PRODUCTION",
-    hypothese: "normal",
+    hypothese: "COMMUNE",
     montantN: 0,
     evolutionN1: 0,
     montantN1: 0,
@@ -88,7 +92,7 @@ function createEmptyActivite(): ActiviteRow {
 function createEmptyCommission(): ActiviteCommissionRow {
   return {
     libelle: "",
-    hypothese: "normal",
+    hypothese: "COMMUNE",
     montantN: 0,
     evolutionN1: 0,
     montantN1: 0,
@@ -107,7 +111,7 @@ function createEmptyProductionImmobilisee(): ProductionImmobiliseeRow {
   return {
     libelle: "",
     nature: "CORPOREL",
-    hypothese: "normal",
+    hypothese: "COMMUNE",
     date: new Date().toISOString().split("T")[0],
     montant: 0,
     amortissement: "LINEAIRE",
@@ -120,7 +124,7 @@ function createEmptyProductionImmobilisee(): ProductionImmobiliseeRow {
 function createEmptySubvention(): SubventionExploitationRow {
   return {
     libelle: "",
-    hypothese: "normal",
+    hypothese: "COMMUNE",
     montantN: 0,
     montantN1: 0,
     montantN2: 0,
@@ -231,6 +235,23 @@ export const useActiviteStore = create<ActiviteState>()(
         });
       },
 
+      duplicateActivite: (dossierId, index) => {
+        set((state) => {
+          const draft = state.drafts[dossierId] ?? getEmptyDraft();
+          const source = draft.activites[index];
+          if (!source) return state;
+          const { id, ...rest } = source;
+          const rows = [...draft.activites];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...state.drafts,
+              [dossierId]: { ...draft, activites: rows, hasUnsavedActivites: true },
+            },
+          };
+        });
+      },
+
       markActivitesSaved: (dossierId) => {
         set((state) => ({
           drafts: {
@@ -306,6 +327,23 @@ export const useActiviteStore = create<ActiviteState>()(
                 activitesCommissionnees: updated,
                 hasUnsavedCommissions: true,
               },
+            },
+          };
+        });
+      },
+
+      duplicateActiviteCommission: (dossierId, index) => {
+        set((state) => {
+          const draft = state.drafts[dossierId] ?? getEmptyDraft();
+          const source = draft.activitesCommissionnees[index];
+          if (!source) return state;
+          const { id, ...rest } = source;
+          const rows = [...draft.activitesCommissionnees];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...state.drafts,
+              [dossierId]: { ...draft, activitesCommissionnees: rows, hasUnsavedCommissions: true },
             },
           };
         });
@@ -391,6 +429,23 @@ export const useActiviteStore = create<ActiviteState>()(
         });
       },
 
+      duplicateProductionImmobilisee: (dossierId, index) => {
+        set((state) => {
+          const draft = state.drafts[dossierId] ?? getEmptyDraft();
+          const source = draft.productionsImmobilisees[index];
+          if (!source) return state;
+          const { id, ...rest } = source;
+          const rows = [...draft.productionsImmobilisees];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...state.drafts,
+              [dossierId]: { ...draft, productionsImmobilisees: rows, hasUnsavedProductions: true },
+            },
+          };
+        });
+      },
+
       markProductionsSaved: (dossierId) => {
         set((state) => ({
           drafts: {
@@ -466,6 +521,23 @@ export const useActiviteStore = create<ActiviteState>()(
                 subventionsExploitation: updated,
                 hasUnsavedSubventions: true,
               },
+            },
+          };
+        });
+      },
+
+      duplicateSubventionExploitation: (dossierId, index) => {
+        set((state) => {
+          const draft = state.drafts[dossierId] ?? getEmptyDraft();
+          const source = draft.subventionsExploitation[index];
+          if (!source) return state;
+          const { id, ...rest } = source;
+          const rows = [...draft.subventionsExploitation];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...state.drafts,
+              [dossierId]: { ...draft, subventionsExploitation: rows, hasUnsavedSubventions: true },
             },
           };
         });

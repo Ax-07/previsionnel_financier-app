@@ -51,6 +51,7 @@ export interface PersonnelState {
   addSalarie: (dossierId: string) => void;
   updateSalarie: (dossierId: string, index: number, data: Partial<LigneSalarieRow>) => void;
   removeSalarie: (dossierId: string, index: number) => void;
+  duplicateSalarie: (dossierId: string, index: number) => void;
   markSalariesSaved: (dossierId: string) => void;
 
   // Dirigeants
@@ -58,6 +59,7 @@ export interface PersonnelState {
   addDirigeant: (dossierId: string) => void;
   updateDirigeant: (dossierId: string, index: number, data: Partial<LigneDirigeantRow>) => void;
   removeDirigeant: (dossierId: string, index: number) => void;
+  duplicateDirigeant: (dossierId: string, index: number) => void;
   markDirigeantsSaved: (dossierId: string) => void;
 
   // Cotisations TNS
@@ -72,6 +74,7 @@ export interface PersonnelState {
   addTaxeSalaire: (dossierId: string) => void;
   updateTaxeSalaire: (dossierId: string, index: number, data: Partial<LigneTaxeSalaireRow>) => void;
   removeTaxeSalaire: (dossierId: string, index: number) => void;
+  duplicateTaxeSalaire: (dossierId: string, index: number) => void;
   markTaxesSalairesSaved: (dossierId: string) => void;
 
   // Autres charges
@@ -79,6 +82,7 @@ export interface PersonnelState {
   addAutreCharge: (dossierId: string) => void;
   updateAutreCharge: (dossierId: string, index: number, data: Partial<LigneChargePersonnelRow>) => void;
   removeAutreCharge: (dossierId: string, index: number) => void;
+  duplicateAutreCharge: (dossierId: string, index: number) => void;
   markAutresChargesSaved: (dossierId: string) => void;
 
   // Remboursements
@@ -86,6 +90,7 @@ export interface PersonnelState {
   addRemboursement: (dossierId: string) => void;
   updateRemboursement: (dossierId: string, index: number, data: Partial<LigneChargePersonnelRow>) => void;
   removeRemboursement: (dossierId: string, index: number) => void;
+  duplicateRemboursement: (dossierId: string, index: number) => void;
   markRemboursementsSaved: (dossierId: string) => void;
 
   // Participations
@@ -93,6 +98,7 @@ export interface PersonnelState {
   addParticipation: (dossierId: string) => void;
   updateParticipation: (dossierId: string, index: number, data: Partial<LigneChargePersonnelRow>) => void;
   removeParticipation: (dossierId: string, index: number) => void;
+  duplicateParticipation: (dossierId: string, index: number) => void;
   markParticipationsSaved: (dossierId: string) => void;
 
   clearDraft: (dossierId: string) => void;
@@ -103,7 +109,7 @@ export interface PersonnelState {
 
 function createEmptySalarie(): LigneSalarieRow {
   return {
-    libelle: "", actif: true, hypothese: "normale",
+    libelle: "", actif: true, hypothese: "COMMUNE",
     montantN: 0, evolutionN1: 0, montantN1: 0, evolutionN2: 0, montantN2: 0,
     tauxCotSal: 22, tauxCotPat: 42, tauxFixe: 100,
     hasCommission: false, hasPrime: false, cotisationConges: false,
@@ -111,7 +117,7 @@ function createEmptySalarie(): LigneSalarieRow {
 }
 
 function createEmptyDirigeant(): LigneDirigeantRow {
-  return { libelle: "Rémunération gérant", actif: true, hypothese: "normale", montantN: 0, evolutionN1: 0, montantN1: 0, evolutionN2: 0, montantN2: 0, exonerationTNS: "", conjointCollaborateur: false, tauxFixe: 100 };
+  return { libelle: "Rémunération gérant", actif: true, hypothese: "COMMUNE", montantN: 0, evolutionN1: 0, montantN1: 0, evolutionN2: 0, montantN2: 0, exonerationTNS: "", conjointCollaborateur: false, tauxFixe: 100 };
 }
 
 function createEmptyCotisationTNS(): LigneCotisationTNSRow {
@@ -119,11 +125,11 @@ function createEmptyCotisationTNS(): LigneCotisationTNSRow {
 }
 
 function createEmptyTaxeSalaire(): LigneTaxeSalaireRow {
-  return { libelle: "", actif: true, hypothese: "normale", calcAuto: false, taux: 0, dateN: "", montantN: 0, dateN1: "", montantN1: 0, dateN2: "", montantN2: 0 };
+  return { libelle: "", actif: true, hypothese: "COMMUNE", calcAuto: false, taux: 0, dateN: "", montantN: 0, dateN1: "", montantN1: 0, dateN2: "", montantN2: 0 };
 }
 
 function createEmptyChargePersonnel(type: "AUTRE" | "REMBOURSEMENT" | "PARTICIPATION"): LigneChargePersonnelRow {
-  return { libelle: "", actif: true, hypothese: "normale", type, calcAuto: false, dateN: "", montantN: 0, dateN1: "", montantN1: 0, dateN2: "", montantN2: 0 };
+  return { libelle: "", actif: true, hypothese: "COMMUNE", type, calcAuto: false, dateN: "", montantN: 0, dateN1: "", montantN1: 0, dateN2: "", montantN2: 0 };
 }
 
 function getEmptyDraft(): PersonnelDraft {
@@ -177,6 +183,15 @@ export const usePersonnelStore = create<PersonnelState>()(
           remove: (dossierId: string, index: number) => {
             const rows = get().getDraft(dossierId)[listKey] as T[];
             set((s) => ({ drafts: patchDraft(s.drafts, dossierId, { [listKey]: rows.filter((_, i) => i !== index), [dirtyKey]: true } as Partial<PersonnelDraft>) }));
+          },
+          duplicate: (dossierId: string, index: number) => {
+            const rows = get().getDraft(dossierId)[listKey] as T[];
+            const source = rows[index];
+            if (!source) return;
+            const { id: _id, ...rest } = source as T & { id?: string };
+            const newRows = [...rows];
+            newRows.splice(index + 1, 0, { ...rest, libelle: `${(rest as Record<string, unknown>).libelle} (copie)` } as T);
+            set((s) => ({ drafts: patchDraft(s.drafts, dossierId, { [listKey]: newRows, [dirtyKey]: true } as Partial<PersonnelDraft>) }));
           },
           markSaved: (dossierId: string) =>
             set((s) => ({ drafts: patchDraft(s.drafts, dossierId, { [dirtyKey]: false } as Partial<PersonnelDraft>) })),
@@ -249,6 +264,7 @@ export const usePersonnelStore = create<PersonnelState>()(
           }
         },
         removeSalarie: sal.remove,
+        duplicateSalarie: sal.duplicate,
         markSalariesSaved: sal.markSaved,
 
         // Dirigeants
@@ -256,6 +272,7 @@ export const usePersonnelStore = create<PersonnelState>()(
         addDirigeant: (id) => dir.add(id, createEmptyDirigeant()),
         updateDirigeant: dir.update,
         removeDirigeant: dir.remove,
+        duplicateDirigeant: dir.duplicate,
         markDirigeantsSaved: dir.markSaved,
 
         // Cotisations TNS
@@ -270,6 +287,7 @@ export const usePersonnelStore = create<PersonnelState>()(
         addTaxeSalaire: (id) => tax.add(id, createEmptyTaxeSalaire()),
         updateTaxeSalaire: tax.update,
         removeTaxeSalaire: tax.remove,
+        duplicateTaxeSalaire: tax.duplicate,
         markTaxesSalairesSaved: tax.markSaved,
 
         // Autres charges
@@ -277,6 +295,7 @@ export const usePersonnelStore = create<PersonnelState>()(
         addAutreCharge: (id) => aut.add(id, createEmptyChargePersonnel("AUTRE")),
         updateAutreCharge: aut.update,
         removeAutreCharge: aut.remove,
+        duplicateAutreCharge: aut.duplicate,
         markAutresChargesSaved: aut.markSaved,
 
         // Remboursements
@@ -284,6 +303,7 @@ export const usePersonnelStore = create<PersonnelState>()(
         addRemboursement: (id) => rem.add(id, createEmptyChargePersonnel("REMBOURSEMENT")),
         updateRemboursement: rem.update,
         removeRemboursement: rem.remove,
+        duplicateRemboursement: rem.duplicate,
         markRemboursementsSaved: rem.markSaved,
 
         // Participations
@@ -291,6 +311,7 @@ export const usePersonnelStore = create<PersonnelState>()(
         addParticipation: (id) => par.add(id, createEmptyChargePersonnel("PARTICIPATION")),
         updateParticipation: par.update,
         removeParticipation: par.remove,
+        duplicateParticipation: par.duplicate,
         markParticipationsSaved: par.markSaved,
 
         clearDraft: (dossierId) => {

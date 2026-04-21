@@ -35,6 +35,7 @@ export interface AutresProduitsState {
   addReprise: (dossierId: string) => void;
   updateReprise: (dossierId: string, index: number, data: Partial<AutreProduitRepriseRow>) => void;
   removeReprise: (dossierId: string, index: number) => void;
+  duplicateReprise: (dossierId: string, index: number) => void;
   markReprisesSaved: (dossierId: string, rows: AutreProduitRepriseRow[]) => void;
 
   // Transferts
@@ -42,6 +43,7 @@ export interface AutresProduitsState {
   addTransfert: (dossierId: string) => void;
   updateTransfert: (dossierId: string, index: number, data: Partial<AutreProduitDateRow>) => void;
   removeTransfert: (dossierId: string, index: number) => void;
+  duplicateTransfert: (dossierId: string, index: number) => void;
   markTransfertsSaved: (dossierId: string, rows: AutreProduitDateRow[]) => void;
 
   // Gestion courante
@@ -49,6 +51,7 @@ export interface AutresProduitsState {
   addGestionCourante: (dossierId: string) => void;
   updateGestionCourante: (dossierId: string, index: number, data: Partial<AutreProduitDateRow>) => void;
   removeGestionCourante: (dossierId: string, index: number) => void;
+  duplicateGestionCourante: (dossierId: string, index: number) => void;
   markGestionCouranteSaved: (dossierId: string, rows: AutreProduitDateRow[]) => void;
 
   // Financiers
@@ -56,6 +59,7 @@ export interface AutresProduitsState {
   addFinancier: (dossierId: string) => void;
   updateFinancier: (dossierId: string, index: number, data: Partial<AutreProduitDateRow>) => void;
   removeFinancier: (dossierId: string, index: number) => void;
+  duplicateFinancier: (dossierId: string, index: number) => void;
   markFinanciersSaved: (dossierId: string, rows: AutreProduitDateRow[]) => void;
 
   // Exceptionnels
@@ -63,6 +67,7 @@ export interface AutresProduitsState {
   addExceptionnel: (dossierId: string) => void;
   updateExceptionnel: (dossierId: string, index: number, data: Partial<AutreProduitDateRow>) => void;
   removeExceptionnel: (dossierId: string, index: number) => void;
+  duplicateExceptionnel: (dossierId: string, index: number) => void;
   markExceptionnelsSaved: (dossierId: string, rows: AutreProduitDateRow[]) => void;
 
   // PCA
@@ -70,6 +75,7 @@ export interface AutresProduitsState {
   addPCA: (dossierId: string) => void;
   updatePCA: (dossierId: string, index: number, data: Partial<AutreProduitConstateRow>) => void;
   removePCA: (dossierId: string, index: number) => void;
+  duplicatePCA: (dossierId: string, index: number) => void;
   markPCASaved: (dossierId: string, rows: AutreProduitConstateRow[]) => void;
 
   clearDraft: (dossierId: string) => void;
@@ -196,6 +202,17 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
+      duplicateReprise(dossierId, index) {
+        set((s) => {
+          const d = s.drafts[dossierId] ?? getEmptyDraft();
+          const source = d.reprises[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.reprises];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return patchDraft(s, dossierId, { reprises: rows, hasUnsavedReprises: true });
+        });
+      },
       markReprisesSaved(dossierId, rows) {
         set((s) => patchDraft(s, dossierId, { reprises: rows, hasUnsavedReprises: false }));
       },
@@ -230,6 +247,17 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
             transferts: d.transferts.filter((_, i) => i !== index),
             hasUnsavedTransferts: true,
           });
+        });
+      },
+      duplicateTransfert(dossierId, index) {
+        set((s) => {
+          const d = s.drafts[dossierId] ?? getEmptyDraft();
+          const source = d.transferts[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.transferts];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return patchDraft(s, dossierId, { transferts: rows, hasUnsavedTransferts: true });
         });
       },
       markTransfertsSaved(dossierId, rows) {
@@ -268,6 +296,17 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
+      duplicateGestionCourante(dossierId, index) {
+        set((s) => {
+          const d = s.drafts[dossierId] ?? getEmptyDraft();
+          const source = d.gestionCourante[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.gestionCourante];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return patchDraft(s, dossierId, { gestionCourante: rows, hasUnsavedGestionCourante: true });
+        });
+      },
       markGestionCouranteSaved(dossierId, rows) {
         set((s) => patchDraft(s, dossierId, { gestionCourante: rows, hasUnsavedGestionCourante: false }));
       },
@@ -302,6 +341,17 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
             financiers: d.financiers.filter((_, i) => i !== index),
             hasUnsavedFinanciers: true,
           });
+        });
+      },
+      duplicateFinancier(dossierId, index) {
+        set((s) => {
+          const d = s.drafts[dossierId] ?? getEmptyDraft();
+          const source = d.financiers[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.financiers];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return patchDraft(s, dossierId, { financiers: rows, hasUnsavedFinanciers: true });
         });
       },
       markFinanciersSaved(dossierId, rows) {
@@ -340,6 +390,17 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
+      duplicateExceptionnel(dossierId, index) {
+        set((s) => {
+          const d = s.drafts[dossierId] ?? getEmptyDraft();
+          const source = d.exceptionnels[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.exceptionnels];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return patchDraft(s, dossierId, { exceptionnels: rows, hasUnsavedExceptionnels: true });
+        });
+      },
       markExceptionnelsSaved(dossierId, rows) {
         set((s) => patchDraft(s, dossierId, { exceptionnels: rows, hasUnsavedExceptionnels: false }));
       },
@@ -374,6 +435,17 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
             pca: d.pca.filter((_, i) => i !== index),
             hasUnsavedPCA: true,
           });
+        });
+      },
+      duplicatePCA(dossierId, index) {
+        set((s) => {
+          const d = s.drafts[dossierId] ?? getEmptyDraft();
+          const source = d.pca[index];
+          if (!source) return s;
+          const { id, ...rest } = source;
+          const rows = [...d.pca];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return patchDraft(s, dossierId, { pca: rows, hasUnsavedPCA: true });
         });
       },
       markPCASaved(dossierId, rows) {

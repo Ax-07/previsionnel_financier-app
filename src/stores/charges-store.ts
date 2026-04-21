@@ -33,20 +33,23 @@ export interface ChargesState {
   addFourniture: (dossierId: string) => void;
   updateFourniture: (dossierId: string, index: number, data: Partial<ChargeExploitationRow>) => void;
   removeFourniture: (dossierId: string, index: number) => void;
+  duplicateFourniture: (dossierId: string, index: number) => void;
   markFournituresSaved: (dossierId: string) => void;
 
-  // ── Setters Services extérieurs ────────────────────────────────────────────
+  // ── Setters Services extérieurs ──────────────────────────────────────────────────
   setServices: (dossierId: string, rows: ChargeExploitationRow[]) => void;
   addService: (dossierId: string) => void;
   updateService: (dossierId: string, index: number, data: Partial<ChargeExploitationRow>) => void;
   removeService: (dossierId: string, index: number) => void;
+  duplicateService: (dossierId: string, index: number) => void;
   markServicesSaved: (dossierId: string) => void;
 
-  // ── Setters Impôts et taxes ────────────────────────────────────────────────
+  // ── Setters Impôts et taxes ────────────────────────────────────────────────────
   setImpots: (dossierId: string, rows: ImpotTaxeRow[]) => void;
   addImpot: (dossierId: string) => void;
   updateImpot: (dossierId: string, index: number, data: Partial<ImpotTaxeRow>) => void;
   removeImpot: (dossierId: string, index: number) => void;
+  duplicateImpot: (dossierId: string, index: number) => void;
   markImpotsSaved: (dossierId: string) => void;
 
   // ── Reset ──────────────────────────────────────────────────────────────────
@@ -60,7 +63,7 @@ function createEmptyFourniture(): ChargeExploitationRow {
     libelle: "",
     categorie: "FOURNITURE_CONSOMMABLE",
     actif: true,
-    hypothese: "normale",
+    hypothese: "COMMUNE",
     montantN: 0,
     evolutionN1: 0,
     montantN1: 0,
@@ -79,7 +82,7 @@ function createEmptyService(): ChargeExploitationRow {
     libelle: "",
     categorie: "SERVICE_EXTERIEUR",
     actif: true,
-    hypothese: "normale",
+    hypothese: "COMMUNE",
     montantN: 0,
     evolutionN1: 0,
     montantN1: 0,
@@ -97,7 +100,7 @@ function createEmptyImpot(): ImpotTaxeRow {
   return {
     libelle: "",
     actif: true,
-    hypothese: "normale",
+    hypothese: "COMMUNE",
     isCFE: false,
     cfeModeCalc: false,
     dateN: "",
@@ -220,6 +223,23 @@ export const useChargesStore = create<ChargesState>()(
         });
       },
 
+      duplicateFourniture(dossierId, index) {
+        set((state) => {
+          const draft = state.drafts[dossierId] ?? getEmptyDraft();
+          const source = draft.fournitures[index];
+          if (!source) return state;
+          const { id, ...rest } = source;
+          const rows = [...draft.fournitures];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...state.drafts,
+              [dossierId]: { ...draft, fournitures: rows, hasUnsavedFournitures: true },
+            },
+          };
+        });
+      },
+
       markFournituresSaved(dossierId) {
         set((state) => ({
           drafts: {
@@ -307,6 +327,23 @@ export const useChargesStore = create<ChargesState>()(
         });
       },
 
+      duplicateService(dossierId, index) {
+        set((state) => {
+          const draft = state.drafts[dossierId] ?? getEmptyDraft();
+          const source = draft.services[index];
+          if (!source) return state;
+          const { id, ...rest } = source;
+          const rows = [...draft.services];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          return {
+            drafts: {
+              ...state.drafts,
+              [dossierId]: { ...draft, services: rows, hasUnsavedServices: true },
+            },
+          };
+        });
+      },
+
       markServicesSaved(dossierId) {
         set((state) => ({
           drafts: {
@@ -370,6 +407,23 @@ export const useChargesStore = create<ChargesState>()(
         set((state) => {
           const draft = state.drafts[dossierId] ?? getEmptyDraft();
           const rows = draft.impots.filter((_, i) => i !== index);
+          return {
+            drafts: {
+              ...state.drafts,
+              [dossierId]: { ...draft, impots: rows, hasUnsavedImpots: true },
+            },
+          };
+        });
+      },
+
+      duplicateImpot(dossierId, index) {
+        set((state) => {
+          const draft = state.drafts[dossierId] ?? getEmptyDraft();
+          const source = draft.impots[index];
+          if (!source) return state;
+          const { id, ...rest } = source;
+          const rows = [...draft.impots];
+          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
           return {
             drafts: {
               ...state.drafts,
