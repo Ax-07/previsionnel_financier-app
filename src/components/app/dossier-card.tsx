@@ -12,6 +12,7 @@ import {
   MoreVerticalIcon,
   Trash2Icon,
   Loader2Icon,
+  CopyIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -20,6 +21,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -33,7 +35,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { deleteDossier } from "@/app/actions/dossier";
+import { deleteDossier, duplicateDossier } from "@/app/actions/dossier";
 import type { DossierListItem } from "@/app/actions/dossier";
 
 interface DossierCardProps {
@@ -44,6 +46,18 @@ export function DossierCard({ dossier: d }: DossierCardProps) {
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isDuplicating, startDuplicateTransition] = useTransition();
+
+  function handleDuplicate() {
+    startDuplicateTransition(async () => {
+      const result = await duplicateDossier(d.id);
+      if (result.success) {
+        router.refresh();
+      } else {
+        console.error("[duplicateDossier]", result.error);
+      }
+    });
+  }
 
   function handleDelete() {
     startTransition(async () => {
@@ -132,8 +146,21 @@ export function DossierCard({ dossier: d }: DossierCardProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
+                onSelect={handleDuplicate}
+                disabled={isDuplicating || isPending}
+              >
+                {isDuplicating ? (
+                  <Loader2Icon className="mr-2 size-4 animate-spin" />
+                ) : (
+                  <CopyIcon className="mr-2 size-4" />
+                )}
+                Dupliquer
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
                 onSelect={() => setShowDeleteDialog(true)}
+                disabled={isDuplicating || isPending}
               >
                 <Trash2Icon className="mr-2 size-4" />
                 Supprimer

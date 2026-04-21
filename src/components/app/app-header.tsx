@@ -17,6 +17,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NouveauDossierDialog } from "@/components/app/nouveau-dossier-dialog";
 import { cn } from "@/lib/utils";
 import { ColorThemeControl } from "../ui/color-theme-control";
+import { HypotheseSelector } from "./hypothese/hypothese-selector";
 
 interface AppHeaderProps {
   /** Dossier courant — absent sur le dashboard */
@@ -77,6 +78,9 @@ export default function AppHeader({ dossier }: AppHeaderProps) {
           <span>Mes dossiers</span>
         </div>
       )}
+
+      {dossier?.id && <HypotheseSelector dossierId={dossier.id} />}
+      
 
       {/* Spacer */}
       <div className="flex-1" />

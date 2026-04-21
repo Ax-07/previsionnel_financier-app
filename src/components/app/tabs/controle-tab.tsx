@@ -16,7 +16,9 @@ import TVATab from "@/components/app/tabs/controle/tva-tab";
 import RatiosTab from "@/components/app/tabs/controle/ratios-tab";
 import { TresorerieTab } from "./controle/tresorerie-tab";
 import DashboardKpiTab from "./controle/dashboard-kpi-tab";
+import { HypotheseComparisonView } from "@/components/app/hypothese/hypothese-comparison-view";
 import { SubTablistContainer } from "./shared/tablist-container";
+import { HypotheseSelector } from "@/components/app/hypothese/hypothese-selector";
 import { cn } from "@/lib/utils";
 
 // ── Mapping valeur → composant ────────────────────────────────────────────────
@@ -36,6 +38,7 @@ const TAB_COMPONENTS: Record<string, React.FC<{ dossierId: string }>> = {
   ratios: RatiosTab,
   tresorerie: TresorerieTab,
   tva: TVATab,
+  comparaison: HypotheseComparisonView,
 };
 
 // ── Onglets qui ne sont PAS fullHeight (placeholders en développement) ────────
@@ -57,6 +60,7 @@ const controleSubTabs = [
   { value: "ratios", label: "Ratios" },
   { value: "tresorerie", label: "Trésorerie" },
   { value: "tva", label: "TVA" },
+  { value: "comparaison", label: "Comparaison" },
   { value: "ratios-sectoriels", label: "Ratios sectoriels" },
   { value: "previsionnel-etendu", label: "Prévisionnel étendu" },
 ] as const;
@@ -83,25 +87,28 @@ export default function ControleTab({ dossierId }: ControleTabProps) {
   return (
     <Tabs defaultValue="dashboard" className="flex h-full flex-col gap-0">
       <SubTablistContainer>
-        <TabsList variant="line" className="h-10 gap-0 rounded-none bg-transparent px-4">
-          {controleSubTabs.map((tab) => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className={cn(
-                "shrink-0 px-3 text-xs font-medium",
-                `group-data-[variant=line]/tabs-list:bg-transparent
-                 group-data-[variant=line]/tabs-list:hover:bg-accent-foreground/10
-                 group-data-[variant=line]/tabs-list:data-[state=active]:bg-accent-foreground/30 
-                 dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent 
-                 dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-accent-foreground/30
-                 rounded-b-none`,
-              )}
-            >
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="flex items-center justify-between gap-4 px-4">
+          <TabsList variant="line" className="h-10 gap-0 rounded-none bg-transparent">
+            {controleSubTabs.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className={cn(
+                  "shrink-0 px-3 text-xs font-medium",
+                  `group-data-[variant=line]/tabs-list:bg-transparent
+                   group-data-[variant=line]/tabs-list:hover:bg-accent-foreground/10
+                   group-data-[variant=line]/tabs-list:data-[state=active]:bg-accent-foreground/30 
+                   dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent 
+                   dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-accent-foreground/30
+                   rounded-b-none`,
+                )}
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {/* <HypotheseSelector dossierId={dossierId} /> */}
+        </div>
       </SubTablistContainer>
 
       <div className="min-h-0 flex-1">
