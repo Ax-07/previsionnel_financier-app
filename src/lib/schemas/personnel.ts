@@ -56,23 +56,13 @@ export const MOIS_PAIEMENT_OPTIONS = [
 ] as const;
 
 export const paramsGlobauxSalariesSchema = z.object({
-  moisPaiement:       z.number().int().min(0).max(3).default(1),
-  pctTrimestre:       z.number().min(0).max(100).default(0),
-  pctMensuel:         z.number().min(0).max(100).default(100),
-  tauxCotPatGlobal:   z.number().min(0).max(100).default(42),
-  saisonnaliteConges: z.boolean().default(false),
+  moisPaiement: z.number().int().min(0).max(3).default(1),
 });
 
 export type ParamsGlobauxSalaries = z.infer<typeof paramsGlobauxSalariesSchema>;
 
 export function createDefaultParamsGlobaux(): ParamsGlobauxSalaries {
-  return {
-    moisPaiement: 1,
-    pctTrimestre: 0,
-    pctMensuel: 100,
-    tauxCotPatGlobal: 42,
-    saisonnaliteConges: false,
-  };
+  return { moisPaiement: 1 };
 }
 
 // ── Détail mensuel (répartition par exercice) ─────────────────────────────────
