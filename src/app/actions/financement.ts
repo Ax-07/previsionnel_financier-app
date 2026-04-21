@@ -69,7 +69,6 @@ export async function fetchApports(dossierId: string): Promise<ApportRow[]> {
       type:         item.type as ApportRow["type"],
       montant:      Number(item.montant),
       hypothese:    item.hypothese,
-      hypothese:    item.hypothese,
       dateApport:   item.dateApport.toISOString().slice(0, 10),
       remboursable: item.remboursable,
       actif:        true,
@@ -173,7 +172,6 @@ export async function fetchEmprunts(dossierId: string): Promise<EmpruntWithEchea
       modaliteRemboursement: item.modaliteRemboursement as EmpruntRow["modaliteRemboursement"],
       hypothese:             item.hypothese,
       modeAssurance:         item.modeAssurance as EmpruntRow["modeAssurance"],
-      hypothese:             item.hypothese,
       actif:                 true,
       ordre:                 idx,
       lignesEcheancier:   item.lignesEcheancier.map((l) => ({
