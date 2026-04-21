@@ -24,6 +24,7 @@ export async function fetchUnitesDOeuvre(dossierId: string): Promise<UniteDOeuvr
     return rows.map((r) => ({
       id: r.id,
       actif: r.actif,
+      hypothese: r.hypothese,
       libelle: r.libelle,
       typeUnite: r.typeUnite as UniteDOeuvreRow["typeUnite"],
       typeIndicateur: r.typeIndicateur as UniteDOeuvreRow["typeIndicateur"],
@@ -86,6 +87,7 @@ export async function saveUnitesDOeuvre(
         const row = rows[i]!;
         const data = {
           actif: row.actif,
+          hypothese: row.hypothese,
           libelle: row.libelle,
           typeUnite: row.typeUnite,
           typeIndicateur: row.typeIndicateur,

@@ -242,6 +242,8 @@ export async function fetchLignesCotisationsTNS(dossierId: string): Promise<Lign
       id: r.id,
       libelle: r.libelle,
       actif: r.actif,
+      hypothese: r.hypothese,
+      hypothese: r.hypothese,
       calcAuto: r.calcAuto,
       montantN: Number(r.montantN),
       montantN1: Number(r.montantN1),
@@ -335,7 +337,7 @@ export async function saveLignesCotisationsTNS(
       });
       return Promise.all(
         finalRows.map((r, i) => {
-          const data = { libelle: r.libelle, actif: r.actif ?? true, calcAuto: r.calcAuto, montantN: r.montantN, montantN1: r.montantN1, montantN2: r.montantN2, ordre: i, scenarioId };
+          const data = { libelle: r.libelle, actif: r.actif ?? true, hypothese: r.hypothese, calcAuto: r.calcAuto, montantN: r.montantN, montantN1: r.montantN1, montantN2: r.montantN2, ordre: i, scenarioId };
           const isExisting = r.id && !r.id.startsWith("__new__");
           if (isExisting) return tx.ligneCotisationTNS.update({ where: { id: r.id }, data, select: { id: true } });
           return tx.ligneCotisationTNS.create({ data, select: { id: true } });

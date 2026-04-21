@@ -233,6 +233,549 @@ export async function updateDossier(
   }
 }
 
+// ── Duplication d'un dossier ─────────────────────────────────────────────────
+
+export type DuplicateDossierResult =
+  | { success: true; dossierId: string }
+  | { success: false; error: string };
+
+/**
+ * Calcule un nom sans collision pour la copie.
+ * "Mon dossier" → "Mon dossier (copie)" → "Mon dossier (copie 2)" → …
+ */
+async function buildCopieName(
+  baseName: string,
+  cabinetId: string
+): Promise<string> {
+  const base = baseName.replace(/ \(copie(?: \d+)?\)$/, "");
+  const prefix = `${base} (copie`;
+
+  const existing = await prisma.dossier.findMany({
+    where: { cabinetId, nom: { startsWith: prefix } },
+    select: { nom: true },
+  });
+
+  if (existing.length === 0) return `${base} (copie)`;
+
+  const numbers = existing.map((d) => {
+    const m = d.nom.match(/ \(copie(?: (\d+))?\)$/);
+    if (!m) return 0;
+    return m[1] ? parseInt(m[1], 10) : 1;
+  });
+
+  return `${base} (copie ${Math.max(...numbers) + 1})`;
+}
+
+/** Retire id / scenarioId / createdAt / updatedAt et injecte le nouveau scenarioId. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rebase(items: any[], newScenarioId: string): any[] {
+  return items.map(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    ({ id: _id, scenarioId: _sid, createdAt: _ca, updatedAt: _ua, ...rest }) => ({
+      ...rest,
+      scenarioId: newScenarioId,
+    })
+  );
+}
+
+/**
+ * Duplique un dossier et l'ensemble de ses données saisies :
+ * tous les scénarios (avec toutes les entités métier imbriquées),
+ * les commentaires racines et la checklist.
+ * Les données calculées (résultats, bilan, trésorerie…) ne sont pas copiées.
+ * La référence unique est effacée sur la copie.
+ */
+export async function duplicateDossier(
+  sourceDossierId: string
+): Promise<DuplicateDossierResult> {
+  try {
+    // ── 1. Chargement complet de la source ──────────────────────────────────
+    const source = await prisma.dossier.findUnique({
+      where: { id: sourceDossierId },
+      include: {
+        checklistPieces: true,
+        commentaires: { where: { parentId: null } },
+        scenarios: {
+          include: {
+            activites: {
+              include: {
+                volumesAnnuels: true,
+                saisonnalites: true,
+                croissances: true,
+              },
+            },
+            activitesCommission: true,
+            apports: true,
+            subventions: true,
+            emprunts: { include: { lignesEcheancier: true } },
+            immobilisations: { include: { lignesAmortissement: true } },
+            cessions: true,
+            creditsBaux: true,
+            chargesFixes: true,
+            chargesVariables: true,
+            autresCharges: true,
+            autresChargesProvisions: true,
+            autresChargesDatees: true,
+            autresChargesBilan: true,
+            autresProduits: true,
+            autreProduitReprises: true,
+            autreProduitDates: true,
+            autreProduitConstates: true,
+            chargesExploitation: true,
+            impotsTaxes: true,
+            lignesCotisationsTNS: true,
+            lignesChargesPersonnel: true,
+            lignesSalaries: true,
+            lignesDirigeants: true,
+            lignesTaxesSalaires: true,
+            salaries: { include: { primes: true } },
+            dirigeants: { include: { primes: true } },
+            productionsImmobilisees: true,
+            subventionsExploitation: true,
+            unitesDOeuvre: true,
+            ajustementsFiscaux: true,
+            diversFluxDates: true,
+            diversOperationsCapital: true,
+            diversPrets: true,
+            tableauxLibres: {
+              include: { lignes: { include: { details: true } } },
+            },
+            parametres: { include: { exercices: true } },
+            parametresIS: true,
+          },
+        },
+      },
+    });
+
+    if (!source) {
+      return { success: false, error: "Dossier source introuvable." };
+    }
+
+    // ── 2. Nom sans collision ───────────────────────────────────────────────
+    const newNom = await buildCopieName(source.nom, source.cabinetId);
+
+    // ── 3. Copie en transaction ─────────────────────────────────────────────
+    const newDossier = await prisma.$transaction(
+      async (tx) => {
+        // Scalaires du dossier (sans id, meta et relations)
+        const {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          id: _dId,
+          createdAt: _dCA,
+          updatedAt: _dUA,
+          checklistPieces,
+          commentaires,
+          scenarios,
+          ...dossierScalars
+        } = source;
+
+        const newD = await tx.dossier.create({
+          data: { ...dossierScalars, nom: newNom, reference: null },
+          select: { id: true },
+        });
+
+        // ── ChecklistPieces ─────────────────────────────────────────────────
+        if (checklistPieces.length > 0) {
+          await tx.checklistPiece.createMany({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            data: checklistPieces.map(({ id: _id, dossierId: _did, createdAt: _ca, updatedAt: _ua, ...r }) => ({
+              ...r,
+              dossierId: newD.id,
+            })) as any,
+          });
+        }
+
+        // ── Commentaires racines ────────────────────────────────────────────
+        if (commentaires.length > 0) {
+          await tx.commentaire.createMany({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            data: commentaires.map(({ id: _id, dossierId: _did, parentId: _pid, createdAt: _ca, updatedAt: _ua, ...r }) => ({
+              ...r,
+              dossierId: newD.id,
+              parentId: null,
+            })) as any,
+          });
+        }
+
+        // ── Scénarios ───────────────────────────────────────────────────────
+        for (const scenario of scenarios) {
+          const {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            id: _sId,
+            dossierId: _sDId,
+            createdAt: _sCA,
+            updatedAt: _sUA,
+            activites,
+            activitesCommission,
+            apports,
+            subventions,
+            emprunts,
+            immobilisations,
+            cessions,
+            creditsBaux,
+            chargesFixes,
+            chargesVariables,
+            autresCharges,
+            autresChargesProvisions,
+            autresChargesDatees,
+            autresChargesBilan,
+            autresProduits,
+            autreProduitReprises,
+            autreProduitDates,
+            autreProduitConstates,
+            chargesExploitation,
+            impotsTaxes,
+            lignesCotisationsTNS,
+            lignesChargesPersonnel,
+            lignesSalaries,
+            lignesDirigeants,
+            lignesTaxesSalaires,
+            salaries,
+            dirigeants,
+            productionsImmobilisees,
+            subventionsExploitation,
+            unitesDOeuvre,
+            ajustementsFiscaux,
+            diversFluxDates,
+            diversOperationsCapital,
+            diversPrets,
+            tableauxLibres,
+            parametres,
+            parametresIS,
+            // données calculées — non copiées (architecture cible)
+            resultatsAnnuels: _rA,
+            bilansAnnuels: _bA,
+            tresoreriesMensuelles: _tM,
+            seuilsRentabilite: _sR,
+            ...scenarioScalars
+          } = scenario;
+
+          const newS = await tx.scenario.create({
+            data: { ...scenarioScalars, dossierId: newD.id },
+            select: { id: true },
+          });
+
+          // ── Activités (avec sous-tables) ──────────────────────────────────
+          for (const activite of activites) {
+            const {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              id: _aId,
+              scenarioId: _aSid,
+              createdAt: _aCA,
+              updatedAt: _aUA,
+              volumesAnnuels,
+              saisonnalites,
+              croissances,
+              ...activiteScalars
+            } = activite;
+            const newA = await tx.activite.create({
+              data: { ...activiteScalars, scenarioId: newS.id },
+              select: { id: true },
+            });
+            if (volumesAnnuels.length > 0) {
+              await tx.volumeActivite.createMany({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                data: volumesAnnuels.map(({ id: _, activiteId: __, ...r }) => ({ ...r, activiteId: newA.id })) as any,
+              });
+            }
+            if (saisonnalites.length > 0) {
+              await tx.saisonnaliteActivite.createMany({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                data: saisonnalites.map(({ id: _, activiteId: __, ...r }) => ({ ...r, activiteId: newA.id })) as any,
+              });
+            }
+            if (croissances.length > 0) {
+              await tx.croissanceActivite.createMany({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                data: croissances.map(({ id: _, activiteId: __, ...r }) => ({ ...r, activiteId: newA.id })) as any,
+              });
+            }
+          }
+
+          // ── Emprunts (avec échéancier) ─────────────────────────────────────
+          for (const emprunt of emprunts) {
+            const {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              id: _eId,
+              scenarioId: _eSid,
+              createdAt: _eCA,
+              updatedAt: _eUA,
+              lignesEcheancier,
+              ...empruntScalars
+            } = emprunt;
+            const newE = await tx.emprunt.create({
+              data: { ...empruntScalars, scenarioId: newS.id },
+              select: { id: true },
+            });
+            if (lignesEcheancier.length > 0) {
+              await tx.ligneEcheancier.createMany({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                data: lignesEcheancier.map(({ id: _, empruntId: __, ...r }) => ({ ...r, empruntId: newE.id })) as any,
+              });
+            }
+          }
+
+          // ── Immobilisations (avec amortissements) ─────────────────────────
+          for (const immo of immobilisations) {
+            const {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              id: _iId,
+              scenarioId: _iSid,
+              createdAt: _iCA,
+              updatedAt: _iUA,
+              lignesAmortissement,
+              ...immoScalars
+            } = immo;
+            const newI = await tx.immobilisation.create({
+              data: { ...immoScalars, scenarioId: newS.id },
+              select: { id: true },
+            });
+            if (lignesAmortissement.length > 0) {
+              await tx.ligneAmortissement.createMany({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                data: lignesAmortissement.map(({ id: _, immobilisationId: __, ...r }) => ({ ...r, immobilisationId: newI.id })) as any,
+              });
+            }
+          }
+
+          // ── Salariés (avec primes) ─────────────────────────────────────────
+          for (const salarie of salaries) {
+            const {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              id: _salId,
+              scenarioId: _salSid,
+              createdAt: _salCA,
+              updatedAt: _salUA,
+              primes,
+              ...salarieScalars
+            } = salarie;
+            const newSal = await tx.salarie.create({
+              data: { ...salarieScalars, scenarioId: newS.id },
+              select: { id: true },
+            });
+            if (primes.length > 0) {
+              await tx.prime.createMany({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                data: primes.map(({ id: _, salarieId: __, dirigeantId: ___, createdAt: ____, ...r }) => ({
+                  ...r,
+                  salarieId: newSal.id,
+                  dirigeantId: null,
+                })) as any,
+              });
+            }
+          }
+
+          // ── Dirigeants (avec primes) ───────────────────────────────────────
+          for (const dirigeant of dirigeants) {
+            const {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              id: _dgId,
+              scenarioId: _dgSid,
+              createdAt: _dgCA,
+              updatedAt: _dgUA,
+              primes,
+              ...dirigeantScalars
+            } = dirigeant;
+            const newDir = await tx.dirigeant.create({
+              data: { ...dirigeantScalars, scenarioId: newS.id },
+              select: { id: true },
+            });
+            if (primes.length > 0) {
+              await tx.prime.createMany({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                data: primes.map(({ id: _, salarieId: __, dirigeantId: ___, createdAt: ____, ...r }) => ({
+                  ...r,
+                  dirigeantId: newDir.id,
+                  salarieId: null,
+                })) as any,
+              });
+            }
+          }
+
+          // ── Tableaux libres (lignes → détails) ────────────────────────────
+          for (const tableau of tableauxLibres) {
+            const {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              id: _tId,
+              scenarioId: _tSid,
+              createdAt: _tCA,
+              updatedAt: _tUA,
+              lignes,
+              ...tableauScalars
+            } = tableau;
+            const newT = await tx.tableauLibre.create({
+              data: { ...tableauScalars, scenarioId: newS.id },
+              select: { id: true },
+            });
+            for (const ligne of lignes) {
+              const {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                id: _lId,
+                tableauId: _lTId,
+                createdAt: _lCA,
+                updatedAt: _lUA,
+                details,
+                ...ligneScalars
+              } = ligne;
+              const newL = await tx.tableauLibreLigne.create({
+                data: { ...ligneScalars, tableauId: newT.id },
+                select: { id: true },
+              });
+              if (details.length > 0) {
+                await tx.tableauLibreDetail.createMany({
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  data: details.map(({ id: _, ligneId: __, ...r }) => ({ ...r, ligneId: newL.id })) as any,
+                });
+              }
+            }
+          }
+
+          // ── ParametresEntreprise (avec exercices prévisionnels) ───────────
+          if (parametres) {
+            const {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              id: _pId,
+              scenarioId: _pSid,
+              createdAt: _pCA,
+              updatedAt: _pUA,
+              exercices,
+              ...parametresScalars
+            } = parametres;
+            const newP = await tx.parametresEntreprise.create({
+              data: { ...parametresScalars, scenarioId: newS.id },
+              select: { id: true },
+            });
+            if (exercices.length > 0) {
+              await tx.exercicePrevisionnel.createMany({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                data: exercices.map(({ id: _, parametresId: __, ...r }) => ({ ...r, parametresId: newP.id })) as any,
+              });
+            }
+          }
+
+          // ── ParametresIS (1:1 plat) ────────────────────────────────────────
+          if (parametresIS) {
+            const {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              id: _pisId,
+              scenarioId: _pisSid,
+              createdAt: _pisCA,
+              updatedAt: _pisUA,
+              ...parametresISScalars
+            } = parametresIS;
+            await tx.parametresIS.create({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              data: { ...parametresISScalars, scenarioId: newS.id } as any,
+            });
+          }
+
+          // ── Modèles plats (createMany) ─────────────────────────────────────
+          const sid = newS.id;
+          if (activitesCommission.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.activiteCommission.createMany({ data: rebase(activitesCommission, sid) as any });
+          if (apports.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.apport.createMany({ data: rebase(apports, sid) as any });
+          if (subventions.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.subvention.createMany({ data: rebase(subventions, sid) as any });
+          if (cessions.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.cessionImmobilisation.createMany({ data: rebase(cessions, sid) as any });
+          if (creditsBaux.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.creditBail.createMany({ data: rebase(creditsBaux, sid) as any });
+          if (chargesFixes.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.chargeFixe.createMany({ data: rebase(chargesFixes, sid) as any });
+          if (chargesVariables.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.chargeVariable.createMany({ data: rebase(chargesVariables, sid) as any });
+          if (autresCharges.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.autreCharge.createMany({ data: rebase(autresCharges, sid) as any });
+          if (autresChargesProvisions.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.autreChargeProvision.createMany({ data: rebase(autresChargesProvisions, sid) as any });
+          if (autresChargesDatees.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.autreChargeDatee.createMany({ data: rebase(autresChargesDatees, sid) as any });
+          if (autresChargesBilan.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.autreChargeBilan.createMany({ data: rebase(autresChargesBilan, sid) as any });
+          if (autresProduits.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.autreProduit.createMany({ data: rebase(autresProduits, sid) as any });
+          if (autreProduitReprises.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.autreProduitReprise.createMany({ data: rebase(autreProduitReprises, sid) as any });
+          if (autreProduitDates.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.autreProduitDate.createMany({ data: rebase(autreProduitDates, sid) as any });
+          if (autreProduitConstates.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.autreProduitConstate.createMany({ data: rebase(autreProduitConstates, sid) as any });
+          if (chargesExploitation.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.chargeExploitation.createMany({ data: rebase(chargesExploitation, sid) as any });
+          if (impotsTaxes.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.impotTaxe.createMany({ data: rebase(impotsTaxes, sid) as any });
+          if (lignesCotisationsTNS.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.ligneCotisationTNS.createMany({ data: rebase(lignesCotisationsTNS, sid) as any });
+          if (lignesChargesPersonnel.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.ligneChargePersonnel.createMany({ data: rebase(lignesChargesPersonnel, sid) as any });
+          if (lignesSalaries.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.ligneSalarie.createMany({ data: rebase(lignesSalaries, sid) as any });
+          if (lignesDirigeants.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.ligneDirigeant.createMany({ data: rebase(lignesDirigeants, sid) as any });
+          if (lignesTaxesSalaires.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.ligneTaxeSalaire.createMany({ data: rebase(lignesTaxesSalaires, sid) as any });
+          if (productionsImmobilisees.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.productionImmobilisee.createMany({ data: rebase(productionsImmobilisees, sid) as any });
+          if (subventionsExploitation.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.subventionExploitation.createMany({ data: rebase(subventionsExploitation, sid) as any });
+          if (unitesDOeuvre.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.uniteDOeuvre.createMany({ data: rebase(unitesDOeuvre, sid) as any });
+          if (ajustementsFiscaux.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.ajustementFiscal.createMany({ data: rebase(ajustementsFiscaux, sid) as any });
+          if (diversFluxDates.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.diversFluxDate.createMany({ data: rebase(diversFluxDates, sid) as any });
+          if (diversOperationsCapital.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.diversOperationCapital.createMany({ data: rebase(diversOperationsCapital, sid) as any });
+          if (diversPrets.length > 0)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await tx.diversPret.createMany({ data: rebase(diversPrets, sid) as any });
+        }
+
+        return newD;
+      },
+      { timeout: 30000 }
+    );
+
+    revalidatePath("/previsionnel");
+    return { success: true, dossierId: newDossier.id };
+  } catch (err) {
+    console.error("[duplicateDossier]", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Erreur inattendue.",
+    };
+  }
+}
+
 // ── Suppression d'un dossier ──────────────────────────────────────────────────
 
 export type DeleteDossierResult =

@@ -36,6 +36,7 @@ export async function fetchReprises(
     return rows.map((r) => ({
       id: r.id,
       actif: r.actif,
+      hypothese: r.hypothese,
       libelle: r.libelle,
       nature: r.nature,
       montantN: Number(r.montantN),
@@ -72,6 +73,7 @@ export async function saveReprises(
         const row = rows[i]!;
         const data = {
           actif: row.actif ?? true,
+          hypothese: row.hypothese,
           libelle: row.libelle,
           nature: row.nature ?? "",
           montantN: row.montantN,
@@ -122,6 +124,7 @@ export async function fetchProduitsDate(
     return rows.map((r) => ({
       id: r.id,
       actif: r.actif,
+      hypothese: r.hypothese,
       libelle: r.libelle,
       categorie: r.categorie as AutreProduitDateRow["categorie"],
       dateN: r.dateN ?? undefined,
@@ -165,6 +168,7 @@ export async function saveProduitsDate(
         const row = rows[i]!;
         const data = {
           actif: row.actif ?? true,
+          hypothese: row.hypothese,
           libelle: row.libelle,
           categorie,
           dateN: row.dateN ?? null,
@@ -219,6 +223,7 @@ export async function fetchConstates(
     return rows.map((r) => ({
       id: r.id,
       actif: r.actif,
+      hypothese: r.hypothese,
       libelle: r.libelle,
       nature: r.nature,
       montantN: Number(r.montantN),
@@ -255,6 +260,7 @@ export async function saveConstates(
         const row = rows[i]!;
         const data = {
           actif: row.actif ?? true,
+          hypothese: row.hypothese,
           libelle: row.libelle,
           nature: row.nature ?? "",
           montantN: row.montantN,

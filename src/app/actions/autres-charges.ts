@@ -34,6 +34,7 @@ export async function fetchProvisions(dossierId: string): Promise<AutreChargePro
     return rows.map((r) => ({
       id: r.id,
       actif: r.actif,
+      hypothese: r.hypothese,
       libelle: r.libelle,
       nature: r.nature,
       montantN: Number(r.montantN),
@@ -70,6 +71,7 @@ export async function saveProvisions(
         const row = rows[i]!;
         const data = {
           actif: row.actif ?? true,
+          hypothese: row.hypothese,
           libelle: row.libelle,
           nature: row.nature ?? "",
           montantN: row.montantN,
@@ -117,6 +119,7 @@ export async function fetchChargesDatees(
     return rows.map((r) => ({
       id: r.id,
       actif: r.actif,
+      hypothese: r.hypothese,
       libelle: r.libelle,
       categorie: r.categorie as AutreChargeDateeRow["categorie"],
       dateN: r.dateN ?? undefined,
@@ -160,6 +163,7 @@ export async function saveChargesDatees(
         const row = rows[i]!;
         const data = {
           actif: row.actif ?? true,
+          hypothese: row.hypothese,
           libelle: row.libelle,
           categorie,
           dateN: row.dateN ?? null,
@@ -217,6 +221,7 @@ export async function fetchChargesBilan(
     return rows.map((r) => ({
       id: r.id,
       actif: r.actif,
+      hypothese: r.hypothese,
       libelle: r.libelle,
       type: r.type as AutreChargeBilanRow["type"],
       nature: r.nature,
@@ -256,6 +261,7 @@ export async function saveChargesBilan(
         const row = rows[i]!;
         const data = {
           actif: row.actif ?? true,
+          hypothese: row.hypothese,
           libelle: row.libelle,
           type,
           nature: row.nature ?? "",

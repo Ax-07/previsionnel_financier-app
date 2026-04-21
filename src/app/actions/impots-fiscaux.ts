@@ -33,6 +33,8 @@ export async function fetchReintegrations(
       id: r.id,
       type: "REINTEGRATION" as const,
       actif: r.actif,
+      hypothese: r.hypothese,
+      hypothese: r.hypothese,
       libelle: r.libelle,
       montantN: Number(r.montantN),
       montantN1: Number(r.montantN1),
@@ -78,6 +80,7 @@ export async function saveReintegrations(
         const data = {
           type: "REINTEGRATION" as const,
           actif: row.actif ?? true,
+          hypothese: row.hypothese,
           libelle: row.libelle,
           montantN: row.montantN,
           montantN1: row.montantN1,
@@ -125,7 +128,9 @@ export async function fetchDeductions(
     return rows.map((r) => ({
       id: r.id,
       type: "DEDUCTION" as const,
+      hypothese: r.hypothese,
       actif: r.actif,
+      hypothese: r.hypothese,
       libelle: r.libelle,
       montantN: Number(r.montantN),
       montantN1: Number(r.montantN1),
@@ -171,6 +176,7 @@ export async function saveDeductions(
         const data = {
           type: "DEDUCTION" as const,
           actif: row.actif ?? true,
+          hypothese: row.hypothese,
           libelle: row.libelle,
           montantN: row.montantN,
           montantN1: row.montantN1,
