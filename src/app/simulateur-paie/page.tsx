@@ -1,15 +1,18 @@
 "use client";
 
-import { Suspense, useState, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSimulateurStore } from "@/stores/simulateur-paie-store";
 import { usePersonnelStore } from "@/stores/personnel-store";
-import { useInvalidateControleStores } from "@/hooks/use-invalidate-controle-stores";
-import { saveLignesSalaries } from "@/app/actions/personnel";
+import { useScenarioDataStore } from "@/stores/scenario-data-store";
+import { saveLignesSalaries, fetchDossierDebutExercice } from "@/app/actions/personnel";
 import { SimulateurForm } from "@/components/simulateur/SimulateurForm";
 import { BulletinDisplay } from "@/components/simulateur/BulletinDisplay";
 import { FinancialSummary } from "@/components/simulateur/FinancialSummary";
+import type { InjectPreviData } from "@/components/simulateur/FinancialSummary";
+import type { InjectDetailData } from "@/components/simulateur/ContratResultats";
+import { buildDetailFromContrat } from "@/lib/paie/contrat/build-detail-from-contrat";
 import { AnnualProjection } from "@/components/simulateur/AnnualProjection";
 import { ScenariosManager } from "@/components/simulateur/ScenariosManager";
 import { ContratResultats } from "@/components/simulateur/ContratResultats";
@@ -64,12 +67,22 @@ function SimulateurPageContent() {
 
   const { resultat, input, erreur, calcEnCours, addScenario } = useSimulateurStore();
   const personnelStore = usePersonnelStore();
-  const invalidateControleStores = useInvalidateControleStores();
 
   // État local export PDF (chargement async)
   const [pdfLoading, setPdfLoading] = useState(false);
 
-  const handleInjectPrevi = async (tauxCotPat: number) => {
+  // Date de démarrage du dossier (nécessaire pour l'injection du détail mensuel)
+  const [debutExercice, setDebutExercice] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (isFromPrevi && dossierId) {
+      fetchDossierDebutExercice(dossierId)
+        .then((d) => setDebutExercice(d ? new Date(d.anneeDebut, d.moisDebut - 1, 1) : null))
+        .catch(() => null);
+    }
+  }, [isFromPrevi, dossierId]);
+
+  const handleInjectPrevi = async (data: InjectPreviData) => {
     if (!dossierId || !salarieId) {
       toast.error("Impossible d'identifier le salarié cible.");
       return;
@@ -80,16 +93,56 @@ function SimulateurPageContent() {
       toast.error("Salarié introuvable dans le prévisionnel.");
       return;
     }
-    personnelStore.updateSalarie(dossierId, idx, { tauxCotPat });
+    personnelStore.updateSalarie(dossierId, idx, {
+      tauxCotPat: data.tauxCotPat,
+      tauxCotSal: data.tauxCotSal,
+    });
     personnelStore.markSimulateurInjected(dossierId, salarieId);
 
     const updatedRows = personnelStore.getDraft(dossierId).salaries;
     const result = await saveLignesSalaries(dossierId, updatedRows);
 
     if (result.success) {
-      invalidateControleStores(dossierId);
+      await useScenarioDataStore.getState().reload(dossierId);
       toast.success(
-        `Taux patronal de ${tauxCotPat.toFixed(2)} % appliqué à « ${libelle || "salarié"} » et sauvegardé.`,
+        `Taux patronal de ${data.tauxCotPat.toFixed(2)} % appliqué à « ${libelle || "salarié"} » et sauvegardé.`,
+      );
+      if (returnUrl) router.push(returnUrl);
+    } else {
+      toast.error(result.error ?? "Erreur lors de la sauvegarde des charges.");
+    }
+  };
+
+  const handleInjectContratDetail = async (data: InjectDetailData) => {
+    if (!dossierId || !salarieId) {
+      toast.error("Impossible d'identifier le salarié cible.");
+      return;
+    }
+    const draft = personnelStore.getDraft(dossierId);
+    const idx = draft.salaries.findIndex((r) => r.id === salarieId);
+    if (idx === -1) {
+      toast.error("Salarié introuvable dans le prévisionnel.");
+      return;
+    }
+    personnelStore.updateSalarie(dossierId, idx, {
+      tauxCotPat: data.tauxCotPat,
+      tauxCotSal: data.tauxCotSal,
+      montantN: data.montantN,
+      montantN1: data.montantN1,
+      montantN2: data.montantN2,
+      detailMensuelN: data.detailMensuelN,
+      detailMensuelN1: data.detailMensuelN1,
+      detailMensuelN2: data.detailMensuelN2,
+    });
+    personnelStore.markSimulateurInjected(dossierId, salarieId);
+
+    const updatedRows = personnelStore.getDraft(dossierId).salaries;
+    const result = await saveLignesSalaries(dossierId, updatedRows);
+
+    if (result.success) {
+      await useScenarioDataStore.getState().reload(dossierId);
+      toast.success(
+        `Détail mensuel injecté pour « ${libelle || "salarié"} » — brut total N : ${data.montantN.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €.`,
       );
       if (returnUrl) router.push(returnUrl);
     } else {
@@ -397,8 +450,8 @@ function SimulateurPageContent() {
                 <div className="rounded-xl border bg-card p-4">
                   <ContratResultats
                     resultat={contratResultat}
-                    estCDD={input?.salarié.typeContrat === "CDD"}
-                  />
+                    estCDD={input?.salarié.typeContrat === "CDD"}                    dateDemarrage={isFromPrevi && debutExercice ? debutExercice : undefined}
+                    onInjectDetail={isFromPrevi ? handleInjectContratDetail : undefined}                  />
                 </div>
               )}
             </>
