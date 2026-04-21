@@ -28,7 +28,7 @@ import {
 } from "@/lib/schemas/divers";
 
 import { useDiversStore } from "@/stores/divers-store";
-import { HYPOTHESE_TYPE_OPTIONS, filterByHypothese } from "@/lib/schemas/hypothese";
+import { HYPOTHESE_TYPE_OPTIONS, filterByHypothese, type HypotheseType } from "@/lib/schemas/hypothese";
 import { useHypotheseStore } from "@/stores/hypothese-store";
 import {
   fetchFluxDates,
@@ -261,7 +261,7 @@ function FluxDateeSection({
                     <select
                       className={cellSelect}
                       value={row.hypothese ?? "COMMUNE"}
-                      onChange={(e) => config.updateRow(dossierId, i, { hypothese: e.target.value })}
+                      onChange={(e) => config.updateRow(dossierId, i, { hypothese: e.target.value as HypotheseType })}
                     >
                       {HYPOTHESE_TYPE_OPTIONS.map((h) => (
                         <option key={h.value} value={h.value}>{h.label}</option>
@@ -448,7 +448,7 @@ function AugmentationCapitalSection({
                     <select
                       className={cellSelect}
                       value={row.hypothese ?? "COMMUNE"}
-                      onChange={(e) => store.updateAugmentationCapital(dossierId, i, { hypothese: e.target.value })}
+                      onChange={(e) => store.updateAugmentationCapital(dossierId, i, { hypothese: e.target.value as HypotheseType })}
                     >
                       {HYPOTHESE_TYPE_OPTIONS.map((h) => (
                         <option key={h.value} value={h.value}>{h.label}</option>
@@ -609,7 +609,7 @@ function ReductionCapitalSection({
                     <select
                       className={cellSelect}
                       value={row.hypothese ?? "COMMUNE"}
-                      onChange={(e) => store.updateReductionCapital(dossierId, i, { hypothese: e.target.value })}
+                      onChange={(e) => store.updateReductionCapital(dossierId, i, { hypothese: e.target.value as HypotheseType })}
                     >
                       {HYPOTHESE_TYPE_OPTIONS.map((h) => (
                         <option key={h.value} value={h.value}>{h.label}</option>
@@ -789,7 +789,7 @@ function PretsSection({
                       <select
                         className={cellSelect}
                         value={row.hypothese ?? "COMMUNE"}
-                        onChange={(e) => store.updatePret(dossierId, i, { hypothese: e.target.value })}
+                        onChange={(e) => store.updatePret(dossierId, i, { hypothese: e.target.value as HypotheseType })}
                       >
                         {HYPOTHESE_TYPE_OPTIONS.map((h) => (
                           <option key={h.value} value={h.value}>{h.label}</option>

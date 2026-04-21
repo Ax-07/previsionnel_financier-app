@@ -289,7 +289,7 @@ function TableauChargeExploitation({
                   <select
                     className={cellSelect}
                     value={row.hypothese}
-                    onChange={(e) => handleUpdate(i, { hypothese: e.target.value })}
+                    onChange={(e) => handleUpdate(i, { hypothese: e.target.value as ChargeExploitationRow["hypothese"] })}
                   >
                     {HYPOTHESES_CHARGE.map((h) => (
                       <option key={h.value} value={h.value} className="bg-background text-foreground">
@@ -739,7 +739,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
                 <select
                   className={cellSelect}
                   value={cfeRow?.hypothese ?? "COMMUNE"}
-                  onChange={(e) => handleCfeUpdate({ hypothese: e.target.value })}
+                  onChange={(e) => handleCfeUpdate({ hypothese: e.target.value as ImpotTaxeRow["hypothese"] }) }
                 >
                   {HYPOTHESES_CHARGE.map((h) => (
                     <option key={h.value} value={h.value}>
@@ -939,7 +939,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
                   <select
                     className={cellSelect}
                     value={row.hypothese}
-                    onChange={(e) => handleUpdate(idx, { hypothese: e.target.value })}
+                    onChange={(e) => handleUpdate(idx, { hypothese: e.target.value as ImpotTaxeRow["hypothese"] })}
                   >
                     {HYPOTHESES_CHARGE.map((h) => (
                       <option key={h.value} value={h.value}>
