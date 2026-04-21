@@ -84,7 +84,7 @@ export interface AutresChargesState {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function emptyProvision(): AutreChargeProvisionRow {
-  return { libelle: "", actif: true, nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
+  return { libelle: "", actif: true, hypothese: "COMMUNE", nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
 }
 
 function emptyDatee(categorie: "GESTION_COURANTE" | "FINANCIERE" | "EXCEPTIONNELLE"): AutreChargeDateeRow {
@@ -105,7 +105,7 @@ function emptyDatee(categorie: "GESTION_COURANTE" | "FINANCIERE" | "EXCEPTIONNEL
 }
 
 function emptyBilan(type: "CHARGE_CONSTATEE_AVANCE" | "CHARGE_A_PAYER"): AutreChargeBilanRow {
-  return { libelle: "", actif: true, type, nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
+  return { libelle: "", actif: true, hypothese: "COMMUNE", type, nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
 }
 
 function getEmptyDraft(): AutresChargesDraft {

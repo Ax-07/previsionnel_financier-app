@@ -84,7 +84,7 @@ export interface AutresProduitsState {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function emptyReprise(): AutreProduitRepriseRow {
-  return { libelle: "", actif: true, nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
+  return { libelle: "", actif: true, hypothese: "COMMUNE", nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
 }
 
 function emptyDate(
@@ -107,7 +107,7 @@ function emptyDate(
 }
 
 function emptyConstate(): AutreProduitConstateRow {
-  return { libelle: "", actif: true, nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
+  return { libelle: "", actif: true, hypothese: "COMMUNE", nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
 }
 
 function getEmptyDraft(): AutresProduitsDraft {

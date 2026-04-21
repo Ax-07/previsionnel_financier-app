@@ -121,7 +121,7 @@ function createEmptyDirigeant(): LigneDirigeantRow {
 }
 
 function createEmptyCotisationTNS(): LigneCotisationTNSRow {
-  return { libelle: "", actif: true, calcAuto: false, montantN: 0, montantN1: 0, montantN2: 0 };
+  return { libelle: "", actif: true, hypothese: "COMMUNE", calcAuto: false, montantN: 0, montantN1: 0, montantN2: 0 };
 }
 
 function createEmptyTaxeSalaire(): LigneTaxeSalaireRow {
