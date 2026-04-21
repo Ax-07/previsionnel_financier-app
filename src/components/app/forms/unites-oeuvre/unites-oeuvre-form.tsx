@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronRight,
   Scale,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ import {
   type UniteDOeuvreRow,
   type ExerciceUO,
 } from "@/lib/schemas/unites-oeuvre";
+import { HYPOTHESE_TYPE_OPTIONS } from "@/lib/schemas/hypothese";
 
 import { useUnitesDOeuvreStore } from "@/stores/unites-oeuvre-store";
 import { saveUnitesDOeuvre } from "@/app/actions/unites-oeuvre";
@@ -56,14 +58,31 @@ function fmt(v: number, decimals = 2): string {
   });
 }
 
-/** Recalcule les champs dérivés d'un exercice */
+/**
+ * Recalcule les champs dérivés d'un exercice — logique bottom-up (volume → CA) :
+ * 1. quantite        = nbJours × parJour  (volume journalier × jours d'exploitation)
+ * 2. chiffreAffaires = quantite × prixMoyen
+ * 3. partPct         = chiffreAffaires / indicateurBase × 100  (si indicateurBase > 0, sinon 0)
+ */
 function recalcExercice(ex: ExerciceUO): ExerciceUO {
-  const chiffreAffaires = ex.indicateurBase > 0 && ex.partPct > 0
-    ? (ex.indicateurBase * ex.partPct) / 100
-    : ex.chiffreAffaires;
-  const parJour = ex.nbJours > 0 ? chiffreAffaires / ex.nbJours : 0;
-  const quantite = ex.prixMoyen > 0 ? chiffreAffaires / ex.prixMoyen : 0;
-  return { ...ex, chiffreAffaires, parJour, quantite };
+  const quantite = parseFloat((ex.nbJours * ex.parJour).toFixed(4));
+  const chiffreAffaires = parseFloat((quantite * ex.prixMoyen).toFixed(2));
+  const partPct = ex.indicateurBase > 0
+    ? parseFloat(((chiffreAffaires / ex.indicateurBase) * 100).toFixed(4))
+    : 0;
+  return { ...ex, quantite, chiffreAffaires, partPct };
+}
+
+/** Libellé du volume journalier selon le type d'unité d'œuvre */
+function volumeParJourLabel(typeUnite: UniteDOeuvreRow["typeUnite"]): string {
+  const labels: Record<UniteDOeuvreRow["typeUnite"], string> = {
+    COUVERT: "Couverts / jour",
+    PRODUIT: "Produits / jour",
+    HEURE:   "Heures / jour",
+    CLIENT:  "Clients / jour",
+    AUTRE:   "Volume / jour",
+  };
+  return labels[typeUnite];
 }
 
 // ── Composants ───────────────────────────────────────────────────────────────
@@ -113,13 +132,13 @@ function UniteTable({ unite, onChange }: UniteTableProps) {
     editable: boolean;
     decimals?: number;
   }[] = [
-    { key: "indicateurBase", label: "Indicateur", editable: true },
-    { key: "partPct", label: "Part (%)", editable: true, decimals: 4 },
-    { key: "chiffreAffaires", label: "Chiffre d'affaires", editable: false },
-    { key: "nbJours", label: dureeLabel, editable: true },
-    { key: "parJour", label: "Soit par jour", editable: false, decimals: 4 },
-    { key: "prixMoyen", label: "Prix moyen / unité", editable: true, decimals: 4 },
-    { key: "quantite", label: "Quantité", editable: false, decimals: 4 },
+    { key: "nbJours",         label: dureeLabel,                          editable: true },
+    { key: "parJour",         label: volumeParJourLabel(unite.typeUnite), editable: true,  decimals: 2 },
+    { key: "quantite",        label: "Quantité totale",                   editable: false, decimals: 0 },
+    { key: "prixMoyen",       label: "Prix moyen / unité (€)",            editable: true,  decimals: 4 },
+    { key: "chiffreAffaires", label: "Chiffre d'affaires (€)",            editable: false },
+    { key: "indicateurBase",  label: "CA de référence (optionnel)",       editable: true },
+    { key: "partPct",         label: "Part du CA total (%)",              editable: false, decimals: 2 },
   ];
 
   return (
@@ -180,9 +199,10 @@ interface UniteBlockProps {
   index: number;
   onUpdate: (index: number, patch: Partial<UniteDOeuvreRow>) => void;
   onRemove: (index: number) => void;
+  onDuplicate?: (index: number) => void;
 }
 
-function UniteBlock({ unite, index, onUpdate, onRemove }: UniteBlockProps) {
+function UniteBlock({ unite, index, onUpdate, onRemove, onDuplicate }: UniteBlockProps) {
   const [open, setOpen] = useState(true);
 
   return (
@@ -214,6 +234,17 @@ function UniteBlock({ unite, index, onUpdate, onRemove }: UniteBlockProps) {
           >
             {TYPES_UNITE.find((t) => t.value === unite.typeUnite)?.label ?? unite.typeUnite}
           </Badge>
+          {onDuplicate && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              onClick={() => onDuplicate(index)}
+              title="Dupliquer cette unité"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button
             size="sm"
             variant="ghost"
@@ -229,7 +260,7 @@ function UniteBlock({ unite, index, onUpdate, onRemove }: UniteBlockProps) {
       {open && (
         <div className="px-4 py-4 space-y-4">
           {/* Paramètres généraux */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-muted-foreground">Intitulé</label>
               <input
@@ -290,6 +321,22 @@ function UniteBlock({ unite, index, onUpdate, onRemove }: UniteBlockProps) {
                 ))}
               </select>
             </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground">Hypothèse</label>
+              <select
+                className={cn(cellSelect, "h-8 rounded border px-2")}
+                value={unite.hypothese}
+                onChange={(e) =>
+                  onUpdate(index, { hypothese: e.target.value as UniteDOeuvreRow["hypothese"] })
+                }
+              >
+                {HYPOTHESE_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value} className="bg-background text-foreground">
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Tableau de calcul */}
@@ -298,17 +345,6 @@ function UniteBlock({ unite, index, onUpdate, onRemove }: UniteBlockProps) {
             onChange={(patch) => onUpdate(index, patch)}
           />
 
-          {/* Note de validation */}
-          {(() => {
-            const totalPct = unite.n.partPct + unite.n1.partPct + unite.n2.partPct;
-            if (totalPct > 100)
-              return (
-                <p className="text-xs text-destructive">
-                  ⚠ La somme des parts dépasse 100 %.
-                </p>
-              );
-            return null;
-          })()}
         </div>
       )}
     </div>
@@ -372,7 +408,7 @@ export function UnitesDOeuvreForm({ dossierId, initialData = [] }: UnitesDOeuvre
       toast.success("Unités d'œuvre enregistrées");
       invalidateControleStores(dossierId);
     });
-  }, [dossierId, unites, store]);
+  }, [dossierId, unites, store, invalidateControleStores]);
 
   return (
     <div className="space-y-6">
@@ -447,21 +483,21 @@ export function UnitesDOeuvreForm({ dossierId, initialData = [] }: UnitesDOeuvre
               index={index}
               onUpdate={handleUpdate}
               onRemove={handleRemove}
+              onDuplicate={(i) => store.duplicateUnite(dossierId, i)}
             />
           ))}
 
-          {/* Note validation part total */}
-          {(() => {
-            const totalPctN = unites.reduce((sum, u) => sum + u.n.partPct, 0);
-            if (totalPctN > 100)
-              return (
-                <p className="text-xs text-destructive">
-                  ⚠ La somme des parts (N) dépasse 100 % ({totalPctN.toFixed(2)} %).
-                  Vérifiez la répartition entre vos unités.
-                </p>
-              );
-            return null;
-          })()}
+          {/* Avertissement si une unité dépasse 100% de son indicateur de référence */}
+          {unites.some((u) =>
+            (u.n.indicateurBase > 0 && u.n.partPct > 100) ||
+            (u.n1.indicateurBase > 0 && u.n1.partPct > 100) ||
+            (u.n2.indicateurBase > 0 && u.n2.partPct > 100)
+          ) && (
+            <p className="text-xs text-destructive">
+              ⚠ Une ou plusieurs unités génèrent un CA supérieur à leur indicateur de référence (part &gt; 100 %).
+              Vérifiez les volumes et prix saisis.
+            </p>
+          )}
         </div>
       )}
     </div>

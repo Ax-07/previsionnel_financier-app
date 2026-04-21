@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useRef, useTransition, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Save, Loader2, FileText } from "lucide-react";
+import { Trash2, Plus, Save, Loader2, FileText, Copy } from "lucide-react";
 import { DetailChargeDialog } from "./detail-charge-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,8 @@ import {
 import { useChargesStore } from "@/stores/charges-store";
 import { saveFournitures, saveServices, saveImpots, fetchImpots } from "@/app/actions/charges";
 import { useInvalidateControleStores } from "@/hooks/use-invalidate-controle-stores";
+import { filterByHypothese } from "@/lib/schemas/hypothese";
+import { useHypotheseStore } from "@/stores/hypothese-store";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -95,8 +97,9 @@ function Td({ children, className }: { children: React.ReactNode; className?: st
 
 // ── Totaux section ───────────────────────────────────────────────────────────
 
-function TotauxRow({ rows }: { rows: ChargeExploitationRow[] }) {
-  const activeRows = rows.filter((r) => r.actif !== false);
+function TotauxRow({ rows, dossierId }: { rows: ChargeExploitationRow[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const activeRows = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   const totalN = activeRows.reduce((sum, r) => sum + r.montantN, 0);
   const totalN1 = activeRows.reduce((sum, r) => sum + r.montantN1, 0);
   const totalN2 = activeRows.reduce((sum, r) => sum + r.montantN2, 0);
@@ -119,8 +122,9 @@ function TotauxRow({ rows }: { rows: ChargeExploitationRow[] }) {
   );
 }
 
-function TotauxImpotRow({ rows }: { rows: ImpotTaxeRow[] }) {
-  const activeRows = rows.filter((r) => r.actif !== false);
+function TotauxImpotRow({ rows, dossierId }: { rows: ImpotTaxeRow[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const activeRows = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   const totalN = activeRows.reduce((sum, r) => sum + r.montantN, 0);
   const totalN1 = activeRows.reduce((sum, r) => sum + r.montantN1, 0);
   const totalN2 = activeRows.reduce((sum, r) => sum + r.montantN2, 0);
@@ -175,6 +179,7 @@ function TableauChargeExploitation({
   const addRow = categorie === "FOURNITURE_CONSOMMABLE" ? store.addFourniture : store.addService;
   const updateRow = categorie === "FOURNITURE_CONSOMMABLE" ? store.updateFourniture : store.updateService;
   const removeRow = categorie === "FOURNITURE_CONSOMMABLE" ? store.removeFourniture : store.removeService;
+  const duplicateRow = categorie === "FOURNITURE_CONSOMMABLE" ? store.duplicateFourniture : store.duplicateService;
   const markSaved = categorie === "FOURNITURE_CONSOMMABLE" ? store.markFournituresSaved : store.markServicesSaved;
   const saveAction = categorie === "FOURNITURE_CONSOMMABLE" ? saveFournitures : saveServices;
   const invalidateControleStores = useInvalidateControleStores();
@@ -189,6 +194,7 @@ function TableauChargeExploitation({
 
   const handleAdd = useCallback(() => addRow(dossierId), [addRow, dossierId]);
   const handleRemove = useCallback((i: number) => removeRow(dossierId, i), [removeRow, dossierId]);
+  const handleDuplicate = useCallback((i: number) => duplicateRow(dossierId, i), [duplicateRow, dossierId]);
   const handleUpdate = useCallback(
     (i: number, data: Partial<ChargeExploitationRow>) => updateRow(dossierId, i, data),
     [updateRow, dossierId],
@@ -453,22 +459,31 @@ function TableauChargeExploitation({
                   </select>
                 </Td>
 
-                {/* Supprimer */}
+                {/* Actions */}
                 <Td className="text-center px-1">
-                  <button
-                    className="flex items-center justify-center h-6 w-6 rounded hover:bg-destructive/10 hover:text-destructive transition-colors mx-auto"
-                    onClick={() => handleRemove(i)}
-                    title="Supprimer"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
+                  <div className="flex items-center justify-center gap-0.5">
+                    <button
+                      className="flex items-center justify-center h-6 w-6 rounded hover:bg-primary/10 hover:text-primary transition-colors"
+                      onClick={() => handleDuplicate(i)}
+                      title="Dupliquer"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                    <button
+                      className="flex items-center justify-center h-6 w-6 rounded hover:bg-destructive/10 hover:text-destructive transition-colors"
+                      onClick={() => handleRemove(i)}
+                      title="Supprimer"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
                 </Td>
               </tr>
             ))}
 
             {/* Ligne totaux */}
           </tbody>
-          {rows.length > 0 && <TotauxRow rows={rows} />}
+          {rows.length > 0 && <TotauxRow rows={rows} dossierId={dossierId} />}
         </table>
       </div>
 
@@ -540,7 +555,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
         {
           libelle: "CFE",
           actif: true,
-          hypothese: "normale",
+          hypothese: "COMMUNE",
           isCFE: true,
           cfeModeCalc: false,
           montantN: 0,
@@ -566,6 +581,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
 
   const handleAdd = useCallback(() => store.addImpot(dossierId), [store, dossierId]);
   const handleRemove = useCallback((i: number) => store.removeImpot(dossierId, i), [store, dossierId]);
+  const handleDuplicate = useCallback((i: number) => store.duplicateImpot(dossierId, i), [store, dossierId]);
 
   const handleUpdate = useCallback(
     (i: number, data: Partial<ImpotTaxeRow>) => store.updateImpot(dossierId, i, data),
@@ -722,7 +738,7 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
               <Td>
                 <select
                   className={cellSelect}
-                  value={cfeRow?.hypothese ?? "normale"}
+                  value={cfeRow?.hypothese ?? "COMMUNE"}
                   onChange={(e) => handleCfeUpdate({ hypothese: e.target.value })}
                 >
                   {HYPOTHESES_CHARGE.map((h) => (
@@ -997,18 +1013,27 @@ function TableauImpotsTaxes({ dossierId, initialData }: { dossierId: string; ini
                 </Td>
 
                 <Td className="text-center px-1">
-                  <button
-                    className="flex items-center justify-center h-6 w-6 rounded hover:bg-destructive/10 hover:text-destructive transition-colors mx-auto"
-                    onClick={() => handleRemove(idx)}
-                    title="Supprimer"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
+                  <div className="flex items-center justify-center gap-0.5">
+                    <button
+                      className="flex items-center justify-center h-6 w-6 rounded hover:bg-primary/10 hover:text-primary transition-colors"
+                      onClick={() => handleDuplicate(idx)}
+                      title="Dupliquer"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                    <button
+                      className="flex items-center justify-center h-6 w-6 rounded hover:bg-destructive/10 hover:text-destructive transition-colors"
+                      onClick={() => handleRemove(idx)}
+                      title="Supprimer"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
                 </Td>
               </tr>
             ))}
           </tbody>
-          {rows.length > 0 && <TotauxImpotRow rows={rows} />}
+          {rows.length > 0 && <TotauxImpotRow rows={rows} dossierId={dossierId} />}
         </table>
       </div>
     </div>

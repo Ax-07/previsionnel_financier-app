@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useTransition } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Save, Loader2 } from "lucide-react";
+import { Trash2, Plus, Save, Loader2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, numVal } from "@/lib/utils";
@@ -28,6 +28,8 @@ import {
 } from "@/lib/schemas/autres-produits";
 
 import { useAutresProduitsStore } from "@/stores/autres-produits-store";
+import { filterByHypothese } from "@/lib/schemas/hypothese";
+import { useHypotheseStore } from "@/stores/hypothese-store";
 import {
   fetchReprises,
   saveReprises,
@@ -152,10 +154,13 @@ function Td({
 
 function TotauxSimpleRow({
   rows,
+  dossierId,
 }: {
-  rows: { actif?: boolean; montantN: number; montantN1: number; montantN2: number }[];
+  rows: { actif?: boolean; hypothese?: string; montantN: number; montantN1: number; montantN2: number }[];
+  dossierId: string;
 }) {
-  const active = rows.filter((r) => r.actif !== false);
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const active = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   return (
     <tfoot className="border-t-2 border-border bg-muted/30">
       <tr>
@@ -183,11 +188,14 @@ function TotauxSimpleRow({
 function TotauxDateRow({
   rows,
   showTVA,
+  dossierId,
 }: {
   rows: AutreProduitDateRow[];
   showTVA: boolean;
+  dossierId: string;
 }) {
-  const active = rows.filter((r) => r.actif !== false);
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const active = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   return (
     <tfoot className="border-t-2 border-border bg-muted/30">
       <tr>
@@ -377,20 +385,30 @@ function ReprisesSection({
                     />
                   </Td>
                   <Td className="w-10 px-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
-                      onClick={() => store.removeReprise(dossierId, i)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-primary"
+                        onClick={() => store.duplicateReprise(dossierId, i)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-destructive"
+                        onClick={() => store.removeReprise(dossierId, i)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </Td>
                 </tr>
               ))
             )}
           </tbody>
-          {rows.length > 0 && <TotauxSimpleRow rows={rows} />}
+          {rows.length > 0 && <TotauxSimpleRow rows={rows} dossierId={dossierId} />}
         </table>
       </div>
     </div>
@@ -493,6 +511,17 @@ function ProduitDateSection({
         store.removeGestionCourante(dossierId, i);
       else if (categorie === "FINANCIER") store.removeFinancier(dossierId, i);
       else store.removeExceptionnel(dossierId, i);
+    },
+    [store, dossierId, categorie]
+  );
+
+  const handleDuplicate = useCallback(
+    (i: number) => {
+      if (categorie === "TRANSFERT") store.duplicateTransfert(dossierId, i);
+      else if (categorie === "GESTION_COURANTE")
+        store.duplicateGestionCourante(dossierId, i);
+      else if (categorie === "FINANCIER") store.duplicateFinancier(dossierId, i);
+      else store.duplicateExceptionnel(dossierId, i);
     },
     [store, dossierId, categorie]
   );
@@ -705,21 +734,31 @@ function ProduitDateSection({
                     </Td>
                   )}
                   <Td className="w-10 px-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
-                      onClick={() => handleRemove(i)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-primary"
+                        onClick={() => handleDuplicate(i)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-destructive"
+                        onClick={() => handleRemove(i)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </Td>
                 </tr>
               ))
             )}
           </tbody>
           {rows.length > 0 && (
-            <TotauxDateRow rows={rows} showTVA={hasTVA} />
+            <TotauxDateRow rows={rows} showTVA={hasTVA} dossierId={dossierId} />
           )}
         </table>
       </div>
@@ -890,20 +929,30 @@ function PCASection({
                     />
                   </Td>
                   <Td className="w-10 px-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
-                      onClick={() => store.removePCA(dossierId, i)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-primary"
+                        onClick={() => store.duplicatePCA(dossierId, i)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-destructive"
+                        onClick={() => store.removePCA(dossierId, i)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </Td>
                 </tr>
               ))
             )}
           </tbody>
-          {rows.length > 0 && <TotauxSimpleRow rows={rows} />}
+          {rows.length > 0 && <TotauxSimpleRow rows={rows} dossierId={dossierId} />}
         </table>
       </div>
     </div>

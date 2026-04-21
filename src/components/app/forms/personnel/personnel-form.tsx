@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Trash2, Plus, Save, Loader2, Users, UserCog, Activity, Percent, Package, RotateCcw, UsersRound, FileText, Settings2, CalendarDays, Info, Wand2, Calculator, CheckCircle2 } from "lucide-react";
+import { Trash2, Plus, Save, Loader2, Users, UserCog, Activity, Percent, Package, RotateCcw, UsersRound, FileText, Settings2, CalendarDays, Info, Wand2, Calculator, CheckCircle2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -33,6 +33,8 @@ import {
 } from "@/lib/schemas/personnel";
 
 import { usePersonnelStore } from "@/stores/personnel-store";
+import { filterByHypothese } from "@/lib/schemas/hypothese";
+import { useHypotheseStore } from "@/stores/hypothese-store";
 import {
   saveLignesSalaries,
   saveLignesDirigeants,
@@ -174,11 +176,14 @@ function Td({ children, className }: { children: React.ReactNode; className?: st
 function TotauxRow({
   rows,
   colSpanBefore = 4,
+  dossierId,
 }: {
-  rows: Array<{ actif?: boolean; montantN: number; montantN1: number; montantN2: number }>;
+  rows: Array<{ actif?: boolean; hypothese?: string; montantN: number; montantN1: number; montantN2: number }>;
   colSpanBefore?: number;
+  dossierId: string;
 }) {
-  const active = rows.filter((r) => r.actif !== false);
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const active = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   const totalN = active.reduce((s, r) => s + r.montantN, 0);
   const totalN1 = active.reduce((s, r) => s + r.montantN1, 0);
   const totalN2 = active.reduce((s, r) => s + r.montantN2, 0);
@@ -203,8 +208,9 @@ function TotauxRow({
 // TOTAUX SALARIÉS (brut + charges patronales calculées)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function TotauxSalariesRow({ rows }: { rows: LigneSalarieRow[] }) {
-  const active = rows.filter((r) => r.actif !== false);
+function TotauxSalariesRow({ rows, dossierId }: { rows: LigneSalarieRow[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const active = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   const totalN  = active.reduce((s, r) => s + r.montantN,  0);
   const totalN1 = active.reduce((s, r) => s + r.montantN1, 0);
   const totalN2 = active.reduce((s, r) => s + r.montantN2, 0);
@@ -425,6 +431,7 @@ function TableauSalaries({
 
   const handleAdd = useCallback(() => store.addSalarie(dossierId), [store, dossierId]);
   const handleRemove = useCallback((i: number) => store.removeSalarie(dossierId, i), [store, dossierId]);
+  const handleDuplicate = useCallback((i: number) => store.duplicateSalarie(dossierId, i), [store, dossierId]);
   const handleUpdate = useCallback(
     (i: number, data: Partial<LigneSalarieRow>) => store.updateSalarie(dossierId, i, data),
     [store, dossierId],
@@ -697,21 +704,30 @@ function TableauSalaries({
                     />
                   </Td>
 
-                  {/* Supprimer */}
+                  {/* Dupliquer / Supprimer */}
                 <Td className="text-center px-1">
-                  <button
-                    className="flex items-center justify-center h-6 w-6 rounded hover:bg-destructive/10 hover:text-destructive transition-colors mx-auto"
-                    onClick={() => handleRemove(i)}
-                    title="Supprimer"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
+                  <div className="flex items-center justify-center gap-0.5">
+                    <button
+                      className="flex items-center justify-center h-6 w-6 rounded hover:bg-primary/10 hover:text-primary transition-colors"
+                      onClick={() => handleDuplicate(i)}
+                      title="Dupliquer"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                    <button
+                      className="flex items-center justify-center h-6 w-6 rounded hover:bg-destructive/10 hover:text-destructive transition-colors"
+                      onClick={() => handleRemove(i)}
+                      title="Supprimer"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
                 </Td>
                 </tr>
               ))
             )}
           </tbody>
-          {rows.length > 0 && <TotauxSalariesRow rows={rows} />}
+          {rows.length > 0 && <TotauxSalariesRow rows={rows} dossierId={dossierId} />}
         </table>
       </div>
     </section>
@@ -767,6 +783,7 @@ function TableauDirigeant({
 
   const handleAdd = useCallback(() => store.addDirigeant(dossierId), [store, dossierId]);
   const handleRemove = useCallback((i: number) => store.removeDirigeant(dossierId, i), [store, dossierId]);
+  const handleDuplicate = useCallback((i: number) => store.duplicateDirigeant(dossierId, i), [store, dossierId]);
   const handleUpdate = useCallback(
     (i: number, data: Partial<LigneDirigeantRow>) => store.updateDirigeant(dossierId, i, data),
     [store, dossierId],
@@ -1015,21 +1032,30 @@ function TableauDirigeant({
                     />
                   </Td>
 
-                  {/* Supprimer */}
+                  {/* Dupliquer / Supprimer */}
                 <Td className="text-center px-1">
-                  <button
-                    className="flex items-center justify-center h-6 w-6 rounded hover:bg-destructive/10 hover:text-destructive transition-colors mx-auto"
-                    onClick={() => handleRemove(i)}
-                    title="Supprimer"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
+                  <div className="flex items-center justify-center gap-0.5">
+                    <button
+                      className="flex items-center justify-center h-6 w-6 rounded hover:bg-primary/10 hover:text-primary transition-colors"
+                      onClick={() => handleDuplicate(i)}
+                      title="Dupliquer"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                    <button
+                      className="flex items-center justify-center h-6 w-6 rounded hover:bg-destructive/10 hover:text-destructive transition-colors"
+                      onClick={() => handleRemove(i)}
+                      title="Supprimer"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
                 </Td>
                 </tr>
               ))
             )}
           </tbody>
-          {rows.length > 0 && <TotauxRow rows={rows} />}
+          {rows.length > 0 && <TotauxRow rows={rows} dossierId={dossierId} />}
         </table>
       </div>
 
@@ -1169,6 +1195,7 @@ function TableauCotisationsTNS({
 }) {
   const store = usePersonnelStore();
   const draft = store.getDraft(dossierId);
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
   const [isPending, startTransition] = useTransition();
 
   const rows = draft.cotisationsTNS;
@@ -1414,9 +1441,9 @@ const {
           <tfoot className="border-t-2 border-border bg-muted/30">
             <tr>
               <td colSpan={3} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">Total (actifs)</td>
-              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(rowsWithAuto.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN, 0))}</td>
-              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(rowsWithAuto.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN1, 0))}</td>
-              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(rowsWithAuto.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN2, 0))}</td>
+              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(filterByHypothese(rowsWithAuto, hypotheseActive).filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN, 0))}</td>
+              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(filterByHypothese(rowsWithAuto, hypotheseActive).filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN1, 0))}</td>
+              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(filterByHypothese(rowsWithAuto, hypotheseActive).filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN2, 0))}</td>
             </tr>
             {tresorieTNS && (
               <tr className="border-t border-dashed border-amber-400/50 bg-amber-50/40 dark:bg-amber-950/20">
@@ -1466,6 +1493,7 @@ function TableauTaxesSalaires({
 }) {
   const store = usePersonnelStore();
   const draft = store.getDraft(dossierId);
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
   const [isPending, startTransition] = useTransition();
   const [debutExercice, setDebutExercice] = useState<{ anneeDebut: number; moisDebut: number } | null>(null);
 
@@ -1482,6 +1510,7 @@ function TableauTaxesSalaires({
 
   const handleAdd = useCallback(() => store.addTaxeSalaire(dossierId), [store, dossierId]);
   const handleRemove = useCallback((i: number) => store.removeTaxeSalaire(dossierId, i), [store, dossierId]);
+  const handleDuplicate = useCallback((i: number) => store.duplicateTaxeSalaire(dossierId, i), [store, dossierId]);
   const handleUpdate = useCallback(
     (i: number, data: Partial<LigneTaxeSalaireRow>) => store.updateTaxeSalaire(dossierId, i, data),
     [store, dossierId],
@@ -1512,16 +1541,16 @@ function TableauTaxesSalaires({
 
   // ── Masse salariale brute (somme des salariés actifs) ──────────────────────
   const masseSalarialeN = useMemo(
-    () => draft.salaries.filter((s) => s.actif !== false).reduce((sum, s) => sum + (s.montantN ?? 0), 0),
-    [draft.salaries],
+    () => filterByHypothese(draft.salaries, hypotheseActive).filter((s) => s.actif !== false).reduce((sum, s) => sum + (s.montantN ?? 0), 0),
+    [draft.salaries, hypotheseActive],
   );
   const masseSalarialeN1 = useMemo(
-    () => draft.salaries.filter((s) => s.actif !== false).reduce((sum, s) => sum + (s.montantN1 ?? 0), 0),
-    [draft.salaries],
+    () => filterByHypothese(draft.salaries, hypotheseActive).filter((s) => s.actif !== false).reduce((sum, s) => sum + (s.montantN1 ?? 0), 0),
+    [draft.salaries, hypotheseActive],
   );
   const masseSalarialeN2 = useMemo(
-    () => draft.salaries.filter((s) => s.actif !== false).reduce((sum, s) => sum + (s.montantN2 ?? 0), 0),
-    [draft.salaries],
+    () => filterByHypothese(draft.salaries, hypotheseActive).filter((s) => s.actif !== false).reduce((sum, s) => sum + (s.montantN2 ?? 0), 0),
+    [draft.salaries, hypotheseActive],
   );
 
   // ── Calcul automatique : Taxe = Masse salariale × Taux ─────────────────────
@@ -1697,13 +1726,22 @@ function TableauTaxesSalaires({
                     />
                   </Td>
                   <Td className="text-center px-1">
-                    <button
-                      className="flex items-center justify-center h-6 w-6 rounded hover:bg-destructive/10 hover:text-destructive transition-colors mx-auto"
-                      onClick={() => handleRemove(i)}
-                      title="Supprimer"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
+                    <div className="flex items-center justify-center gap-0.5">
+                      <button
+                        className="flex items-center justify-center h-6 w-6 rounded hover:bg-primary/10 hover:text-primary transition-colors"
+                        onClick={() => handleDuplicate(i)}
+                        title="Dupliquer"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </button>
+                      <button
+                        className="flex items-center justify-center h-6 w-6 rounded hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        onClick={() => handleRemove(i)}
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
                   </Td>
                 </tr>
               ))
@@ -1713,11 +1751,11 @@ function TableauTaxesSalaires({
             <tfoot className="border-t-2 border-border bg-muted/30">
               <tr>
                 <td colSpan={6} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">Total (actifs)</td>
-                <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(rowsWithAuto.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN, 0))}</td>
+                <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(filterByHypothese(rowsWithAuto, hypotheseActive).filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN, 0))}</td>
                 <td />
-                <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(rowsWithAuto.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN1, 0))}</td>
+                <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(filterByHypothese(rowsWithAuto, hypotheseActive).filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN1, 0))}</td>
                 <td />
-                <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(rowsWithAuto.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN2, 0))}</td>
+                <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(filterByHypothese(rowsWithAuto, hypotheseActive).filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN2, 0))}</td>
                 <td />
               </tr>
             </tfoot>
@@ -1787,6 +1825,7 @@ function TableauChargePersonnel({
   const config = CHARGE_CONFIG[type];
   const store = usePersonnelStore();
   const draft = store.getDraft(dossierId);
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
   const [isPending, startTransition] = useTransition();
 
   const rows = draft[config.listKey];
@@ -1814,6 +1853,11 @@ function TableauChargePersonnel({
     else if (type === "REMBOURSEMENT") store.removeRemboursement(dossierId, i);
     else store.removeParticipation(dossierId, i);
   }, [store, dossierId, type]);
+
+  const duplicateRow = type === "AUTRE" ? store.duplicateAutreCharge
+    : type === "REMBOURSEMENT" ? store.duplicateRemboursement
+    : store.duplicateParticipation;
+  const handleDuplicate = useCallback((i: number) => duplicateRow(dossierId, i), [duplicateRow, dossierId]);
 
   const handleUpdate = useCallback((i: number, data: Partial<LigneChargePersonnelRow>) => {
     if (type === "AUTRE") store.updateAutreCharge(dossierId, i, data);
@@ -1925,13 +1969,22 @@ function TableauChargePersonnel({
                     </>
                   )}
                 <Td className="text-center px-1">
-                  <button
-                    className="flex items-center justify-center h-6 w-6 rounded hover:bg-destructive/10 hover:text-destructive transition-colors mx-auto"
-                    onClick={() => handleRemove(i)}
-                    title="Supprimer"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
+                  <div className="flex items-center justify-center gap-0.5">
+                    <button
+                      className="flex items-center justify-center h-6 w-6 rounded hover:bg-primary/10 hover:text-primary transition-colors"
+                      onClick={() => handleDuplicate(i)}
+                      title="Dupliquer"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                    <button
+                      className="flex items-center justify-center h-6 w-6 rounded hover:bg-destructive/10 hover:text-destructive transition-colors"
+                      onClick={() => handleRemove(i)}
+                      title="Supprimer"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
                 </Td>
                 </tr>
               ))
@@ -1941,18 +1994,18 @@ function TableauChargePersonnel({
             <tfoot className="border-t-2 border-border bg-muted/30">
               <tr>
                 <td colSpan={withDates ? 6 : (3 + (withCalcAuto ? 1 : 0))} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">Total (actifs)</td>
-                <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(rows.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN, 0))}</td>
+                <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN, 0))}</td>
                 {withDates ? (
                   <>
                     <td />
-                    <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(rows.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN1, 0))}</td>
+                    <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN1, 0))}</td>
                     <td />
-                    <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(rows.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN2, 0))}</td>
+                    <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN2, 0))}</td>
                   </>
                 ) : (
                   <>
-                    <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(rows.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN1, 0))}</td>
-                    <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(rows.filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN2, 0))}</td>
+                    <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN1, 0))}</td>
+                    <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false).reduce((s, r) => s + r.montantN2, 0))}</td>
                   </>
                 )}
                 <td />

@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useTransition } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Save, Loader2 } from "lucide-react";
+import { Trash2, Plus, Save, Loader2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, numVal } from "@/lib/utils";
@@ -29,6 +29,8 @@ import {
 } from "@/lib/schemas/autres-charges";
 
 import { useAutresChargesStore } from "@/stores/autres-charges-store";
+import { filterByHypothese } from "@/lib/schemas/hypothese";
+import { useHypotheseStore } from "@/stores/hypothese-store";
 import {
   fetchProvisions,
   saveProvisions,
@@ -109,8 +111,9 @@ function Td({ children, className }: { children: React.ReactNode; className?: st
 
 // ── Totaux ───────────────────────────────────────────────────────────────────
 
-function TotauxProvisionRow({ rows }: { rows: AutreChargeProvisionRow[] }) {
-  const active = rows.filter((r) => r.actif !== false);
+function TotauxProvisionRow({ rows, dossierId }: { rows: AutreChargeProvisionRow[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const active = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   return (
     <tfoot className="border-t-2 border-border bg-muted/30">
       <tr>
@@ -124,8 +127,9 @@ function TotauxProvisionRow({ rows }: { rows: AutreChargeProvisionRow[] }) {
   );
 }
 
-function TotauxDateeRow({ rows }: { rows: AutreChargeDateeRow[] }) {
-  const active = rows.filter((r) => r.actif !== false);
+function TotauxDateeRow({ rows, dossierId }: { rows: AutreChargeDateeRow[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const active = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   return (
     <tfoot className="border-t-2 border-border bg-muted/30">
       <tr>
@@ -141,8 +145,9 @@ function TotauxDateeRow({ rows }: { rows: AutreChargeDateeRow[] }) {
   );
 }
 
-function TotauxBilanRow({ rows }: { rows: AutreChargeBilanRow[] }) {
-  const active = rows.filter((r) => r.actif !== false);
+function TotauxBilanRow({ rows, dossierId }: { rows: AutreChargeBilanRow[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const active = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   return (
     <tfoot className="border-t-2 border-border bg-muted/30">
       <tr>
@@ -290,20 +295,22 @@ function ProvisionsSection({
                     />
                   </Td>
                   <Td className="w-10 px-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
-                      onClick={() => store.removeProvision(dossierId, i)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
+                      <Button size="icon" variant="ghost" className="h-6 w-6 text-primary"
+                        onClick={() => store.duplicateProvision(dossierId, i)}>
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive"
+                        onClick={() => store.removeProvision(dossierId, i)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </Td>
                 </tr>
               ))
             )}
           </tbody>
-          {rows.length > 0 && <TotauxProvisionRow rows={rows} />}
+          {rows.length > 0 && <TotauxProvisionRow rows={rows} dossierId={dossierId} />}
         </table>
       </div>
     </div>
@@ -379,6 +386,12 @@ function ChargeDateeSection({
     if (categorie === "GESTION_COURANTE") store.removeGestionCourante(dossierId, i);
     else if (categorie === "FINANCIERE") store.removeFinanciere(dossierId, i);
     else store.removeExceptionnelle(dossierId, i);
+  }, [store, dossierId, categorie]);
+
+  const handleDuplicate = useCallback((i: number) => {
+    if (categorie === "GESTION_COURANTE") store.duplicateGestionCourante(dossierId, i);
+    else if (categorie === "FINANCIERE") store.duplicateFinanciere(dossierId, i);
+    else store.duplicateExceptionnelle(dossierId, i);
   }, [store, dossierId, categorie]);
 
   const handleUpdate = useCallback((i: number, data: Partial<AutreChargeDateeRow>) => {
@@ -547,20 +560,22 @@ function ChargeDateeSection({
                     </Td>
                   )}
                   <Td className="w-10 px-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
-                      onClick={() => handleRemove(i)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
+                      <Button size="icon" variant="ghost" className="h-6 w-6 text-primary"
+                        onClick={() => handleDuplicate(i)}>
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive"
+                        onClick={() => handleRemove(i)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </Td>
                 </tr>
               ))
             )}
           </tbody>
-          {rows.length > 0 && <TotauxDateeRow rows={rows} />}
+          {rows.length > 0 && <TotauxDateeRow rows={rows} dossierId={dossierId} />}
         </table>
       </div>
     </div>
@@ -617,6 +632,11 @@ function ChargeBilanSection({
   const handleRemove = useCallback((i: number) => {
     if (type === "CHARGE_CONSTATEE_AVANCE") store.removeCCA(dossierId, i);
     else store.removeCAP(dossierId, i);
+  }, [store, dossierId, type]);
+
+  const handleDuplicate = useCallback((i: number) => {
+    if (type === "CHARGE_CONSTATEE_AVANCE") store.duplicateCCA(dossierId, i);
+    else store.duplicateCAP(dossierId, i);
   }, [store, dossierId, type]);
 
   const handleUpdate = useCallback((i: number, data: Partial<AutreChargeBilanRow>) => {
@@ -733,20 +753,22 @@ function ChargeBilanSection({
                     />
                   </Td>
                   <Td className="w-10 px-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
-                      onClick={() => handleRemove(i)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
+                      <Button size="icon" variant="ghost" className="h-6 w-6 text-primary"
+                        onClick={() => handleDuplicate(i)}>
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive"
+                        onClick={() => handleRemove(i)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </Td>
                 </tr>
               ))
             )}
           </tbody>
-          {rows.length > 0 && <TotauxBilanRow rows={rows} />}
+          {rows.length > 0 && <TotauxBilanRow rows={rows} dossierId={dossierId} />}
         </table>
       </div>
     </div>

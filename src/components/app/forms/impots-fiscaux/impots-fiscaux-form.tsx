@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useTransition } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Save, Loader2, Scale, BadgeDollarSign, FlaskConical, TrendingUp } from "lucide-react";
+import { Trash2, Plus, Save, Loader2, Scale, BadgeDollarSign, FlaskConical, TrendingUp, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -33,6 +33,8 @@ import {
   saveParametresIS,
 } from "@/app/actions/impots-fiscaux";
 import { useInvalidateControleStores } from "@/hooks/use-invalidate-controle-stores";
+import { filterByHypothese } from "@/lib/schemas/hypothese";
+import { useHypotheseStore } from "@/stores/hypothese-store";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -109,6 +111,7 @@ function SectionHeader({
 // ── Tableau ajustement (réintégrations ou déductions) ─────────────────────────
 
 function TableauAjustements({
+  dossierId,
   rows,
   isDirty,
   isSaving,
@@ -117,8 +120,10 @@ function TableauAjustements({
   onAdd,
   onUpdate,
   onRemove,
+  onDuplicate,
   onSave,
 }: {
+  dossierId: string;
   rows: AjustementFiscalRow[];
   isDirty: boolean;
   isSaving: boolean;
@@ -127,11 +132,13 @@ function TableauAjustements({
   onAdd: () => void;
   onUpdate: (index: number, data: Partial<AjustementFiscalRow>) => void;
   onRemove: (index: number) => void;
+  onDuplicate?: (index: number) => void;
   onSave: () => void;
 }) {
-  const totalN = rows.filter((r) => r.actif).reduce((s, r) => s + r.montantN, 0);
-  const totalN1 = rows.filter((r) => r.actif).reduce((s, r) => s + r.montantN1, 0);
-  const totalN2 = rows.filter((r) => r.actif).reduce((s, r) => s + r.montantN2, 0);
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const totalN = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif).reduce((s, r) => s + r.montantN, 0);
+  const totalN1 = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif).reduce((s, r) => s + r.montantN1, 0);
+  const totalN2 = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif).reduce((s, r) => s + r.montantN2, 0);
 
   return (
     <div className="flex flex-col gap-3">
@@ -223,16 +230,29 @@ function TableauAjustements({
                   />
                 </Td>
 
-                {/* Supprimer */}
+                {/* Dupliquer / Supprimer */}
                 <Td className="w-8">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    onClick={() => onRemove(i)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <div className="flex items-center">
+                    {onDuplicate && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        onClick={() => onDuplicate(i)}
+                        title="Dupliquer"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => onRemove(i)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </Td>
               </tr>
             ))}
@@ -738,6 +758,7 @@ export function ImpotsFiscauxForm({
     <div className="flex flex-col gap-8">
       {/* ── Réintégrations fiscales ─────────────────────────────────────────── */}
       <TableauAjustements
+        dossierId={dossierId}
         title="Réintégrations fiscales"
         icon={<Scale className="h-4 w-4 text-muted-foreground" />}
         rows={draft.reintegrations}
@@ -746,6 +767,7 @@ export function ImpotsFiscauxForm({
         onAdd={() => store.addReintegration(dossierId)}
         onUpdate={(i, data) => store.updateReintegration(dossierId, i, data)}
         onRemove={(i) => store.removeReintegration(dossierId, i)}
+        onDuplicate={(i) => store.duplicateReintegration(dossierId, i)}
         onSave={handleSaveReintegrations}
       />
 
@@ -753,6 +775,7 @@ export function ImpotsFiscauxForm({
 
       {/* ── Déductions fiscales ─────────────────────────────────────────────── */}
       <TableauAjustements
+        dossierId={dossierId}
         title="Déductions fiscales"
         icon={<Scale className="h-4 w-4 text-muted-foreground rotate-180" />}
         rows={draft.deductions}
@@ -761,6 +784,7 @@ export function ImpotsFiscauxForm({
         onAdd={() => store.addDeduction(dossierId)}
         onUpdate={(i, data) => store.updateDeduction(dossierId, i, data)}
         onRemove={(i) => store.removeDeduction(dossierId, i)}
+        onDuplicate={(i) => store.duplicateDeduction(dossierId, i)}
         onSave={handleSaveDeductions}
       />
 

@@ -14,7 +14,7 @@
 
 import { useCallback, useEffect, useTransition } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Save, Loader2 } from "lucide-react";
+import { Trash2, Plus, Save, Loader2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, numVal } from "@/lib/utils";
@@ -28,6 +28,8 @@ import {
 } from "@/lib/schemas/divers";
 
 import { useDiversStore } from "@/stores/divers-store";
+import { HYPOTHESE_TYPE_OPTIONS, filterByHypothese } from "@/lib/schemas/hypothese";
+import { useHypotheseStore } from "@/stores/hypothese-store";
 import {
   fetchFluxDates,
   saveFluxDates,
@@ -108,8 +110,9 @@ function Td({ children, className }: { children: React.ReactNode; className?: st
 
 // ── Totaux ───────────────────────────────────────────────────────────────────
 
-function TotauxFluxRow({ rows }: { rows: DiversFluxDateRow[] }) {
-  const active = rows.filter((r) => r.actif !== false);
+function TotauxFluxRow({ rows, dossierId }: { rows: DiversFluxDateRow[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const active = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   return (
     <tfoot className="border-t-2 border-border bg-muted/30">
       <tr>
@@ -125,8 +128,9 @@ function TotauxFluxRow({ rows }: { rows: DiversFluxDateRow[] }) {
   );
 }
 
-function TotauxCapitalRow({ rows }: { rows: DiversOperationCapitalRow[] }) {
-  const active = rows.filter((r) => r.actif !== false);
+function TotauxCapitalRow({ rows, dossierId }: { rows: DiversOperationCapitalRow[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const active = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   return (
     <tfoot className="border-t-2 border-border bg-muted/30">
       <tr>
@@ -155,6 +159,7 @@ interface FluxSectionConfig {
   addRow: (dossierId: string) => void;
   updateRow: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
   removeRow: (dossierId: string, index: number) => void;
+  duplicateRow: (dossierId: string, index: number) => void;
   markSaved: (dossierId: string, rows: DiversFluxDateRow[]) => void;
 }
 
@@ -253,12 +258,15 @@ function FluxDateeSection({
                     />
                   </Td>
                   <Td>
-                    <input
-                      className={cellInput}
-                      value={row.hypothese ?? ""}
+                    <select
+                      className={cellSelect}
+                      value={row.hypothese ?? "COMMUNE"}
                       onChange={(e) => config.updateRow(dossierId, i, { hypothese: e.target.value })}
-                      placeholder="Hypothèse"
-                    />
+                    >
+                      {HYPOTHESE_TYPE_OPTIONS.map((h) => (
+                        <option key={h.value} value={h.value}>{h.label}</option>
+                      ))}
+                    </select>
                   </Td>
                   <Td className="w-28">
                     <input
@@ -315,20 +323,30 @@ function FluxDateeSection({
                     />
                   </Td>
                   <Td className="w-10 px-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
-                      onClick={() => config.removeRow(dossierId, i)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-primary"
+                        onClick={() => config.duplicateRow(dossierId, i)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-destructive"
+                        onClick={() => config.removeRow(dossierId, i)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </Td>
                 </tr>
               ))
             )}
           </tbody>
-          {rows.length > 0 && <TotauxFluxRow rows={rows} />}
+          {rows.length > 0 && <TotauxFluxRow rows={rows} dossierId={dossierId} />}
         </table>
       </div>
     </div>
@@ -427,12 +445,15 @@ function AugmentationCapitalSection({
                     />
                   </Td>
                   <Td>
-                    <input
-                      className={cellInput}
-                      value={row.hypothese ?? ""}
+                    <select
+                      className={cellSelect}
+                      value={row.hypothese ?? "COMMUNE"}
                       onChange={(e) => store.updateAugmentationCapital(dossierId, i, { hypothese: e.target.value })}
-                      placeholder="Hypothèse"
-                    />
+                    >
+                      {HYPOTHESE_TYPE_OPTIONS.map((h) => (
+                        <option key={h.value} value={h.value}>{h.label}</option>
+                      ))}
+                    </select>
                   </Td>
                   <Td className="w-28">
                     <input
@@ -462,20 +483,30 @@ function AugmentationCapitalSection({
                     />
                   </Td>
                   <Td className="w-10 px-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
-                      onClick={() => store.removeAugmentationCapital(dossierId, i)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-primary"
+                        onClick={() => store.duplicateAugmentationCapital(dossierId, i)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-destructive"
+                        onClick={() => store.removeAugmentationCapital(dossierId, i)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </Td>
                 </tr>
               ))
             )}
           </tbody>
-          {rows.length > 0 && <TotauxCapitalRow rows={rows} />}
+          {rows.length > 0 && <TotauxCapitalRow rows={rows} dossierId={dossierId} />}
         </table>
       </div>
     </div>
@@ -575,12 +606,15 @@ function ReductionCapitalSection({
                     />
                   </Td>
                   <Td>
-                    <input
-                      className={cellInput}
-                      value={row.hypothese ?? ""}
+                    <select
+                      className={cellSelect}
+                      value={row.hypothese ?? "COMMUNE"}
                       onChange={(e) => store.updateReductionCapital(dossierId, i, { hypothese: e.target.value })}
-                      placeholder="Hypothèse"
-                    />
+                    >
+                      {HYPOTHESE_TYPE_OPTIONS.map((h) => (
+                        <option key={h.value} value={h.value}>{h.label}</option>
+                      ))}
+                    </select>
                   </Td>
                   <Td className="w-28">
                     <input
@@ -619,20 +653,30 @@ function ReductionCapitalSection({
                     />
                   </Td>
                   <Td className="w-10 px-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
-                      onClick={() => store.removeReductionCapital(dossierId, i)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-primary"
+                        onClick={() => store.duplicateReductionCapital(dossierId, i)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-destructive"
+                        onClick={() => store.removeReductionCapital(dossierId, i)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </Td>
                 </tr>
               ))
             )}
           </tbody>
-          {rows.length > 0 && <TotauxCapitalRow rows={rows} />}
+          {rows.length > 0 && <TotauxCapitalRow rows={rows} dossierId={dossierId} />}
         </table>
       </div>
     </div>
@@ -742,12 +786,15 @@ function PretsSection({
                       />
                     </Td>
                     <Td>
-                      <input
-                        className={cellInput}
-                        value={row.hypothese ?? ""}
+                      <select
+                        className={cellSelect}
+                        value={row.hypothese ?? "COMMUNE"}
                         onChange={(e) => store.updatePret(dossierId, i, { hypothese: e.target.value })}
-                        placeholder="Hypothèse"
-                      />
+                      >
+                        {HYPOTHESE_TYPE_OPTIONS.map((h) => (
+                          <option key={h.value} value={h.value}>{h.label}</option>
+                        ))}
+                      </select>
                     </Td>
                     <Td className="w-28">
                       <input
@@ -809,14 +856,24 @@ function PretsSection({
                       {fmt(coutTotal)}
                     </Td>
                     <Td className="w-10 px-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
-                        onClick={() => store.removePret(dossierId, i)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6 text-primary"
+                          onClick={() => store.duplicatePret(dossierId, i)}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6 text-destructive"
+                          onClick={() => store.removePret(dossierId, i)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </Td>
                   </tr>
                 );
@@ -871,6 +928,7 @@ export function DiversForm({
     addRow: (id) => store.addRemboursementCC(id),
     updateRow: (id, i, data) => store.updateRemboursementCC(id, i, data),
     removeRow: (id, i) => store.removeRemboursementCC(id, i),
+    duplicateRow: (id, i) => store.duplicateRemboursementCC(id, i),
     markSaved: (id, rows) => store.markRemboursementsCCSaved(id, rows),
   };
 
@@ -885,6 +943,7 @@ export function DiversForm({
     addRow: (id) => store.addDividende(id),
     updateRow: (id, i, data) => store.updateDividende(id, i, data),
     removeRow: (id, i) => store.removeDividende(id, i),
+    duplicateRow: (id, i) => store.duplicateDividende(id, i),
     markSaved: (id, rows) => store.markDividendesSaved(id, rows),
   };
 
@@ -899,6 +958,7 @@ export function DiversForm({
     addRow: (id) => store.addDeblocageParticipation(id),
     updateRow: (id, i, data) => store.updateDeblocageParticipation(id, i, data),
     removeRow: (id, i) => store.removeDeblocageParticipation(id, i),
+    duplicateRow: (id, i) => store.duplicateDeblocageParticipation(id, i),
     markSaved: (id, rows) => store.markDeblocagesParticipationSaved(id, rows),
   };
 
@@ -913,6 +973,7 @@ export function DiversForm({
     addRow: (id) => store.addEncaissement(id),
     updateRow: (id, i, data) => store.updateEncaissement(id, i, data),
     removeRow: (id, i) => store.removeEncaissement(id, i),
+    duplicateRow: (id, i) => store.duplicateEncaissement(id, i),
     markSaved: (id, rows) => store.markEncaissementsSaved(id, rows),
   };
 
@@ -927,6 +988,7 @@ export function DiversForm({
     addRow: (id) => store.addDecaissement(id),
     updateRow: (id, i, data) => store.updateDecaissement(id, i, data),
     removeRow: (id, i) => store.removeDecaissement(id, i),
+    duplicateRow: (id, i) => store.duplicateDecaissement(id, i),
     markSaved: (id, rows) => store.markDecaissementsSaved(id, rows),
   };
 

@@ -8,7 +8,7 @@
 
 import { useCallback, useTransition, useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Save, Loader2, FileText, CheckIcon } from "lucide-react";
+import { Trash2, Plus, Save, Loader2, FileText, CheckIcon, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -52,6 +52,8 @@ import {
   deleteEmprunt,
 } from "@/app/actions/financement";
 import { useInvalidateControleStores } from "@/hooks/use-invalidate-controle-stores";
+import { HYPOTHESE_TYPE_OPTIONS, filterByHypothese } from "@/lib/schemas/hypothese";
+import { useHypotheseStore } from "@/stores/hypothese-store";
 
 import {
   useFinancementStore,
@@ -550,6 +552,7 @@ function TableauApports({
         montant:      0,
         dateApport:   dateDebutExerciceN ?? new Date().toISOString().slice(0, 10),
         remboursable: false,
+        hypothese:    "COMMUNE" as const,
         actif:        true,
         ordre:        prev.length,
         _dirty:       true,
@@ -590,6 +593,19 @@ function TableauApports({
     [rows, setRows, dossierId, invalidateControleStores]
   );
 
+  const duplicateRow = useCallback(
+    (idx: number) => {
+      const source = rows[idx];
+      if (!source) return;
+      setRows((prev) => [
+        ...prev.slice(0, idx + 1),
+        { ...source, id: tempId(), libelle: `${source.libelle} (copie)`, ordre: prev.length, _dirty: true },
+        ...prev.slice(idx + 1),
+      ]);
+    },
+    [rows, setRows]
+  );
+
   const saveAll = useCallback(() => {
     startTransition(async () => {
       const dirtyRows = rows.filter((r) => r._dirty);
@@ -620,7 +636,8 @@ function TableauApports({
     });
   }, [rows, dossierId, setRows, invalidateControleStores]);
 
-  const totalApports = rows.reduce((sum, r) => sum + (r.actif !== false ? r.montant : 0), 0);
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const totalApports = filterByHypothese(rows, hypotheseActive).reduce((sum, r) => sum + (r.actif !== false ? r.montant : 0), 0);
 
   return (
     <div className="space-y-3">
@@ -639,6 +656,7 @@ function TableauApports({
               <Th className="w-8">#</Th>
               <Th className="w-8 text-center">Actif</Th>
               <Th className="min-w-48">Libellé</Th>
+              <Th className="w-28">Hypothèse</Th>
               <Th className="w-40">Type</Th>
               <Th className="w-32">Date</Th>
               <Th className="w-28">Montant (€)</Th>
@@ -649,7 +667,7 @@ function TableauApports({
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="text-center text-muted-foreground text-xs py-6">
+                <td colSpan={9} className="text-center text-muted-foreground text-xs py-6">
                   Aucun apport. Cliquez sur « Ajouter » pour commencer.
                 </td>
               </tr>
@@ -679,6 +697,17 @@ function TableauApports({
                     placeholder="Libellé"
                     onChange={(e) => updateRow(idx, "libelle", e.target.value)}
                   />
+                </Td>
+                <Td>
+                  <select
+                    className={cellSelect}
+                    value={row.hypothese}
+                    onChange={(e) => updateRow(idx, "hypothese", e.target.value as ApportRow["hypothese"])}
+                  >
+                    {HYPOTHESE_TYPE_OPTIONS.map((h) => (
+                      <option key={h.value} value={h.value} className="bg-background text-foreground">{h.label}</option>
+                    ))}
+                  </select>
                 </Td>
                 <Td>
                   <select
@@ -721,14 +750,24 @@ function TableauApports({
                   />
                 </Td>
                 <Td className="text-center">
-                  <button
-                    className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                    onClick={() => removeRow(idx)}
-                    title="Supprimer"
-                    disabled={isPending}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center justify-center gap-0.5">
+                    <button
+                      className="p-1 text-muted-foreground hover:text-primary transition-colors"
+                      onClick={() => duplicateRow(idx)}
+                      title="Dupliquer"
+                      disabled={isPending}
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                      onClick={() => removeRow(idx)}
+                      title="Supprimer"
+                      disabled={isPending}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </Td>
               </tr>
             ))}
@@ -736,7 +775,7 @@ function TableauApports({
           {rows.length > 0 && (
             <tfoot className="border-t border-border bg-muted/50">
               <tr>
-                <td colSpan={5} className="text-right text-xs font-medium text-muted-foreground px-2 py-1.5">
+                <td colSpan={6} className="text-right text-xs font-medium text-muted-foreground px-2 py-1.5">
                   Total apports actifs
                 </td>
                 <td className="text-right text-xs font-semibold px-2 py-1.5 tabular-nums">
@@ -803,6 +842,7 @@ function TableauEmprunts({
         dureeDiffereEnMois:    0,
         modeAssurance:         "CAPITAL_RESTANT",
         fraisDossier:          0,
+        hypothese:             "COMMUNE" as const,
         actif:                 true,
         ordre:                 prev.length,
         lignesEcheancier:      [],
@@ -858,6 +898,19 @@ function TableauEmprunts({
     [rows, setRows, dossierId, invalidateControleStores]
   );
 
+  const duplicateRow = useCallback(
+    (idx: number) => {
+      const source = rows[idx];
+      if (!source) return;
+      setRows((prev) => [
+        ...prev.slice(0, idx + 1),
+        { ...source, id: tempId(), libelle: `${source.libelle} (copie)`, ordre: prev.length, lignesEcheancier: [], _dirty: true },
+        ...prev.slice(idx + 1),
+      ]);
+    },
+    [rows, setRows]
+  );
+
   const saveAll = useCallback(() => {
     startTransition(async () => {
       const dirtyRows = rows.filter((r) => r._dirty);
@@ -878,6 +931,7 @@ function TableauEmprunts({
             dureeDiffereEnMois:    row.dureeDiffereEnMois,
             modeAssurance:         row.modeAssurance,
             fraisDossier:          row.fraisDossier,
+            hypothese:             row.hypothese,
             actif:                 row.actif,
             ordre:                 row.ordre,
           };
@@ -905,7 +959,8 @@ function TableauEmprunts({
     });
   }, [rows, dossierId, setRows, invalidateControleStores]);
 
-  const totalEmprunts = rows.reduce((sum, r) => sum + (r.actif !== false ? r.montant : 0), 0);
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const totalEmprunts = filterByHypothese(rows, hypotheseActive).reduce((sum, r) => sum + (r.actif !== false ? r.montant : 0), 0);
 
   return (
     <div className="space-y-3">
@@ -924,6 +979,7 @@ function TableauEmprunts({
               <Th className="w-8">#</Th>
               <Th className="w-8 text-center">Actif</Th>
               <Th className="min-w-40">Libellé</Th>
+              <Th className="w-28">Hypothèse</Th>
               <Th className="w-8 text-center">Détail</Th>
               <Th className="w-32">Date déblocage</Th>
               <Th className="w-28">Montant (€)</Th>
@@ -940,7 +996,7 @@ function TableauEmprunts({
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={14} className="text-center text-muted-foreground text-xs py-6">
+                <td colSpan={15} className="text-center text-muted-foreground text-xs py-6">
                   Aucun emprunt. Cliquez sur « Ajouter » pour commencer.
                 </td>
               </tr>
@@ -978,6 +1034,17 @@ function TableauEmprunts({
                       placeholder="Libellé"
                       onChange={(e) => updateRow(idx, "libelle", e.target.value)}
                     />
+                  </Td>
+                  <Td>
+                    <select
+                      className={cellSelect}
+                      value={row.hypothese}
+                      onChange={(e) => updateRow(idx, "hypothese", e.target.value as EmpruntRow["hypothese"])}
+                    >
+                      {HYPOTHESE_TYPE_OPTIONS.map((h) => (
+                        <option key={h.value} value={h.value} className="bg-background text-foreground">{h.label}</option>
+                      ))}
+                    </select>
                   </Td>
                   <Td className="text-center px-1">
                     <button
@@ -1060,14 +1127,24 @@ function TableauEmprunts({
                       : "—"}
                   </Td>
                   <Td className="text-center">
-                    <button
-                      className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                      onClick={() => removeRow(idx)}
-                      title="Supprimer"
-                      disabled={isPending}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    <div className="flex items-center justify-center gap-0.5">
+                      <button
+                        className="p-1 text-muted-foreground hover:text-primary transition-colors"
+                        onClick={() => duplicateRow(idx)}
+                        title="Dupliquer"
+                        disabled={isPending}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                        onClick={() => removeRow(idx)}
+                        title="Supprimer"
+                        disabled={isPending}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </Td>
                 </tr>
               );
@@ -1076,7 +1153,7 @@ function TableauEmprunts({
           {rows.length > 0 && (
             <tfoot className="border-t border-border bg-muted/50">
               <tr>
-                <td colSpan={5} className="text-right text-xs font-medium text-muted-foreground px-2 py-1.5">
+                <td colSpan={6} className="text-right text-xs font-medium text-muted-foreground px-2 py-1.5">
                   Total emprunts actifs
                 </td>
                 <td className="text-right text-xs font-semibold px-2 py-1.5 tabular-nums">

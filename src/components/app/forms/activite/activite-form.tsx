@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useTransition, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Save, Loader2, FileText } from "lucide-react";
+import { Trash2, Plus, Save, Loader2, FileText, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, numVal } from "@/lib/utils";
@@ -27,6 +27,8 @@ import {
 } from "@/lib/schemas/activite";
 
 import { useActiviteStore } from "@/stores/activite-store";
+import { filterByHypothese } from "@/lib/schemas/hypothese";
+import { useHypotheseStore } from "@/stores/hypothese-store";
 import { DetailActiviteDialog } from "@/components/app/forms/activite/detail-activite-dialog";
 import { saveActivites, saveActivitesCommission, saveProductionsImmobilisees, saveSubventionsExploitation } from "@/app/actions/activite";
 import { useInvalidateControleStores } from "@/hooks/use-invalidate-controle-stores";
@@ -132,6 +134,7 @@ function TableauActivites({
   rows,
   onUpdate,
   onRemove,
+  onDuplicate,
   dateDebutExerciceN,
   exercices,
 }: {
@@ -139,10 +142,12 @@ function TableauActivites({
   rows: ActiviteRow[];
   onUpdate: (i: number, data: Partial<ActiviteRow>) => void;
   onRemove: (i: number) => void;
+  onDuplicate: (i: number) => void;
   dateDebutExerciceN?: string;
   exercices?: Array<{ dateCloture: string; duree: number; annee: number }>;
 }) {
   const [detailIdx, setDetailIdx] = useState<number | null>(null);
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
 
   return (
     <>
@@ -429,13 +434,23 @@ function TableauActivites({
                     </select>
                   </Td>
                   <Td className="text-center px-1">
-                    <button
-                      type="button"
-                      className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                      onClick={() => onRemove(i)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    <div className="flex items-center justify-center gap-0.5">
+                      <button
+                        type="button"
+                        className="p-1 text-muted-foreground hover:text-primary transition-colors"
+                        onClick={() => onDuplicate(i)}
+                        title="Dupliquer"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                        onClick={() => onRemove(i)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </Td>
                 </tr>
               ))
@@ -448,15 +463,15 @@ function TableauActivites({
                   Total (actifs)
                 </td>
                 <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
-                  {rows.filter(r => r.actif ?? true).reduce((s, r) => s + r.montantN, 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
+                  {filterByHypothese(rows, hypotheseActive).filter(r => r.actif ?? true).reduce((s, r) => s + r.montantN, 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
                 </td>
                 <td />
                 <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
-                  {rows.filter(r => r.actif ?? true).reduce((s, r) => s + r.montantN1, 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
+                  {filterByHypothese(rows, hypotheseActive).filter(r => r.actif ?? true).reduce((s, r) => s + r.montantN1, 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
                 </td>
                 <td />
                 <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
-                  {rows.filter(r => r.actif ?? true).reduce((s, r) => s + r.montantN2, 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
+                  {filterByHypothese(rows, hypotheseActive).filter(r => r.actif ?? true).reduce((s, r) => s + r.montantN2, 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
                 </td>
                 <td colSpan={7} />
               </tr>
@@ -481,14 +496,19 @@ function TableauActivites({
 // ── Tableau Activités commissionnées ─────────────────────────────────────────
 
 function TableauActivitesCommissions({
+  dossierId,
   rows,
   onUpdate,
   onRemove,
+  onDuplicate,
 }: {
+  dossierId: string;
   rows: ActiviteCommissionRow[];
   onUpdate: (i: number, data: Partial<ActiviteCommissionRow>) => void;
   onRemove: (i: number) => void;
+  onDuplicate: (i: number) => void;
 }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
   return (
     <div className="overflow-x-auto rounded border border-border">
       <table className="w-full text-sm border-collapse">
@@ -718,13 +738,23 @@ function TableauActivitesCommissions({
                   />
                 </Td>
                 <Td className="text-center px-1">
-                  <button
-                    type="button"
-                    className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                    onClick={() => onRemove(i)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center justify-center gap-0.5">
+                    <button
+                      type="button"
+                      className="p-1 text-muted-foreground hover:text-primary transition-colors"
+                      onClick={() => onDuplicate(i)}
+                      title="Dupliquer"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                      onClick={() => onRemove(i)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </Td>
               </tr>
             ))
@@ -737,15 +767,15 @@ function TableauActivitesCommissions({
                 Total (actifs)
               </td>
               <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
-                {rows.filter(r => r.actif ?? true).reduce((s, r) => s + r.montantN, 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
+                {filterByHypothese(rows, hypotheseActive).filter(r => r.actif ?? true).reduce((s, r) => s + r.montantN, 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
               </td>
               <td />
               <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
-                {rows.filter(r => r.actif ?? true).reduce((s, r) => s + r.montantN1, 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
+                {filterByHypothese(rows, hypotheseActive).filter(r => r.actif ?? true).reduce((s, r) => s + r.montantN1, 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
               </td>
               <td />
               <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
-                {rows.filter(r => r.actif ?? true).reduce((s, r) => s + r.montantN2, 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
+                {filterByHypothese(rows, hypotheseActive).filter(r => r.actif ?? true).reduce((s, r) => s + r.montantN2, 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
               </td>
               <td colSpan={6} />
             </tr>
@@ -774,10 +804,12 @@ function TableauProductionsImmobilisees({
   rows,
   onUpdate,
   onRemove,
+  onDuplicate,
 }: {
   rows: ProductionImmobiliseeRow[];
   onUpdate: (i: number, data: Partial<ProductionImmobiliseeRow>) => void;
   onRemove: (i: number) => void;
+  onDuplicate: (i: number) => void;
 }) {
   return (
     <div className="overflow-x-auto rounded border border-border">
@@ -946,13 +978,23 @@ function TableauProductionsImmobilisees({
                   />
                 </Td>
                 <Td className="text-center px-1">
-                  <button
-                    type="button"
-                    className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                    onClick={() => onRemove(i)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center justify-center gap-0.5">
+                    <button
+                      type="button"
+                      className="p-1 text-muted-foreground hover:text-primary transition-colors"
+                      onClick={() => onDuplicate(i)}
+                      title="Dupliquer"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                      onClick={() => onRemove(i)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </Td>
               </tr>
             ))
@@ -975,10 +1017,12 @@ function TableauSubventions({
   rows,
   onUpdate,
   onRemove,
+  onDuplicate,
 }: {
   rows: SubventionExploitationRow[];
   onUpdate: (i: number, data: Partial<SubventionExploitationRow>) => void;
   onRemove: (i: number) => void;
+  onDuplicate: (i: number) => void;
 }) {
   return (
     <div className="overflow-x-auto rounded border border-border">
@@ -1161,13 +1205,23 @@ function TableauSubventions({
                   </select>
                 </Td>
                 <Td className="text-center px-1">
-                  <button
-                    type="button"
-                    className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                    onClick={() => onRemove(i)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center justify-center gap-0.5">
+                    <button
+                      type="button"
+                      className="p-1 text-muted-foreground hover:text-primary transition-colors"
+                      onClick={() => onDuplicate(i)}
+                      title="Dupliquer"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                      onClick={() => onRemove(i)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </Td>
               </tr>
             ))
@@ -1208,18 +1262,22 @@ export function ActiviteForm({
     addActivite,
     updateActivite,
     removeActivite,
+    duplicateActivite,
     markActivitesSaved,
     addActiviteCommission,
     updateActiviteCommission,
     removeActiviteCommission,
+    duplicateActiviteCommission,
     markCommissionsSaved,
     addProductionImmobilisee,
     updateProductionImmobilisee,
     removeProductionImmobilisee,
+    duplicateProductionImmobilisee,
     markProductionsSaved,
     addSubventionExploitation,
     updateSubventionExploitation,
     removeSubventionExploitation,
+    duplicateSubventionExploitation,
     markSubventionsSaved,
   } = useActiviteStore();
 
@@ -1361,6 +1419,7 @@ export function ActiviteForm({
           rows={draft.activites}
           onUpdate={(i, data) => updateActivite(dossierId, i, data)}
           onRemove={(i) => removeActivite(dossierId, i)}
+          onDuplicate={(i) => duplicateActivite(dossierId, i)}
           dateDebutExerciceN={dateDebutExerciceN}
           exercices={exercices}
         />
@@ -1377,9 +1436,11 @@ export function ActiviteForm({
           onSave={handleSaveCommissions}
         />
         <TableauActivitesCommissions
+          dossierId={dossierId}
           rows={draft.activitesCommissionnees}
           onUpdate={(i, data) => updateActiviteCommission(dossierId, i, data)}
           onRemove={(i) => removeActiviteCommission(dossierId, i)}
+          onDuplicate={(i) => duplicateActiviteCommission(dossierId, i)}
         />
       </section>
 
@@ -1399,6 +1460,7 @@ export function ActiviteForm({
             updateProductionImmobilisee(dossierId, i, data)
           }
           onRemove={(i) => removeProductionImmobilisee(dossierId, i)}
+          onDuplicate={(i) => duplicateProductionImmobilisee(dossierId, i)}
         />
       </section>
 
@@ -1418,6 +1480,7 @@ export function ActiviteForm({
             updateSubventionExploitation(dossierId, i, data)
           }
           onRemove={(i) => removeSubventionExploitation(dossierId, i)}
+          onDuplicate={(i) => duplicateSubventionExploitation(dossierId, i)}
         />
       </section>
     </div>

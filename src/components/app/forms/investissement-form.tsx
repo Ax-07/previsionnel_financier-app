@@ -9,7 +9,7 @@
 
 import { useCallback, useMemo, useTransition, useEffect } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Save, Loader2, FolderPlus } from "lucide-react";
+import { Trash2, Plus, Save, Loader2, FolderPlus, Copy } from "lucide-react";
 import { GroupedDndTable } from "@/components/ui/grouped-dnd-table";
 import { useGroupedDnd } from "@/hooks/use-grouped-dnd";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,8 @@ import {
   type LocalCredit,
 } from "@/stores/investissement-store";
 import { DragHandleCell, SortableTableRow } from "@/components/ui/sortable-table-row";
+import { HYPOTHESE_TYPE_OPTIONS, filterByHypothese } from "@/lib/schemas/hypothese";
+import { useHypotheseStore } from "@/stores/hypothese-store";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -148,14 +150,15 @@ function Td({ children, className }: { children: React.ReactNode; className?: st
 const fmt = (v: number) =>
   v.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-function TotauxImmos({ rows }: { rows: LocalImmo[] }) {
-  const actifs = rows.filter((r) => r.actif !== false);
+function TotauxImmos({ rows, dossierId }: { rows: LocalImmo[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const actifs = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   const total = actifs.reduce((s, r) => s + (r.montantHT ?? 0), 0);
   return (
     <tfoot className="border-t-2 border-border bg-muted/30">
       <tr>
-        {/* drag, #, actif, libellé, nature, date */}
-        <td colSpan={6} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
+        {/* drag, #, actif, libellé, hypothèse, nature, date */}
+        <td colSpan={7} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
           Total Montant HT (actifs)
         </td>
         <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
@@ -168,15 +171,16 @@ function TotauxImmos({ rows }: { rows: LocalImmo[] }) {
   );
 }
 
-function TotauxCessions({ rows }: { rows: LocalCession[] }) {
-  const actifs = rows.filter((r) => r.actif !== false);
+function TotauxCessions({ rows, dossierId }: { rows: LocalCession[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const actifs = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   const totalVente = actifs.reduce((s, r) => s + (r.prixVente ?? 0), 0);
   const totalAchat = actifs.reduce((s, r) => s + (r.prixAchat ?? 0), 0);
   return (
     <tfoot className="border-t-2 border-border bg-muted/30">
       <tr>
-        {/* drag, #, actif, libellé, nature, date */}
-        <td colSpan={6} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
+        {/* drag, #, actif, libellé, hypothèse, nature, date */}
+        <td colSpan={7} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
           Total (actifs)
         </td>
         <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(totalVente)}</td>
@@ -188,15 +192,16 @@ function TotauxCessions({ rows }: { rows: LocalCession[] }) {
   );
 }
 
-function TotauxCreditBail({ rows }: { rows: LocalCredit[] }) {
-  const actifs = rows.filter((r) => r.actif !== false);
+function TotauxCreditBail({ rows, dossierId }: { rows: LocalCredit[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const actifs = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
   const totalMontant = actifs.reduce((s, r) => s + (r.montantHT ?? 0), 0);
   const totalLoyer = actifs.reduce((s, r) => s + (r.loyerHT ?? 0), 0);
   return (
     <tfoot className="border-t-2 border-border bg-muted/30">
       <tr>
-        {/* drag, #, actif, libellé, date */}
-        <td colSpan={5} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
+        {/* drag, #, actif, libellé, hypothèse, date */}
+        <td colSpan={6} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
           Total (actifs)
         </td>
         <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(totalMontant)}</td>
@@ -226,6 +231,7 @@ function TableauImmobilisations({
   const _storeRows = useInvestissementStore((s) => s.immos[dossierId]);
   const setImmos = useInvestissementStore((s) => s.setImmos);
   const hydrateImmos = useInvestissementStore((s) => s.hydrateImmos);
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
 
   useEffect(() => {
     hydrateImmos(dossierId, initialData.map((d) => ({ ...d, _dirty: false })));
@@ -259,6 +265,7 @@ function TableauImmobilisations({
         dureeAmortissement: 5,
         tauxTVA: 20,
         typeTva: "RECUPERABLE",
+        hypothese: "COMMUNE" as const,
         actif: true,
         ordre: prev.length,
         _dirty: true,
@@ -297,6 +304,19 @@ function TableauImmobilisations({
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rows, setRows]
+  );
+
+  const duplicateRow = useCallback(
+    (idx: number) => {
+      const source = rows[idx];
+      if (!source) return;
+      setRows((prev) => [
+        ...prev.slice(0, idx + 1),
+        { ...source, id: tempId(), libelle: `${source.libelle} (copie)`, ordre: prev.length, _dirty: true },
+        ...prev.slice(idx + 1),
+      ]);
+    },
     [rows, setRows]
   );
 
@@ -352,6 +372,7 @@ function TableauImmobilisations({
         dureeAmortissement: 5,
         tauxTVA: 20,
         typeTva: "RECUPERABLE",
+        hypothese: "COMMUNE" as const,
         actif: true,
         ordre: 0,
         groupe: name,
@@ -377,6 +398,7 @@ function TableauImmobilisations({
             dureeAmortissement: 5,
             tauxTVA: 20,
             typeTva: "RECUPERABLE",
+            hypothese: "COMMUNE" as const,
             actif: true,
             ordre: groupRows.length,
             groupe: g,
@@ -420,6 +442,17 @@ function TableauImmobilisations({
             placeholder="Libellé"
             onChange={(e) => updateRow(idx, "libelle", e.target.value)}
           />
+        </Td>
+        <Td>
+          <select
+            className={cellSelect}
+            value={row.hypothese}
+            onChange={(e) => updateRow(idx, "hypothese", e.target.value as ImmobilisationRow["hypothese"])}
+          >
+            {HYPOTHESE_TYPE_OPTIONS.map((h) => (
+              <option key={h.value} value={h.value} className="bg-background text-foreground">{h.label}</option>
+            ))}
+          </select>
         </Td>
         <Td>
           <select
@@ -517,6 +550,14 @@ function TableauImmobilisations({
         <Td className="text-center px-1">
           <div className="flex items-center justify-center gap-0.5">
             <button
+              className="p-1 text-muted-foreground hover:text-primary transition-colors"
+              onClick={() => duplicateRow(idx)}
+              title="Dupliquer"
+              disabled={isPending}
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+            <button
               className="p-1 text-muted-foreground hover:text-destructive transition-colors"
               onClick={() => removeRow(idx)}
               title="Supprimer"
@@ -529,7 +570,7 @@ function TableauImmobilisations({
       </SortableTableRow>
     );
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, isPending, updateRow, removeRow, setRows, dateDebutExerciceN]);
+  }, [rows, isPending, updateRow, removeRow, duplicateRow, setRows, dateDebutExerciceN]);
 
   return (
     <div className="space-y-3">
@@ -544,14 +585,14 @@ function TableauImmobilisations({
       />
       <GroupedDndTable
         dnd={dnd}
-        colSpan={13}
+        colSpan={14}
         onAddRowToGroupe={addRowToGroupe}
         renderRow={renderRow}
         emptyMessage="Aucune immobilisation. Cliquez sur « Ajouter » pour commencer."
-        footer={<TotauxImmos rows={rows} />}
-        groupNameColSpan={5}
+        footer={<TotauxImmos rows={rows} dossierId={dossierId} />}
+        groupNameColSpan={6}
         renderGroupSummaryCells={(groupRows) => {
-          const actifs = groupRows.filter((r) => r.actif !== false);
+          const actifs = filterByHypothese(groupRows, hypotheseActive).filter((r) => r.actif !== false);
           const total = actifs.reduce((s, r) => s + (r.montantHT ?? 0), 0);
           return (
             <>
@@ -567,6 +608,7 @@ function TableauImmobilisations({
             <Th className="w-8">#</Th>
             <Th className="w-8 text-center">Actif</Th>
             <Th className="min-w-45">Libellé</Th>
+            <Th className="w-28">Hypothèse</Th>
             <Th className="w-28">Nature</Th>
             <Th className="w-32">Date acquisition</Th>
             <Th className="w-24">Montant HT</Th>
@@ -599,6 +641,7 @@ function TableauCessions({
   const _storeRows = useInvestissementStore((s) => s.cessions[dossierId]);
   const setCessions = useInvestissementStore((s) => s.setCessions);
   const hydrateCessions = useInvestissementStore((s) => s.hydrateCessions);
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
 
   useEffect(() => {
     hydrateCessions(dossierId, initialData.map((d) => ({ ...d, _dirty: false })));
@@ -630,6 +673,7 @@ function TableauCessions({
         prixAchat: 0,
         dejaAmortie: 0,
         tauxTVA: 20,
+        hypothese: "COMMUNE" as const,
         actif: true,
         ordre: prev.length,
         _dirty: true,
@@ -664,6 +708,7 @@ function TableauCessions({
         prixAchat: 0,
         dejaAmortie: 0,
         tauxTVA: 20,
+        hypothese: "COMMUNE" as const,
         actif: true,
         ordre: 0,
         groupe: name,
@@ -687,6 +732,7 @@ function TableauCessions({
             prixAchat: 0,
             dejaAmortie: 0,
             tauxTVA: 20,
+            hypothese: "COMMUNE" as const,
             actif: true,
             ordre: groupRows.length,
             groupe: g,
@@ -718,6 +764,19 @@ function TableauCessions({
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rows, setRows]
+  );
+
+  const duplicateRow = useCallback(
+    (idx: number) => {
+      const source = rows[idx];
+      if (!source) return;
+      setRows((prev) => [
+        ...prev.slice(0, idx + 1),
+        { ...source, id: tempId(), libelle: `${source.libelle} (copie)`, ordre: prev.length, _dirty: true },
+        ...prev.slice(idx + 1),
+      ]);
+    },
     [rows, setRows]
   );
 
@@ -792,6 +851,17 @@ function TableauCessions({
         <Td>
           <select
             className={cellSelect}
+            value={row.hypothese}
+            onChange={(e) => updateRow(idx, "hypothese", e.target.value as CessionRow["hypothese"])}
+          >
+            {HYPOTHESE_TYPE_OPTIONS.map((h) => (
+              <option key={h.value} value={h.value} className="bg-background text-foreground">{h.label}</option>
+            ))}
+          </select>
+        </Td>
+        <Td>
+          <select
+            className={cellSelect}
             value={row.nature}
             onChange={(e) => updateRow(idx, "nature", e.target.value as CessionRow["nature"])}
           >
@@ -861,6 +931,14 @@ function TableauCessions({
         <Td className="text-center px-1">
           <div className="flex items-center justify-center gap-0.5">
             <button
+              className="p-1 text-muted-foreground hover:text-primary transition-colors"
+              onClick={() => duplicateRow(idx)}
+              title="Dupliquer"
+              disabled={isPending}
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+            <button
               className="p-1 text-muted-foreground hover:text-destructive transition-colors"
               onClick={() => removeRow(idx)}
               title="Supprimer"
@@ -873,7 +951,7 @@ function TableauCessions({
       </SortableTableRow>
     );
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, isPending, updateRow, removeRow, setRows, dateDebutExerciceN]);
+  }, [rows, isPending, updateRow, removeRow, duplicateRow, setRows, dateDebutExerciceN]);
 
   return (
     <div className="space-y-3">
@@ -888,14 +966,14 @@ function TableauCessions({
       />
       <GroupedDndTable
         dnd={dnd}
-        colSpan={14}
+        colSpan={15}
         onAddRowToGroupe={addRowToGroupe}
         renderRow={renderRow}
         emptyMessage="Aucune cession. Cliquez sur « Ajouter » pour commencer."
-        footer={<TotauxCessions rows={rows} />}
-        groupNameColSpan={5}
+        footer={<TotauxCessions rows={rows} dossierId={dossierId} />}
+        groupNameColSpan={6}
         renderGroupSummaryCells={(groupRows) => {
-          const actifs = groupRows.filter((r) => r.actif !== false);
+          const actifs = filterByHypothese(groupRows, hypotheseActive).filter((r) => r.actif !== false);
           const vente = actifs.reduce((s, r) => s + (r.prixVente ?? 0), 0);
           const achat = actifs.reduce((s, r) => s + (r.prixAchat ?? 0), 0);
           return (
@@ -913,6 +991,7 @@ function TableauCessions({
             <Th className="w-8">#</Th>
             <Th className="w-8 text-center">Actif</Th>
             <Th className="min-w-40">Libellé</Th>
+            <Th className="w-28">Hypothèse</Th>
             <Th className="w-28">Nature</Th>
             <Th className="w-32">Date cession</Th>
             <Th className="w-24">Prix vente</Th>
@@ -946,6 +1025,7 @@ function TableauCreditBail({
   const _storeRows = useInvestissementStore((s) => s.credits[dossierId]);
   const setCredits = useInvestissementStore((s) => s.setCredits);
   const hydrateCredits = useInvestissementStore((s) => s.hydrateCredits);
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
 
   useEffect(() => {
     hydrateCredits(dossierId, initialData.map((d) => ({ ...d, _dirty: false })));
@@ -977,6 +1057,7 @@ function TableauCreditBail({
         duree: 36,
         periodicite: "MENSUEL",
         tauxTVA: 20,
+        hypothese: "COMMUNE" as const,
         actif: true,
         ordre: prev.length,
         _dirty: true,
@@ -1011,6 +1092,7 @@ function TableauCreditBail({
         duree: 36,
         periodicite: "MENSUEL",
         tauxTVA: 20,
+        hypothese: "COMMUNE" as const,
         actif: true,
         ordre: 0,
         groupe: name,
@@ -1034,6 +1116,7 @@ function TableauCreditBail({
             duree: 36,
             periodicite: "MENSUEL",
             tauxTVA: 20,
+            hypothese: "COMMUNE" as const,
             actif: true,
             ordre: groupRows.length,
             groupe: g,
@@ -1065,6 +1148,19 @@ function TableauCreditBail({
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rows, setRows]
+  );
+
+  const duplicateRow = useCallback(
+    (idx: number) => {
+      const source = rows[idx];
+      if (!source) return;
+      setRows((prev) => [
+        ...prev.slice(0, idx + 1),
+        { ...source, id: tempId(), libelle: `${source.libelle} (copie)`, ordre: prev.length, _dirty: true },
+        ...prev.slice(idx + 1),
+      ]);
+    },
     [rows, setRows]
   );
 
@@ -1134,6 +1230,17 @@ function TableauCreditBail({
             placeholder="Libellé"
             onChange={(e) => updateRow(idx, "libelle", e.target.value)}
           />
+        </Td>
+        <Td>
+          <select
+            className={cellSelect}
+            value={row.hypothese}
+            onChange={(e) => updateRow(idx, "hypothese", e.target.value as CreditBailRow["hypothese"])}
+          >
+            {HYPOTHESE_TYPE_OPTIONS.map((h) => (
+              <option key={h.value} value={h.value} className="bg-background text-foreground">{h.label}</option>
+            ))}
+          </select>
         </Td>
         <Td>
           <input
@@ -1229,6 +1336,14 @@ function TableauCreditBail({
         <Td className="text-center px-1">
           <div className="flex items-center justify-center gap-0.5">
             <button
+              className="p-1 text-muted-foreground hover:text-primary transition-colors"
+              onClick={() => duplicateRow(idx)}
+              title="Dupliquer"
+              disabled={isPending}
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+            <button
               className="p-1 text-muted-foreground hover:text-destructive transition-colors"
               onClick={() => removeRow(idx)}
               title="Supprimer"
@@ -1241,7 +1356,7 @@ function TableauCreditBail({
       </SortableTableRow>
     );
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, isPending, updateRow, removeRow, setRows, dateDebutExerciceN]);
+  }, [rows, isPending, updateRow, removeRow, duplicateRow, setRows, dateDebutExerciceN]);
 
   return (
     <div className="space-y-3">
@@ -1256,14 +1371,14 @@ function TableauCreditBail({
       />
       <GroupedDndTable
         dnd={dnd}
-        colSpan={15}
+        colSpan={16}
         onAddRowToGroupe={addRowToGroupe}
         renderRow={renderRow}
         emptyMessage="Aucun crédit-bail. Cliquez sur « Ajouter » pour commencer."
-        footer={<TotauxCreditBail rows={rows} />}
-        groupNameColSpan={4}
+        footer={<TotauxCreditBail rows={rows} dossierId={dossierId} />}
+        groupNameColSpan={5}
         renderGroupSummaryCells={(groupRows) => {
-          const actifs = groupRows.filter((r) => r.actif !== false);
+          const actifs = filterByHypothese(groupRows, hypotheseActive).filter((r) => r.actif !== false);
           const montant = actifs.reduce((s, r) => s + (r.montantHT ?? 0), 0);
           const loyer = actifs.reduce((s, r) => s + (r.loyerHT ?? 0), 0);
           return (
@@ -1282,6 +1397,7 @@ function TableauCreditBail({
             <Th className="w-8">#</Th>
             <Th className="w-8 text-center">Actif</Th>
             <Th className="min-w-40">Libellé</Th>
+            <Th className="w-28">Hypothèse</Th>
             <Th className="w-32">Date début</Th>
             <Th className="w-24">Montant HT</Th>
             <Th className="w-16">Taux %</Th>
