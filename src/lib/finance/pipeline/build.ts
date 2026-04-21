@@ -11,6 +11,8 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import type { FinCalcResult } from "@/lib/finance/types/results";
 import type { YearAcc } from "@/lib/finance/types/series";
+import type { HypotheseType } from "@/lib/schemas/hypothese";
+import { HYPOTHESE_ACTIVE_DEFAULT } from "@/lib/schemas/hypothese";
 import { makeExerciceHelpers, fmtExercice } from "./calendar";
 import { n } from "@/lib/finance/utils";
 
@@ -28,6 +30,23 @@ import {
 } from "@/lib/finance/calculs/monthly";
 
 /**
+ * Filtre un tableau d'entités par hypothèse active.
+ * Conserve les lignes dont `hypothese` vaut `COMMUNE` ou correspond à l'hypothèse active.
+ * Si le champ `hypothese` est absent (données legacy / fixtures de test), la ligne est considérée comme `COMMUNE`.
+ */
+function filterByHypothese<T extends { hypothese?: string }>(
+  items: T[],
+  hypotheseActive: HypotheseType,
+): T[] {
+  return items.filter(
+    (item) => {
+      const h = item.hypothese ?? "COMMUNE";
+      return h === "COMMUNE" || h === hypotheseActive;
+    },
+  );
+}
+
+/**
  * Calcule l'intégralité des agrégats financiers prévisionnels.
  * Délègue tous les calculs à buildMonthlyCalc, puis somme les séries mensuelles.
  * Appeler cette fonction en tête de chaque action de contrôle.
@@ -35,14 +54,48 @@ import {
 export function buildFinCalc(
   data: ScenarioFinData,
   dateDemarrage: Date,
+  hypotheseActive: HypotheseType = HYPOTHESE_ACTIVE_DEFAULT,
 ): FinCalcResult {
+  // ── Filtrage des données par hypothèse ──────────────────────────────────
+  const d: ScenarioFinData = {
+    ...data,
+    activites: filterByHypothese(data.activites, hypotheseActive),
+    activiteCommissions: filterByHypothese(data.activiteCommissions, hypotheseActive),
+    subventionsExploitation: filterByHypothese(data.subventionsExploitation, hypotheseActive),
+    productionsImmobilisees: filterByHypothese(data.productionsImmobilisees, hypotheseActive),
+    fournitures: filterByHypothese(data.fournitures, hypotheseActive),
+    services: filterByHypothese(data.services, hypotheseActive),
+    impotsTaxes: filterByHypothese(data.impotsTaxes, hypotheseActive),
+    salaries: filterByHypothese(data.salaries, hypotheseActive),
+    dirigeants: filterByHypothese(data.dirigeants, hypotheseActive),
+    cotisationsTNS: filterByHypothese(data.cotisationsTNS, hypotheseActive),
+    taxesSalaires: filterByHypothese(data.taxesSalaires, hypotheseActive),
+    immobilisations: filterByHypothese(data.immobilisations, hypotheseActive),
+    provisions: filterByHypothese(data.provisions, hypotheseActive),
+    chargesFinancieres: filterByHypothese(data.chargesFinancieres, hypotheseActive),
+    chargesExceptionnelles: filterByHypothese(data.chargesExceptionnelles, hypotheseActive),
+    chargesGestionCourante: filterByHypothese(data.chargesGestionCourante, hypotheseActive),
+    reprisesProduits: filterByHypothese(data.reprisesProduits, hypotheseActive),
+    financiersProduits: filterByHypothese(data.financiersProduits, hypotheseActive),
+    exceptionnelsProduits: filterByHypothese(data.exceptionnelsProduits, hypotheseActive),
+    transfertsProduits: filterByHypothese(data.transfertsProduits, hypotheseActive),
+    gestionCouranteProduits: filterByHypothese(data.gestionCouranteProduits, hypotheseActive),
+    emprunts: filterByHypothese(data.emprunts, hypotheseActive),
+    apports: filterByHypothese(data.apports, hypotheseActive),
+    subventions: filterByHypothese(data.subventions, hypotheseActive),
+    diversEncaissements: filterByHypothese(data.diversEncaissements, hypotheseActive),
+    diversDecaissements: filterByHypothese(data.diversDecaissements, hypotheseActive),
+    diversRemboursementsCC: filterByHypothese(data.diversRemboursementsCC, hypotheseActive),
+    ajustementsFiscaux: filterByHypothese(data.ajustementsFiscaux, hypotheseActive),
+  };
+
   const anneeDebut = dateDemarrage.getFullYear();
   const moisDebut = dateDemarrage.getMonth();
   const { toExerciceKey, exBorne1, exBorne2, exBorne3, pFin, pDeb } =
     makeExerciceHelpers(dateDemarrage);
 
   // Calcul TVA — source unique de vérité pour tout le pipeline
-  const tva = calcTVA(data, { toExerciceKey, exBorne1, exBorne2, exBorne3 });
+  const tva = calcTVA(d, { toExerciceKey, exBorne1, exBorne2, exBorne3 });
 
   const yearLabels = {
     y1: fmtExercice(anneeDebut, moisDebut),
@@ -50,27 +103,27 @@ export function buildFinCalc(
     y3: fmtExercice(anneeDebut + 2, moisDebut),
   };
 
-  const dureeProjection = ((data.dureeProjection ?? 3) as 1 | 2 | 3);
+  const dureeProjection = ((d.dureeProjection ?? 3) as 1 | 2 | 3);
 
   // ── IS : nécessite resCourant et resExcep calculés d'abord ────────────────
-  const _capital = calcCapitalRembourse(data, toExerciceKey);
-  const _resExcep = calcResExcep(data);
-  const _ajustementNet = calcAjustementNet(data);
+  const _capital = calcCapitalRembourse(d, toExerciceKey);
+  const _resExcep = calcResExcep(d);
+  const _ajustementNet = calcAjustementNet(d);
 
   // Passe 1 : IS = 0 pour obtenir resCourant (IS dépend de RCAI → calcul après)
-  const mc0: MonthlyCalcResult = buildMonthlyCalc(data, dateDemarrage, { y1: 0, y2: 0, y3: 0 });
+  const mc0: MonthlyCalcResult = buildMonthlyCalc(d, dateDemarrage, { y1: 0, y2: 0, y3: 0 });
   const _resCourant = monthlyToYearAcc(mc0.resCourant);
 
   const isParAnnee = calcISParAnnee(
     _resCourant,
     _resExcep,
     _ajustementNet,
-    data.parametresIS,
-    data.isIS,
+    d.parametresIS,
+    d.isIS,
   );
 
   // Passe 2 : re-calcul avec IS réel — séries mensuelles (resNet, caf, isSeries) correctes
-  const mc: MonthlyCalcResult = buildMonthlyCalc(data, dateDemarrage, isParAnnee);
+  const mc: MonthlyCalcResult = buildMonthlyCalc(d, dateDemarrage, isParAnnee);
 
   // ── Calcul des agrégats annuels (somme des séries mensuelles) ─────────────
   const sum = monthlyToYearAcc;
@@ -163,7 +216,7 @@ export function buildFinCalc(
 
   // ── BFR — variation annuelle exposée dans FinCalcResult ──────────────────
   // Appel minimal : seuls stockFinal, tva, moisDebut, isParAnnee sont requis.
-  const { variationBFR } = calcBfr(data, { stockFinal, tva, moisDebut, isParAnnee });
+  const { variationBFR } = calcBfr(d, { stockFinal, tva, moisDebut, isParAnnee });
 
   // ── Drill-down CAF ────────────────────────────────────────────────────────
   const dotationsParImmoAcc = mc.dotationsParImmo.map((d) => ({
@@ -171,7 +224,7 @@ export function buildFinCalc(
     values: sum(d.series),
   }));
 
-  const capitalRembourseParEmprunt = data.emprunts.map((emprunt) => {
+  const capitalRembourseParEmprunt = d.emprunts.map((emprunt) => {
     const values: YearAcc = { y1: 0, y2: 0, y3: 0 };
     for (const ligne of emprunt.lignesEcheancier) {
       const dateStr =
@@ -246,5 +299,6 @@ export function buildFinCalc(
     capitalRembourseParEmprunt,
     tva,
     monthlyCalc: mc,
+    filteredData: d,
   };
 }

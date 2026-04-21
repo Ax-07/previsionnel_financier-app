@@ -143,6 +143,26 @@ export interface FinCalcMensuel {
   monthlyCalc: MonthlyCalcResult;
 }
 
+/** Données d'entrée filtrées par hypothèse active. */
+export interface FinCalcFilteredData {
+  /**
+   * Données ScenarioFinData filtrées par l'hypothèse active.
+   * À utiliser dans les builders de drill-down (CR, SIG, budget, etc.)
+   * au lieu du `data` brut du store.
+   */
+  filteredData: import("@/lib/finance/fetch-scenario").ScenarioFinData;
+}
+
+/** Données d'entrée filtrées par hypothèse active. */
+export interface FinCalcFilteredData {
+  /**
+   * Données ScenarioFinData filtrées par l'hypothèse active.
+   * À utiliser dans les builders de drill-down (CR, SIG, budget, etc.)
+   * au lieu du `data` brut du store.
+   */
+  filteredData: import("@/lib/finance/fetch-scenario").ScenarioFinData;
+}
+
 // ── Type agrégé ───────────────────────────────────────────────────────────────
 
 /**
@@ -162,4 +182,5 @@ export interface FinCalcResult
     FinCalcBFR,
     FinCalcCAF,
     FinCalcTVA,
-    FinCalcMensuel {}
+    FinCalcMensuel,
+    FinCalcFilteredData {}
