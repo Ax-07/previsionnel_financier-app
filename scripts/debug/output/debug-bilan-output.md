@@ -29,11 +29,13 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 
 ### Activités
 
-|  ✓  | Libellé       | Type              | TVA CA | Tx marge | TVA ach. | Stock j | Cli. j | Fourn. j |      CA N |    CA N+1 |     CA N+2 |
-| :-: | ------------- | ----------------- | -----: | -------: | -------: | ------: | -----: | -------: | --------: | --------: | ---------: |
-| ✅  | Vente pizza   | PRODUCTION_VENDUE |   10 % |     73 % |    5.5 % |      15 |      0 |       30 | 94 800,00 | 99 540,00 | 104 517,00 |
-| ✅  | Vente boisson | PRODUCTION_VENDUE |   10 % |     65 % |    5.5 % |      15 |      0 |       30 |  6 000,00 |  6 300,00 |   6 615,00 |
-| ✅  | Vente alcool  | PRODUCTION_VENDUE |   20 % |     65 % |     20 % |      15 |      0 |       30 |  4 197,00 |  4 406,85 |   4 627,19 |
+|  ✓  | Libellé                     | Type              | TVA CA | Tx marge | TVA ach. | Stock j | Cli. j | Fourn. j |      CA N |     CA N+1 |     CA N+2 |
+| :-: | --------------------------- | ----------------- | -----: | -------: | -------: | ------: | -----: | -------: | --------: | ---------: | ---------: |
+| ✅  | Vente pizza                 | PRODUCTION_VENDUE |   10 % |     73 % |    5.5 % |      15 |      0 |       30 | 94 800,00 |  99 540,00 | 104 517,00 |
+| ✅  | Vente boisson               | PRODUCTION_VENDUE |   10 % |     65 % |    5.5 % |      15 |      0 |       30 |  6 000,00 |   6 300,00 |   6 615,00 |
+| ✅  | Vente alcool                | PRODUCTION_VENDUE |   20 % |     65 % |     20 % |      15 |      0 |       30 |  4 197,00 |   4 406,85 |   4 627,19 |
+| ✅  | Vente pizza (copie)         | PRODUCTION_VENDUE |   10 % |     73 % |    5.5 % |      15 |      0 |       30 | 90 850,00 |  95 392,50 | 100 162,13 |
+| ✅  | Vente pizza (copie) (copie) | PRODUCTION_VENDUE |   10 % |     73 % |    5.5 % |      15 |      0 |       30 | 98 750,00 | 103 687,50 | 108 871,88 |
 
 #### Saisonnalité CA (activités non-uniformes)
 
@@ -69,6 +71,28 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 | 2027–2028 € | 499,30 | 483,43 | 499,30 | 599,33 | 386,48 | 260,89 | 251,19 | 251,19 | 260,89 | 231,80 | 346,38 | 336,68 | **4 406,85** |
 | 2028–2029 % | 11.3 % | 11.0 % | 11.3 % | 13.6 % |  8.8 % |  5.9 % |  5.7 % |  5.7 % |  5.9 % |  5.3 % |  7.9 % |  7.6 % |  **100.0 %** |
 | 2028–2029 € | 524,26 | 507,60 | 524,26 | 629,30 | 405,80 | 273,93 | 263,75 | 263,75 | 273,93 | 243,39 | 363,70 | 353,52 | **4 627,19** |
+
+**Vente pizza (copie)**
+
+| Exercice    |       Mai |       Jun |       Jul |       Aoû |      Sep |      Oct |      Nov |      Déc |      Jan |      Fév |      Mar |      Avr |      **Total** |
+| :---------- | --------: | --------: | --------: | --------: | -------: | -------: | -------: | -------: | -------: | -------: | -------: | -------: | -------------: |
+| 2026–2027 % |    11.3 % |    11.0 % |    11.3 % |    13.6 % |    8.8 % |    5.9 % |    5.7 % |    5.7 % |    5.9 % |    5.3 % |    7.9 % |    7.6 % |    **100.0 %** |
+| 2026–2027 € | 10 293,31 |  9 966,25 | 10 293,31 | 12 355,60 | 7 967,55 | 5 378,32 | 5 178,45 | 5 178,45 | 5 378,32 | 4 778,71 | 7 140,81 | 6 940,94 |  **90 850,00** |
+| 2027–2028 % |    11.3 % |    11.0 % |    11.3 % |    13.6 % |    8.8 % |    5.9 % |    5.7 % |    5.7 % |    5.9 % |    5.3 % |    7.9 % |    7.6 % |    **100.0 %** |
+| 2027–2028 € | 10 807,97 | 10 464,56 | 10 807,97 | 12 973,38 | 8 365,92 | 5 647,24 | 5 437,37 | 5 437,37 | 5 647,24 | 5 017,65 | 7 497,85 | 7 287,99 |  **95 392,50** |
+| 2028–2029 % |    11.3 % |    11.0 % |    11.3 % |    13.6 % |    8.8 % |    5.9 % |    5.7 % |    5.7 % |    5.9 % |    5.3 % |    7.9 % |    7.6 % |    **100.0 %** |
+| 2028–2029 € | 11 348,37 | 10 987,79 | 11 348,37 | 13 622,05 | 8 784,22 | 5 929,60 | 5 709,24 | 5 709,24 | 5 929,60 | 5 268,53 | 7 872,74 | 7 652,39 | **100 162,13** |
+
+**Vente pizza (copie) (copie)**
+
+| Exercice    |       Mai |       Jun |       Jul |       Aoû |      Sep |      Oct |      Nov |      Déc |      Jan |      Fév |      Mar |      Avr |      **Total** |
+| :---------- | --------: | --------: | --------: | --------: | -------: | -------: | -------: | -------: | -------: | -------: | -------: | -------: | -------------: |
+| 2026–2027 % |    11.3 % |    11.0 % |    11.3 % |    13.6 % |    8.8 % |    5.9 % |    5.7 % |    5.7 % |    5.9 % |    5.3 % |    7.9 % |    7.6 % |    **100.0 %** |
+| 2026–2027 € | 11 188,38 | 10 832,88 | 11 188,38 | 13 430,00 | 8 660,38 | 5 846,00 | 5 628,75 | 5 628,75 | 5 846,00 | 5 194,25 | 7 761,75 | 7 544,50 |  **98 750,00** |
+| 2027–2028 % |    11.3 % |    11.0 % |    11.3 % |    13.6 % |    8.8 % |    5.9 % |    5.7 % |    5.7 % |    5.9 % |    5.3 % |    7.9 % |    7.6 % |    **100.0 %** |
+| 2027–2028 € | 11 747,79 | 11 374,52 | 11 747,79 | 14 101,50 | 9 093,39 | 6 138,30 | 5 910,19 | 5 910,19 | 6 138,30 | 5 453,96 | 8 149,84 | 7 921,73 | **103 687,50** |
+| 2028–2029 % |    11.3 % |    11.0 % |    11.3 % |    13.6 % |    8.8 % |    5.9 % |    5.7 % |    5.7 % |    5.9 % |    5.3 % |    7.9 % |    7.6 % |    **100.0 %** |
+| 2028–2029 € | 12 335,18 | 11 943,25 | 12 335,18 | 14 806,58 | 9 548,06 | 6 445,22 | 6 205,70 | 6 205,70 | 6 445,22 | 5 726,66 | 8 557,33 | 8 317,81 | **108 871,88** |
 
 ### Charges d'exploitation
 
@@ -203,8 +227,8 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 | ✅  | Provision pour frais de greffe et journal (constitution société) | INCORPOREL | AUCUN       | 01/05/2026 |     500,00 |   0 % |  0 ans |  0 mois |
 | ✅  | Enseigne et communication                                        | CORPOREL   | LINEAIRE    | 01/05/2026 |   1 000,00 |  20 % | 10 ans |  0 mois |
 | ✅  | Droit d'enregistrement                                           | INCORPOREL | AUCUN       | 01/05/2026 |   1 110,00 |   0 % |  0 ans |  0 mois |
+| ✅  | Fond de commerce                                                 | INCORPOREL | AUCUN       | 01/05/2026 |  28 940,00 |   0 % |  0 ans |  0 mois |
 | ✅  | Caisse enregistreuse (airkitchen)                                | CORPOREL   | LINEAIRE    | 01/05/2026 |     889,00 |  20 % | 10 ans |  0 mois |
-| ✅  | Fond de commerce                                                 | INCORPOREL | AUCUN       | 01/05/2026 |  18 940,00 |   0 % |  0 ans |  0 mois |
 | ❌  | Formation HACCP                                                  | INCORPOREL | AUCUN       | 01/05/2026 |     759,00 |  20 % |  0 ans |  0 mois |
 | ✅  | Meuble pizza                                                     | CORPOREL   | LINEAIRE    | 01/05/2026 |   1 222,99 |  20 % | 10 ans |  0 mois |
 | ❌  | Frais de garantie "France active"                                | INCORPOREL | AUCUN       | 01/05/2026 |     950,00 |   0 % |  0 ans |  0 mois |
@@ -221,7 +245,7 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 
 | Libellé |   Montant | Taux | Assur. |   Durée | Déblocage  | Différé | Type         |
 | ------- | --------: | ---: | -----: | ------: | ---------- | :------ | ------------ |
-| CIC     | 60 000,00 |  4 % |  0.8 % | 84 mois | 01/05/2026 | —       | AMORTISSABLE |
+| CIC     | 70 000,00 |  4 % |  0.3 % | 84 mois | 01/05/2026 | —       | AMORTISSABLE |
 
 ## Données calculées
 
@@ -232,38 +256,38 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 | Désignation                          | 2026–2027 | 2027–2028 | 2028–2029 |
 | ------------------------------------ | --------: | --------: | --------: |
 | **ACTIF**                            |           |           |           |
-| Immobilisations incorporelles brutes | 28 783,00 | 28 783,00 | 28 783,00 |
+| Immobilisations incorporelles brutes | 38 783,00 | 38 783,00 | 38 783,00 |
 | − Amortissements incorporels cumulés |      0,00 |      0,00 |      0,00 |
-| Immobilisations incorporelles nettes | 28 783,00 | 28 783,00 | 28 783,00 |
+| Immobilisations incorporelles nettes | 38 783,00 | 38 783,00 | 38 783,00 |
 | Immobilisations corporelles brutes   | 34 171,99 | 34 171,99 | 34 171,99 |
 | − Amortissements corporels cumulés   |  3 417,20 |  6 834,40 | 10 251,60 |
 | Immobilisations corporelles nettes   | 30 754,79 | 27 337,59 | 23 920,39 |
 | Immobilisations financières brutes   |  3 200,00 |  3 200,00 |  3 200,00 |
 | − Amortissements financiers cumulés  |      0,00 |      0,00 |      0,00 |
 | Immobilisations financières nettes   |  3 200,00 |  3 200,00 |  3 200,00 |
-| **Total immobilisations nettes**     | 62 737,79 | 59 320,59 | 55 903,39 |
+| **Total immobilisations nettes**     | 72 737,79 | 69 320,59 | 65 903,39 |
 | Stocks de matières                   |  1 298,71 |  1 275,97 |  1 339,76 |
 | Crédit de TVA                        |     27,81 |      0,00 |      0,00 |
 | Créances clients                     |      0,00 |      0,00 |      0,00 |
-| Disponibilités (trésorerie)          | 21 009,05 | 24 447,02 | 30 484,76 |
-| **Total actif circulant**            | 22 335,57 | 25 722,98 | 31 824,52 |
-| **TOTAL ACTIF**                      | 85 073,36 | 85 043,58 | 87 727,91 |
+| Disponibilités (trésorerie)          | 24 401,89 | 26 622,80 | 31 437,69 |
+| **Total actif circulant**            | 25 728,41 | 27 898,76 | 32 777,46 |
+| **TOTAL ACTIF**                      | 98 466,20 | 97 219,36 | 98 680,85 |
 | **PASSIF**                           |           |           |           |
 | Capital social                       |  1 000,00 |  1 000,00 |  1 000,00 |
 | Comptes courants associés            | 19 000,00 | 19 000,00 | 19 000,00 |
-| Réserves / Report à nouveau          |      0,00 |  5 048,48 | 12 340,62 |
-| Résultat de l'exercice               |  5 048,48 |  7 292,14 | 10 543,76 |
-| **Total capitaux propres**           | 25 048,48 | 32 340,62 | 42 884,38 |
-| Emprunts (capital restant dû)        | 53 063,76 | 45 201,68 | 37 019,26 |
-| Dettes fournisseurs                  |  2 366,41 |  2 485,38 |  2 609,65 |
+| Réserves / Report à nouveau          |      0,00 |  5 453,29 | 12 654,30 |
+| Résultat de l'exercice               |  5 453,29 |  7 201,01 | 10 467,36 |
+| **Total capitaux propres**           | 25 453,29 | 32 654,30 | 43 121,67 |
+| Emprunts (capital restant dû)        | 61 907,74 | 52 735,31 | 43 189,17 |
+| Dettes fournisseurs                  |  6 492,59 |  6 817,86 |  7 158,76 |
 | Dettes charges externes              |  2 283,38 |  2 309,02 |  2 335,68 |
 | Dettes personnel                     |  2 088,60 |  2 223,72 |  2 223,72 |
 | Dettes impôts et taxes               |      0,00 |      0,00 |      0,00 |
 | TVA à payer                          |      0,00 |    161,44 |    190,06 |
-| Impôt sur les sociétés (acompte)     |    222,73 |    321,71 |    465,17 |
-| **Total dettes d'exploitation**      |  6 961,12 |  7 501,28 |  7 824,27 |
-| **Total des dettes**                 | 60 024,88 | 52 702,96 | 44 843,53 |
-| **TOTAL PASSIF**                     | 85 073,36 | 85 043,58 | 87 727,91 |
+| Impôt sur les sociétés (acompte)     |    240,59 |    317,69 |    461,80 |
+| **Total dettes d'exploitation**      | 11 105,16 | 11 829,74 | 12 370,02 |
+| **Total des dettes**                 | 73 012,90 | 64 565,05 | 55 559,19 |
+| **TOTAL PASSIF**                     | 98 466,20 | 97 219,36 | 98 680,85 |
 
 ### Équilibre du bilan
 
@@ -275,55 +299,61 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 
 ### BFR — Vue d'ensemble (= écran)
 
-| Désignation                    |  Initial | 2026–2027 | 2027–2028 | 2028–2029 |
-| ------------------------------ | -------: | --------: | --------: | --------: |
-| Stocks matières                | 2 000,00 |  1 298,71 |  1 275,97 |  1 339,76 |
-| Créances clients               |     0,00 |      0,00 |      0,00 |      0,00 |
-| Crédit TVA                     | 2 351,50 |     27,81 |      0,00 |      0,00 |
-| \***\*= Total Besoins\*\***    | 4 351,50 |  1 326,52 |  1 275,97 |  1 339,76 |
-| Dettes fournisseurs            |     0,00 |  2 366,41 |  2 485,38 |  2 609,65 |
-| Dettes charges ext.            |     0,00 |  2 283,38 |  2 309,02 |  2 335,68 |
-| Dettes impôts/taxes            |     0,00 |      0,00 |      0,00 |      0,00 |
-| Dettes personnel               |     0,00 |  2 088,60 |  2 223,72 |  2 223,72 |
-| TVA à payer                    |     0,00 |      0,00 |    161,44 |    190,06 |
-| Dettes IS                      |     0,00 |    222,73 |    321,71 |    465,17 |
-| \***\*= Total Ressources\*\*** |     0,00 |  6 961,12 |  7 501,28 |  7 824,27 |
-| \***\*= BFR\*\***              | 4 351,50 | -5 634,60 | -6 225,31 | -6 484,51 |
-| \***\*Variation BFR\*\***      | 4 351,50 | -9 986,10 |   -590,71 |   -259,20 |
+| Désignation                    |  Initial |  2026–2027 |  2027–2028 |  2028–2029 |
+| ------------------------------ | -------: | ---------: | ---------: | ---------: |
+| Stocks matières                | 4 000,00 |   1 298,71 |   1 275,97 |   1 339,76 |
+| Créances clients               |     0,00 |       0,00 |       0,00 |       0,00 |
+| Crédit TVA                     | 2 351,50 |      27,81 |       0,00 |       0,00 |
+| \***\*= Total Besoins\*\***    | 6 351,50 |   1 326,52 |   1 275,97 |   1 339,76 |
+| Dettes fournisseurs            |     0,00 |   6 492,59 |   6 817,86 |   7 158,76 |
+| Dettes charges ext.            |     0,00 |   2 283,38 |   2 309,02 |   2 335,68 |
+| Dettes impôts/taxes            |     0,00 |       0,00 |       0,00 |       0,00 |
+| Dettes personnel               |     0,00 |   2 088,60 |   2 223,72 |   2 223,72 |
+| TVA à payer                    |     0,00 |       0,00 |     161,44 |     190,06 |
+| Dettes IS                      |     0,00 |     240,59 |     317,69 |     461,80 |
+| \***\*= Total Ressources\*\*** |     0,00 |  11 105,16 |  11 829,74 |  12 370,02 |
+| \***\*= BFR\*\***              | 6 351,50 |  -9 778,64 | -10 553,78 | -11 030,25 |
+| \***\*Variation BFR\*\***      | 6 351,50 | -16 130,14 |    -775,13 |    -476,47 |
 
 ### BFR — Détail Achats / Stocks par activité
 
 #### Paramètres
 
-| Activité      | Coef achat | TVA ach. % | Jours stock | Jours fourn. |
-| ------------- | ---------: | ---------: | ----------: | -----------: |
-| Vente pizza   |     0.2700 |        5.5 |          15 |           30 |
-| Vente boisson |     0.3500 |        5.5 |          15 |           30 |
-| Vente alcool  |     0.3500 |         20 |          15 |           30 |
+| Activité                    | Coef achat | TVA ach. % | Jours stock | Jours fourn. |
+| --------------------------- | ---------: | ---------: | ----------: | -----------: |
+| Vente pizza                 |     0.2700 |        5.5 |          15 |           30 |
+| Vente boisson               |     0.3500 |        5.5 |          15 |           30 |
+| Vente alcool                |     0.3500 |         20 |          15 |           30 |
+| Vente pizza (copie)         |     0.2700 |        5.5 |          15 |           30 |
+| Vente pizza (copie) (copie) |     0.2700 |        5.5 |          15 |           30 |
 
 #### Achats HT consommés + ponctuels
 
 > AchHT = CA × coef. StockInit = ponctuelN[0] → BFR initial (y0). PoncFlux N = ponctuelN[1..11].
 
-| Activité      | AchHT 2026–2027 | AchHT 2027–2028 | AchHT 2028–2029 | StockInit (y0) | PoncFlux 2026–2027 | PoncFlux 2027–2028 | PoncFlux 2028–2029 |
-| ------------- | --------------: | --------------: | --------------: | -------------: | -----------------: | -----------------: | -----------------: |
-| Vente pizza   |       25 596,00 |       26 875,80 |       28 219,59 |       1 000,00 |               0,00 |               0,00 |               0,00 |
-| Vente boisson |        2 100,00 |        2 205,00 |        2 315,25 |         500,00 |               0,00 |               0,00 |               0,00 |
-| Vente alcool  |        1 468,95 |        1 542,40 |        1 619,52 |         500,00 |               0,00 |               0,00 |               0,00 |
-| **Total**     |   **29 164,95** |   **30 623,20** |   **32 154,36** |   **2 000,00** |           **0,00** |           **0,00** |           **0,00** |
+| Activité                    | AchHT 2026–2027 | AchHT 2027–2028 | AchHT 2028–2029 | StockInit (y0) | PoncFlux 2026–2027 | PoncFlux 2027–2028 | PoncFlux 2028–2029 |
+| --------------------------- | --------------: | --------------: | --------------: | -------------: | -----------------: | -----------------: | -----------------: |
+| Vente pizza                 |       25 596,00 |       26 875,80 |       28 219,59 |       1 000,00 |               0,00 |               0,00 |               0,00 |
+| Vente boisson               |        2 100,00 |        2 205,00 |        2 315,25 |         500,00 |               0,00 |               0,00 |               0,00 |
+| Vente alcool                |        1 468,95 |        1 542,40 |        1 619,52 |         500,00 |               0,00 |               0,00 |               0,00 |
+| Vente pizza (copie)         |       24 529,50 |       25 755,98 |       27 043,78 |       1 000,00 |               0,00 |               0,00 |               0,00 |
+| Vente pizza (copie) (copie) |       26 662,50 |       27 995,63 |       29 395,41 |       1 000,00 |               0,00 |               0,00 |               0,00 |
+| **Total**                   |   **80 356,95** |   **84 374,80** |   **88 593,54** |   **4 000,00** |           **0,00** |           **0,00** |           **0,00** |
 
 #### Stocks fin d'exercice & Dettes fournisseurs
 
 > Stock = achatsConsoHT × joursStock/360 (formule annuelle). DetteFourn = (M12 HT + ΔStock/12) × coefTTC × délaiMois.
 
-| Activité                 |     Stock y0 | Stock 2026–2027 | Stock 2027–2028 | Stock 2028–2029 | DetteFourn 2026–2027 | DetteFourn 2027–2028 | DetteFourn 2028–2029 |
-| ------------------------ | -----------: | --------------: | --------------: | --------------: | -------------------: | -------------------: | -------------------: |
-| Vente pizza              |     1 000,00 |        1 108,17 |        1 119,83 |        1 175,82 |             2 063,09 |             2 166,24 |             2 274,56 |
-| Vente boisson            |       500,00 |          108,37 |           91,88 |           96,47 |               169,10 |               177,73 |               186,61 |
-| Vente alcool             |       500,00 |           82,17 |           64,27 |           67,48 |               134,22 |               141,41 |               148,48 |
-| **Total**                | **2 000,00** |    **1 298,71** |    **1 275,97** |    **1 339,76** |         **2 366,41** |         **2 485,38** |         **2 609,65** |
-| _BFR stocksMatieres_     |   _2 000,00_ |      _1 298,71_ |      _1 275,97_ |      _1 339,76_ |                      |                      |                      |
-| _BFR dettesFournisseurs_ |              |      _2 366,41_ |      _2 485,38_ |      _2 609,65_ |                      |                      |                      |
+| Activité                    |     Stock y0 | Stock 2026–2027 | Stock 2027–2028 | Stock 2028–2029 | DetteFourn 2026–2027 | DetteFourn 2027–2028 | DetteFourn 2028–2029 |
+| --------------------------- | -----------: | --------------: | --------------: | --------------: | -------------------: | -------------------: | -------------------: |
+| Vente pizza                 |     1 000,00 |        1 108,17 |        1 119,83 |        1 175,82 |             2 063,09 |             2 166,24 |             2 274,56 |
+| Vente boisson               |       500,00 |          108,37 |           91,88 |           96,47 |               169,10 |               177,73 |               186,61 |
+| Vente alcool                |       500,00 |           82,17 |           64,27 |           67,48 |               134,22 |               141,41 |               148,48 |
+| Vente pizza (copie)         |     1 000,00 |        1 063,73 |        1 073,17 |        1 126,82 |             1 977,13 |             2 075,98 |             2 179,78 |
+| Vente pizza (copie) (copie) |     1 000,00 |        1 152,60 |        1 166,48 |        1 224,81 |             2 149,05 |             2 256,50 |             2 369,33 |
+| **Total**                   | **4 000,00** |    **3 515,04** |    **3 515,62** |    **3 691,40** |         **6 492,59** |         **6 817,86** |         **7 158,76** |
+| _BFR stocksMatieres_        |   _4 000,00_ |      _1 298,71_ |      _1 275,97_ |      _1 339,76_ |                      |                      |                      |
+| _BFR dettesFournisseurs_    |              |      _6 492,59_ |      _6 817,86_ |      _7 158,76_ |                      |                      |                      |
 
 #### TVA déductible achats (recalc par activité)
 
@@ -331,12 +361,14 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 > ΔStock Y1 = stockFin Y1 − 0 (SI = 0 hors ponctuel). ΔStock Y2 = stockFin Y2 − Y1. etc.
 > Comparer le **Total recalc** au **Total moteur TVA** pour détecter les écarts.
 
-| Activité         | TVADed 2026–2027 | TVADed 2027–2028 | TVADed 2028–2029 |
-| ---------------- | ---------------: | ---------------: | ---------------: |
-| Vente pizza      |         1 468,73 |         1 478,81 |         1 555,16 |
-| Vente boisson    |           121,46 |           120,37 |           127,59 |
-| Vente alcool     |           310,22 |           304,90 |           324,55 |
-| **Total recalc** |     **1 900,41** |     **1 904,08** |     **2 007,29** |
+| Activité                    | TVADed 2026–2027 | TVADed 2027–2028 | TVADed 2028–2029 |
+| --------------------------- | ---------------: | ---------------: | ---------------: |
+| Vente pizza                 |         1 468,73 |         1 478,81 |         1 555,16 |
+| Vente boisson               |           121,46 |           120,37 |           127,59 |
+| Vente alcool                |           310,22 |           304,90 |           324,55 |
+| Vente pizza (copie)         |         1 407,63 |         1 417,10 |         1 490,36 |
+| Vente pizza (copie) (copie) |         1 529,83 |         1 540,52 |         1 619,96 |
+| **Total recalc**            |     **4 837,87** |     **4 861,70** |     **5 117,61** |
 
 ### BFR — Détail charges externes
 
@@ -384,13 +416,13 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 | Autres charges gestion              |       0,00 |       0,00 |       0,00 |
 | \***\*= Résultat exploitation\*\*** |   9 281,60 |  10 954,33 |  14 395,36 |
 | Produits financiers                 |       0,00 |       0,00 |       0,00 |
-| Charges financières                 |   3 342,21 |   2 375,35 |   1 990,94 |
-| \***\*= Résultat financier\*\***    |  -3 342,21 |  -2 375,35 |  -1 990,94 |
-| \***\*= Résultat courant\*\***      |   5 939,39 |   8 578,98 |  12 404,42 |
+| Charges financières                 |   2 865,96 |   2 482,56 |   2 080,82 |
+| \***\*= Résultat financier\*\***    |  -2 865,96 |  -2 482,56 |  -2 080,82 |
+| \***\*= Résultat courant\*\***      |   6 415,64 |   8 471,77 |  12 314,54 |
 | Résultat exceptionnel               |       0,00 |       0,00 |       0,00 |
 | Ajustement net                      |       0,00 |       0,00 |       0,00 |
-| − IS                                |     890,91 |   1 286,85 |   1 860,66 |
-| \***\*= Résultat net\*\***          |   5 048,48 |   7 292,14 |  10 543,76 |
+| − IS                                |     962,35 |   1 270,77 |   1 847,18 |
+| \***\*= Résultat net\*\***          |   5 453,29 |   7 201,01 |  10 467,36 |
 
 ### Vérification compte de résultat
 
@@ -399,7 +431,7 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 | ResExpl (fc)                       |  9 281,60 | 10 954,33 | 14 395,36 |
 | ResExpl recalculé (Prod − Charges) |  9 281,60 | 10 954,33 | 14 395,36 |
 | Écart ResExpl                      |      0,00 |      0,00 |     -0,00 | _✅_ |
-| ResNet (fc)                        |  5 048,48 |  7 292,14 | 10 543,76 |
+| ResNet (fc)                        |  5 453,29 |  7 201,01 | 10 467,36 |
 
 ### Détail dotations amortissement (par immobilisation)
 
@@ -415,8 +447,8 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 | Provision pour frais de greffe et journal (constitution société) | AUCUN    |     0 |     500,00 |     0,00 |     0,00 |     0,00 |
 | Enseigne et communication                                        | LINEAIRE |    10 |   1 000,00 |   100,00 |   100,00 |   100,00 |
 | Droit d'enregistrement                                           | AUCUN    |     0 |   1 110,00 |     0,00 |     0,00 |     0,00 |
+| Fond de commerce                                                 | AUCUN    |     0 |  28 940,00 |     0,00 |     0,00 |     0,00 |
 | Caisse enregistreuse (airkitchen)                                | LINEAIRE |    10 |     889,00 |    88,90 |    88,90 |    88,90 |
-| Fond de commerce                                                 | AUCUN    |     0 |  18 940,00 |     0,00 |     0,00 |     0,00 |
 | Meuble pizza                                                     | LINEAIRE |    10 |   1 222,99 |   122,30 |   122,30 |   122,30 |
 | Frais de garantie "BPI"                                          | AUCUN    |     0 |   3 200,00 |     0,00 |     0,00 |     0,00 |
 
@@ -440,8 +472,8 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 | Provision pour frais de greffe et journal (constitution société) | INCORPOREL | 01/05/2026 |     500,00 |     0 | oui   |
 | Enseigne et communication                                        | CORPOREL   | 01/05/2026 |   1 000,00 |    10 | oui   |
 | Droit d'enregistrement                                           | INCORPOREL | 01/05/2026 |   1 110,00 |     0 | oui   |
+| Fond de commerce                                                 | INCORPOREL | 01/05/2026 |  28 940,00 |     0 | oui   |
 | Caisse enregistreuse (airkitchen)                                | CORPOREL   | 01/05/2026 |     889,00 |    10 | oui   |
-| Fond de commerce                                                 | INCORPOREL | 01/05/2026 |  18 940,00 |     0 | oui   |
 | Meuble pizza                                                     | CORPOREL   | 01/05/2026 |   1 222,99 |    10 | oui   |
 | Frais de garantie "BPI"                                          | FINANCIER  | 01/05/2026 |   3 200,00 |     0 | oui   |
 
@@ -449,7 +481,7 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 
 | Libellé | Montant initial | Date déblocage | Capital restant fin Y1 |    fin Y2 |    fin Y3 |
 | ------- | --------------: | -------------- | ---------------------: | --------: | --------: |
-| CIC     |       60 000,00 | 01/05/2026     |              53 063,76 | 45 201,68 | 37 019,26 |
+| CIC     |       70 000,00 | 01/05/2026     |              61 907,74 | 52 735,31 | 43 189,17 |
 
 ### Trésorerie — Comparaison Bilan vs Tableau mensuel
 
@@ -466,25 +498,25 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 | --------------------------------------------------- | ---------: | ---------: | ---------: |
 | Enc. apports capital                                |   1 000,00 |       0,00 |       0,00 |
 | Enc. apports CC                                     |  19 000,00 |       0,00 |       0,00 |
-| Enc. emprunts débloqués                             |  60 000,00 |       0,00 |       0,00 |
-| Enc. production vendue (TTC)                        | 115 916,40 | 121 712,22 | 127 797,83 |
+| Enc. emprunts débloqués                             |  70 000,00 |       0,00 |       0,00 |
+| Enc. production vendue (TTC)                        | 324 476,40 | 340 700,22 | 357 735,24 |
 | Enc. subventions exploitation                       |       0,00 |       0,00 |       0,00 |
 | Enc. subventions investissement                     |       0,00 |       0,00 |       0,00 |
 | Enc. divers                                         |       0,00 |       0,00 |       0,00 |
-| \***\*= Total encaissements\*\***                   | 195 916,40 | 121 712,22 | 127 797,83 |
-| Dec. immobilisations (TTC)                          |  68 323,99 |       0,00 |       0,00 |
-| Dec. emprunts (capital + intérêts + frais)          |  10 278,45 |  10 237,43 |  10 173,36 |
-| Dec. achats                                         |  29 997,66 |  32 385,56 |  34 101,18 |
+| \***\*= Total encaissements\*\***                   | 414 476,40 | 340 700,22 | 357 735,24 |
+| Dec. immobilisations (TTC)                          |  78 323,99 |       0,00 |       0,00 |
+| Dec. emprunts (capital + intérêts + frais)          |  10 958,22 |  11 654,99 |  11 626,96 |
+| Dec. achats                                         |  82 217,27 |  88 911,80 |  93 546,03 |
 | Dec. charges externes                               |  41 041,42 |  43 460,54 |  44 097,93 |
 | Dec. impôts et taxes                                |   1 623,00 |   1 978,00 |   1 978,00 |
 | Dec. personnel                                      |  22 974,65 |  26 549,56 |  26 684,68 |
 | Dec. TVA nette (collectée − déductible)             |       0,00 |   2 475,30 |   3 007,73 |
-| Dec. IS                                             |     668,18 |   1 187,86 |   1 717,21 |
+| Dec. IS                                             |     721,76 |   1 193,66 |   1 703,08 |
 | Dec. divers                                         |       0,00 |       0,00 |       0,00 |
-| \***\*= Total décaissements\*\***                   | 174 907,35 | 118 274,26 | 121 760,09 |
-| Solde début d'exercice                              |       0,00 |  21 009,05 |  24 447,02 |
-| Variation nette (enc − dec)                         |  21 009,05 |   3 437,96 |   6 037,74 |
-| \***\*= Solde fin d'exercice (soldeFinal[11])\*\*** |  21 009,05 |  24 447,02 |  30 484,76 |
+| \***\*= Total décaissements\*\***                   | 237 860,30 | 176 223,85 | 182 644,41 |
+| Solde début d'exercice                              |       0,00 | 176 616,10 | 341 092,47 |
+| Variation nette (enc − dec)                         | 176 616,10 | 164 476,37 | 175 090,83 |
+| \***\*= Solde fin d'exercice (soldeFinal[11])\*\*** | 176 616,10 | 341 092,47 | 516 183,30 |
 
 #### B — Trésorerie bilan (formule cumulative économique)
 
@@ -494,37 +526,87 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 | ------------------------------------------------ | --------: | --------: | --------: |
 | Apports capital cumulatifs                       |  1 000,00 |  1 000,00 |  1 000,00 |
 | Apports CC cumulatifs                            | 19 000,00 | 19 000,00 | 19 000,00 |
-| Emprunts débloqués cumulatifs                    | 60 000,00 | 60 000,00 | 60 000,00 |
-| + CAF cumulatif                                  |  8 465,68 | 19 175,02 | 33 135,98 |
-| dont: CAF Y1                                     |  8 465,68 |  8 465,68 |  8 465,68 |
-| dont: CAF Y2                                     |      0,00 | 10 709,33 | 10 709,33 |
-| dont: CAF Y3                                     |      0,00 |      0,00 | 13 960,96 |
+| Emprunts débloqués cumulatifs                    | 70 000,00 | 70 000,00 | 70 000,00 |
+| + CAF cumulatif                                  |  8 870,49 | 19 488,70 | 33 373,26 |
+| dont: CAF Y1                                     |  8 870,49 |  8 870,49 |  8 870,49 |
+| dont: CAF Y2                                     |      0,00 | 10 618,21 | 10 618,21 |
+| dont: CAF Y3                                     |      0,00 |      0,00 | 13 884,56 |
 | + Enc. non-P&L cumulatifs (subv invest + divers) |      0,00 |      0,00 |      0,00 |
 | − Dec. non-P&L cumulatifs (divers)               |      0,00 |      0,00 |      0,00 |
-| − Immos acquises cumulatives (HT)                | 66 154,99 | 66 154,99 | 66 154,99 |
+| − Immos acquises cumulatives (HT)                | 76 154,99 | 76 154,99 | 76 154,99 |
 | − BFR besoins (stocks+crédit TVA+créances)       |  1 326,52 |  1 275,97 |  1 339,76 |
 | dont: Stocks de matières                         |  1 298,71 |  1 275,97 |  1 339,76 |
 | dont: Crédit de TVA                              |     27,81 |      0,00 |      0,00 |
 | dont: Créances clients                           |      0,00 |      0,00 |      0,00 |
-| − Remboursements capital cumulatifs              |  6 936,24 | 14 798,32 | 22 980,74 |
-| \***\*= Trésorerie brute\*\***                   | 14 047,93 | 16 945,74 | 22 660,48 |
-| + BFR dettes expl. (totalRessources)             |  6 961,12 |  7 501,28 |  7 824,27 |
-| dont: Dettes fournisseurs                        |  2 366,41 |  2 485,38 |  2 609,65 |
+| − Remboursements capital cumulatifs              |  8 092,26 | 17 264,69 | 26 810,83 |
+| \***\*= Trésorerie brute\*\***                   | 13 296,73 | 14 793,05 | 19 067,68 |
+| + BFR dettes expl. (totalRessources)             | 11 105,16 | 11 829,74 | 12 370,02 |
+| dont: Dettes fournisseurs                        |  6 492,59 |  6 817,86 |  7 158,76 |
 | dont: Dettes charges ext.                        |  2 283,38 |  2 309,02 |  2 335,68 |
 | dont: Dettes impôts/taxes                        |      0,00 |      0,00 |      0,00 |
 | dont: Dettes personnel                           |  2 088,60 |  2 223,72 |  2 223,72 |
 | dont: TVA à payer                                |      0,00 |    161,44 |    190,06 |
-| dont: Dettes IS                                  |    222,73 |    321,71 |    465,17 |
-| \***\*= Tréso corrigée\*\***                     | 21 009,05 | 24 447,02 | 30 484,76 |
-| \***\*= Disponibilités (bilan)\*\***             | 21 009,05 | 24 447,02 | 30 484,76 |
+| dont: Dettes IS                                  |    240,59 |    317,69 |    461,80 |
+| \***\*= Tréso corrigée\*\***                     | 24 401,89 | 26 622,80 | 31 437,69 |
+| \***\*= Disponibilités (bilan)\*\***             | 24 401,89 | 26 622,80 | 31 437,69 |
 
 #### C — Réconciliation
 
-| Désignation                     | 2026–2027 | 2027–2028 | 2028–2029 |
-| ------------------------------- | --------: | --------: | --------: | ------------- |
-| Tableau mensuel soldeFinal[11]  | 21 009,05 | 24 447,02 | 30 484,76 |
-| Bilan disponibilités            | 21 009,05 | 24 447,02 | 30 484,76 |
-| \***\*Écart (Tab − Bilan)\*\*** |      0,00 |      0,00 |      0,00 | _✅ Cohérent_ |
+| Désignation                     |  2026–2027 |  2027–2028 |  2028–2029 |
+| ------------------------------- | ---------: | ---------: | ---------: | --------------- |
+| Tableau mensuel soldeFinal[11]  | 176 616,10 | 341 092,47 | 516 183,30 |
+| Bilan disponibilités            |  24 401,89 |  26 622,80 |  31 437,69 |
+| \***\*Écart (Tab − Bilan)\*\*** | 152 214,21 | 314 469,67 | 484 745,60 | _❌ DIVERGENCE_ |
+
+> ⚠ **Pistes d'explication de l'écart :**
+>
+> - Immos décaissées **TTC** dans le tableau vs **HT** dans le bilan (TVA déductible sur immos comptée dans `decTVA`)
+> - Délais clients non nuls → créances à l'actif réduisent le bilan mais pas encore reçues dans le tableau
+> - Subventions d'exploitation dans le tableau, mais pas dans la CAF du bilan
+> - Décalage des acomptes IS (trimestriels dans le tableau vs solde annuel dans le bilan)
+
+**Analyse par composante :**
+
+| Désignation                                           |  2026–2027 |  2027–2028 |  2028–2029 |
+| ----------------------------------------------------- | ---------: | ---------: | ---------: | ----------------- |
+| Bilan immoAcquises (HT cumul)                         |  76 154,99 |  76 154,99 |  76 154,99 |
+| Tableau dec.immoTTC (TTC cumul)                       |  78 323,99 |       0,00 |       0,00 |
+| Écart immo (Bilan−Tab)                                |  -2 169,00 |  76 154,99 |  76 154,99 | _⚠ TVA sur immos_ |
+| Enc. production TTC (tableau)                         | 324 476,40 | 340 700,22 | 357 735,24 |
+| CA HT (fc.ca)                                         | 104 997,00 | 110 246,85 | 115 759,19 |
+| Écart enc prod TTC−HT (= TVA collectée dans tréso)    | 219 479,40 | 230 453,37 | 241 976,05 |
+| Enc. subv. exploitation (tableau, non dans CAF bilan) |       0,00 |       0,00 |       0,00 |
+| Dec. IS tableau (acomptes payés)                      |     721,76 |   1 193,66 |   1 703,08 |
+| IS annuel (fc.isParAnnee)                             |     962,35 |   1 270,77 |   1 847,18 |
+| Écart IS (tab−annuel)                                 |    -240,59 |     -77,10 |    -144,10 |
+
+#### D — Reconstitution analytique de l'écart
+
+> Décomposition du tableau trésorerie par poste, comparé à la contribution bilan.
+> Permet d'identifier quelle ligne crée l'écart résiduel.
+
+| Désignation                                    |   2026–2027 |   2027–2028 |   2028–2029 |
+| ---------------------------------------------- | ----------: | ----------: | ----------: | ---- |
+| Dec. achats tab                                |   82 217,27 |   88 911,80 |   93 546,03 |
+| Achats contrib bilan (consoHT+ΔSt+TVA-ΔDettes) |   28 808,94 |   35 136,88 |   36 994,87 |
+| → Écart achats (tab − bilan)                   |   53 408,33 |   53 774,92 |   56 551,17 | _❌_ |
+| Dec. charges ext tab                           |   41 041,42 |   43 460,54 |   44 097,93 |
+| ChargesExt contrib bilan (HT+TVA-ΔDettes)      |   41 041,42 |   43 460,54 |   44 097,93 |
+| → Écart charges ext (tab − bilan)              |       -0,00 |        0,00 |        0,00 | _✅_ |
+| Dec. personnel tab                             |   22 974,65 |   26 549,56 |   26 684,68 |
+| Personnel contrib bilan (HT-ΔDettes)           |   22 974,65 |   26 549,56 |   26 684,68 |
+| → Écart personnel (tab − bilan)                |       -0,00 |       -0,00 |        0,00 | _✅_ |
+| Dec. TVA net tab                               |        0,00 |    2 475,30 |    3 007,73 |
+| TVA contrib bilan (coll-ded-ΔCrédit+ΔPayer)    | -207 791,54 | -218 505,68 | -229 673,39 |
+| → Écart TVA (tab − bilan)                      |  207 791,54 |  220 980,98 |  232 681,12 | _❌_ |
+| Achats consoHT (fc)                            |   29 164,95 |   30 623,20 |   32 154,36 |
+| ΔStocks (BFR besoins)                          |    1 298,71 |      -22,74 |       63,80 |
+| TVA déd achats (recalc)                        |    4 837,87 |    4 861,70 |    5 117,61 |
+| ChargesExt HT (fc)                             |   36 447,00 |   36 589,44 |   37 129,59 |
+| TVA déd charges (recalc)                       |    6 877,80 |    6 896,74 |    6 994,99 |
+| TVA déd immos (recalc)                         |        0,00 |        0,00 |        0,00 |
+| TVA collectée (enc TTC-HT)                     |  219 479,40 |  230 453,37 |  241 976,05 |
+| ΔCrédit TVA BFR                                |       27,81 |      -27,81 |        0,00 |
 
 ### Détail apports
 
@@ -623,12 +705,12 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 
 | Désignation                | 2026–2027 | 2027–2028 | 2028–2029 |
 | -------------------------- | --------: | --------: | --------: | ------------- |
-| Résultat net               |  5 048,48 |  7 292,14 | 10 543,76 |
+| Résultat net               |  5 453,29 |  7 201,01 | 10 467,36 |
 | + Dotations amortissements |  3 417,20 |  3 417,20 |  3 417,20 |
 | + Dotations provisions     |      0,00 |      0,00 |      0,00 |
 | − Reprises sur provisions  |      0,00 |      0,00 |      0,00 |
-| **= CAF recalculée**       |  8 465,68 | 10 709,33 | 13 960,96 |
-| CAF officielle (fc.caf)    |  8 465,68 | 10 709,33 | 13 960,96 |
+| **= CAF recalculée**       |  8 870,49 | 10 618,21 | 13 884,56 |
+| CAF officielle (fc.caf)    |  8 870,49 | 10 618,21 | 13 884,56 |
 | Écart                      |      0,00 |     -0,00 |      0,00 | _✅ Cohérent_ |
 
 ### SIG — Soldes Intermédiaires de Gestion
@@ -655,26 +737,28 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 | ± Autres charges/produits gestion net |      -0,00 |      -0,00 |      -0,00 |
 | **= Résultat d'exploitation (REX)**   |   9 281,60 |  10 954,33 |  14 395,36 | _tx: 8,8 % / 9,9 % / 12,4 %_   |
 | + Produits financiers                 |       0,00 |       0,00 |       0,00 |
-| − Charges financières                 |   3 342,21 |   2 375,35 |   1 990,94 |
-| **= Résultat financier**              |  -3 342,21 |  -2 375,35 |  -1 990,94 |
-| **= Résultat courant (RCB)**          |   5 939,39 |   8 578,98 |  12 404,42 |
+| − Charges financières                 |   2 865,96 |   2 482,56 |   2 080,82 |
+| **= Résultat financier**              |  -2 865,96 |  -2 482,56 |  -2 080,82 |
+| **= Résultat courant (RCB)**          |   6 415,64 |   8 471,77 |  12 314,54 |
 | + Résultat exceptionnel               |       0,00 |       0,00 |       0,00 |
 | +/− Ajustements nets                  |       0,00 |       0,00 |       0,00 |
-| − IS                                  |     890,91 |   1 286,85 |   1 860,66 |
-| **= Résultat net**                    |   5 048,48 |   7 292,14 |  10 543,76 | _tx: 4,8 % / 6,6 % / 9,1 %_    |
-| **CAF**                               |   8 465,68 |  10 709,33 |  13 960,96 | _tx: 8,1 % / 9,7 % / 12,1 %_   |
+| − IS                                  |     962,35 |   1 270,77 |   1 847,18 |
+| **= Résultat net**                    |   5 453,29 |   7 201,01 |  10 467,36 | _tx: 5,2 % / 6,5 % / 9,0 %_    |
+| **CAF**                               |   8 870,49 |  10 618,21 |  13 884,56 | _tx: 8,4 % / 9,6 % / 12,0 %_   |
 
 ### Détail activités (hypothèses saisies)
 
-| Libellé       | Type              | Tx marge | TVA CA | TVA ach. | Stock j | Cli. j | Fourn. j |      CA N |    CA N+1 |     CA N+2 |
-| ------------- | ----------------- | -------: | -----: | -------: | ------: | -----: | -------: | --------: | --------: | ---------: |
-| Vente pizza   | PRODUCTION_VENDUE |     73 % |   10 % |    5.5 % |      15 |      0 |       30 | 94 800,00 | 99 540,00 | 104 517,00 |
-| Vente boisson | PRODUCTION_VENDUE |     65 % |   10 % |    5.5 % |      15 |      0 |       30 |  6 000,00 |  6 300,00 |   6 615,00 |
-| Vente alcool  | PRODUCTION_VENDUE |     65 % |   20 % |     20 % |      15 |      0 |       30 |  4 197,00 |  4 406,85 |   4 627,19 |
+| Libellé                     | Type              | Tx marge | TVA CA | TVA ach. | Stock j | Cli. j | Fourn. j |      CA N |     CA N+1 |     CA N+2 |
+| --------------------------- | ----------------- | -------: | -----: | -------: | ------: | -----: | -------: | --------: | ---------: | ---------: |
+| Vente pizza                 | PRODUCTION_VENDUE |     73 % |   10 % |    5.5 % |      15 |      0 |       30 | 94 800,00 |  99 540,00 | 104 517,00 |
+| Vente boisson               | PRODUCTION_VENDUE |     65 % |   10 % |    5.5 % |      15 |      0 |       30 |  6 000,00 |   6 300,00 |   6 615,00 |
+| Vente alcool                | PRODUCTION_VENDUE |     65 % |   20 % |     20 % |      15 |      0 |       30 |  4 197,00 |   4 406,85 |   4 627,19 |
+| Vente pizza (copie)         | PRODUCTION_VENDUE |     73 % |   10 % |    5.5 % |      15 |      0 |       30 | 90 850,00 |  95 392,50 | 100 162,13 |
+| Vente pizza (copie) (copie) | PRODUCTION_VENDUE |     73 % |   10 % |    5.5 % |      15 |      0 |       30 | 98 750,00 | 103 687,50 | 108 871,88 |
 
 | Désignation                         |  2026–2027 |  2027–2028 |  2028–2029 |
 | ----------------------------------- | ---------: | ---------: | ---------: |
-| CA total activités actives (saisie) | 104 997,00 | 110 246,85 | 115 759,19 |
+| CA total activités actives (saisie) | 294 597,00 | 309 326,85 | 324 793,20 |
 | CA total (fc.ca)                    | 104 997,00 | 110 246,85 | 115 759,19 |
 
 ### Détail personnel (hypothèses saisies vs fc)
@@ -719,13 +803,13 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 
 ### Plan de financement (= écran)
 
-| + Immobilisations incorporelles | 28 783,00 | 0,00 | 0,00 | 0,00 |
+| + Immobilisations incorporelles | 38 783,00 | 0,00 | 0,00 | 0,00 |
 | + Immobilisations corporelles | 34 171,99 | 0,00 | 0,00 | 0,00 |
 | + Immobilisations financières | 3 200,00 | 0,00 | 0,00 | 0,00 |
-| = Total immobilisations | 66 154,99 | 0,00 | 0,00 | 0,00 |
-| + Variation du BFR | 4 351,50 | -9 986,10 | -590,71 | -259,20 |
-| + Remboursement des emprunts | 0,00 | 6 936,24 | 7 862,08 | 8 182,42 |
-| **= Total des besoins** | 70 506,49 | -3 049,86 | 7 271,37 | 7 923,22 |
+| = Total immobilisations | 76 154,99 | 0,00 | 0,00 | 0,00 |
+| + Variation du BFR | 4 351,50 | -10 003,96 | -568,83 | -259,85 |
+| + Remboursement des emprunts | 0,00 | 8 092,26 | 9 172,43 | 9 546,14 |
+| **= Total des besoins** | 80 506,49 | -1 911,70 | 8 603,60 | 9 286,29 |
 
 **RESSOURCES**
 
@@ -733,33 +817,33 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 | ---------------------------------- | --------: | --------: | --------: | --------: |
 | + Apports en capital               |  1 000,00 |      0,00 |      0,00 |      0,00 |
 | + Apports en comptes courants      | 19 000,00 |      0,00 |      0,00 |      0,00 |
-| + Souscription d'emprunts          | 60 000,00 |      0,00 |      0,00 |      0,00 |
+| + Souscription d'emprunts          | 70 000,00 |      0,00 |      0,00 |      0,00 |
 | + Subventions d'investissement     |      0,00 |      0,00 |      0,00 |      0,00 |
-| + Capacité d'autofinancement (CAF) |      0,00 |  8 465,68 | 10 709,33 | 13 960,96 |
-| **= Total des ressources**         | 80 000,00 |  8 465,68 | 10 709,33 | 13 960,96 |
+| + Capacité d'autofinancement (CAF) |      0,00 |  8 870,49 | 10 618,21 | 13 884,56 |
+| **= Total des ressources**         | 90 000,00 |  8 870,49 | 10 618,21 | 13 884,56 |
 
 **TRÉSORERIE**
 
 | Désignation               |  Initial | 2026–2027 | 2027–2028 | 2028–2029 |
 | ------------------------- | -------: | --------: | --------: | --------: |
-| = Variation de trésorerie | 9 493,51 | 11 515,54 |  3 437,96 |  6 037,74 |
-| **= Solde de trésorerie** | 9 493,51 | 21 009,05 | 24 447,02 | 30 484,76 |
+| = Variation de trésorerie | 9 493,51 | 10 782,19 |  2 014,61 |  4 598,27 |
+| **= Solde de trésorerie** | 9 493,51 | 20 275,71 | 22 290,31 | 26 888,58 |
 
-| **= Variation de trésorerie (Ressources − Besoins)** | 9 493,51 | 11 515,54 | 3 437,96 | 6 037,74 | _(= par construction)_ |
+| **= Variation de trésorerie (Ressources − Besoins)** | 9 493,51 | 10 782,19 | 2 014,61 | 4 598,27 | _(= par construction)_ |
 
 ### Échéancier emprunts (par exercice)
 
 #### CIC
 
-> Montant : **60 000,00 €** · Taux : **4 %** · Durée : **84 mois** · Déblocage : **01/05/2026** · MENSUEL · AMORTISSABLE
+> Montant : **70 000,00 €** · Taux : **4 %** · Durée : **84 mois** · Déblocage : **01/05/2026** · MENSUEL · AMORTISSABLE
 
-| Exercice                 | Cap. remboursé |     Intérêts |    Assurance | Total mensualités | Cap. restant fin |
-| ------------------------ | -------------: | -----------: | -----------: | ----------------: | ---------------: |
-| 2026–2027                |       6 936,24 |     2 085,17 |       417,04 |          9 438,45 |        53 063,75 |
-| 2027–2028                |       7 862,08 |     1 979,46 |       395,89 |         10 237,43 |        45 201,66 |
-| 2028–2029                |       8 182,42 |     1 659,13 |       331,81 |         10 173,37 |        37 019,26 |
-| Hors projection          |      37 019,24 |     3 167,04 |            — |         40 819,71 |                — |
-| **Total durée emprunts** |  **59 999,98** | **8 890,80** | **1 778,16** |     **70 668,96** |         **0,00** |
+| Exercice                 | Cap. remboursé |      Intérêts |  Assurance | Total mensualités | Cap. restant fin |
+| ------------------------ | -------------: | ------------: | ---------: | ----------------: | ---------------: |
+| 2026–2027                |       8 092,26 |      2 432,67 |     182,46 |         10 707,44 |        61 907,71 |
+| 2027–2028                |       9 172,43 |      2 309,36 |     173,20 |         11 655,00 |        52 735,27 |
+| 2028–2029                |       9 546,14 |      1 935,66 |     145,16 |         11 626,99 |        43 189,14 |
+| Hors projection          |      43 189,14 |      3 694,89 |          — |         47 161,11 |                — |
+| **Total durée emprunts** |  **69 999,97** | **10 372,58** | **777,93** |     **81 150,54** |         **0,00** |
 
 ### Conclusion
 
@@ -777,15 +861,17 @@ Exercices : **2026–2027** · **2027–2028** · **2028–2029**
 | 5   | TVA à payer BFR = tableau TVA M12        |      ✅      |               — |               — |               — |
 | 6   | Crédit TVA BFR = tableau TVA M12         |      ✅      |               — |               — |               — |
 | 7   | TVA décaissée = tvaAnnuel − ΔDettes TVA  |      ✅      |               — |               — |               — |
-| 8   | Trésorerie tableau mensuel = bilan       |      ✅      |               — |               — |               — |
+| 8   | Trésorerie tableau mensuel = bilan       |      ❌      |      152 214,21 |      314 469,67 |      484 745,60 |
 | 9   | Capital emprunts bilan = échéancier      |      ✅      |               — |               — |               — |
-| 10  | CA activités saisies = fc.ca             |      ✅      |               — |               — |               — |
-| 11  | Plan financement solde tréso = bilan     |      ✅      |               — |               — |               — |
+| 10  | CA activités saisies = fc.ca             |      ❌      |      189 600,00 |      199 080,00 |      209 034,01 |
+| 11  | Plan financement solde tréso = bilan     |      ❌      |       -4 126,18 |       -4 332,49 |       -4 549,11 |
 
-#### ✅ Aucune divergence détectée
+#### ❌ Divergences à investiguer
 
-Toutes les vérifications de cohérence passent. La modélisation est cohérente.
+- **[8] Trésorerie divergente** (écarts : Y1=152 214,21 · Y2=314 469,67 · Y3=484 745,60) — le tableau mensuel TTC et la formule bilan ne convergent pas. Causes probables : TVA sur immos décaissée TTC vs bilan HT, subventions exploitation hors P&L, décalage acomptes IS. Voir section _Trésorerie — Comparaison_.
+- **[10] CA activités saisies ≠ fc.ca** (écarts : Y1=189 600,00 · Y2=199 080,00 · Y3=209 034,01) — la somme des montants des activités actives diffère du CA calculé. Vérifier la logique d'agrégation dans `buildFinCalc`.
+- **[11] Plan de financement incohérent** (écarts : Y1=-4 126,18 · Y2=-4 332,49 · Y3=-4 549,11) — le solde de trésorerie du plan diffère des disponibilités bilan. Vérifier `aggregations/plan-financement.ts`.
 
 #### Points de vigilance
 
-Aucun point de vigilance identifié.
+- ⚠ La divergence trésorerie (check #8) dépasse 500 € — vérifier le traitement de la TVA sur immobilisations dans le tableau mensuel vs le bilan.

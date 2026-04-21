@@ -192,15 +192,16 @@ async function main() {
 
     // ── Calculs officiels (= application) ──────────────────────────────────────
     const fc = buildFinCalc(data, dateDemarrageDate);
+    const d = fc.filteredData;
 
-    const sigData = buildSigData(data, fc, isIS);
-    const seuilData = calcSeuil(data, fc);
-    const bfrData = buildBfrRows(data, fc);
-    const bilanData = buildBilanRows(data, fc);
+    const sigData = buildSigData(d, fc, isIS);
+    const seuilData = calcSeuil(d, fc);
+    const bfrData = buildBfrRows(d, fc);
+    const bilanData = buildBilanRows(d, fc);
 
     const ctx = buildTemporelCtx(dateDemarrageDate, isFranchise);
-    const enc = calcEncaissements(data, ctx);
-    const dec = calcDecaissements(data, ctx, effectiveMoisPaiement, fc.isParAnnee, fc.tva);
+    const enc = calcEncaissements(d, ctx);
+    const dec = calcDecaissements(d, ctx, effectiveMoisPaiement, fc.isParAnnee, fc.tva);
 
     const variation = {
         y1: subSeries(enc.totalEnc.y1, dec.totalDec.y1),
@@ -213,7 +214,7 @@ async function main() {
 
     const soldePrecedent = { y1: y1Sol.soldePrecedent, y2: y2Sol.soldePrecedent, y3: y3Sol.soldePrecedent };
     const soldeFinalSeries = { y1: y1Sol.soldeFinal, y2: y2Sol.soldeFinal, y3: y3Sol.soldeFinal };
-    const decAchatsRaw = calcAchatsRaw(data.activites, isFranchise);
+    const decAchatsRaw = calcAchatsRaw(d.activites, isFranchise);
     const encoursFournisseurs = calcEncoursFournisseurs(decAchatsRaw, dec.decAchats);
     const tresoRows = buildTresorerieRows({
         enc, dec, soldePrecedent, variation,

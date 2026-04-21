@@ -134,9 +134,10 @@ async function main() {
 
   // ── Calculs officiels (= application) ──────────────────────────────────────
   const fc = buildFinCalc(data, dateDemarrageDate);
-  const sigData = buildSigData(data, fc, isIS);
+  const d = fc.filteredData;
+  const sigData = buildSigData(d, fc, isIS);
   // buildSigRows pour les détails drill-down
-  const sigRows = buildSigRows(data, fc);
+  const sigRows = buildSigRows(d, fc);
 
   const y1L = sigData.yearLabels.y1;
   const y2L = sigData.yearLabels.y2;

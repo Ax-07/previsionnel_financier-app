@@ -90,7 +90,8 @@ async function main() {
 
   // ── Calculs officiels (= application) ────────────────────────────────────────
   const fc = buildFinCalc(data, dateDemarrageDate);
-  const ratiosData = buildRatiosRows(data, fc);
+  const d = fc.filteredData;
+  const ratiosData = buildRatiosRows(d, fc);
   const { yearLabels, rows } = ratiosData;
 
   const y1L = yearLabels.y1;
@@ -98,7 +99,7 @@ async function main() {
   const y3L = yearLabels.y3;
 
   // ── Recalcul des valeurs intermédiaires (pour les checks) ─────────────────────
-  const bfr = calcBfr(data, fc);
+  const bfr = calcBfr(d, fc);
 
   const achatsRows = bfr.achatsRows;
   const stocks = bfr.stocksMatieres;
@@ -123,7 +124,7 @@ async function main() {
     fc.exBorne3,
     fc.dotationsParImmoAcc,
   );
-  const { apportsCapital, apportsCC } = calcApportsCumulatifs(data, fc.exBorne1, fc.exBorne2, fc.exBorne3);
+  const { apportsCapital, apportsCC } = calcApportsCumulatifs(d, fc.exBorne1, fc.exBorne2, fc.exBorne3);
   const { capitalRestantDu, empruntsDebloques, remboursementsCumul } = calcEmpruntsPassif(
     data,
     fc.exBorne1,

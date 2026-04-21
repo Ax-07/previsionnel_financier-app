@@ -99,8 +99,9 @@ async function main() {
 
   // ── Calculs officiels (= application) ──────────────────────────────────────
   const fc = buildFinCalc(data, dateDemarrageDate);
-  const crData = buildCompteResultatRows(data, fc, isIS);
-  const rows = buildDrilldownRows(data, fc);
+  const d = fc.filteredData;
+  const crData = buildCompteResultatRows(d, fc, isIS);
+  const rows = buildDrilldownRows(d, fc);
 
   const y1L = crData.yearLabels.y1;
   const y2L = crData.yearLabels.y2;

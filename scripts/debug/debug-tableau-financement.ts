@@ -81,7 +81,8 @@ async function main() {
 
   // ── Calculs officiels (= application) ────────────────────────────────────────
   const fc = buildFinCalc(data, dateDemarrageDate);
-  const tfData = buildTableauFinancementRows(data, fc);
+  const d = fc.filteredData;
+  const tfData = buildTableauFinancementRows(d, fc);
   const { yearLabels, rows } = tfData;
 
   const y0L = "Initial";

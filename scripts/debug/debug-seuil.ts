@@ -99,7 +99,8 @@ async function main() {
 
   // ── Calculs officiels (= application) ──────────────────────────────────────
   const fc = buildFinCalc(data, dateDemarrageDate);
-  const seuilData = calcSeuil(data, fc);
+  const d = fc.filteredData;
+  const seuilData = calcSeuil(d, fc);
 
   const { yearLabels, rows } = seuilData;
   const y1L = yearLabels.y1;

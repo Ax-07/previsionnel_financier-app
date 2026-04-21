@@ -106,7 +106,8 @@ async function main() {
 
   // ── Calculs officiels (= application) ──────────────────────────────────────
   const fc = buildFinCalc(data, dateDemarrageDate);
-  const cafData = buildCafRows(data, fc);
+  const d = fc.filteredData;
+  const cafData = buildCafRows(d, fc);
 
   const { yearLabels, rows } = cafData;
   const y1L = yearLabels.y1;

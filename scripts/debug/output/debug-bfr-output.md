@@ -18,8 +18,8 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Périodicité TVA | mensuel |
 | Délai paiement salaires | 1 mois |
 | Exercices | Initial · 2026–2027 · 2027–2028 · 2028–2029 |
-| Activités actives | 3 |
-| dont commerce/production | 3 |
+| Activités actives | 5 |
+| dont commerce/production | 5 |
 | Fournitures & services actifs | 22 |
 | Salariés | 2 |
 | Dirigeants | 1 |
@@ -33,17 +33,21 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Désignation | Initial | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: | ---: |
 | **BESOINS D'EXPLOITATION** | | | | |
-| Stocks de matières | 2 000,00 | 1 298,71 | 1 275,97 | 1 339,76 |
+| Stocks de matières | 4 000,00 | 1 298,71 | 1 275,97 | 1 339,76 |
 | \  Vente pizza | 1 000,00 | 1 108,17 | 1 119,83 | 1 175,82 |
 | \  Vente boisson | 500,00 | 108,37 | 91,88 | 96,47 |
 | \  Vente alcool | 500,00 | 82,17 | 64,27 | 67,48 |
+| \  Vente pizza (copie) | 1 000,00 | 1 063,73 | 1 073,17 | 1 126,82 |
+| \  Vente pizza (copie) (copie) | 1 000,00 | 1 152,60 | 1 166,48 | 1 224,81 |
 | Crédit de TVA | 2 351,50 | 27,81 | 0,00 | 0,00 |
-| **= Total des besoins** | 4 351,50 | 1 326,52 | 1 275,97 | 1 339,76 |
+| **= Total des besoins** | 6 351,50 | 1 326,52 | 1 275,97 | 1 339,76 |
 | **RESSOURCES D'EXPLOITATION** | | | | |
-| Dettes fournisseurs (achats matières) | 0,00 | 2 366,41 | 2 485,38 | 2 609,65 |
+| Dettes fournisseurs (achats matières) | 0,00 | 6 492,59 | 6 817,86 | 7 158,76 |
 | \  Vente pizza | 0,00 | 2 063,09 | 2 166,24 | 2 274,56 |
 | \  Vente boisson | 0,00 | 169,10 | 177,73 | 186,61 |
 | \  Vente alcool | 0,00 | 134,22 | 141,41 | 148,48 |
+| \  Vente pizza (copie) | 0,00 | 1 977,13 | 2 075,98 | 2 179,78 |
+| \  Vente pizza (copie) (copie) | 0,00 | 2 149,05 | 2 256,50 | 2 369,33 |
 | Dettes charges externes | 0,00 | 2 283,38 | 2 309,02 | 2 335,68 |
 | \  Embalages | 0,00 | 0,00 | 0,00 | 0,00 |
 | \  Electricité | 0,00 | 0,00 | 0,00 | 0,00 |
@@ -70,10 +74,10 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Dettes impôts et taxes | 0,00 | 0,00 | 0,00 | 0,00 |
 | Dettes personnel | 0,00 | 2 088,60 | 2 223,72 | 2 223,72 |
 | TVA à payer | 0,00 | 0,00 | 161,44 | 190,06 |
-| Impôt sur les sociétés (dette) | 0,00 | 222,73 | 321,71 | 465,17 |
-| **= Total des ressources** | 0,00 | 6 961,12 | 7 501,28 | 7 824,27 |
-| Variation du BFR | 4 351,50 | -9 986,10 | -590,71 | -259,20 |
-| **= Besoin en fonds de roulement (BFR)** | 4 351,50 | -5 634,60 | -6 225,31 | -6 484,51 |
+| Impôt sur les sociétés (dette) | 0,00 | 240,59 | 317,69 | 461,80 |
+| **= Total des ressources** | 0,00 | 11 105,16 | 11 829,74 | 12 370,02 |
+| Variation du BFR | 6 351,50 | -16 130,14 | -775,13 | -476,47 |
+| **= Besoin en fonds de roulement (BFR)** | 6 351,50 | -9 778,64 | -10 553,78 | -11 030,25 |
 
 
 ## 2. Vérifications de cohérence
@@ -81,7 +85,7 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Check | Statut | Détail |
 | --- | :---: | --- |
-| Stocks (UI) = calcBfr.stocksMatieres (Initial) | ✅ | 2 000,00 ≟ 2 000,00 |
+| Stocks (UI) = calcBfr.stocksMatieres (Initial) | ✅ | 4 000,00 ≟ 4 000,00 |
 | Stocks (UI) = calcBfr.stocksMatieres (2026–2027) | ✅ | 1 298,71 ≟ 1 298,71 |
 | Stocks (UI) = calcBfr.stocksMatieres (2027–2028) | ✅ | 1 275,97 ≟ 1 275,97 |
 | Stocks (UI) = calcBfr.stocksMatieres (2028–2029) | ✅ | 1 339,76 ≟ 1 339,76 |
@@ -89,14 +93,14 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Crédit TVA (UI) = calcBfr.creditTVA (2026–2027) | ✅ | 27,81 ≟ 27,81 |
 | Crédit TVA (UI) = calcBfr.creditTVA (2027–2028) | ✅ | 0,00 ≟ 0,00 |
 | Crédit TVA (UI) = calcBfr.creditTVA (2028–2029) | ✅ | 0,00 ≟ 0,00 |
-| Total besoins (UI) = calcBfr.totalBesoins (Initial) | ✅ | 4 351,50 ≟ 4 351,50 |
+| Total besoins (UI) = calcBfr.totalBesoins (Initial) | ✅ | 6 351,50 ≟ 6 351,50 |
 | Total besoins (UI) = calcBfr.totalBesoins (2026–2027) | ✅ | 1 326,52 ≟ 1 326,52 |
 | Total besoins (UI) = calcBfr.totalBesoins (2027–2028) | ✅ | 1 275,97 ≟ 1 275,97 |
 | Total besoins (UI) = calcBfr.totalBesoins (2028–2029) | ✅ | 1 339,76 ≟ 1 339,76 |
 | Dettes fourn. (UI) = calcBfr.dettesFournisseurs (Initial) | ✅ | 0,00 ≟ 0,00 |
-| Dettes fourn. (UI) = calcBfr.dettesFournisseurs (2026–2027) | ✅ | 2 366,41 ≟ 2 366,41 |
-| Dettes fourn. (UI) = calcBfr.dettesFournisseurs (2027–2028) | ✅ | 2 485,38 ≟ 2 485,38 |
-| Dettes fourn. (UI) = calcBfr.dettesFournisseurs (2028–2029) | ✅ | 2 609,65 ≟ 2 609,65 |
+| Dettes fourn. (UI) = calcBfr.dettesFournisseurs (2026–2027) | ✅ | 6 492,59 ≟ 6 492,59 |
+| Dettes fourn. (UI) = calcBfr.dettesFournisseurs (2027–2028) | ✅ | 6 817,86 ≟ 6 817,86 |
+| Dettes fourn. (UI) = calcBfr.dettesFournisseurs (2028–2029) | ✅ | 7 158,76 ≟ 7 158,76 |
 | Dettes charges ext. (UI) = calcBfr.dettesChargesExt. (Initial) | ✅ | 0,00 ≟ 0,00 |
 | Dettes charges ext. (UI) = calcBfr.dettesChargesExt. (2026–2027) | ✅ | 2 283,38 ≟ 2 283,38 |
 | Dettes charges ext. (UI) = calcBfr.dettesChargesExt. (2027–2028) | ✅ | 2 309,02 ≟ 2 309,02 |
@@ -114,47 +118,47 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | TVA à payer (UI) = calcBfr.tvaAPayer (2027–2028) | ✅ | 161,44 ≟ 161,44 |
 | TVA à payer (UI) = calcBfr.tvaAPayer (2028–2029) | ✅ | 190,06 ≟ 190,06 |
 | Dettes IS (UI) = calcBfr.dettesIS (Initial) | ✅ | 0,00 ≟ 0,00 |
-| Dettes IS (UI) = calcBfr.dettesIS (2026–2027) | ✅ | 222,73 ≟ 222,73 |
-| Dettes IS (UI) = calcBfr.dettesIS (2027–2028) | ✅ | 321,71 ≟ 321,71 |
-| Dettes IS (UI) = calcBfr.dettesIS (2028–2029) | ✅ | 465,17 ≟ 465,17 |
+| Dettes IS (UI) = calcBfr.dettesIS (2026–2027) | ✅ | 240,59 ≟ 240,59 |
+| Dettes IS (UI) = calcBfr.dettesIS (2027–2028) | ✅ | 317,69 ≟ 317,69 |
+| Dettes IS (UI) = calcBfr.dettesIS (2028–2029) | ✅ | 461,80 ≟ 461,80 |
 | Total ressources (UI) = calcBfr.totalRessources (Initial) | ✅ | 0,00 ≟ 0,00 |
-| Total ressources (UI) = calcBfr.totalRessources (2026–2027) | ✅ | 6 961,12 ≟ 6 961,12 |
-| Total ressources (UI) = calcBfr.totalRessources (2027–2028) | ✅ | 7 501,28 ≟ 7 501,28 |
-| Total ressources (UI) = calcBfr.totalRessources (2028–2029) | ✅ | 7 824,27 ≟ 7 824,27 |
-| BFR (UI) = calcBfr.bfr (Initial) | ✅ | 4 351,50 ≟ 4 351,50 |
-| BFR (UI) = calcBfr.bfr (2026–2027) | ✅ | -5 634,60 ≟ -5 634,60 |
-| BFR (UI) = calcBfr.bfr (2027–2028) | ✅ | -6 225,31 ≟ -6 225,31 |
-| BFR (UI) = calcBfr.bfr (2028–2029) | ✅ | -6 484,51 ≟ -6 484,51 |
-| VariationBFR (UI) = calcBfr.variationBFR (Initial) | ✅ | 4 351,50 ≟ 4 351,50 |
-| VariationBFR (UI) = calcBfr.variationBFR (2026–2027) | ✅ | -9 986,10 ≟ -9 986,10 |
-| VariationBFR (UI) = calcBfr.variationBFR (2027–2028) | ✅ | -590,71 ≟ -590,71 |
-| VariationBFR (UI) = calcBfr.variationBFR (2028–2029) | ✅ | -259,20 ≟ -259,20 |
-| Total besoins = Stocks + CréditTVA (Initial) [y0 seulement] | ✅ | 4 351,50 ≟ 4 351,50 |
+| Total ressources (UI) = calcBfr.totalRessources (2026–2027) | ✅ | 11 105,16 ≟ 11 105,16 |
+| Total ressources (UI) = calcBfr.totalRessources (2027–2028) | ✅ | 11 829,74 ≟ 11 829,74 |
+| Total ressources (UI) = calcBfr.totalRessources (2028–2029) | ✅ | 12 370,02 ≟ 12 370,02 |
+| BFR (UI) = calcBfr.bfr (Initial) | ✅ | 6 351,50 ≟ 6 351,50 |
+| BFR (UI) = calcBfr.bfr (2026–2027) | ✅ | -9 778,64 ≟ -9 778,64 |
+| BFR (UI) = calcBfr.bfr (2027–2028) | ✅ | -10 553,78 ≟ -10 553,78 |
+| BFR (UI) = calcBfr.bfr (2028–2029) | ✅ | -11 030,25 ≟ -11 030,25 |
+| VariationBFR (UI) = calcBfr.variationBFR (Initial) | ✅ | 6 351,50 ≟ 6 351,50 |
+| VariationBFR (UI) = calcBfr.variationBFR (2026–2027) | ✅ | -16 130,14 ≟ -16 130,14 |
+| VariationBFR (UI) = calcBfr.variationBFR (2027–2028) | ✅ | -775,13 ≟ -775,13 |
+| VariationBFR (UI) = calcBfr.variationBFR (2028–2029) | ✅ | -476,47 ≟ -476,47 |
+| Total besoins = Stocks + CréditTVA (Initial) [y0 seulement] | ✅ | 6 351,50 ≟ 6 351,50 |
 | Total besoins = Stocks + CréditTVA (2026–2027) [y0 seulement] | ✅ | 1 326,52 ≟ 1 326,52 |
 | Total besoins = Stocks + CréditTVA (2027–2028) [y0 seulement] | ✅ | 1 275,97 ≟ 1 275,97 |
 | Total besoins = Stocks + CréditTVA (2028–2029) [y0 seulement] | ✅ | 1 339,76 ≟ 1 339,76 |
 | Total ressources = Σ dettes (Initial) | ✅ | 0,00 ≟ 0,00 |
-| Total ressources = Σ dettes (2026–2027) | ✅ | 6 961,12 ≟ 6 961,12 |
-| Total ressources = Σ dettes (2027–2028) | ✅ | 7 501,28 ≟ 7 501,28 |
-| Total ressources = Σ dettes (2028–2029) | ✅ | 7 824,27 ≟ 7 824,27 |
-| BFR = Total besoins − Total ressources (Initial) | ✅ | 4 351,50 ≟ 4 351,50 |
-| BFR = Total besoins − Total ressources (2026–2027) | ✅ | -5 634,60 ≟ -5 634,60 |
-| BFR = Total besoins − Total ressources (2027–2028) | ✅ | -6 225,31 ≟ -6 225,31 |
-| BFR = Total besoins − Total ressources (2028–2029) | ✅ | -6 484,51 ≟ -6 484,51 |
-| Variation BFR (Initial) | ✅ | 4 351,50 ≟ 4 351,50 |
-| Variation BFR (2026–2027) | ✅ | -9 986,10 ≟ -9 986,10 |
-| Variation BFR (2027–2028) | ✅ | -590,71 ≟ -590,71 |
-| Variation BFR (2028–2029) | ✅ | -259,20 ≟ -259,20 |
-| Stocks (BFR y1-y3) = fc.stockFinal (Initial) | ✅ | 2 000,00 ≟ 2 000,00 |
+| Total ressources = Σ dettes (2026–2027) | ✅ | 11 105,16 ≟ 11 105,16 |
+| Total ressources = Σ dettes (2027–2028) | ✅ | 11 829,74 ≟ 11 829,74 |
+| Total ressources = Σ dettes (2028–2029) | ✅ | 12 370,02 ≟ 12 370,02 |
+| BFR = Total besoins − Total ressources (Initial) | ✅ | 6 351,50 ≟ 6 351,50 |
+| BFR = Total besoins − Total ressources (2026–2027) | ✅ | -9 778,64 ≟ -9 778,64 |
+| BFR = Total besoins − Total ressources (2027–2028) | ✅ | -10 553,78 ≟ -10 553,78 |
+| BFR = Total besoins − Total ressources (2028–2029) | ✅ | -11 030,25 ≟ -11 030,25 |
+| Variation BFR (Initial) | ✅ | 6 351,50 ≟ 6 351,50 |
+| Variation BFR (2026–2027) | ✅ | -16 130,14 ≟ -16 130,14 |
+| Variation BFR (2027–2028) | ✅ | -775,13 ≟ -775,13 |
+| Variation BFR (2028–2029) | ✅ | -476,47 ≟ -476,47 |
+| Stocks (BFR y1-y3) = fc.stockFinal (Initial) | ✅ | 4 000,00 ≟ 4 000,00 |
 | Stocks (BFR y1-y3) = fc.stockFinal (2026–2027) | ✅ | 1 298,71 ≟ 1 298,71 |
 | Stocks (BFR y1-y3) = fc.stockFinal (2027–2028) | ✅ | 1 275,97 ≟ 1 275,97 |
 | Stocks (BFR y1-y3) = fc.stockFinal (2028–2029) | ✅ | 1 339,76 ≟ 1 339,76 |
-| Stocks total = Σ par activité (2026–2027) | ✅ | 1 298,71 ≟ 1 298,71 |
-| Stocks total = Σ par activité (2027–2028) | ✅ | 1 275,97 ≟ 1 275,97 |
-| Stocks total = Σ par activité (2028–2029) | ✅ | 1 339,76 ≟ 1 339,76 |
-| Dettes fourn. total = Σ par activité (2026–2027) | ✅ | 2 366,41 ≟ 2 366,41 |
-| Dettes fourn. total = Σ par activité (2027–2028) | ✅ | 2 485,38 ≟ 2 485,38 |
-| Dettes fourn. total = Σ par activité (2028–2029) | ✅ | 2 609,65 ≟ 2 609,65 |
+| Stocks total = Σ par activité (2026–2027) | ❌ | 3 515,04 ≟ 1 298,71 |
+| Stocks total = Σ par activité (2027–2028) | ❌ | 3 515,62 ≟ 1 275,97 |
+| Stocks total = Σ par activité (2028–2029) | ❌ | 3 691,40 ≟ 1 339,76 |
+| Dettes fourn. total = Σ par activité (2026–2027) | ✅ | 6 492,59 ≟ 6 492,59 |
+| Dettes fourn. total = Σ par activité (2027–2028) | ✅ | 6 817,86 ≟ 6 817,86 |
+| Dettes fourn. total = Σ par activité (2028–2029) | ✅ | 7 158,76 ≟ 7 158,76 |
 | Dettes charges ext. total = Σ par charge (2026–2027) | ✅ | 2 283,38 ≟ 2 283,38 |
 | Dettes charges ext. total = Σ par charge (2027–2028) | ✅ | 2 309,02 ≟ 2 309,02 |
 | Dettes charges ext. total = Σ par charge (2028–2029) | ✅ | 2 335,68 ≟ 2 335,68 |
@@ -168,7 +172,9 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Vente pizza | 27.0 % | 15 j | 30 j | 1 108,17 | 1 119,83 | 1 175,82 | 2 063,09 | 2 166,24 | 2 274,56 |
 | Vente boisson | 35.0 % | 15 j | 30 j | 108,37 | 91,88 | 96,47 | 169,10 | 177,73 | 186,61 |
 | Vente alcool | 35.0 % | 15 j | 30 j | 82,17 | 64,27 | 67,48 | 134,22 | 141,41 | 148,48 |
-| **Total** | | | | **1 298,71** | **1 275,97** | **1 339,76** | **2 366,41** | **2 485,38** | **2 609,65** |
+| Vente pizza (copie) | 27.0 % | 15 j | 30 j | 1 063,73 | 1 073,17 | 1 126,82 | 1 977,13 | 2 075,98 | 2 179,78 |
+| Vente pizza (copie) (copie) | 27.0 % | 15 j | 30 j | 1 152,60 | 1 166,48 | 1 224,81 | 2 149,05 | 2 256,50 | 2 369,33 |
+| **Total** | | | | **1 298,71** | **1 275,97** | **1 339,76** | **6 492,59** | **6 817,86** | **7 158,76** |
 
 
 ## 4. Détail charges externes — Dettes fin d'exercice
@@ -207,10 +213,10 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Bilan | Valeur |
 | --- | --- |
 | Total checks | 77 |
-| ✅ OK | 77 |
-| ❌ KO | 0 |
+| ✅ OK | 74 |
+| ❌ KO | 3 |
 
-> ✅ **Tous les checks sont OK.** Les calculs du BFR sont cohérents.
+> ❌ **3 check(s) échoué(s).** Voir la section 2 pour les détails.
 
 
 ### 5.1 Indicateurs clés
@@ -218,15 +224,15 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Indicateur | Initial | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: | ---: |
-| Stocks de matières | 2 000,00 | 1 298,71 | 1 275,97 | 1 339,76 |
+| Stocks de matières | 4 000,00 | 1 298,71 | 1 275,97 | 1 339,76 |
 | Crédit de TVA | 2 351,50 | 27,81 | 0,00 | 0,00 |
-| **Total besoins** | **4 351,50** | **1 326,52** | **1 275,97** | **1 339,76** |
-| Dettes fournisseurs | 0,00 | 2 366,41 | 2 485,38 | 2 609,65 |
+| **Total besoins** | **6 351,50** | **1 326,52** | **1 275,97** | **1 339,76** |
+| Dettes fournisseurs | 0,00 | 6 492,59 | 6 817,86 | 7 158,76 |
 | Dettes charges ext. | 0,00 | 2 283,38 | 2 309,02 | 2 335,68 |
 | Dettes impôts | 0,00 | 0,00 | 0,00 | 0,00 |
 | Dettes personnel | 0,00 | 2 088,60 | 2 223,72 | 2 223,72 |
 | TVA à payer | 0,00 | 0,00 | 161,44 | 190,06 |
-| Dettes IS | 0,00 | 222,73 | 321,71 | 465,17 |
-| **Total ressources** | **0,00** | **6 961,12** | **7 501,28** | **7 824,27** |
-| **BFR** | **4 351,50** | **-5 634,60** | **-6 225,31** | **-6 484,51** |
-| Variation BFR | 4 351,50 | -9 986,10 | -590,71 | -259,20 |
+| Dettes IS | 0,00 | 240,59 | 317,69 | 461,80 |
+| **Total ressources** | **0,00** | **11 105,16** | **11 829,74** | **12 370,02** |
+| **BFR** | **6 351,50** | **-9 778,64** | **-10 553,78** | **-11 030,25** |
+| Variation BFR | 6 351,50 | -16 130,14 | -775,13 | -476,47 |

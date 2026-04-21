@@ -119,8 +119,9 @@ async function main() {
 
   // ── Calculs officiels (= application) ──────────────────────────────────────
   const fc = buildFinCalc(data, dateDemarrageDate);
-  const bilan = buildBilanRows(data, fc);   // même fonction que l'app
-  const bfr = calcBfr(data, fc);            // même fonction que l'app
+  const d = fc.filteredData;
+  const bilan = buildBilanRows(d, fc);   // même fonction que l'app
+  const bfr = calcBfr(d, fc);            // même fonction que l'app
 
   const y1L = bilan.yearLabels.y1;
   const y2L = bilan.yearLabels.y2;
@@ -908,8 +909,8 @@ async function main() {
   const isFranchise = regimeTVA === "FRANCHISE";
   const moisPaiement = data.scenario.parametres?.moisPaiementSalaires ?? 1;
   const ctx = buildTemporelCtx(dateDemarrageDate, isFranchise);
-  const enc = calcEncaissements(data, ctx);
-  const dec = calcDecaissements(data, ctx, moisPaiement, fc.isParAnnee, fc.tva);
+  const enc = calcEncaissements(d, ctx);
+  const dec = calcDecaissements(d, ctx, moisPaiement, fc.isParAnnee, fc.tva);
 
   const varY1 = subSeries(enc.totalEnc.y1, dec.totalDec.y1);
   const varY2 = subSeries(enc.totalEnc.y2, dec.totalDec.y2);
@@ -971,9 +972,9 @@ async function main() {
   L(``);
 
   // ── B. Trésorerie bilan (formule cumulative) ──────────────────────────────
-  const bilanImmos = calcImmosBilan(data, anneeDebut, moisDebut, exBorne1, exBorne2, exBorne3, fc.dotationsParImmoAcc);
-  const { apportsCapital: apCap, apportsCC: apCC } = calcApportsCumulatifs(data, exBorne1, exBorne2, exBorne3);
-  const { empruntsDebloques: empDeb, remboursementsCumul: rembCumul } = calcEmpruntsPassif(data, exBorne1, exBorne2, exBorne3);
+  const bilanImmos = calcImmosBilan(d, anneeDebut, moisDebut, exBorne1, exBorne2, exBorne3, fc.dotationsParImmoAcc);
+  const { apportsCapital: apCap, apportsCC: apCC } = calcApportsCumulatifs(d, exBorne1, exBorne2, exBorne3);
+  const { empruntsDebloques: empDeb, remboursementsCumul: rembCumul } = calcEmpruntsPassif(d, exBorne1, exBorne2, exBorne3);
 
   const bfrBesoins: YAcc = {
     y1: bfr.stocksMatieres.y1 + bfr.creditTVA.y1 + bfr.creancesClients.y1,
@@ -1273,7 +1274,7 @@ async function main() {
     L(`> ℹ **Franchise de TVA** — aucun calcul TVA applicable.`);
     L(``);
   } else {
-    const tvaRows = buildTVARows(data, fc);
+    const tvaRows = buildTVARows(d, fc);
     const findRow = (key: string) => tvaRows.find((r) => r.key === key);
 
     const rowCA       = findRow("tva-ca");
@@ -1579,7 +1580,7 @@ async function main() {
 
   // ── 17. PLAN DE FINANCEMENT ───────────────────────────────────────────────────
   L(section("Plan de financement (= écran)"));
-  const pf = buildPlanFinancementRows(data, fc);
+  const pf = buildPlanFinancementRows(d, fc);
   for (const r of pf.rows) {
     if (r.style === "section") {
       L(``);
@@ -1686,7 +1687,7 @@ async function main() {
   let ecartCreditTVAConc: YAcc = zero;
   let ecartDecTVAConc: YAcc = zero;
   if (!isFranchise) {
-    const tvaRowsConc = buildTVARows(data, fc);
+    const tvaRowsConc = buildTVARows(d, fc);
     const findC = (key: string) => tvaRowsConc.find((r) => r.key === key);
     const rowPayerC = findC("tva-payer");
     const rowCreditC = findC("credit-tva");

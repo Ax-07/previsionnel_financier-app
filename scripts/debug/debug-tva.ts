@@ -84,6 +84,7 @@ async function main() {
 
   const { dateDemarrage: dateDemarrageDate, scenario } = data;
   const fc = buildFinCalc(data, dateDemarrageDate);
+  const d = fc.filteredData;
   const anneeDebut = dateDemarrageDate.getFullYear();
   const moisDebut = dateDemarrageDate.getMonth();
 
@@ -155,7 +156,7 @@ async function main() {
   }
 
   // ── Calculs officiels (= application) ──────────────────────────────────────
-  const rows = buildTVARows(data, fc);
+  const rows = buildTVARows(d, fc);
 
   // ─── Section 1 : Tableau TVA — totaux annuels ─────────────────────────────
 

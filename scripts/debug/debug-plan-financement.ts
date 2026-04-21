@@ -82,8 +82,9 @@ async function main() {
 
   // ── Calculs officiels (= application) ────────────────────────────────────────
   const fc = buildFinCalc(data, dateDemarrageDate);
-  const bfrCalc = calcBfr(data, fc);
-  const pfData = buildPlanFinancementRows(data, fc);
+  const d = fc.filteredData;
+  const bfrCalc = calcBfr(d, fc);
+  const pfData = buildPlanFinancementRows(d, fc);
   const { yearLabels, rows } = pfData;
 
   const y0L = "Initial";

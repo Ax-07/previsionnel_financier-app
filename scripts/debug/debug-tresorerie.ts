@@ -151,10 +151,11 @@ async function main() {
 
   // ── Calculs officiels (= application) ─────────────────────────────────────
   const fc = buildFinCalc(data, dateDemarrageDate);
+  const d = fc.filteredData;
   const ctx = buildTemporelCtx(dateDemarrageDate, isFranchise);
 
-  const enc = calcEncaissements(data, ctx);
-  const dec = calcDecaissements(data, ctx, moisPaiementSalaires, fc.isParAnnee, fc.tva);
+  const enc = calcEncaissements(d, ctx);
+  const dec = calcDecaissements(d, ctx, moisPaiementSalaires, fc.isParAnnee, fc.tva);
 
   const variation = {
     y1: subSeries(enc.totalEnc.y1, dec.totalDec.y1),
@@ -177,7 +178,7 @@ async function main() {
     y3: y3Sol.soldeFinal,
   };
 
-  const decAchatsRaw = calcAchatsRaw(data.activites, isFranchise);
+  const decAchatsRaw = calcAchatsRaw(d.activites, isFranchise);
   const encoursFournisseurs = calcEncoursFournisseurs(decAchatsRaw, dec.decAchats);
 
   const rows = buildTresorerieRows({
@@ -215,9 +216,9 @@ async function main() {
   L(`| Franchise de base | ${isFranchise ? "Oui" : "Non"} |`);
   L(`| Périodicité déclaration | ${par?.periodiciteDeclarationTVA ?? "—"} |`);
   L(`| Mois paiement salaires | ${moisPaiementSalaires} |`);
-  L(`| Activités actives | ${data.activites.filter((a) => a.actif !== false).length} |`);
-  L(`| Emprunts | ${data.emprunts.length} |`);
-  L(`| Immobilisations actives | ${data.immobilisations.filter((i) => i.actif !== false).length} |`);
+  L(`| Activités actives | ${d.activites.filter((a) => a.actif !== false).length} |`);
+  L(`| Emprunts | ${d.emprunts.length} |`);
+  L(`| Immobilisations actives | ${d.immobilisations.filter((i) => i.actif !== false).length} |`);
   L(``);
 
   // ─── Section 1 : Récapitulatif annuel ────────────────────────────────────────

@@ -16,7 +16,7 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Mois de début | Mai (5) |
 | Régime fiscal | IS |
 | Exercices | 2026–2027 · 2027–2028 · 2028–2029 |
-| Activités | 3 |
+| Activités | 5 |
 | Salariés | 2 |
 | Dirigeants | 1 |
 | Immobilisations actives | 12 |
@@ -31,16 +31,20 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Désignation | 2026–2027 € | 2026–2027 % CA | 2027–2028 € | 2027–2028 % CA | 2028–2029 € | 2028–2029 % CA |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | **CHIFFRE D'AFFAIRES** | 104 997,00 | 100.0 % | 110 246,85 | 100.0 % | 115 759,19 | 100.0 % |
-| Production vendue | 104 997,00 | 100.0 % | 110 246,85 | 100.0 % | 115 759,19 | 100.0 % |
+| Production vendue | 294 597,00 | 100.0 % | 309 326,85 | 100.0 % | 324 793,20 | 100.0 % |
 | \  Vente pizza | 94 800,00 | 90.3 % | 99 540,00 | 90.3 % | 104 517,00 | 90.3 % |
 | \  Vente boisson | 6 000,00 | 5.7 % | 6 300,00 | 5.7 % | 6 615,00 | 5.7 % |
 | \  Vente alcool | 4 197,00 | 4.0 % | 4 406,85 | 4.0 % | 4 627,19 | 4.0 % |
+| \  Vente pizza (copie) | 90 850,00 | 86.5 % | 95 392,50 | 86.5 % | 100 162,13 | 86.5 % |
+| \  Vente pizza (copie) (copie) | 98 750,00 | 94.1 % | 103 687,50 | 94.1 % | 108 871,88 | 94.1 % |
 | **Production de l'exercice** | 104 997,00 | 100.0 % | 110 246,85 | 100.0 % | 115 759,19 | 100.0 % |
 | **MARGE SUR PRODUCTION** | 75 832,05 | 72.2 % | 79 623,65 | 72.2 % | 83 604,83 | 72.2 % |
 | Achats effectués de matières | 30 463,66 | 29.0 % | 30 600,46 | 27.8 % | 32 218,15 | 27.8 % |
 | \  Achats – Vente pizza | 26 704,17 | 25.4 % | 26 887,46 | 24.4 % | 28 275,58 | 24.4 % |
 | \  Achats – Vente boisson | 2 208,37 | 2.1 % | 2 188,50 | 2.0 % | 2 319,84 | 2.0 % |
 | \  Achats – Vente alcool | 1 551,12 | 1.5 % | 1 524,49 | 1.4 % | 1 622,73 | 1.4 % |
+| \  Achats – Vente pizza (copie) | 25 593,23 | 24.4 % | 25 765,41 | 23.4 % | 27 097,43 | 23.4 % |
+| \  Achats – Vente pizza (copie) (copie) | 27 815,10 | 26.5 % | 28 009,51 | 25.4 % | 29 453,73 | 25.4 % |
 | Variation de stocks d'approvisionnement | -1 298,71 | -1.2 % | 22,74 | 0.0 % | -63,80 | -0.1 % |
 | **Achats consommés de matières** | 29 164,95 | 27.8 % | 30 623,20 | 27.8 % | 32 154,36 | 27.8 % |
 | **Marge sur production** | 75 832,05 | 72.2 % | 79 623,65 | 72.2 % | 83 604,83 | 72.2 % |
@@ -87,7 +91,7 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | \  CFE | 1 128,00 | 1.1 % | 1 128,00 | 1.0 % | 1 128,00 | 1.0 % |
 | \  Taxe foncière | 495,00 | 0.5 % | 850,00 | 0.8 % | 850,00 | 0.7 % |
 | **Excédent brut d'exploitation** | 12 698,80 | 12.1 % | 14 371,53 | 13.0 % | 17 812,56 | 15.4 % |
-| **RÉSULTATS** | 5 048,48 | 4.8 % | 7 292,14 | 6.6 % | 10 543,76 | 9.1 % |
+| **RÉSULTATS** | 5 453,29 | 5.2 % | 7 201,01 | 6.5 % | 10 467,36 | 9.0 % |
 | Dotations aux amortissements | 3 417,20 | 3.3 % | 3 417,20 | 3.1 % | 3 417,20 | 3.0 % |
 | \  Immobilisations corporelles | 3 417,20 | 3.3 % | 3 417,20 | 3.1 % | 3 417,20 | 3.0 % |
 | \  \  Fond de commerce (materiel) | 3 106,00 | 3.0 % | 3 106,00 | 2.8 % | 3 106,00 | 2.7 % |
@@ -105,12 +109,12 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | \  Immobilisations financières | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
 | \  \  Frais de garantie "BPI" | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
 | **Résultat d'exploitation** | 9 281,60 | 8.8 % | 10 954,33 | 9.9 % | 14 395,36 | 12.4 % |
-| Charges financières | 3 342,21 | 3.2 % | 2 375,35 | 2.2 % | 1 990,94 | 1.7 % |
-| **Résultat financier** | -3 342,21 | -3.2 % | -2 375,35 | -2.2 % | -1 990,94 | -1.7 % |
-| **Résultat courant** | 5 939,39 | 5.7 % | 8 578,98 | 7.8 % | 12 404,42 | 10.7 % |
-| Impôt sur les bénéfices (IS) | 890,91 | 0.8 % | 1 286,85 | 1.2 % | 1 860,66 | 1.6 % |
-| **Résultat de l'exercice** | 5 048,48 | 4.8 % | 7 292,14 | 6.6 % | 10 543,76 | 9.1 % |
-| Capacité d'autofinancement (CAF) | 8 465,68 | 8.1 % | 10 709,33 | 9.7 % | 13 960,96 | 12.1 % |
+| Charges financières | 2 865,96 | 2.7 % | 2 482,56 | 2.3 % | 2 080,82 | 1.8 % |
+| **Résultat financier** | -2 865,96 | -2.7 % | -2 482,56 | -2.3 % | -2 080,82 | -1.8 % |
+| **Résultat courant** | 6 415,64 | 6.1 % | 8 471,77 | 7.7 % | 12 314,54 | 10.6 % |
+| Impôt sur les bénéfices (IS) | 962,35 | 0.9 % | 1 270,77 | 1.2 % | 1 847,18 | 1.6 % |
+| **Résultat de l'exercice** | 5 453,29 | 5.2 % | 7 201,01 | 6.5 % | 10 467,36 | 9.0 % |
+| Capacité d'autofinancement (CAF) | 8 870,49 | 8.4 % | 10 618,21 | 9.6 % | 13 884,56 | 12.0 % |
 
 
 ## 2. SIG — Synthèse des grands soldes
@@ -138,13 +142,13 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 |   Dotations provisions | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
 |   Reprises sur provisions | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
 | ****Résultat d'exploitation**** | 9 281,60 | 8.8 % | 10 954,33 | 9.9 % | 14 395,36 | 12.4 % |
-|   Charges financières | 3 342,21 | 3.2 % | 2 375,35 | 2.2 % | 1 990,94 | 1.7 % |
+|   Charges financières | 2 865,96 | 2.7 % | 2 482,56 | 2.3 % | 2 080,82 | 1.8 % |
 |   Produits financiers | 0,00 | 0.0 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
-| ****Résultat financier**** | -3 342,21 | -3.2 % | -2 375,35 | -2.2 % | -1 990,94 | -1.7 % |
-| ****Résultat courant**** | 5 939,39 | 5.7 % | 8 578,98 | 7.8 % | 12 404,42 | 10.7 % |
-|   Impôt sur les bénéfices (IS) | 890,91 | 0.8 % | 1 286,85 | 1.2 % | 1 860,66 | 1.6 % |
-| ****Résultat de l'exercice**** | 5 048,48 | 4.8 % | 7 292,14 | 6.6 % | 10 543,76 | 9.1 % |
-| ****CAF**** | 8 465,68 | 8.1 % | 10 709,33 | 9.7 % | 13 960,96 | 12.1 % |
+| ****Résultat financier**** | -2 865,96 | -2.7 % | -2 482,56 | -2.3 % | -2 080,82 | -1.8 % |
+| ****Résultat courant**** | 6 415,64 | 6.1 % | 8 471,77 | 7.7 % | 12 314,54 | 10.6 % |
+|   Impôt sur les bénéfices (IS) | 962,35 | 0.9 % | 1 270,77 | 1.2 % | 1 847,18 | 1.6 % |
+| ****Résultat de l'exercice**** | 5 453,29 | 5.2 % | 7 201,01 | 6.5 % | 10 467,36 | 9.0 % |
+| ****CAF**** | 8 870,49 | 8.4 % | 10 618,21 | 9.6 % | 13 884,56 | 12.0 % |
 
 
 ## 3. Vérifications de cohérence des soldes
@@ -164,18 +168,18 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Résultat expl = EBE − Dot.amort − Dot.prov + Reprises (2026–2027) | ✅ | 9 281,60 ≟ 9 281,60 |
 | Résultat expl = EBE − Dot.amort − Dot.prov + Reprises (2027–2028) | ✅ | 10 954,33 ≟ 10 954,33 |
 | Résultat expl = EBE − Dot.amort − Dot.prov + Reprises (2028–2029) | ✅ | 14 395,36 ≟ 14 395,36 |
-| Résultat financier = Prod.fin − Chg.fin (2026–2027) | ✅ | -3 342,21 ≟ -3 342,21 |
-| Résultat financier = Prod.fin − Chg.fin (2027–2028) | ✅ | -2 375,35 ≟ -2 375,35 |
-| Résultat financier = Prod.fin − Chg.fin (2028–2029) | ✅ | -1 990,94 ≟ -1 990,94 |
-| Résultat courant = Résultat expl + Résultat fin (2026–2027) | ✅ | 5 939,39 ≟ 5 939,39 |
-| Résultat courant = Résultat expl + Résultat fin (2027–2028) | ✅ | 8 578,98 ≟ 8 578,98 |
-| Résultat courant = Résultat expl + Résultat fin (2028–2029) | ✅ | 12 404,42 ≟ 12 404,42 |
-| Résultat net = Résultat courant − IS + Résultat excep. (2026–2027) | ✅ | 5 048,48 ≟ 5 048,48 |
-| Résultat net = Résultat courant − IS + Résultat excep. (2027–2028) | ✅ | 7 292,14 ≟ 7 292,14 |
-| Résultat net = Résultat courant − IS + Résultat excep. (2028–2029) | ✅ | 10 543,76 ≟ 10 543,76 |
-| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2026–2027) | ✅ | 8 465,68 ≟ 8 465,68 |
-| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2027–2028) | ✅ | 10 709,33 ≟ 10 709,33 |
-| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2028–2029) | ✅ | 13 960,96 ≟ 13 960,96 |
+| Résultat financier = Prod.fin − Chg.fin (2026–2027) | ✅ | -2 865,96 ≟ -2 865,96 |
+| Résultat financier = Prod.fin − Chg.fin (2027–2028) | ✅ | -2 482,56 ≟ -2 482,56 |
+| Résultat financier = Prod.fin − Chg.fin (2028–2029) | ✅ | -2 080,82 ≟ -2 080,82 |
+| Résultat courant = Résultat expl + Résultat fin (2026–2027) | ✅ | 6 415,64 ≟ 6 415,64 |
+| Résultat courant = Résultat expl + Résultat fin (2027–2028) | ✅ | 8 471,77 ≟ 8 471,77 |
+| Résultat courant = Résultat expl + Résultat fin (2028–2029) | ✅ | 12 314,54 ≟ 12 314,54 |
+| Résultat net = Résultat courant − IS + Résultat excep. (2026–2027) | ✅ | 5 453,29 ≟ 5 453,29 |
+| Résultat net = Résultat courant − IS + Résultat excep. (2027–2028) | ✅ | 7 201,01 ≟ 7 201,01 |
+| Résultat net = Résultat courant − IS + Résultat excep. (2028–2029) | ✅ | 10 467,36 ≟ 10 467,36 |
+| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2026–2027) | ✅ | 8 870,49 ≟ 8 870,49 |
+| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2027–2028) | ✅ | 10 618,21 ≟ 10 618,21 |
+| CAF = Résultat net + Dot.amort + Dot.prov − Reprises (2028–2029) | ✅ | 13 884,56 ≟ 13 884,56 |
 | Charges personnel = Salaires + Chg.pat + Rému.dir + Cotis.TNS (2026–2027) | ✅ | 25 063,25 ≟ 25 063,25 |
 | Charges personnel = Salaires + Chg.pat + Rému.dir + Cotis.TNS (2027–2028) | ✅ | 26 684,68 ≟ 26 684,68 |
 | Charges personnel = Salaires + Chg.pat + Rému.dir + Cotis.TNS (2028–2029) | ✅ | 26 684,68 ≟ 26 684,68 |
@@ -189,6 +193,8 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Vente pizza | PRODUCTION_VENDUE | 94 800,00 | 90.3 % | 99 540,00 | 90.3 % | 104 517,00 | 90.3 % |
 | Vente boisson | PRODUCTION_VENDUE | 6 000,00 | 5.7 % | 6 300,00 | 5.7 % | 6 615,00 | 5.7 % |
 | Vente alcool | PRODUCTION_VENDUE | 4 197,00 | 4.0 % | 4 406,85 | 4.0 % | 4 627,19 | 4.0 % |
+| Vente pizza (copie) | PRODUCTION_VENDUE | 90 850,00 | 86.5 % | 95 392,50 | 86.5 % | 100 162,13 | 86.5 % |
+| Vente pizza (copie) (copie) | PRODUCTION_VENDUE | 98 750,00 | 94.1 % | 103 687,50 | 94.1 % | 108 871,88 | 94.1 % |
 
 | ****Total CA**** | 104 997,00 | 110 246,85 | 115 759,19 |
 
@@ -293,8 +299,8 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Provision pour frais de greffe et journal (constitution société) | INCORPOREL | 0,00 | 0,00 | 0,00 |
 | Enseigne et communication | CORPOREL | 100,00 | 100,00 | 100,00 |
 | Droit d'enregistrement | INCORPOREL | 0,00 | 0,00 | 0,00 |
-| Caisse enregistreuse (airkitchen) | CORPOREL | 88,90 | 88,90 | 88,90 |
 | Fond de commerce | INCORPOREL | 0,00 | 0,00 | 0,00 |
+| Caisse enregistreuse (airkitchen) | CORPOREL | 88,90 | 88,90 | 88,90 |
 | Meuble pizza | CORPOREL | 122,30 | 122,30 | 122,30 |
 | Frais de garantie "BPI" | FINANCIER | 0,00 | 0,00 | 0,00 |
 
@@ -336,8 +342,8 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | EBE | 12 698,80 | 14 371,53 | 17 812,56 |
 | Dotations amort. | 3 417,20 | 3 417,20 | 3 417,20 |
 | Résultat exploitation | 9 281,60 | 10 954,33 | 14 395,36 |
-| Résultat financier | -3 342,21 | -2 375,35 | -1 990,94 |
-| Résultat courant | 5 939,39 | 8 578,98 | 12 404,42 |
-| IS | 890,91 | 1 286,85 | 1 860,66 |
-| Résultat net | 5 048,48 | 7 292,14 | 10 543,76 |
-| CAF | 8 465,68 | 10 709,33 | 13 960,96 |
+| Résultat financier | -2 865,96 | -2 482,56 | -2 080,82 |
+| Résultat courant | 6 415,64 | 8 471,77 | 12 314,54 |
+| IS | 962,35 | 1 270,77 | 1 847,18 |
+| Résultat net | 5 453,29 | 7 201,01 | 10 467,36 |
+| CAF | 8 870,49 | 10 618,21 | 13 884,56 |

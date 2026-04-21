@@ -122,8 +122,9 @@ async function main() {
 
   // ── Calculs officiels (= application) ──────────────────────────────────────
   const fc = buildFinCalc(data, dateDemarrageDate);
-  const mc = buildMonthlyCalc(data, dateDemarrageDate, fc.isParAnnee);
-  const nodes = buildBudgetTree(data, mc);
+  const d = fc.filteredData;
+  const mc = buildMonthlyCalc(d, dateDemarrageDate, fc.isParAnnee);
+  const nodes = buildBudgetTree(d, mc);
 
   const monthLabels: Record<YearKey, string[]> = {
     y1: buildBudgetMonthLabels(mc.moisDebut, mc.anneeDebut),

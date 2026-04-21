@@ -100,8 +100,9 @@ async function main() {
 
   // ── Calculs officiels (= application) ──────────────────────────────────────
   const fc = buildFinCalc(data, dateDemarrageDate);
-  const bfrCalc = calcBfr(data, fc);
-  const bfrData = buildBfrRows(data, fc);
+  const d = fc.filteredData;
+  const bfrCalc = calcBfr(d, fc);
+  const bfrData = buildBfrRows(d, fc);
 
   const { yearLabels, rows } = bfrData;
   const y0L = "Initial";

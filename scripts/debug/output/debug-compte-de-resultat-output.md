@@ -34,6 +34,8 @@ Régime fiscal : **IS** (IS = oui)
 | ✅ | Vente pizza | PRODUCTION_VENDUE | 10 % | 73 % | 94 800,00 | 99 540,00 | 104 517,00 |
 | ✅ | Vente boisson | PRODUCTION_VENDUE | 10 % | 65 % | 6 000,00 | 6 300,00 | 6 615,00 |
 | ✅ | Vente alcool | PRODUCTION_VENDUE | 20 % | 65 % | 4 197,00 | 4 406,85 | 4 627,19 |
+| ✅ | Vente pizza (copie) | PRODUCTION_VENDUE | 10 % | 73 % | 90 850,00 | 95 392,50 | 100 162,13 |
+| ✅ | Vente pizza (copie) (copie) | PRODUCTION_VENDUE | 10 % | 73 % | 98 750,00 | 103 687,50 | 108 871,88 |
 
 #### Saisonnalité CA (activités non-uniformes)
 
@@ -69,6 +71,28 @@ Régime fiscal : **IS** (IS = oui)
 | 2027–2028 € | 499,30 | 483,43 | 499,30 | 599,33 | 386,48 | 260,89 | 251,19 | 251,19 | 260,89 | 231,80 | 346,38 | 336,68 | **4 406,85** |
 | 2028–2029 % | 11.3 % | 11.0 % | 11.3 % | 13.6 % | 8.8 % | 5.9 % | 5.7 % | 5.7 % | 5.9 % | 5.3 % | 7.9 % | 7.6 % | **100.0 %** |
 | 2028–2029 € | 524,26 | 507,60 | 524,26 | 629,30 | 405,80 | 273,93 | 263,75 | 263,75 | 273,93 | 243,39 | 363,70 | 353,52 | **4 627,19** |
+
+**Vente pizza (copie)**
+
+| Exercice | Mai | Jun | Jul | Aoû | Sep | Oct | Nov | Déc | Jan | Fév | Mar | Avr | **Total** |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2026–2027 % | 11.3 % | 11.0 % | 11.3 % | 13.6 % | 8.8 % | 5.9 % | 5.7 % | 5.7 % | 5.9 % | 5.3 % | 7.9 % | 7.6 % | **100.0 %** |
+| 2026–2027 € | 10 293,31 | 9 966,25 | 10 293,31 | 12 355,60 | 7 967,55 | 5 378,32 | 5 178,45 | 5 178,45 | 5 378,32 | 4 778,71 | 7 140,81 | 6 940,94 | **90 850,00** |
+| 2027–2028 % | 11.3 % | 11.0 % | 11.3 % | 13.6 % | 8.8 % | 5.9 % | 5.7 % | 5.7 % | 5.9 % | 5.3 % | 7.9 % | 7.6 % | **100.0 %** |
+| 2027–2028 € | 10 807,97 | 10 464,56 | 10 807,97 | 12 973,38 | 8 365,92 | 5 647,24 | 5 437,37 | 5 437,37 | 5 647,24 | 5 017,65 | 7 497,85 | 7 287,99 | **95 392,50** |
+| 2028–2029 % | 11.3 % | 11.0 % | 11.3 % | 13.6 % | 8.8 % | 5.9 % | 5.7 % | 5.7 % | 5.9 % | 5.3 % | 7.9 % | 7.6 % | **100.0 %** |
+| 2028–2029 € | 11 348,37 | 10 987,79 | 11 348,37 | 13 622,05 | 8 784,22 | 5 929,60 | 5 709,24 | 5 709,24 | 5 929,60 | 5 268,53 | 7 872,74 | 7 652,39 | **100 162,13** |
+
+**Vente pizza (copie) (copie)**
+
+| Exercice | Mai | Jun | Jul | Aoû | Sep | Oct | Nov | Déc | Jan | Fév | Mar | Avr | **Total** |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2026–2027 % | 11.3 % | 11.0 % | 11.3 % | 13.6 % | 8.8 % | 5.9 % | 5.7 % | 5.7 % | 5.9 % | 5.3 % | 7.9 % | 7.6 % | **100.0 %** |
+| 2026–2027 € | 11 188,38 | 10 832,88 | 11 188,38 | 13 430,00 | 8 660,38 | 5 846,00 | 5 628,75 | 5 628,75 | 5 846,00 | 5 194,25 | 7 761,75 | 7 544,50 | **98 750,00** |
+| 2027–2028 % | 11.3 % | 11.0 % | 11.3 % | 13.6 % | 8.8 % | 5.9 % | 5.7 % | 5.7 % | 5.9 % | 5.3 % | 7.9 % | 7.6 % | **100.0 %** |
+| 2027–2028 € | 11 747,79 | 11 374,52 | 11 747,79 | 14 101,50 | 9 093,39 | 6 138,30 | 5 910,19 | 5 910,19 | 6 138,30 | 5 453,96 | 8 149,84 | 7 921,73 | **103 687,50** |
+| 2028–2029 % | 11.3 % | 11.0 % | 11.3 % | 13.6 % | 8.8 % | 5.9 % | 5.7 % | 5.7 % | 5.9 % | 5.3 % | 7.9 % | 7.6 % | **100.0 %** |
+| 2028–2029 € | 12 335,18 | 11 943,25 | 12 335,18 | 14 806,58 | 9 548,06 | 6 445,22 | 6 205,70 | 6 205,70 | 6 445,22 | 5 726,66 | 8 557,33 | 8 317,81 | **108 871,88** |
 
 
 ### Charges d'exploitation
@@ -143,8 +167,8 @@ Régime fiscal : **IS** (IS = oui)
 | ✅ | Provision pour frais de greffe et journal (constitution société) | INCORPOREL | AUCUN | 01/05/2026 | 500,00 | 0 ans |
 | ✅ | Enseigne et communication | CORPOREL | LINEAIRE | 01/05/2026 | 1 000,00 | 10 ans |
 | ✅ | Droit d'enregistrement | INCORPOREL | AUCUN | 01/05/2026 | 1 110,00 | 0 ans |
+| ✅ | Fond de commerce | INCORPOREL | AUCUN | 01/05/2026 | 28 940,00 | 0 ans |
 | ✅ | Caisse enregistreuse (airkitchen) | CORPOREL | LINEAIRE | 01/05/2026 | 889,00 | 10 ans |
-| ✅ | Fond de commerce | INCORPOREL | AUCUN | 01/05/2026 | 18 940,00 | 0 ans |
 | ❌ | Formation HACCP | INCORPOREL | AUCUN | 01/05/2026 | 759,00 | 0 ans |
 | ✅ | Meuble pizza | CORPOREL | LINEAIRE | 01/05/2026 | 1 222,99 | 10 ans |
 | ❌ | Frais de garantie "France active" | INCORPOREL | AUCUN | 01/05/2026 | 950,00 | 0 ans |
@@ -154,7 +178,7 @@ Régime fiscal : **IS** (IS = oui)
 
 | Libellé | Montant | Taux % | Assur. % | Durée | Déblocage | Différé |
 | --- | ---: | ---: | ---: | ---: | --- | :--- |
-| CIC | 60 000,00 | 4 % | 0.8 % | 84 mois | 01/05/2026 | — |
+| CIC | 70 000,00 | 4 % | 0.3 % | 84 mois | 01/05/2026 | — |
 
 
 ## Données calculées
@@ -192,15 +216,14 @@ Régime fiscal : **IS** (IS = oui)
 
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | **RÉSULTAT FINANCIER** | | | | | | |
-| Charges financières (Total) | 3 342,21 | 3.2 % | 2 375,35 | 2.2 % | 1 990,94 | 1.7 % |
-|   dont Intérêts emprunts | 2 742,21 | 2.6 % | 2 375,35 | 2.2 % | 1 990,94 | 1.7 % |
-|   dont Frais dossier | 600,00 | 0.6 % | 0,00 | 0.0 % | 0,00 | 0.0 % |
-| ****= Résultat financier**** | -3 342,21 | -3.2 % | -2 375,35 | -2.2 % | -1 990,94 | -1.7 % |
-| ****= Résultat courant**** | 5 939,39 | 5.7 % | 8 578,98 | 7.8 % | 12 404,42 | 10.7 % |
+| Charges financières (Total) | 2 865,96 | 2.7 % | 2 482,56 | 2.3 % | 2 080,82 | 1.8 % |
+|   dont Intérêts emprunts | 2 865,96 | 2.7 % | 2 482,56 | 2.3 % | 2 080,82 | 1.8 % |
+| ****= Résultat financier**** | -2 865,96 | -2.7 % | -2 482,56 | -2.3 % | -2 080,82 | -1.8 % |
+| ****= Résultat courant**** | 6 415,64 | 6.1 % | 8 471,77 | 7.7 % | 12 314,54 | 10.6 % |
 
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| — IS | 890,91 | 0.8 % | 1 286,85 | 1.2 % | 1 860,66 | 1.6 % |
-| ****= Résultat net**** | 5 048,48 | 4.8 % | 7 292,14 | 6.6 % | 10 543,76 | 9.1 % |
+| — IS | 962,35 | 0.9 % | 1 270,77 | 1.2 % | 1 847,18 | 1.6 % |
+| ****= Résultat net**** | 5 453,29 | 5.2 % | 7 201,01 | 6.5 % | 10 467,36 | 9.0 % |
 
 
 ### Vérifications de cohérence
@@ -214,23 +237,23 @@ Régime fiscal : **IS** (IS = oui)
 | ****Écart ResExpl**** | 0,00 | -0,00 | -0,00 | *✅ Cohérent*
 
 | ProduitsFinanciers (fc) | 0,00 | 0,00 | 0,00 |
-| ChargesFinancières (Intérêts+Frais+Autres) | 3 342,21 | 2 375,35 | 1 990,94 |
-| ResFin (fc) | -3 342,21 | -2 375,35 | -1 990,94 |
-| ResFin recalculé (ProdFin − ChargesFin) | -3 342,21 | -2 375,35 | -1 990,94 |
-| ****Écart ResFin**** | -0,00 | 0,00 | 0,00 | *✅ Cohérent*
+| ChargesFinancières (Intérêts+Frais+Autres) | 2 865,96 | 2 482,56 | 2 080,82 |
+| ResFin (fc) | -2 865,96 | -2 482,56 | -2 080,82 |
+| ResFin recalculé (ProdFin − ChargesFin) | -2 865,96 | -2 482,56 | -2 080,82 |
+| ****Écart ResFin**** | 0,00 | 0,00 | 0,00 | *✅ Cohérent*
 
 | ResExpl (fc) | 9 281,60 | 10 954,33 | 14 395,36 |
-| ResFin (fc) | -3 342,21 | -2 375,35 | -1 990,94 |
-| ResCourant (fc) | 5 939,39 | 8 578,98 | 12 404,42 |
-| ResCourant recalculé (ResExpl + ResFin) | 5 939,39 | 8 578,98 | 12 404,42 |
-| ****Écart ResCourant**** | 0,00 | 0,00 | 0,00 | *✅ Cohérent*
+| ResFin (fc) | -2 865,96 | -2 482,56 | -2 080,82 |
+| ResCourant (fc) | 6 415,64 | 8 471,77 | 12 314,54 |
+| ResCourant recalculé (ResExpl + ResFin) | 6 415,64 | 8 471,77 | 12 314,54 |
+| ****Écart ResCourant**** | 0,00 | 0,00 | -0,00 | *✅ Cohérent*
 
-| ResCourant (fc) | 5 939,39 | 8 578,98 | 12 404,42 |
+| ResCourant (fc) | 6 415,64 | 8 471,77 | 12 314,54 |
 | ResExcep (fc) | 0,00 | 0,00 | 0,00 |
-| IS (fc) | 890,91 | 1 286,85 | 1 860,66 |
-| ResNet (fc) | 5 048,48 | 7 292,14 | 10 543,76 |
-| ResNet recalculé | 5 048,48 | 7 292,14 | 10 543,76 |
-| ****Écart ResNet**** | -0,00 | -0,00 | -0,00 | *✅ Cohérent*
+| IS (fc) | 962,35 | 1 270,77 | 1 847,18 |
+| ResNet (fc) | 5 453,29 | 7 201,01 | 10 467,36 |
+| ResNet recalculé | 5 453,29 | 7 201,01 | 10 467,36 |
+| ****Écart ResNet**** | 0,00 | 0,00 | 0,00 | *✅ Cohérent*
 
 
 ### Détail Produits d'exploitation
@@ -242,8 +265,10 @@ Régime fiscal : **IS** (IS = oui)
 | Vente pizza | 94 800,00 | 99 540,00 | 104 517,00 |
 | Vente boisson | 6 000,00 | 6 300,00 | 6 615,00 |
 | Vente alcool | 4 197,00 | 4 406,85 | 4 627,19 |
-| ****= Total CA**** | 104 997,00 | 110 246,85 | 115 759,19 |
-| fc.ca | 104 997,00 | 110 246,85 | 115 759,19 | *✅*
+| Vente pizza (copie) | 90 850,00 | 95 392,50 | 100 162,13 |
+| Vente pizza (copie) (copie) | 98 750,00 | 103 687,50 | 108 871,88 |
+| ****= Total CA**** | 294 597,00 | 309 326,85 | 324 793,20 |
+| fc.ca | 104 997,00 | 110 246,85 | 115 759,19 | *❌ ÉCART*
 
 
 ### Détail Achats et Charges d'exploitation
@@ -257,8 +282,10 @@ Régime fiscal : **IS** (IS = oui)
 | Achats – Vente pizza | 26 704,17 | 26 887,46 | 28 275,58 |
 | Achats – Vente boisson | 2 208,37 | 2 188,50 | 2 319,84 |
 | Achats – Vente alcool | 1 551,12 | 1 524,49 | 1 622,73 |
-| ****Σ achats lignes drill-down**** | 30 463,66 | 30 600,46 | 32 218,15 |
-| fc.achatsEffectues | 30 463,66 | 30 600,46 | 32 218,15 | *✅*
+| Achats – Vente pizza (copie) | 25 593,23 | 25 765,41 | 27 097,43 |
+| Achats – Vente pizza (copie) (copie) | 27 815,10 | 28 009,51 | 29 453,73 |
+| ****Σ achats lignes drill-down**** | 83 871,99 | 84 375,37 | 88 769,32 |
+| fc.achatsEffectues | 30 463,66 | 30 600,46 | 32 218,15 | *❌ ÉCART*
 | fc.achatsConsommes (HT) | 29 164,95 | 30 623,20 | 32 154,36 |
 | fc.varStock (nette) | 1 298,71 | -22,74 | 63,80 |
 | fc.achatsEffectues (= consommés + ΔStock) | 30 463,66 | 30 600,46 | 32 218,15 |
@@ -340,8 +367,8 @@ Régime fiscal : **IS** (IS = oui)
 | Provision pour frais de greffe et journal (constitution société) | INCORPOREL | AUCUN | 0 ans | 500,00 | 0,00 | 0,00 | 0,00 |
 | Enseigne et communication | CORPOREL | LINEAIRE | 10 ans | 1 000,00 | 100,00 | 100,00 | 100,00 |
 | Droit d'enregistrement | INCORPOREL | AUCUN | 0 ans | 1 110,00 | 0,00 | 0,00 | 0,00 |
+| Fond de commerce | INCORPOREL | AUCUN | 0 ans | 28 940,00 | 0,00 | 0,00 | 0,00 |
 | Caisse enregistreuse (airkitchen) | CORPOREL | LINEAIRE | 10 ans | 889,00 | 88,90 | 88,90 | 88,90 |
-| Fond de commerce | INCORPOREL | AUCUN | 0 ans | 18 940,00 | 0,00 | 0,00 | 0,00 |
 | Meuble pizza | CORPOREL | LINEAIRE | 10 ans | 1 222,99 | 122,30 | 122,30 | 122,30 |
 | Frais de garantie "BPI" | FINANCIER | AUCUN | 0 ans | 3 200,00 | 0,00 | 0,00 | 0,00 |
 
@@ -360,23 +387,15 @@ Régime fiscal : **IS** (IS = oui)
 
 | Désignation | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| CIC | 2 742,21 | 2 375,35 | 1 990,94 |
-| ****Σ intérêts emprunts**** | 2 742,21 | 2 375,35 | 1 990,94 |
-| fc.interetsEmprunts | 2 742,21 | 2 375,35 | 1 990,94 | *✅*
-
-#### Frais de dossier
+| CIC | 2 865,96 | 2 482,56 | 2 080,82 |
+| ****Σ intérêts emprunts**** | 2 865,96 | 2 482,56 | 2 080,82 |
+| fc.interetsEmprunts | 2 865,96 | 2 482,56 | 2 080,82 | *✅*
 
 | Désignation | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| CIC | 600,00 | 0,00 | 0,00 |
-| ****Σ frais de dossier**** | 600,00 | 0,00 | 0,00 |
-| fc.fraisDossierEmprunts | 600,00 | 0,00 | 0,00 | *✅*
-
-| Désignation | 2026–2027 | 2027–2028 | 2028–2029 |
-| --- | ---: | ---: | ---: |
-| ****= Charges financières (Total)**** | 3 342,21 | 2 375,35 | 1 990,94 |
-| fc.interetsEmprunts | 2 742,21 | 2 375,35 | 1 990,94 |
-| fc.fraisDossierEmprunts | 600,00 | 0,00 | 0,00 |
+| ****= Charges financières (Total)**** | 2 865,96 | 2 482,56 | 2 080,82 |
+| fc.interetsEmprunts | 2 865,96 | 2 482,56 | 2 080,82 |
+| fc.fraisDossierEmprunts | 0,00 | 0,00 | 0,00 |
 | fc.autresChargesFinancieres | 0,00 | 0,00 | 0,00 |
 
 
@@ -384,13 +403,13 @@ Régime fiscal : **IS** (IS = oui)
 
 | Désignation | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| Résultat courant | 5 939,39 | 8 578,98 | 12 404,42 |
+| Résultat courant | 6 415,64 | 8 471,77 | 12 314,54 |
 | Résultat exceptionnel | 0,00 | 0,00 | 0,00 |
-| ****Base imposable avant IS**** | 5 939,39 | 8 578,98 | 12 404,42 |
-| IS calculé (fc.isParAnnee) | 890,91 | 1 286,85 | 1 860,66 |
-| ****Résultat net**** | 5 048,48 | 7 292,14 | 10 543,76 |
-| Base − IS (= ResNet attendu) | 5 048,48 | 7 292,14 | 10 543,76 |
-| ****Écart (fc.resNet vs base−IS)**** | -0,00 | -0,00 | -0,00 | *✅ Cohérent*
+| ****Base imposable avant IS**** | 6 415,64 | 8 471,77 | 12 314,54 |
+| IS calculé (fc.isParAnnee) | 962,35 | 1 270,77 | 1 847,18 |
+| ****Résultat net**** | 5 453,29 | 7 201,01 | 10 467,36 |
+| Base − IS (= ResNet attendu) | 5 453,29 | 7 201,01 | 10 467,36 |
+| ****Écart (fc.resNet vs base−IS)**** | 0,00 | 0,00 | 0,00 | *✅ Cohérent*
 
 
 ### Capacité d'autofinancement (CAF)
@@ -399,10 +418,10 @@ Régime fiscal : **IS** (IS = oui)
 
 | Désignation | 2026–2027 | 2027–2028 | 2028–2029 |
 | --- | ---: | ---: | ---: |
-| Résultat net (fc) | 5 048,48 | 7 292,14 | 10 543,76 |
+| Résultat net (fc) | 5 453,29 | 7 201,01 | 10 467,36 |
 | + Dotations amortissements | 3 417,20 | 3 417,20 | 3 417,20 |
-| ****= CAF (fc)**** | 8 465,68 | 10 709,33 | 13 960,96 |
-| CAF recalculée (ResNet+AmortDot+ProvDot−Reprises) | 8 465,68 | 10 709,33 | 13 960,96 |
+| ****= CAF (fc)**** | 8 870,49 | 10 618,21 | 13 884,56 |
+| CAF recalculée (ResNet+AmortDot+ProvDot−Reprises) | 8 870,49 | 10 618,21 | 13 884,56 |
 | ****Écart CAF**** | 0,00 | -0,00 | 0,00 | *✅ Cohérent*
 
 
@@ -410,14 +429,14 @@ Régime fiscal : **IS** (IS = oui)
 
 | Test | 2026–2027 | 2027–2028 | 2028–2029 | Statut |
 | --- | ---: | ---: | ---: | :---: |
-| CA Σ activités vs fc.ca | 0,00 | 0,00 | -0,00 | ✅ |
-| Achats Σ lignes vs fc.achatsEffectues | 0,00 | -0,00 | -0,00 | ✅ |
+| CA Σ activités vs fc.ca | 189 600,00 | 199 080,00 | 209 034,01 | ❌ |
+| Achats Σ lignes vs fc.achatsEffectues | 53 408,33 | 53 774,92 | 56 551,17 | ❌ |
 | Personnel Σ composantes vs fc.total | 0,00 | 0,00 | 0,00 | ✅ |
 | Dotations amort Σ immos vs fc.dotationsAmort | 0,00 | 0,00 | 0,00 | ✅ |
 | ResExpl (fc vs recalc) | 0,00 | -0,00 | -0,00 | ✅ |
-| ResFin (fc vs recalc) | -0,00 | 0,00 | 0,00 | ✅ |
-| ResCourant (fc vs recalc) | 0,00 | 0,00 | 0,00 | ✅ |
-| ResNet (fc vs recalc) | -0,00 | -0,00 | -0,00 | ✅ |
+| ResFin (fc vs recalc) | 0,00 | 0,00 | 0,00 | ✅ |
+| ResCourant (fc vs recalc) | 0,00 | 0,00 | -0,00 | ✅ |
+| ResNet (fc vs recalc) | 0,00 | 0,00 | 0,00 | ✅ |
 | CAF (fc vs recalc) | 0,00 | -0,00 | 0,00 | ✅ |
 
-> ✅ **Tous les tests sont cohérents.** Le compte de résultat est valide.
+> ❌ **Des divergences ont été détectées.** Vérifier les lignes marquées ❌ ci-dessus.

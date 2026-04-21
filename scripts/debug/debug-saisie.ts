@@ -87,7 +87,8 @@ async function main() {
 
   // 2-pass IS : d'abord buildFinCalc pour isParAnnee, puis buildMonthlyCalc pour mc
   const finCalc = buildFinCalc(data, data.dateDemarrage);
-  const mc = buildMonthlyCalc(data, data.dateDemarrage, finCalc.isParAnnee);
+  const d = finCalc.filteredData;
+  const mc = buildMonthlyCalc(d, data.dateDemarrage, finCalc.isParAnnee);
 
   const { dateDemarrage: dateDem, scenario, isIS } = data;
   const p = scenario.parametres;

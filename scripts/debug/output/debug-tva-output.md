@@ -16,8 +16,8 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Régime TVA | REEL_NORMAL |
 | Franchise de base | Non |
 | Périodicité déclaration | mensuel |
-| Activités actives | 3 |
-| dont commerce/production | 3 |
+| Activités actives | 5 |
+| dont commerce/production | 5 |
 | Fournitures | 6 |
 | Services | 16 |
 | Immobilisations récupérables | 12 |
@@ -33,6 +33,8 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | \  Vente pizza | normal | 9 480,00 | 9 954,00 | 10 451,70 |
 | \  Vente boisson | normal | 600,00 | 630,00 | 661,50 |
 | \  Vente alcool | normal | 839,40 | 881,37 | 925,44 |
+| \  Vente pizza (copie) | normal | 9 085,00 | 9 539,25 | 10 016,21 |
+| \  Vente pizza (copie) (copie) | normal | 9 875,00 | 10 368,75 | 10 887,19 |
 | **Total TVA collectée** | subtotal | **10 919,40** | **11 465,37** | **12 038,64** |
 | **TVA DÉDUCTIBLE** | section | | | |
 | TVA sur immobilisations | normal | 0,00 | 0,00 | 0,00 |
@@ -44,14 +46,16 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | \  Provision pour frais de greffe et journal (constitution société) | normal | 0,00 | 0,00 | 0,00 |
 | \  Enseigne et communication | normal | 200,00 | 0,00 | 0,00 |
 | \  Droit d'enregistrement | normal | 0,00 | 0,00 | 0,00 |
-| \  Caisse enregistreuse (airkitchen) | normal | 177,80 | 0,00 | 0,00 |
 | \  Fond de commerce | normal | 0,00 | 0,00 | 0,00 |
+| \  Caisse enregistreuse (airkitchen) | normal | 177,80 | 0,00 | 0,00 |
 | \  Meuble pizza | normal | 244,60 | 0,00 | 0,00 |
 | \  Frais de garantie "BPI" | normal | 0,00 | 0,00 | 0,00 |
 | TVA sur achats de matières | normal | 1 900,41 | 1 904,08 | 2 007,29 |
 | \  Vente pizza | normal | 1 468,73 | 1 478,81 | 1 555,16 |
 | \  Vente boisson | normal | 121,46 | 120,37 | 127,59 |
 | \  Vente alcool | normal | 310,22 | 304,90 | 324,55 |
+| \  Vente pizza (copie) | normal | 1 407,63 | 1 417,10 | 1 490,36 |
+| \  Vente pizza (copie) (copie) | normal | 1 529,83 | 1 540,52 | 1 619,96 |
 | TVA sur charges externes | normal | 6 877,80 | 6 896,74 | 6 994,99 |
 | \  Embalages | normal | 248,85 | 261,29 | 274,36 |
 | \  Electricité | normal | 900,00 | 918,00 | 936,36 |
@@ -162,6 +166,8 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Vente pizza | 9 480,00 | 9 954,00 | 10 451,70 |
 | Vente boisson | 600,00 | 630,00 | 661,50 |
 | Vente alcool | 839,40 | 881,37 | 925,44 |
+| Vente pizza (copie) | 9 085,00 | 9 539,25 | 10 016,21 |
+| Vente pizza (copie) (copie) | 9 875,00 | 10 368,75 | 10 887,19 |
 
 
 ## 5. Détail TVA déductible
@@ -181,8 +187,8 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Provision pour frais de greffe et journal (constitution société) | 0,00 | 0,00 | 0,00 |
 | Enseigne et communication | 200,00 | 0,00 | 0,00 |
 | Droit d'enregistrement | 0,00 | 0,00 | 0,00 |
-| Caisse enregistreuse (airkitchen) | 177,80 | 0,00 | 0,00 |
 | Fond de commerce | 0,00 | 0,00 | 0,00 |
+| Caisse enregistreuse (airkitchen) | 177,80 | 0,00 | 0,00 |
 | Meuble pizza | 244,60 | 0,00 | 0,00 |
 | Frais de garantie "BPI" | 0,00 | 0,00 | 0,00 |
 
@@ -195,6 +201,8 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Vente pizza | 1 468,73 | 1 478,81 | 1 555,16 |
 | Vente boisson | 121,46 | 120,37 | 127,59 |
 | Vente alcool | 310,22 | 304,90 | 324,55 |
+| Vente pizza (copie) | 1 407,63 | 1 417,10 | 1 490,36 |
+| Vente pizza (copie) (copie) | 1 529,83 | 1 540,52 | 1 619,96 |
 
 
 ### 5c. Charges externes
