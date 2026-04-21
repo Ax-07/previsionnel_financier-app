@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { prisma } from "@/lib/prisma";
 import {
@@ -267,10 +267,8 @@ async function buildCopieName(
 }
 
 /** Retire id / scenarioId / createdAt / updatedAt et injecte le nouveau scenarioId. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rebase(items: any[], newScenarioId: string): any[] {
   return items.map(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ({ id: _id, scenarioId: _sid, createdAt: _ca, updatedAt: _ua, ...rest }) => ({
       ...rest,
       scenarioId: newScenarioId,
@@ -359,7 +357,6 @@ export async function duplicateDossier(
       async (tx) => {
         // Scalaires du dossier (sans id, meta et relations)
         const {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           id: _dId,
           createdAt: _dCA,
           updatedAt: _dUA,
@@ -377,7 +374,6 @@ export async function duplicateDossier(
         // ── ChecklistPieces ─────────────────────────────────────────────────
         if (checklistPieces.length > 0) {
           await tx.checklistPiece.createMany({
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             data: checklistPieces.map(({ id: _id, dossierId: _did, createdAt: _ca, updatedAt: _ua, ...r }) => ({
               ...r,
               dossierId: newD.id,
@@ -388,7 +384,6 @@ export async function duplicateDossier(
         // ── Commentaires racines ────────────────────────────────────────────
         if (commentaires.length > 0) {
           await tx.commentaire.createMany({
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             data: commentaires.map(({ id: _id, dossierId: _did, parentId: _pid, createdAt: _ca, updatedAt: _ua, ...r }) => ({
               ...r,
               dossierId: newD.id,
@@ -400,7 +395,6 @@ export async function duplicateDossier(
         // ── Scénarios ───────────────────────────────────────────────────────
         for (const scenario of scenarios) {
           const {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             id: _sId,
             dossierId: _sDId,
             createdAt: _sCA,
@@ -442,11 +436,7 @@ export async function duplicateDossier(
             tableauxLibres,
             parametres,
             parametresIS,
-            // données calculées — non copiées (architecture cible)
-            resultatsAnnuels: _rA,
-            bilansAnnuels: _bA,
-            tresoreriesMensuelles: _tM,
-            seuilsRentabilite: _sR,
+            // données calculées — supprimées (architecture cible)
             ...scenarioScalars
           } = scenario;
 
@@ -458,7 +448,6 @@ export async function duplicateDossier(
           // ── Activités (avec sous-tables) ──────────────────────────────────
           for (const activite of activites) {
             const {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               id: _aId,
               scenarioId: _aSid,
               createdAt: _aCA,
@@ -469,24 +458,21 @@ export async function duplicateDossier(
               ...activiteScalars
             } = activite;
             const newA = await tx.activite.create({
-              data: { ...activiteScalars, scenarioId: newS.id },
+              data: { ...activiteScalars, scenarioId: newS.id } as any,
               select: { id: true },
             });
             if (volumesAnnuels.length > 0) {
               await tx.volumeActivite.createMany({
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 data: volumesAnnuels.map(({ id: _, activiteId: __, ...r }) => ({ ...r, activiteId: newA.id })) as any,
               });
             }
             if (saisonnalites.length > 0) {
               await tx.saisonnaliteActivite.createMany({
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 data: saisonnalites.map(({ id: _, activiteId: __, ...r }) => ({ ...r, activiteId: newA.id })) as any,
               });
             }
             if (croissances.length > 0) {
               await tx.croissanceActivite.createMany({
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 data: croissances.map(({ id: _, activiteId: __, ...r }) => ({ ...r, activiteId: newA.id })) as any,
               });
             }
@@ -495,7 +481,6 @@ export async function duplicateDossier(
           // ── Emprunts (avec échéancier) ─────────────────────────────────────
           for (const emprunt of emprunts) {
             const {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               id: _eId,
               scenarioId: _eSid,
               createdAt: _eCA,
@@ -509,7 +494,6 @@ export async function duplicateDossier(
             });
             if (lignesEcheancier.length > 0) {
               await tx.ligneEcheancier.createMany({
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 data: lignesEcheancier.map(({ id: _, empruntId: __, ...r }) => ({ ...r, empruntId: newE.id })) as any,
               });
             }
@@ -518,7 +502,6 @@ export async function duplicateDossier(
           // ── Immobilisations (avec amortissements) ─────────────────────────
           for (const immo of immobilisations) {
             const {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               id: _iId,
               scenarioId: _iSid,
               createdAt: _iCA,
@@ -532,7 +515,6 @@ export async function duplicateDossier(
             });
             if (lignesAmortissement.length > 0) {
               await tx.ligneAmortissement.createMany({
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 data: lignesAmortissement.map(({ id: _, immobilisationId: __, ...r }) => ({ ...r, immobilisationId: newI.id })) as any,
               });
             }
@@ -541,7 +523,6 @@ export async function duplicateDossier(
           // ── Salariés (avec primes) ─────────────────────────────────────────
           for (const salarie of salaries) {
             const {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               id: _salId,
               scenarioId: _salSid,
               createdAt: _salCA,
@@ -555,7 +536,6 @@ export async function duplicateDossier(
             });
             if (primes.length > 0) {
               await tx.prime.createMany({
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 data: primes.map(({ id: _, salarieId: __, dirigeantId: ___, createdAt: ____, ...r }) => ({
                   ...r,
                   salarieId: newSal.id,
@@ -568,7 +548,6 @@ export async function duplicateDossier(
           // ── Dirigeants (avec primes) ───────────────────────────────────────
           for (const dirigeant of dirigeants) {
             const {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               id: _dgId,
               scenarioId: _dgSid,
               createdAt: _dgCA,
@@ -582,7 +561,6 @@ export async function duplicateDossier(
             });
             if (primes.length > 0) {
               await tx.prime.createMany({
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 data: primes.map(({ id: _, salarieId: __, dirigeantId: ___, createdAt: ____, ...r }) => ({
                   ...r,
                   dirigeantId: newDir.id,
@@ -595,7 +573,6 @@ export async function duplicateDossier(
           // ── Tableaux libres (lignes → détails) ────────────────────────────
           for (const tableau of tableauxLibres) {
             const {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               id: _tId,
               scenarioId: _tSid,
               createdAt: _tCA,
@@ -609,7 +586,6 @@ export async function duplicateDossier(
             });
             for (const ligne of lignes) {
               const {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 id: _lId,
                 tableauId: _lTId,
                 createdAt: _lCA,
@@ -623,7 +599,6 @@ export async function duplicateDossier(
               });
               if (details.length > 0) {
                 await tx.tableauLibreDetail.createMany({
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   data: details.map(({ id: _, ligneId: __, ...r }) => ({ ...r, ligneId: newL.id })) as any,
                 });
               }
@@ -633,7 +608,6 @@ export async function duplicateDossier(
           // ── ParametresEntreprise (avec exercices prévisionnels) ───────────
           if (parametres) {
             const {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               id: _pId,
               scenarioId: _pSid,
               createdAt: _pCA,
@@ -647,7 +621,6 @@ export async function duplicateDossier(
             });
             if (exercices.length > 0) {
               await tx.exercicePrevisionnel.createMany({
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 data: exercices.map(({ id: _, parametresId: __, ...r }) => ({ ...r, parametresId: newP.id })) as any,
               });
             }
@@ -656,7 +629,6 @@ export async function duplicateDossier(
           // ── ParametresIS (1:1 plat) ────────────────────────────────────────
           if (parametresIS) {
             const {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               id: _pisId,
               scenarioId: _pisSid,
               createdAt: _pisCA,
@@ -664,7 +636,6 @@ export async function duplicateDossier(
               ...parametresISScalars
             } = parametresIS;
             await tx.parametresIS.create({
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               data: { ...parametresISScalars, scenarioId: newS.id } as any,
             });
           }
@@ -672,91 +643,62 @@ export async function duplicateDossier(
           // ── Modèles plats (createMany) ─────────────────────────────────────
           const sid = newS.id;
           if (activitesCommission.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.activiteCommission.createMany({ data: rebase(activitesCommission, sid) as any });
           if (apports.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.apport.createMany({ data: rebase(apports, sid) as any });
           if (subventions.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.subvention.createMany({ data: rebase(subventions, sid) as any });
           if (cessions.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.cessionImmobilisation.createMany({ data: rebase(cessions, sid) as any });
           if (creditsBaux.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.creditBail.createMany({ data: rebase(creditsBaux, sid) as any });
           if (chargesFixes.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.chargeFixe.createMany({ data: rebase(chargesFixes, sid) as any });
           if (chargesVariables.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.chargeVariable.createMany({ data: rebase(chargesVariables, sid) as any });
           if (autresCharges.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.autreCharge.createMany({ data: rebase(autresCharges, sid) as any });
           if (autresChargesProvisions.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.autreChargeProvision.createMany({ data: rebase(autresChargesProvisions, sid) as any });
           if (autresChargesDatees.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.autreChargeDatee.createMany({ data: rebase(autresChargesDatees, sid) as any });
           if (autresChargesBilan.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.autreChargeBilan.createMany({ data: rebase(autresChargesBilan, sid) as any });
           if (autresProduits.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.autreProduit.createMany({ data: rebase(autresProduits, sid) as any });
           if (autreProduitReprises.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.autreProduitReprise.createMany({ data: rebase(autreProduitReprises, sid) as any });
           if (autreProduitDates.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.autreProduitDate.createMany({ data: rebase(autreProduitDates, sid) as any });
           if (autreProduitConstates.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.autreProduitConstate.createMany({ data: rebase(autreProduitConstates, sid) as any });
           if (chargesExploitation.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.chargeExploitation.createMany({ data: rebase(chargesExploitation, sid) as any });
           if (impotsTaxes.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.impotTaxe.createMany({ data: rebase(impotsTaxes, sid) as any });
           if (lignesCotisationsTNS.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.ligneCotisationTNS.createMany({ data: rebase(lignesCotisationsTNS, sid) as any });
           if (lignesChargesPersonnel.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.ligneChargePersonnel.createMany({ data: rebase(lignesChargesPersonnel, sid) as any });
           if (lignesSalaries.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.ligneSalarie.createMany({ data: rebase(lignesSalaries, sid) as any });
           if (lignesDirigeants.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.ligneDirigeant.createMany({ data: rebase(lignesDirigeants, sid) as any });
           if (lignesTaxesSalaires.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.ligneTaxeSalaire.createMany({ data: rebase(lignesTaxesSalaires, sid) as any });
           if (productionsImmobilisees.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.productionImmobilisee.createMany({ data: rebase(productionsImmobilisees, sid) as any });
           if (subventionsExploitation.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.subventionExploitation.createMany({ data: rebase(subventionsExploitation, sid) as any });
           if (unitesDOeuvre.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.uniteDOeuvre.createMany({ data: rebase(unitesDOeuvre, sid) as any });
           if (ajustementsFiscaux.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.ajustementFiscal.createMany({ data: rebase(ajustementsFiscaux, sid) as any });
           if (diversFluxDates.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.diversFluxDate.createMany({ data: rebase(diversFluxDates, sid) as any });
           if (diversOperationsCapital.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.diversOperationCapital.createMany({ data: rebase(diversOperationsCapital, sid) as any });
           if (diversPrets.length > 0)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await tx.diversPret.createMany({ data: rebase(diversPrets, sid) as any });
         }
 
