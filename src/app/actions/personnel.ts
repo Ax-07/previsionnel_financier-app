@@ -243,7 +243,6 @@ export async function fetchLignesCotisationsTNS(dossierId: string): Promise<Lign
       libelle: r.libelle,
       actif: r.actif,
       hypothese: r.hypothese,
-      hypothese: r.hypothese,
       calcAuto: r.calcAuto,
       montantN: Number(r.montantN),
       montantN1: Number(r.montantN1),
