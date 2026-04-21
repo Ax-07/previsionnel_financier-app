@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { hypotheseTypeSchema } from "@/lib/schemas/hypothese";
 
 // ── Listes de référence ──────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ export const NATURES_PCA = [
 export const autreProduitRepriseSchema = z.object({
   id: z.string().optional(),
   actif: z.boolean().default(true),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   libelle: z.string().min(1, "Requis").max(255),
   nature: z.string().default(""),
   montantN: z.number().min(0, "≥ 0"),
@@ -57,6 +59,7 @@ export type AutreProduitRepriseRow = z.infer<typeof autreProduitRepriseSchema>;
 export const autreProduitDateSchema = z.object({
   id: z.string().optional(),
   actif: z.boolean().default(true),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   libelle: z.string().min(1, "Requis").max(255),
   categorie: z
     .enum(["TRANSFERT", "GESTION_COURANTE", "FINANCIER", "EXCEPTIONNEL"])
@@ -81,6 +84,7 @@ export type AutreProduitDateRow = z.infer<typeof autreProduitDateSchema>;
 export const autreProduitConstateSchema = z.object({
   id: z.string().optional(),
   actif: z.boolean().default(true),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   libelle: z.string().min(1, "Requis").max(255),
   nature: z.string().default(""),
   montantN: z.number().min(0, "≥ 0"),

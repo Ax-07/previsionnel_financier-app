@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { hypotheseTypeSchema } from "@/lib/schemas/hypothese";
 
 // ── Listes de référence ──────────────────────────────────────────────────────
 
@@ -7,11 +8,7 @@ export const CATEGORIES_CHARGE = [
   { value: "SERVICE_EXTERIEUR", label: "Service extérieur" },
 ] as const;
 
-export const HYPOTHESES_CHARGE = [
-  { value: "normale", label: "Normale" },
-  { value: "basse", label: "Basse" },
-  { value: "haute", label: "Haute" },
-] as const;
+export { HYPOTHESE_TYPE_OPTIONS as HYPOTHESES_CHARGE } from "@/lib/schemas/hypothese";
 
 export const FREQUENCES_CHARGE = [
   { value: "MENSUELLE", label: "Mensuelle" },
@@ -50,7 +47,7 @@ export const chargeExploitationSchema = z.object({
   categorie: z.enum(["FOURNITURE_CONSOMMABLE", "SERVICE_EXTERIEUR"]),
   actif: z.boolean().optional(),
 
-  hypothese: z.string().default("normale"),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
 
   // Projections annuelles
   montantN: z.number().min(0, "≥ 0"),
@@ -87,7 +84,7 @@ export const impotTaxeSchema = z.object({
   libelle: z.string().min(1, "Requis").max(255),
   actif: z.boolean().optional(),
 
-  hypothese: z.string().default("normale"),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
 
   // Mode CFE
   isCFE: z.boolean().optional().default(false),

@@ -1,13 +1,9 @@
 import { z } from "zod/v4";
+import { hypotheseTypeSchema } from "@/lib/schemas/hypothese";
 
 // ── Listes de référence ──────────────────────────────────────────────────────
 
-export const HYPOTHESES_PERSONNEL = [
-  { value: "normale", label: "Normale" },
-  { value: "basse", label: "Basse" },
-  { value: "haute", label: "Haute" },
-  { value: "limite", label: "Limite" },
-] as const;
+export { HYPOTHESE_TYPE_OPTIONS as HYPOTHESES_PERSONNEL } from "@/lib/schemas/hypothese";
 
 export const EXONERATIONS_TNS = [
   { value: "", label: "Aucune" },
@@ -104,7 +100,7 @@ export const ligneSalarieSchema = z.object({
   id: z.string().optional(),
   libelle: z.string().min(1, "Requis").max(255),
   actif: z.boolean().optional().default(true),
-  hypothese: z.string().default("normale"),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   montantN: z.number().min(0, "≥ 0"),
   evolutionN1: z.number(),
   montantN1: z.number().min(0, "≥ 0"),
@@ -130,7 +126,7 @@ export const ligneDirigeantSchema = z.object({
   id: z.string().optional(),
   libelle: z.string().min(1, "Requis").max(255),
   actif: z.boolean().optional().default(true),
-  hypothese: z.string().default("normale"),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   montantN: z.number().min(0, "≥ 0"),
   evolutionN1: z.number(),
   montantN1: z.number().min(0, "≥ 0"),
@@ -154,6 +150,7 @@ export const ligneCotisationTNSSchema = z.object({
   id: z.string().optional(),
   libelle: z.string().min(1, "Requis").max(255),
   actif: z.boolean().optional().default(true),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   calcAuto: z.boolean().default(false),
   montantN: z.number().min(0, "≥ 0"),
   montantN1: z.number().min(0, "≥ 0"),
@@ -181,7 +178,7 @@ export const ligneTaxeSalaireSchema = z.object({
   id: z.string().optional(),
   libelle: z.string().min(1, "Requis").max(255),
   actif: z.boolean().optional().default(true),
-  hypothese: z.string().default("normale"),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   calcAuto: z.boolean().default(false),
   taux: z.number().min(0).max(100).default(0),
   dateN: z.string().optional().default(""),
@@ -201,7 +198,7 @@ export const ligneChargePersonnelSchema = z.object({
   id: z.string().optional(),
   libelle: z.string().min(1, "Requis").max(255),
   actif: z.boolean().optional().default(true),
-  hypothese: z.string().default("normale"),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   type: z.enum(["AUTRE", "REMBOURSEMENT", "PARTICIPATION"]).default("AUTRE"),
   calcAuto: z.boolean().default(false),
   dateN: z.string().optional().default(""),

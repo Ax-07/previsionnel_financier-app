@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { hypotheseTypeSchema } from "@/lib/schemas/hypothese";
 
 // ── Listes de référence ──────────────────────────────────────────────────────
 
@@ -8,13 +9,7 @@ export const SECTEURS_ACTIVITE = [
   { value: "NEGOCE", label: "Négoce" },
 ] as const;
 
-export const HYPOTHESES_ACTIVITE = [
-  { value: "limite", label: "Limite" },
-  { value: "basse", label: "Basse" },
-  { value: "normal", label: "Normal" },
-  { value: "haute", label: "Haute" },
-  { value: "detailler", label: "Détailler" },
-] as const;
+export { HYPOTHESE_TYPE_OPTIONS as HYPOTHESES_ACTIVITE } from "@/lib/schemas/hypothese";
 
 export const TAUX_TVA_OPTIONS = [
   { value: 0, label: "0 %" },
@@ -52,7 +47,7 @@ export const activiteSchema = z.object({
   id: z.string().optional(),
   libelle: z.string().min(1, "Requis").max(255),
   secteur: z.enum(["PRODUCTION", "SERVICE", "NEGOCE"]),
-  hypothese: z.enum(["limite", "basse", "normal", "haute", "detailler"]),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   
   // Projections annuelles
   montantN: z.number().min(0, "≥ 0"),
@@ -86,7 +81,7 @@ export type ActiviteRow = z.infer<typeof activiteSchema>;
 export const activiteCommissionSchema = z.object({
   id: z.string().optional(),
   libelle: z.string().min(1, "Requis").max(255),
-  hypothese: z.enum(["limite", "basse", "normal", "haute", "detailler"]),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   
   montantN: z.number().min(0, "≥ 0"),
   evolutionN1: z.number(),
@@ -111,7 +106,7 @@ export const productionImmobiliseeSchema = z.object({
   id: z.string().optional(),
   libelle: z.string().min(1, "Requis").max(255),
   nature: z.enum(["CORPOREL", "INCORPOREL", "FINANCIER"]),
-  hypothese: z.enum(["limite", "basse", "normal", "haute", "detailler"]),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   date: z.string().min(1, "Requis"),
   montant: z.number().min(0, "≥ 0"),
   amortissement: z.enum(["AUCUN", "LINEAIRE", "DEGRESSIF"]),
@@ -128,7 +123,7 @@ export type ProductionImmobiliseeRow = z.infer<typeof productionImmobiliseeSchem
 export const subventionExploitationSchema = z.object({
   id: z.string().optional(),
   libelle: z.string().min(1, "Requis").max(255),
-  hypothese: z.enum(["limite", "basse", "normal", "haute", "detailler"]),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   
   dateN: z.string().optional(),
   montantN: z.number().min(0, "≥ 0").optional(),

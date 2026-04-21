@@ -1,14 +1,9 @@
 import { z } from "zod/v4";
+import { hypotheseTypeSchema } from "@/lib/schemas/hypothese";
 
 // ── Listes de référence ──────────────────────────────────────────────────────
 
-export const HYPOTHESES_DIVERS = [
-  { value: "LIMITE", label: "Limite" },
-  { value: "BASSE", label: "Basse" },
-  { value: "NORMAL", label: "Normale" },
-  { value: "HAUTE", label: "Haute" },
-  { value: "COMMUNE", label: "Commune" },
-] as const;
+export { HYPOTHESE_TYPE_OPTIONS as HYPOTHESES_DIVERS } from "@/lib/schemas/hypothese";
 
 export const TYPES_DIVERS_FLUX = [
   { value: "REMBOURSEMENT_CC", label: "Remboursements C/C" },
@@ -36,7 +31,7 @@ export const diversFluxDateSchema = z.object({
   id: z.string().optional(),
   actif: z.boolean().default(true),
   libelle: z.string().min(1, "Requis").max(255),
-  hypothese: z.string().optional(),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   type: z.enum([
     "REMBOURSEMENT_CC",
     "DIVIDENDE",
@@ -60,7 +55,7 @@ export const diversOperationCapitalSchema = z.object({
   id: z.string().optional(),
   actif: z.boolean().default(true),
   libelle: z.string().min(1, "Requis").max(255),
-  hypothese: z.string().optional(),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   type: z.enum(["AUGMENTATION_INCORPORATION", "REDUCTION"]),
   date: z.string().optional(),
   montantN: z.number().min(0, "≥ 0"),
@@ -76,7 +71,7 @@ export const diversPretSchema = z.object({
   id: z.string().optional(),
   actif: z.boolean().default(true),
   libelle: z.string().min(1, "Requis").max(255),
-  hypothese: z.string().optional(),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   dateDebut: z.string().optional(),
   capital: z.number().min(0, "≥ 0"),
   taux: z.number().min(0, "≥ 0").max(100, "≤ 100"),

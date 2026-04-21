@@ -1,10 +1,11 @@
 import { z } from "zod/v4";
+import { hypotheseTypeSchema } from "@/lib/schemas/hypothese";
 
 // ── Listes de référence ──────────────────────────────────────────────────────
 
 export const TYPES_APPORT = [
   { value: "CAPITAL",        label: "Apport en capital" },
-  { value: "COMPTE_COURANT", label: "Compte courant d'associé (CCA)" },
+  { value: "COMPTE_COURANT", label: "Compte courant d'associé" },
   { value: "APPORT_NATURE",  label: "Apport en nature" },
 ] as const;
 
@@ -43,6 +44,7 @@ export const apportSchema = z.object({
   libelle: z.string().min(1, "Requis").max(255),
   type:    z.enum(["CAPITAL", "COMPTE_COURANT", "APPORT_NATURE"]),
   montant: z.number().min(0, "≥ 0"),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   dateApport: z.string().min(1, "Requis"), // YYYY-MM-DD
   remboursable: z.boolean().optional(),
   actif:  z.boolean().optional(),
@@ -57,6 +59,7 @@ export const empruntSchema = z.object({
   id:      z.string().optional(),
   libelle: z.string().min(1, "Requis").max(255),
   montant: z.number().min(0, "≥ 0"),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
 
   // Conditions
   tauxAnnuel:    z.number().min(0).max(100),

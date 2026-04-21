@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { hypotheseTypeSchema } from "@/lib/schemas/hypothese";
 
 // ── Listes de référence ──────────────────────────────────────────────────────
 
@@ -47,6 +48,7 @@ export const immobilisationSchema = z.object({
   dureeAmortissement: z.number().int().min(0).optional(),
   tauxTVA: z.number().min(0).max(100),
   typeTva: z.enum(["RECUPERABLE", "NON_RECUPERABLE", "EXONEREE"]),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   actif: z.boolean().optional(),
   ordre: z.number().int().min(0).optional(),
   groupe: z.string().max(100).nullish(),
@@ -60,6 +62,7 @@ export const cessionSchema = z.object({
   id: z.string().optional(),
   libelle: z.string().min(1, "Requis").max(255),
   nature: z.enum(["CORPOREL", "INCORPOREL", "FINANCIER"]),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   dateCession: z.string().min(1, "Requis"),
   prixVente: z.number().min(0, "≥ 0"),
   prixAchat: z.number().min(0, "≥ 0"),
@@ -77,6 +80,7 @@ export type CessionRow = z.infer<typeof cessionSchema>;
 export const creditBailSchema = z.object({
   id: z.string().optional(),
   libelle: z.string().min(1, "Requis").max(255),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   dateDebut: z.string().min(1, "Requis"),
   montantHT: z.number().min(0, "≥ 0"),
   taux: z.number().min(0).max(100),

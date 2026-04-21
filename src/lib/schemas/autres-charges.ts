@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { hypotheseTypeSchema } from "@/lib/schemas/hypothese";
 
 // ── Listes de référence ──────────────────────────────────────────────────────
 
@@ -55,6 +56,7 @@ export const NATURES_CHARGE_BILAN_CAP = [
 export const autreChargeProvisionSchema = z.object({
   id: z.string().optional(),
   actif: z.boolean().default(true),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   libelle: z.string().min(1, "Requis").max(255),
   nature: z.string().default(""),
   montantN: z.number().min(0, "≥ 0"),
@@ -69,6 +71,7 @@ export type AutreChargeProvisionRow = z.infer<typeof autreChargeProvisionSchema>
 export const autreChargeDateeSchema = z.object({
   id: z.string().optional(),
   actif: z.boolean().default(true),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   libelle: z.string().min(1, "Requis").max(255),
   categorie: z.enum(["GESTION_COURANTE", "FINANCIERE", "EXCEPTIONNELLE"]).default("GESTION_COURANTE"),
   dateN: z.string().optional(),
@@ -88,6 +91,7 @@ export type AutreChargeDateeRow = z.infer<typeof autreChargeDateeSchema>;
 export const autreChargeBilanSchema = z.object({
   id: z.string().optional(),
   actif: z.boolean().default(true),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   libelle: z.string().min(1, "Requis").max(255),
   type: z.enum(["CHARGE_CONSTATEE_AVANCE", "CHARGE_A_PAYER"]).default("CHARGE_CONSTATEE_AVANCE"),
   nature: z.string().default(""),

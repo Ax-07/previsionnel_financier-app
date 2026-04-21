@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { hypotheseTypeSchema } from "@/lib/schemas/hypothese";
 
 // ── Listes de référence ──────────────────────────────────────────────────────
 
@@ -30,7 +31,7 @@ export type TypeDureeValue = (typeof TYPES_DUREE)[number]["value"];
 
 const exerciceSchema = z.object({
   indicateurBase: z.number().min(0).default(0),
-  partPct: z.number().min(0).max(100).default(0),
+  partPct: z.number().min(0).default(0),
   chiffreAffaires: z.number().min(0).default(0),
   nbJours: z.number().min(0).default(365),
   parJour: z.number().min(0).default(0),
@@ -45,6 +46,7 @@ export type ExerciceUO = z.infer<typeof exerciceSchema>;
 export const uniteDOeuvreSchema = z.object({
   id: z.string().optional(),
   actif: z.boolean().default(true),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   libelle: z.string().max(255).default(""),
   typeUnite: z
     .enum(["COUVERT", "PRODUIT", "HEURE", "CLIENT", "AUTRE"])

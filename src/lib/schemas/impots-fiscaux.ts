@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { hypotheseTypeSchema } from "@/lib/schemas/hypothese";
 
 // ── Réintégrations & Déductions fiscales ─────────────────────────────────────
 
@@ -6,6 +7,7 @@ export const ajustementFiscalSchema = z.object({
   id: z.string().optional(),
   type: z.enum(["REINTEGRATION", "DEDUCTION"]),
   actif: z.boolean().default(true),
+  hypothese: hypotheseTypeSchema.default("COMMUNE"),
   libelle: z.string().min(1, "Requis").max(255),
   montantN: z.number().min(0, "≥ 0"),
   montantN1: z.number().min(0, "≥ 0"),
