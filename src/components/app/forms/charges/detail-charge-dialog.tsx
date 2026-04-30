@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowBigDown, ArrowBigUp, RefreshCw, DollarSign, Percent } from "lucide-react";
 import { cn, numVal } from "@/lib/utils";
+import { formatNumber, formatAmount } from "@/lib/format";
 import { useChargesStore } from "@/stores/charges-store";
 import { useActiviteStore } from "@/stores/activite-store";
 import type { ChargeExploitationRow } from "@/lib/schemas/charges";
@@ -21,6 +22,8 @@ import type {
   ExerciceConfig,
   ExercicesConfig,
 } from "@/hooks/use-activite-calculs";
+import { cellInput } from "../helpers/cell-styles";
+import { Th } from "../helpers/table-helpers";
 
 // ── Types locaux ─────────────────────────────────────────────────────────────
 
@@ -106,25 +109,13 @@ function buildExercicesConfig(
   };
 }
 
-function fmt(v: number, dec = 0) {
-  return v === 0 ? "—" : v.toLocaleString("fr-FR", { minimumFractionDigits: dec, maximumFractionDigits: dec });
-}
+const fmt = (v: number, dec = 0): string => v === 0 ? "—" : formatNumber(v, dec);
 
 // Calcul montant mensuel = montantAnnuel × (saisonnalité / 100)
 function calcMontants(montantAnnuel: number, saison: number[]): number[] {
   return saison.map((p) => +(montantAnnuel * (p / 100)).toFixed(2));
 }
 
-const cellInput =
-  "h-7 w-full border-0 bg-transparent px-1 text-sm focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none min-w-0";
-
-function Th({ children, className }: { children?: React.ReactNode; className?: string }) {
-  return (
-    <th className={cn("px-2 py-1.5 text-left text-xs font-medium text-muted-foreground whitespace-nowrap", className)}>
-      {children}
-    </th>
-  );
-}
 
 // ── Tableau mensuel générique ────────────────────────────────────────────────
 
@@ -139,15 +130,11 @@ interface LigneMensuelle {
   totalClass?: string;
 }
 
-function fmtCell(v: number, f: LigneMensuelle["format"]) {
-  if (f === "euro") return v === 0 ? "—" : v.toLocaleString("fr-FR", { maximumFractionDigits: 0 });
-  return v.toFixed(2);
-}
+const fmtCell = (v: number, f: LigneMensuelle["format"]) =>
+  f === "euro" ? formatAmount(v) : v.toFixed(2);
 
-function fmtTotalCell(v: number, f: LigneMensuelle["format"]) {
-  if (f === "euro") return v === 0 ? "—" : v.toLocaleString("fr-FR", { maximumFractionDigits: 0 });
-  return `${v.toFixed(2)} %`;
-}
+const fmtTotalCell = (v: number, f: LigneMensuelle["format"]) =>
+  f === "euro" ? formatAmount(v) : `${v.toFixed(2)} %`;
 
 function TableauMensuel({ lignes, moisLabels }: { lignes: LigneMensuelle[]; moisLabels?: readonly string[] }) {
   const mois = moisLabels ?? TOUS_MOIS;
