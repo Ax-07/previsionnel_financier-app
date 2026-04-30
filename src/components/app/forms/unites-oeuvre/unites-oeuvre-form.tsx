@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, numVal } from "@/lib/utils";
+import { formatNumber } from "@/lib/format";
 
 import {
   TYPES_UNITE,
@@ -34,29 +35,19 @@ import { HYPOTHESE_TYPE_OPTIONS } from "@/lib/schemas/hypothese";
 import { useUnitesDOeuvreStore } from "@/stores/unites-oeuvre-store";
 import { saveUnitesDOeuvre } from "@/app/actions/unites-oeuvre";
 import { useInvalidateControleStores } from "@/hooks/use-invalidate-controle-stores";
+import { cellInput, cellSelect } from "../helpers/cell-styles";
+import { Th, Td } from "../helpers/table-helpers";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const MAX_UNITES = 5;
-
-const cellInput =
-  "h-7 w-full border-0 bg-transparent px-1 text-sm focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none min-w-0";
-
-const cellSelect =
-  "h-7 w-full border-0 bg-transparent px-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none cursor-pointer";
 
 const cellReadonly =
   "h-7 w-full px-1 text-sm font-medium text-muted-foreground bg-muted/40 flex items-center";
 
 
 
-function fmt(v: number, decimals = 2): string {
-  if (v === 0) return "—";
-  return v.toLocaleString("fr-FR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: decimals,
-  });
-}
+const fmt = (v: number, decimals = 2): string => v === 0 ? "—" : formatNumber(v, decimals);
 
 /**
  * Recalcule les champs dérivés d'un exercice — logique bottom-up (volume → CA) :
@@ -86,23 +77,6 @@ function volumeParJourLabel(typeUnite: UniteDOeuvreRow["typeUnite"]): string {
 }
 
 // ── Composants ───────────────────────────────────────────────────────────────
-
-function Th({ children, className }: { children?: React.ReactNode; className?: string }) {
-  return (
-    <th
-      className={cn(
-        "px-2 py-1.5 text-left text-xs font-medium text-muted-foreground whitespace-nowrap",
-        className,
-      )}
-    >
-      {children}
-    </th>
-  );
-}
-
-function Td({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <td className={cn("px-0 py-0 align-middle", className)}>{children}</td>;
-}
 
 // ── Table de calcul pour une unité ──────────────────────────────────────────
 
