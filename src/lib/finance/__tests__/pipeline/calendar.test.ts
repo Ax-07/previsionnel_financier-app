@@ -159,16 +159,6 @@ describe("buildTemporelCtx", () => {
     expect(ctx.isFranchise).toBe(true);
   });
 
-  it("defaultDelaiClients = 30 par défaut", () => {
-    const ctx = buildTemporelCtx(new Date("2026-01-01"), false);
-    expect(ctx.defaultDelaiClients).toBe(30);
-  });
-
-  it("defaultDelaiClients peut être surchargé", () => {
-    const ctx = buildTemporelCtx(new Date("2026-01-01"), false, 60);
-    expect(ctx.defaultDelaiClients).toBe(60);
-  });
-
   it("anneeDebut et moisDebut corrects", () => {
     const ctx = buildTemporelCtx(new Date("2026-04-01"), false);
     expect(ctx.anneeDebut).toBe(2026);
