@@ -43,7 +43,7 @@ export default function SaisieTab({ dossierId }: SaisieTabProps) {
   const { data, status, error } = useSaisieData(dossierId);
 
   return (
-    <Tabs defaultValue="porteur" className="flex h-full flex-col gap-0">
+    <Tabs defaultValue="porteur" className="flex h-full min-h-0 flex-col gap-0">
       {/* Barre des sous-onglets */}
       <SubTablistContainer>
         <TabsList variant="line" className="h-12 gap-0 rounded-none bg-transparent px-4">
@@ -68,7 +68,7 @@ export default function SaisieTab({ dossierId }: SaisieTabProps) {
       </SubTablistContainer>
 
       {/* Contenu des sous-onglets */}
-      <div className="min-h-0 flex-1 px-32 py-8">
+      <div className="min-h-0 flex-1 overflow-hidden">
         {status === "loading" || status === "idle" ? (
           <div className="flex h-full items-center justify-center">
             <Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -80,15 +80,15 @@ export default function SaisieTab({ dossierId }: SaisieTabProps) {
           </div>
         ) : data ? (
           <>
-            <TabsContent value="porteur" className="h-full data-[state=inactive]:hidden">
+            <TabsContent value="porteur" className="h-full min-h-0 overflow-hidden data-[state=inactive]:hidden">
               <PorteurForm dossierId={dossierId} defaultValues={data.porteur ?? undefined} />
             </TabsContent>
 
-            <TabsContent value="entreprise" className="h-full data-[state=inactive]:hidden">
+            <TabsContent value="entreprise" className="h-full min-h-0 overflow-hidden data-[state=inactive]:hidden">
               <EntrepriseForm dossierId={dossierId} defaultValues={data.entreprise ?? undefined} />
             </TabsContent>
 
-            <TabsContent value="investissement" className="h-full data-[state=inactive]:hidden">
+            <TabsContent value="investissement" className="h-full min-h-0 overflow-hidden data-[state=inactive]:hidden">
               <InvestissementForm
                 dossierId={dossierId}
                 immobilisations={data.immobilisations}
