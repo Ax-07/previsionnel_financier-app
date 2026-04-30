@@ -108,19 +108,8 @@ async function main() {
       formeJuridique: "SARL",
       regimeFiscal: "IS",
       regimeTVA: "REEL_NORMAL",
-      tauxIs: 25.0,
-      tauxIsReduit: 15.0,
-      plafondIsReduit: 42500,
-      tauxTvaStandard: 20.0,
-      tauxTvaReduit: 10.0,
       periodiciteDeclarationTVA: "mensuel",
-      delaiPaiementClients: 0, // Restaurant = paiement comptant
-      delaiPaiementFournisseurs: 30,
-      joursStockMoyen: 7, // Stock alimentaire ≈ 7 jours
       moisPaiementSalaires: 0, // Salaires payés le mois même
-      repartitionResultat: 0,
-      activite: "Restauration traditionnelle",
-      codeNAF: "5610A",
       dureePrevisionnelle: DUREE_PROJECTION,
       tnsRegimeSocial: "commerce",
       tnsModeCalcul: "DEBUT_ACTIVITE_FORFAIT",
