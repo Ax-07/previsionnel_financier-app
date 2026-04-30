@@ -38,6 +38,7 @@ export async function fetchReintegrations(
       montantN: Number(r.montantN),
       montantN1: Number(r.montantN1),
       montantN2: Number(r.montantN2),
+      groupe: r.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchReintegrations] Erreur :", error);
@@ -65,7 +66,7 @@ export async function saveReintegrations(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows.map((r) => r.id).filter((id) => id && !id.startsWith("__new__")) as string[];
       await tx.ajustementFiscal.deleteMany({
         where: {
           scenarioId,
@@ -84,10 +85,11 @@ export async function saveReintegrations(
           montantN: row.montantN,
           montantN1: row.montantN1,
           montantN2: row.montantN2,
+          groupe: row.groupe ?? null,
           ordre: i,
           scenarioId,
         };
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.ajustementFiscal.upsert({
             where: { id: row.id },
             create: data,
@@ -133,6 +135,7 @@ export async function fetchDeductions(
       montantN: Number(r.montantN),
       montantN1: Number(r.montantN1),
       montantN2: Number(r.montantN2),
+      groupe: r.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchDeductions] Erreur :", error);
@@ -160,7 +163,7 @@ export async function saveDeductions(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows.map((r) => r.id).filter((id) => id && !id.startsWith("__new__")) as string[];
       await tx.ajustementFiscal.deleteMany({
         where: {
           scenarioId,
@@ -179,10 +182,11 @@ export async function saveDeductions(
           montantN: row.montantN,
           montantN1: row.montantN1,
           montantN2: row.montantN2,
+          groupe: row.groupe ?? null,
           ordre: i,
           scenarioId,
         };
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.ajustementFiscal.upsert({
             where: { id: row.id },
             create: data,

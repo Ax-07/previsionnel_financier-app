@@ -43,6 +43,7 @@ export async function fetchReprises(
       montantN1: Number(r.montantN1),
       montantN2: Number(r.montantN2),
       ordre: r.ordre,
+      groupe: r.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchReprises]", error);
@@ -61,7 +62,7 @@ export async function saveReprises(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows.map((r) => r.id).filter((id) => id && !id.startsWith("__new__")) as string[];
       await tx.autreProduitReprise.deleteMany({
         where: {
           scenarioId,
@@ -80,9 +81,10 @@ export async function saveReprises(
           montantN1: row.montantN1,
           montantN2: row.montantN2,
           ordre: i,
+          groupe: row.groupe ?? null,
           scenarioId,
         };
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.autreProduitReprise.update({ where: { id: row.id }, data });
         } else {
           await tx.autreProduitReprise.create({ data });
@@ -136,6 +138,7 @@ export async function fetchProduitsDate(
       tauxTVA: Number(r.tauxTVA),
       typeTVA: r.typeTVA as AutreProduitDateRow["typeTVA"],
       ordre: r.ordre,
+      groupe: r.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchProduitsDate]", error);
@@ -155,7 +158,7 @@ export async function saveProduitsDate(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows.map((r) => r.id).filter((id) => id && !id.startsWith("__new__")) as string[];
       await tx.autreProduitDate.deleteMany({
         where: {
           scenarioId,
@@ -180,9 +183,10 @@ export async function saveProduitsDate(
           tauxTVA: row.tauxTVA ?? 0,
           typeTVA: row.typeTVA ?? null,
           ordre: i,
+          groupe: row.groupe ?? null,
           scenarioId,
         };
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.autreProduitDate.update({ where: { id: row.id }, data });
         } else {
           await tx.autreProduitDate.create({ data });
@@ -230,6 +234,7 @@ export async function fetchConstates(
       montantN1: Number(r.montantN1),
       montantN2: Number(r.montantN2),
       ordre: r.ordre,
+      groupe: r.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchConstates]", error);
@@ -248,7 +253,7 @@ export async function saveConstates(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows.map((r) => r.id).filter((id) => id && !id.startsWith("__new__")) as string[];
       await tx.autreProduitConstate.deleteMany({
         where: {
           scenarioId,
@@ -267,9 +272,10 @@ export async function saveConstates(
           montantN1: row.montantN1,
           montantN2: row.montantN2,
           ordre: i,
+          groupe: row.groupe ?? null,
           scenarioId,
         };
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.autreProduitConstate.update({ where: { id: row.id }, data });
         } else {
           await tx.autreProduitConstate.create({ data });

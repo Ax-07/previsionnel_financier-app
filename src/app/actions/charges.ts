@@ -46,6 +46,7 @@ export async function fetchFournitures(dossierId: string): Promise<ChargeExploit
       tauxTVA: Number(r.tauxTVA),
       typeTVA: r.typeTVA as ChargeExploitationRow["typeTVA"],
       detailCalc: (r.detailCalc ?? undefined) as ChargeExploitationRow["detailCalc"],
+      groupe: r.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchFournitures] Erreur :", error);
@@ -64,7 +65,7 @@ export async function saveFournitures(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows.map((r) => r.id).filter((id): id is string => Boolean(id) && !id.startsWith("__new__"));
       await tx.chargeExploitation.deleteMany({
         where: {
           scenarioId,
@@ -92,10 +93,11 @@ export async function saveFournitures(
           typeTVA: row.typeTVA,
           detailCalc: row.detailCalc ?? Prisma.JsonNull,
           ordre: i,
+          groupe: row.groupe ?? null,
           scenarioId,
         };
 
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.chargeExploitation.upsert({
             where: { id: row.id },
             create: data,
@@ -149,6 +151,7 @@ export async function fetchServices(dossierId: string): Promise<ChargeExploitati
       tauxTVA: Number(r.tauxTVA),
       typeTVA: r.typeTVA as ChargeExploitationRow["typeTVA"],
       detailCalc: (r.detailCalc ?? undefined) as ChargeExploitationRow["detailCalc"],
+      groupe: r.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchServices] Erreur :", error);
@@ -167,7 +170,7 @@ export async function saveServices(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows.map((r) => r.id).filter((id): id is string => Boolean(id) && !id.startsWith("__new__"));
       await tx.chargeExploitation.deleteMany({
         where: {
           scenarioId,
@@ -195,10 +198,11 @@ export async function saveServices(
           typeTVA: row.typeTVA,
           detailCalc: row.detailCalc ?? Prisma.JsonNull,
           ordre: i,
+          groupe: row.groupe ?? null,
           scenarioId,
         };
 
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.chargeExploitation.upsert({
             where: { id: row.id },
             create: data,
@@ -250,6 +254,7 @@ export async function fetchImpots(dossierId: string): Promise<ImpotTaxeRow[]> {
       montantN1: Number(r.montantN1),
       dateN2: r.dateN2 ?? "",
       montantN2: Number(r.montantN2),
+      groupe: r.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchImpots] Erreur :", error);
@@ -272,7 +277,7 @@ export async function saveImpots(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = normalizedRows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = normalizedRows.map((r) => r.id).filter((id): id is string => Boolean(id) && !id.startsWith("__new__"));
       await tx.impotTaxe.deleteMany({
         where: {
           scenarioId,
@@ -297,10 +302,11 @@ export async function saveImpots(
           dateN2: row.dateN2 ?? null,
           montantN2: row.montantN2,
           ordre: i,
+          groupe: row.groupe ?? null,
           scenarioId,
         };
 
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.impotTaxe.upsert({
             where: { id: row.id },
             create: data,

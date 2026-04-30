@@ -54,9 +54,10 @@ export async function fetchLignesSalaries(dossierId: string): Promise<LigneSalar
       hasCommission: r.hasCommission,
       hasPrime: r.hasPrime,
       cotisationConges: r.cotisationConges,
-      detailMensuelN: (r.detailMensuelN as unknown) as DetailMensuelExercice | undefined,
-      detailMensuelN1: (r.detailMensuelN1 as unknown) as DetailMensuelExercice | undefined,
-      detailMensuelN2: (r.detailMensuelN2 as unknown) as DetailMensuelExercice | undefined,
+      detailMensuelN: r.detailMensuelN != null ? (r.detailMensuelN as unknown as DetailMensuelExercice) : undefined,
+      detailMensuelN1: r.detailMensuelN1 != null ? (r.detailMensuelN1 as unknown as DetailMensuelExercice) : undefined,
+      detailMensuelN2: r.detailMensuelN2 != null ? (r.detailMensuelN2 as unknown as DetailMensuelExercice) : undefined,
+      groupe: r.groupe ?? null,
     }));
   } catch (error) {
     console.error("[fetchLignesSalaries] Erreur :", error);
@@ -101,6 +102,7 @@ export async function saveLignesSalaries(
             detailMensuelN: r.detailMensuelN ?? Prisma.DbNull,
             detailMensuelN1: r.detailMensuelN1 ?? Prisma.DbNull,
             detailMensuelN2: r.detailMensuelN2 ?? Prisma.DbNull,
+            groupe: r.groupe ?? null,
             ordre: i,
             scenarioId,
           };
@@ -155,9 +157,10 @@ export async function fetchLignesDirigeants(dossierId: string): Promise<LigneDir
       exonerationTNS: r.exonerationTNS ?? "",
       conjointCollaborateur: r.conjointCollaborateur,
       tauxFixe: Number(r.tauxFixe),
-      detailMensuelN: (r.detailMensuelN as unknown) as DetailMensuelExercice | undefined,
-      detailMensuelN1: (r.detailMensuelN1 as unknown) as DetailMensuelExercice | undefined,
-      detailMensuelN2: (r.detailMensuelN2 as unknown) as DetailMensuelExercice | undefined,
+      detailMensuelN: r.detailMensuelN != null ? (r.detailMensuelN as unknown as DetailMensuelExercice) : undefined,
+      detailMensuelN1: r.detailMensuelN1 != null ? (r.detailMensuelN1 as unknown as DetailMensuelExercice) : undefined,
+      detailMensuelN2: r.detailMensuelN2 != null ? (r.detailMensuelN2 as unknown as DetailMensuelExercice) : undefined,
+      groupe: r.groupe ?? null,
     }));
   } catch (error) {
     console.error("[fetchLignesDirigeants] Erreur :", error);
@@ -194,6 +197,7 @@ export async function saveLignesDirigeants(
             exonerationTNS: r.exonerationTNS || null,
             conjointCollaborateur: r.conjointCollaborateur,
             tauxFixe: r.tauxFixe,
+            groupe: r.groupe ?? undefined,
             detailMensuelN: r.detailMensuelN ?? Prisma.DbNull,
             detailMensuelN1: r.detailMensuelN1 ?? Prisma.DbNull,
             detailMensuelN2: r.detailMensuelN2 ?? Prisma.DbNull,
@@ -247,6 +251,7 @@ export async function fetchLignesCotisationsTNS(dossierId: string): Promise<Lign
       montantN: Number(r.montantN),
       montantN1: Number(r.montantN1),
       montantN2: Number(r.montantN2),
+      groupe: r.groupe ?? null,
     }));
   } catch (error) {
     console.error("[fetchLignesCotisationsTNS] Erreur :", error);
@@ -318,12 +323,31 @@ export async function saveLignesCotisationsTNS(
       // La ligne "Régularisation URSSAF" n'est jamais persistée (trésorerie uniquement).
       // Filtrer les éventuelles lignes héritées d'une version précédente.
       const REG_LABEL = "Régularisation URSSAF";
-      let autoIdx = 0;
+      // Mapping libellé → index dans MontantsTNSLigne[] (même logique que le client).
+      // Utiliser la correspondance par libellé plutôt qu'un compteur séquentiel pour
+      // rester correct même si l'utilisateur a réordonné les lignes via DnD.
+      const AUTO_IDX_BY_LABEL: Record<string, number> = {
+        "Allocations familiales":                     0,
+        "Maladie-maternité":                          1,
+        "Indemnités journalières (IJ)":               2,
+        "Retraite (base + compl) + invalidité-décès": 3,
+        "CSG/CRDS":                                   4,
+        "CFP (forfait PASS)":                         5,
+        // Anciens libellés (rétrocompatibilité BDD)
+        "Allocation familiale":                       0,
+        "Maladie, maternité":                         1,
+        "Maladie 1, maladie 2":                       1,
+        "Retraite, invalidité / décès":               3,
+        "CSG déductible, CFP":                        4,
+        "CSG/CRDS non déductible":                    5,
+      };
       finalRows = rows
         .filter((row) => row.libelle !== REG_LABEL)
         .map((row) => {
           if (!row.calcAuto) return row;
-          const line = computed[autoIdx++];
+          const idx = AUTO_IDX_BY_LABEL[row.libelle];
+          if (idx === undefined) return row;
+          const line = computed[idx];
           if (!line) return row;
           return { ...row, montantN: line.montantN, montantN1: line.montantN1, montantN2: line.montantN2 };
         });
@@ -336,7 +360,7 @@ export async function saveLignesCotisationsTNS(
       });
       return Promise.all(
         finalRows.map((r, i) => {
-          const data = { libelle: r.libelle, actif: r.actif ?? true, hypothese: r.hypothese, calcAuto: r.calcAuto, montantN: r.montantN, montantN1: r.montantN1, montantN2: r.montantN2, ordre: i, scenarioId };
+          const data = { libelle: r.libelle, actif: r.actif ?? true, hypothese: r.hypothese, calcAuto: r.calcAuto, montantN: r.montantN, montantN1: r.montantN1, montantN2: r.montantN2, groupe: r.groupe ?? null, ordre: i, scenarioId };
           const isExisting = r.id && !r.id.startsWith("__new__");
           if (isExisting) return tx.ligneCotisationTNS.update({ where: { id: r.id }, data, select: { id: true } });
           return tx.ligneCotisationTNS.create({ data, select: { id: true } });
@@ -382,6 +406,7 @@ export async function fetchLignesTaxesSalaires(dossierId: string): Promise<Ligne
       montantN1: Number(r.montantN1),
       dateN2: r.dateN2 ?? "",
       montantN2: Number(r.montantN2),
+      groupe: r.groupe ?? null,
     }));
   } catch (error) {
     console.error("[fetchLignesTaxesSalaires] Erreur :", error);
@@ -405,7 +430,7 @@ export async function saveLignesTaxesSalaires(
       });
       return Promise.all(
         rows.map((r, i) => {
-          const data = { libelle: r.libelle, actif: r.actif ?? true, hypothese: r.hypothese, calcAuto: r.calcAuto, taux: r.taux, dateN: r.dateN || null, montantN: r.montantN, dateN1: r.dateN1 || null, montantN1: r.montantN1, dateN2: r.dateN2 || null, montantN2: r.montantN2, ordre: i, scenarioId };
+          const data = { libelle: r.libelle, actif: r.actif ?? true, hypothese: r.hypothese, calcAuto: r.calcAuto, taux: r.taux, dateN: r.dateN || null, montantN: r.montantN, dateN1: r.dateN1 || null, montantN1: r.montantN1, dateN2: r.dateN2 || null, montantN2: r.montantN2, groupe: r.groupe ?? null, ordre: i, scenarioId };
           const isExisting = r.id && !r.id.startsWith("__new__");
           if (isExisting) return tx.ligneTaxeSalaire.update({ where: { id: r.id }, data, select: { id: true } });
           return tx.ligneTaxeSalaire.create({ data, select: { id: true } });
@@ -456,6 +481,7 @@ export async function fetchLignesChargesPersonnel(
       montantN1: Number(r.montantN1),
       dateN2: r.dateN2 ?? "",
       montantN2: Number(r.montantN2),
+      groupe: r.groupe ?? null,
     }));
   } catch (error) {
     console.error(`[fetchLignesChargesPersonnel:${type}] Erreur :`, error);
@@ -480,7 +506,7 @@ export async function saveLignesChargesPersonnel(
       });
       return Promise.all(
         rows.map((r, i) => {
-          const data = { libelle: r.libelle, actif: r.actif ?? true, hypothese: r.hypothese, type, calcAuto: r.calcAuto, dateN: r.dateN || null, montantN: r.montantN, dateN1: r.dateN1 || null, montantN1: r.montantN1, dateN2: r.dateN2 || null, montantN2: r.montantN2, ordre: i, scenarioId };
+          const data = { libelle: r.libelle, actif: r.actif ?? true, hypothese: r.hypothese, type, calcAuto: r.calcAuto, dateN: r.dateN || null, montantN: r.montantN, dateN1: r.dateN1 || null, montantN1: r.montantN1, dateN2: r.dateN2 || null, montantN2: r.montantN2, groupe: r.groupe ?? null, ordre: i, scenarioId };
           const isExisting = r.id && !r.id.startsWith("__new__");
           if (isExisting) return tx.ligneChargePersonnel.update({ where: { id: r.id }, data, select: { id: true } });
           return tx.ligneChargePersonnel.create({ data, select: { id: true } });

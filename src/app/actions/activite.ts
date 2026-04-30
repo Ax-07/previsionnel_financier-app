@@ -70,6 +70,7 @@ export async function fetchActivites(dossierId: string): Promise<ActiviteRow[]> 
       reglementFournisseurs: a.reglementFournisseurs ?? 30,
       tvaAchats: Number(a.tvaAchats),
       actif: a.actif,
+      groupe: a.groupe ?? undefined,
       saisonnaliteCA:
         a.saisonnaliteCA != null
           ? (a.saisonnaliteCA as Record<string, number[]>)
@@ -100,7 +101,9 @@ export async function saveActivites(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows
+        .map((r) => r.id)
+        .filter((id) => id && !id.startsWith("__new__")) as string[];
       await tx.activite.deleteMany({
         where: {
           scenarioId,
@@ -132,12 +135,13 @@ export async function saveActivites(
           tvaAchats: row.tvaAchats,
           actif: row.actif ?? true,
           ordre: i,
+          groupe: row.groupe ?? null,
           saisonnaliteCA: row.saisonnaliteCA ?? Prisma.JsonNull,
           saisonnaliteAchats: row.saisonnaliteAchats ?? Prisma.JsonNull,
           achatsStockPonctuel: row.achatsStockPonctuel ?? Prisma.JsonNull,
         };
 
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.activite.update({ where: { id: row.id }, data });
         } else {
           await tx.activite.create({ data: { ...data, scenarioId } });
@@ -207,6 +211,7 @@ export async function fetchActivitesCommission(
       stocks: a.stocks ?? 0,
       reglementFournisseurs: a.reglementFournisseurs ?? 30,
       actif: a.actif,
+      groupe: a.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchActivitesCommission] Erreur :", error);
@@ -225,7 +230,9 @@ export async function saveActivitesCommission(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows
+        .map((r) => r.id)
+        .filter((id) => id && !id.startsWith("__new__")) as string[];
       await tx.activiteCommission.deleteMany({
         where: {
           scenarioId,
@@ -253,9 +260,10 @@ export async function saveActivitesCommission(
           reglementFournisseurs: row.reglementFournisseurs ?? null,
           actif: row.actif ?? true,
           ordre: i,
+          groupe: row.groupe ?? null,
         };
 
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.activiteCommission.update({ where: { id: row.id }, data });
         } else {
           await tx.activiteCommission.create({ data: { ...data, scenarioId } });
@@ -300,6 +308,7 @@ export async function fetchProductionsImmobilisees(
       differe: p.differe ?? 0,
       duree: p.duree ?? 0,
       actif: p.actif,
+      groupe: p.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchProductionsImmobilisees] Erreur :", error);
@@ -318,7 +327,9 @@ export async function saveProductionsImmobilisees(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows
+        .map((r) => r.id)
+        .filter((id) => id && !id.startsWith("__new__")) as string[];
       await tx.productionImmobilisee.deleteMany({
         where: {
           scenarioId,
@@ -339,9 +350,10 @@ export async function saveProductionsImmobilisees(
           duree: row.duree ?? null,
           actif: row.actif ?? true,
           ordre: i,
+          groupe: row.groupe ?? null,
         };
 
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.productionImmobilisee.update({ where: { id: row.id }, data });
         } else {
           await tx.productionImmobilisee.create({ data: { ...data, scenarioId } });
@@ -390,6 +402,7 @@ export async function fetchSubventionsExploitation(
       tva: Number(s.tva),
       typeTva: (s.typeTva ?? "RECUPERABLE") as SubventionExploitationRow["typeTva"],
       actif: s.actif,
+      groupe: s.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchSubventionsExploitation] Erreur :", error);
@@ -408,7 +421,9 @@ export async function saveSubventionsExploitation(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows
+        .map((r) => r.id)
+        .filter((id) => id && !id.startsWith("__new__")) as string[];
       await tx.subventionExploitation.deleteMany({
         where: {
           scenarioId,
@@ -431,9 +446,10 @@ export async function saveSubventionsExploitation(
           typeTva: row.typeTva,
           actif: row.actif ?? true,
           ordre: i,
+          groupe: row.groupe ?? null,
         };
 
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.subventionExploitation.update({ where: { id: row.id }, data });
         } else {
           await tx.subventionExploitation.create({ data: { ...data, scenarioId } });

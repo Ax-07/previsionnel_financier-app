@@ -41,6 +41,7 @@ export async function fetchProvisions(dossierId: string): Promise<AutreChargePro
       montantN1: Number(r.montantN1),
       montantN2: Number(r.montantN2),
       ordre: r.ordre,
+      groupe: r.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchProvisions]", error);
@@ -59,7 +60,7 @@ export async function saveProvisions(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows.map((r) => r.id).filter((id) => id && !id.startsWith("__new__")) as string[];
       await tx.autreChargeProvision.deleteMany({
         where: {
           scenarioId,
@@ -77,10 +78,11 @@ export async function saveProvisions(
           montantN: row.montantN,
           montantN1: row.montantN1,
           montantN2: row.montantN2,
+          groupe: row.groupe ?? null,
           ordre: i,
           scenarioId,
         };
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.autreChargeProvision.update({ where: { id: row.id }, data });
         } else {
           await tx.autreChargeProvision.create({ data });
@@ -131,6 +133,7 @@ export async function fetchChargesDatees(
       tauxTVA: Number(r.tauxTVA),
       typeTVA: r.typeTVA as AutreChargeDateeRow["typeTVA"],
       ordre: r.ordre,
+      groupe: r.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchChargesDatees]", error);
@@ -150,7 +153,7 @@ export async function saveChargesDatees(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows.map((r) => r.id).filter((id) => id && !id.startsWith("__new__")) as string[];
       await tx.autreChargeDatee.deleteMany({
         where: {
           scenarioId,
@@ -174,10 +177,11 @@ export async function saveChargesDatees(
           montantN2: row.montantN2,
           tauxTVA: row.tauxTVA ?? 0,
           typeTVA: row.typeTVA ?? null,
+          groupe: row.groupe ?? null,
           ordre: i,
           scenarioId,
         };
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.autreChargeDatee.update({ where: { id: row.id }, data });
         } else {
           await tx.autreChargeDatee.create({ data });
@@ -229,6 +233,7 @@ export async function fetchChargesBilan(
       montantN1: Number(r.montantN1),
       montantN2: Number(r.montantN2),
       ordre: r.ordre,
+      groupe: r.groupe ?? undefined,
     }));
   } catch (error) {
     console.error("[fetchChargesBilan]", error);
@@ -248,7 +253,7 @@ export async function saveChargesBilan(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const keepIds = rows.map((r) => r.id).filter((id) => id && !id.startsWith("__new__")) as string[];
       await tx.autreChargeBilan.deleteMany({
         where: {
           scenarioId,
@@ -268,10 +273,11 @@ export async function saveChargesBilan(
           montantN: row.montantN,
           montantN1: row.montantN1,
           montantN2: row.montantN2,
+          groupe: row.groupe ?? null,
           ordre: i,
           scenarioId,
         };
-        if (row.id) {
+        if (row.id && !row.id.startsWith("__new__")) {
           await tx.autreChargeBilan.update({ where: { id: row.id }, data });
         } else {
           await tx.autreChargeBilan.create({ data });

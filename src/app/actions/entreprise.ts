@@ -36,25 +36,8 @@ export async function fetchEntrepriseParams(
       formeJuridique: p.formeJuridique as EntrepriseFormValues["formeJuridique"],
       regimeFiscal: p.regimeFiscal as EntrepriseFormValues["regimeFiscal"],
       regimeTVA: p.regimeTVA as EntrepriseFormValues["regimeTVA"],
-      tauxIs: Number(p.tauxIs),
-      tauxIsReduit:
-        p.tauxIsReduit != null ? Number(p.tauxIsReduit) : undefined,
-      plafondIsReduit:
-        p.plafondIsReduit != null ? Number(p.plafondIsReduit) : undefined,
-      tauxTvaStandard: Number(p.tauxTvaStandard),
-      tauxTvaReduit:
-        p.tauxTvaReduit != null ? Number(p.tauxTvaReduit) : undefined,
       periodiciteDeclarationTVA: (p.periodiciteDeclarationTVA ??
         "mensuel") as EntrepriseFormValues["periodiciteDeclarationTVA"],
-      delaiPaiementClients: p.delaiPaiementClients,
-      delaiPaiementFournisseurs: p.delaiPaiementFournisseurs,
-      joursStockMoyen: p.joursStockMoyen ?? undefined,
-      repartitionResultat:
-        p.repartitionResultat != null
-          ? Number(p.repartitionResultat)
-          : undefined,
-      activite: p.activite ?? "",
-      codeNAF: p.codeNAF ?? "",
       dateDebutExerciceN:
         p.dateDebutExerciceN != null
           ? p.dateDebutExerciceN.toISOString().slice(0, 10)
@@ -98,18 +81,7 @@ export async function upsertEntrepriseParams(
       formeJuridique: data.formeJuridique,
       regimeFiscal: data.regimeFiscal,
       regimeTVA: data.regimeTVA,
-      tauxIs: data.tauxIs,
-      tauxIsReduit: data.tauxIsReduit ?? null,
-      plafondIsReduit: data.plafondIsReduit ?? null,
-      tauxTvaStandard: data.tauxTvaStandard,
-      tauxTvaReduit: data.tauxTvaReduit ?? null,
       periodiciteDeclarationTVA: data.periodiciteDeclarationTVA,
-      delaiPaiementClients: data.delaiPaiementClients,
-      delaiPaiementFournisseurs: data.delaiPaiementFournisseurs,
-      joursStockMoyen: data.joursStockMoyen ?? null,
-      repartitionResultat: data.repartitionResultat ?? null,
-      activite: data.activite || null,
-      codeNAF: data.codeNAF || null,
       dateDebutExerciceN:
         data.dateDebutExerciceN ? new Date(data.dateDebutExerciceN) : null,
       dureePrevisionnelle: data.dureePrevisionnelle,
