@@ -65,7 +65,7 @@ export async function saveFournitures(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter((id): id is string => Boolean(id) && !id.startsWith("__new__"));
+      const keepIds = rows.map((r) => r.id).filter((id): id is string => Boolean(id) && !id?.startsWith("__new__"));
       await tx.chargeExploitation.deleteMany({
         where: {
           scenarioId,
@@ -170,7 +170,7 @@ export async function saveServices(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = rows.map((r) => r.id).filter((id): id is string => Boolean(id) && !id.startsWith("__new__"));
+      const keepIds = rows.map((r) => r.id).filter((id): id is string => Boolean(id) && !id?.startsWith("__new__"));
       await tx.chargeExploitation.deleteMany({
         where: {
           scenarioId,
@@ -277,7 +277,7 @@ export async function saveImpots(
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
 
     await prisma.$transaction(async (tx) => {
-      const keepIds = normalizedRows.map((r) => r.id).filter((id): id is string => Boolean(id) && !id.startsWith("__new__"));
+      const keepIds = normalizedRows.map((r) => r.id).filter((id): id is string => Boolean(id) && !id?.startsWith("__new__"));
       await tx.impotTaxe.deleteMany({
         where: {
           scenarioId,
