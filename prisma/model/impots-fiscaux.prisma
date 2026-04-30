@@ -11,6 +11,7 @@ model AjustementFiscal {
   montantN1 Decimal              @default(0) @db.Decimal(15, 2)
   montantN2 Decimal              @default(0) @db.Decimal(15, 2)
   ordre     Int                  @default(0)
+  groupe    String?
   createdAt DateTime             @default(now())
   updatedAt DateTime             @updatedAt
 

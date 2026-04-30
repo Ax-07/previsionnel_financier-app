@@ -8,6 +8,7 @@ model Activite {
   tauxTVA               Decimal                @default(20.00) @db.Decimal(5, 2)
   frequence             FrequenceCA            @default(MENSUEL)
   ordre                 Int                    @default(0)
+  groupe                String?
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   scenarioId            String
@@ -112,6 +113,7 @@ model ActiviteCommission {
   reglementFournisseurs Int?
   actif                 Boolean  @default(true)
   ordre                 Int      @default(0)
+  groupe                String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   scenarioId            String
@@ -132,6 +134,7 @@ model ProductionImmobilisee {
   duree         Int?
   actif         Boolean  @default(true)
   ordre         Int      @default(0)
+  groupe        String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   scenarioId    String
@@ -154,6 +157,7 @@ model SubventionExploitation {
   typeTva    String   @default("RECUPERABLE")
   actif      Boolean  @default(true)
   ordre      Int      @default(0)
+  groupe     String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   scenarioId String

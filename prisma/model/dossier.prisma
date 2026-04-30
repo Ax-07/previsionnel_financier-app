@@ -110,20 +110,9 @@ model ParametresEntreprise {
   id                        String       @id @default(cuid())
   regimeFiscal              RegimeFiscal @default(IS)
   regimeTVA                 RegimeTVA    @default(REEL_NORMAL)
-  tauxIs                    Decimal      @default(25.00) @db.Decimal(5, 2)
-  tauxIsReduit              Decimal?     @db.Decimal(5, 2)
-  plafondIsReduit           Decimal?     @db.Decimal(15, 2)
-  tauxTvaStandard           Decimal      @default(20.00) @db.Decimal(5, 2)
-  tauxTvaReduit             Decimal?     @db.Decimal(5, 2)
   periodiciteDeclarationTVA String?      @default("mensuel")
-  delaiPaiementClients      Int          @default(30)
-  delaiPaiementFournisseurs Int          @default(30)
-  joursStockMoyen           Int?         @default(0)
   /// Décalage de paiement des salaires : 0 = mois courant, 1 = M+1, 2 = M+2, 3 = M+3
   moisPaiementSalaires      Int          @default(1)
-  repartitionResultat       Decimal?     @db.Decimal(5, 2)
-  activite                  String?
-  codeNAF                   String?
   // ── Paramètres TNS ────────────────────────────────────────────────────────
   /// Régime social TNS : "commerce" | "artisan" | "liberal"
   tnsRegimeSocial           String       @default("commerce")

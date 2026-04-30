@@ -11,9 +11,10 @@ model LigneCotisationTNS {
   montantN   Decimal  @default(0) @db.Decimal(15, 2)
   montantN1  Decimal  @default(0) @db.Decimal(15, 2)
   montantN2  Decimal  @default(0) @db.Decimal(15, 2)
-  ordre      Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  ordre            Int      @default(0)
+  groupe           String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   scenarioId String
   scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
 
@@ -38,6 +39,7 @@ model LigneTaxeSalaire {
   dateN2     String?
   montantN2  Decimal  @default(0) @db.Decimal(15, 2)
   ordre      Int      @default(0)
+  groupe     String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   scenarioId String
@@ -65,6 +67,7 @@ model LigneChargePersonnel {
   dateN2     String?
   montantN2  Decimal  @default(0) @db.Decimal(15, 2)
   ordre      Int      @default(0)
+  groupe     String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   scenarioId String
@@ -97,6 +100,7 @@ model LigneSalarie {
   detailMensuelN1  Json?
   detailMensuelN2  Json?
   ordre            Int      @default(0)
+  groupe           String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   scenarioId       String
@@ -119,6 +123,7 @@ model LigneDirigeant {
   conjointCollaborateur Boolean  @default(false)
   tauxFixe              Decimal  @default(100) @db.Decimal(8, 2)
   ordre                 Int      @default(0)
+  groupe                String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   // Détail mensuel (répartition mensuelle par exercice)

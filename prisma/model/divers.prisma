@@ -16,6 +16,7 @@ model DiversFluxDate {
   dateN2     String?
   montantN2  Decimal         @default(0) @db.Decimal(15, 2)
   ordre      Int             @default(0)
+  groupe     String?
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
   scenarioId String
@@ -37,6 +38,7 @@ model DiversOperationCapital {
   montantN1  Decimal                 @default(0) @db.Decimal(15, 2)
   montantN2  Decimal                 @default(0) @db.Decimal(15, 2)
   ordre      Int                     @default(0)
+  groupe     String?
   createdAt  DateTime                @default(now())
   updatedAt  DateTime                @updatedAt
   scenarioId String
@@ -57,6 +59,7 @@ model DiversPret {
   dureeMois   Int                     @default(12)
   periodicite PeriodicitePret         @default(MENSUELLE)
   ordre       Int                     @default(0)
+  groupe      String?
   createdAt   DateTime                @default(now())
   updatedAt   DateTime                @updatedAt
   scenarioId  String
