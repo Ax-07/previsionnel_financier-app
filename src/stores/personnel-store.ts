@@ -48,6 +48,7 @@ export interface PersonnelState {
 
   // Salariés
   setSalaries: (dossierId: string, rows: LigneSalarieRow[]) => void;
+  setSalariesRows: (dossierId: string, rows: LigneSalarieRow[]) => void;
   addSalarie: (dossierId: string) => void;
   updateSalarie: (dossierId: string, index: number, data: Partial<LigneSalarieRow>) => void;
   removeSalarie: (dossierId: string, index: number) => void;
@@ -56,6 +57,7 @@ export interface PersonnelState {
 
   // Dirigeants
   setDirigeants: (dossierId: string, rows: LigneDirigeantRow[]) => void;
+  setDirigeantsRows: (dossierId: string, rows: LigneDirigeantRow[]) => void;
   addDirigeant: (dossierId: string) => void;
   updateDirigeant: (dossierId: string, index: number, data: Partial<LigneDirigeantRow>) => void;
   removeDirigeant: (dossierId: string, index: number) => void;
@@ -64,13 +66,15 @@ export interface PersonnelState {
 
   // Cotisations TNS
   setCotisationsTNS: (dossierId: string, rows: LigneCotisationTNSRow[]) => void;
+  setCotisationsTNSRows: (dossierId: string, rows: LigneCotisationTNSRow[]) => void;
   addCotisationTNS: (dossierId: string) => void;
   updateCotisationTNS: (dossierId: string, index: number, data: Partial<LigneCotisationTNSRow>) => void;
   removeCotisationTNS: (dossierId: string, index: number) => void;
   markCotisationsTNSSaved: (dossierId: string) => void;
-
+  
   // Taxes sur salaires
   setTaxesSalaires: (dossierId: string, rows: LigneTaxeSalaireRow[]) => void;
+  setTaxesSalairesRows: (dossierId: string, rows: LigneTaxeSalaireRow[]) => void;
   addTaxeSalaire: (dossierId: string) => void;
   updateTaxeSalaire: (dossierId: string, index: number, data: Partial<LigneTaxeSalaireRow>) => void;
   removeTaxeSalaire: (dossierId: string, index: number) => void;
@@ -79,6 +83,7 @@ export interface PersonnelState {
 
   // Autres charges
   setAutresCharges: (dossierId: string, rows: LigneChargePersonnelRow[]) => void;
+  setAutresChargesRows: (dossierId: string, rows: LigneChargePersonnelRow[]) => void;
   addAutreCharge: (dossierId: string) => void;
   updateAutreCharge: (dossierId: string, index: number, data: Partial<LigneChargePersonnelRow>) => void;
   removeAutreCharge: (dossierId: string, index: number) => void;
@@ -87,6 +92,7 @@ export interface PersonnelState {
 
   // Remboursements
   setRemboursements: (dossierId: string, rows: LigneChargePersonnelRow[]) => void;
+  setRemboursementsRows: (dossierId: string, rows: LigneChargePersonnelRow[]) => void;
   addRemboursement: (dossierId: string) => void;
   updateRemboursement: (dossierId: string, index: number, data: Partial<LigneChargePersonnelRow>) => void;
   removeRemboursement: (dossierId: string, index: number) => void;
@@ -95,6 +101,7 @@ export interface PersonnelState {
 
   // Participations
   setParticipations: (dossierId: string, rows: LigneChargePersonnelRow[]) => void;
+  setParticipationsRows: (dossierId: string, rows: LigneChargePersonnelRow[]) => void;
   addParticipation: (dossierId: string) => void;
   updateParticipation: (dossierId: string, index: number, data: Partial<LigneChargePersonnelRow>) => void;
   removeParticipation: (dossierId: string, index: number) => void;
@@ -134,7 +141,7 @@ function createEmptyChargePersonnel(type: "AUTRE" | "REMBOURSEMENT" | "PARTICIPA
 
 function getEmptyDraft(): PersonnelDraft {
   return {
-    salaries: [], dirigeants: [], cotisationsTNS: COTISATIONS_TNS_DEFAUT, taxesSalaires: [],
+    salaries: [], dirigeants: [], cotisationsTNS: [...COTISATIONS_TNS_DEFAUT], taxesSalaires: [],
     autresCharges: [], remboursements: [], participations: [],
     paramsGlobaux: createDefaultParamsGlobaux(),
     paramsGlobauxTNS: createDefaultParamsGlobauxTNS(),
@@ -147,6 +154,19 @@ function getEmptyDraft(): PersonnelDraft {
 }
 
 // ── Updater interne ───────────────────────────────────────────────────────────
+
+/**
+ * Référence stable utilisée par getDraft quand aucun draft n'existe.
+ * Évite de créer un nouvel objet à chaque appel (causerait des boucles de re-render).
+ */
+const EMPTY_PERSONNEL_DRAFT: PersonnelDraft = getEmptyDraft();
+
+/**
+ * Cache de mémoïzation pour getDraft : même référence `stored` → même objet fusionné retourné.
+ * Préserve la sécurité de migration (champs ajoutés post-déploiement reçoivent leur valeur
+ * par défaut via getEmptyDraft) sans provoquer d'instabilité de référence React.
+ */
+const draftMergeCache = new WeakMap<PersonnelDraft, PersonnelDraft>();
 
 function patchDraft(
   drafts: Record<string, PersonnelDraft>,
@@ -166,35 +186,84 @@ type DirtyKey = "hasUnsavedSalaries" | "hasUnsavedDirigeants" | "hasUnsavedCotis
 export const usePersonnelStore = create<PersonnelState>()(
   persist(
     (set, get) => {
-      // Helper interne générique pour add/update/remove
       function makeListActions<T>(listKey: ListKey, dirtyKey: DirtyKey) {
         return {
           set: (dossierId: string, rows: T[]) =>
-            set((s) => ({ drafts: patchDraft(s.drafts, dossierId, { [listKey]: rows, [dirtyKey]: false } as Partial<PersonnelDraft>) })),
+            set((s) => ({
+              drafts: patchDraft(s.drafts, dossierId, {
+                [listKey]: rows,
+                [dirtyKey]: false,
+              } as Partial<PersonnelDraft>),
+            })),
+
+          setRows: (dossierId: string, rows: T[]) =>
+            set((s) => ({
+              drafts: patchDraft(s.drafts, dossierId, {
+                [listKey]: rows,
+                [dirtyKey]: true,
+              } as Partial<PersonnelDraft>),
+            })),
+
           add: (dossierId: string, empty: T) => {
             const rows = get().getDraft(dossierId)[listKey] as T[];
-            set((s) => ({ drafts: patchDraft(s.drafts, dossierId, { [listKey]: [...rows, empty], [dirtyKey]: true } as Partial<PersonnelDraft>) }));
+            set((s) => ({
+              drafts: patchDraft(s.drafts, dossierId, {
+                [listKey]: [...rows, empty],
+                [dirtyKey]: true,
+              } as Partial<PersonnelDraft>),
+            }));
           },
+
           update: (dossierId: string, index: number, data: Partial<T>) => {
             const rows = get().getDraft(dossierId)[listKey] as T[];
             const updated = rows.map((r, i) => (i === index ? { ...r, ...data } : r));
-            set((s) => ({ drafts: patchDraft(s.drafts, dossierId, { [listKey]: updated, [dirtyKey]: true } as Partial<PersonnelDraft>) }));
+
+            set((s) => ({
+              drafts: patchDraft(s.drafts, dossierId, {
+                [listKey]: updated,
+                [dirtyKey]: true,
+              } as Partial<PersonnelDraft>),
+            }));
           },
+
           remove: (dossierId: string, index: number) => {
             const rows = get().getDraft(dossierId)[listKey] as T[];
-            set((s) => ({ drafts: patchDraft(s.drafts, dossierId, { [listKey]: rows.filter((_, i) => i !== index), [dirtyKey]: true } as Partial<PersonnelDraft>) }));
+
+            set((s) => ({
+              drafts: patchDraft(s.drafts, dossierId, {
+                [listKey]: rows.filter((_, i) => i !== index),
+                [dirtyKey]: true,
+              } as Partial<PersonnelDraft>),
+            }));
           },
+
           duplicate: (dossierId: string, index: number) => {
             const rows = get().getDraft(dossierId)[listKey] as T[];
             const source = rows[index];
             if (!source) return;
-            const { id: _id, ...rest } = source as T & { id?: string };
+
+            const { id: _id, ...rest } = source as T & { id?: string; libelle?: string };
+
             const newRows = [...rows];
-            newRows.splice(index + 1, 0, { ...rest, libelle: `${(rest as Record<string, unknown>).libelle} (copie)` } as T);
-            set((s) => ({ drafts: patchDraft(s.drafts, dossierId, { [listKey]: newRows, [dirtyKey]: true } as Partial<PersonnelDraft>) }));
+            newRows.splice(index + 1, 0, {
+              ...rest,
+              libelle: `${rest.libelle ?? ""} (copie)`,
+            } as T);
+
+            set((s) => ({
+              drafts: patchDraft(s.drafts, dossierId, {
+                [listKey]: newRows,
+                [dirtyKey]: true,
+              } as Partial<PersonnelDraft>),
+            }));
           },
+
           markSaved: (dossierId: string) =>
-            set((s) => ({ drafts: patchDraft(s.drafts, dossierId, { [dirtyKey]: false } as Partial<PersonnelDraft>) })),
+            set((s) => ({
+              drafts: patchDraft(s.drafts, dossierId, {
+                [dirtyKey]: false,
+              } as Partial<PersonnelDraft>),
+            })),
         };
       }
 
@@ -209,26 +278,34 @@ export const usePersonnelStore = create<PersonnelState>()(
       return {
         drafts: {},
 
-        // Fusion avec getEmptyDraft() pour garantir que les nouveaux champs
-        // (ajoutés après une migration) sont toujours définis, même si le
-        // draft a été persisé avec une version antérieure du store.
         getDraft: (dossierId) => {
           const stored = get().drafts[dossierId];
-          if (!stored) return getEmptyDraft();
-          return { ...getEmptyDraft(), ...stored };
+          if (!stored) return EMPTY_PERSONNEL_DRAFT;
+          const cached = draftMergeCache.get(stored);
+          if (cached) return cached;
+          const merged = { ...getEmptyDraft(), ...stored };
+          draftMergeCache.set(stored, merged);
+          return merged;
         },
 
         hasUnsavedChanges: (dossierId) => {
           const d = get().drafts[dossierId];
           if (!d) return false;
-          return d.hasUnsavedSalaries || d.hasUnsavedDirigeants || d.hasUnsavedCotisationsTNS
-            || d.hasUnsavedTaxesSalaires || d.hasUnsavedAutresCharges
-            || d.hasUnsavedRemboursements || d.hasUnsavedParticipations;
+
+          return (
+            d.hasUnsavedSalaries ||
+            d.hasUnsavedDirigeants ||
+            d.hasUnsavedCotisationsTNS ||
+            d.hasUnsavedTaxesSalaires ||
+            d.hasUnsavedAutresCharges ||
+            d.hasUnsavedRemboursements ||
+            d.hasUnsavedParticipations
+          );
         },
 
-        // Paramètres globaux
         updateParamsGlobaux: (dossierId, data) => {
           const current = get().getDraft(dossierId).paramsGlobaux;
+
           set((s) => ({
             drafts: patchDraft(s.drafts, dossierId, {
               paramsGlobaux: { ...current, ...data },
@@ -238,7 +315,9 @@ export const usePersonnelStore = create<PersonnelState>()(
 
         updateParamsGlobauxTNS: (dossierId, data) => {
           const current = get().getDraft(dossierId).paramsGlobauxTNS;
-          const modeChanged = "modeCalculTNS" in data && data.modeCalculTNS !== current.modeCalculTNS;
+          const modeChanged =
+            "modeCalculTNS" in data && data.modeCalculTNS !== current.modeCalculTNS;
+
           set((s) => ({
             drafts: patchDraft(s.drafts, dossierId, {
               paramsGlobauxTNS: { ...current, ...data },
@@ -249,17 +328,26 @@ export const usePersonnelStore = create<PersonnelState>()(
 
         // Salariés
         setSalaries: sal.set,
+        setSalariesRows: sal.setRows,
         addSalarie: (id) => sal.add(id, createEmptySalarie()),
         updateSalarie: (dossierId, index, data) => {
           sal.update(dossierId, index, data);
-          if ('tauxCotPat' in data) {
+
+          if ("tauxCotPat" in data) {
             set((s) => {
               const draft = s.drafts[dossierId];
               if (!draft) return s;
-              const row = (draft.salaries ?? [])[index];
+
+              const row = draft.salaries[index];
               if (!row?.id) return s;
-              const filtered = (draft.simulateurInjectedIds ?? []).filter((id) => id !== row.id);
-              return { drafts: patchDraft(s.drafts, dossierId, { simulateurInjectedIds: filtered }) };
+
+              const filtered = draft.simulateurInjectedIds.filter((id) => id !== row.id);
+
+              return {
+                drafts: patchDraft(s.drafts, dossierId, {
+                  simulateurInjectedIds: filtered,
+                }),
+              };
             });
           }
         },
@@ -269,6 +357,7 @@ export const usePersonnelStore = create<PersonnelState>()(
 
         // Dirigeants
         setDirigeants: dir.set,
+        setDirigeantsRows: dir.setRows,
         addDirigeant: (id) => dir.add(id, createEmptyDirigeant()),
         updateDirigeant: dir.update,
         removeDirigeant: dir.remove,
@@ -277,6 +366,7 @@ export const usePersonnelStore = create<PersonnelState>()(
 
         // Cotisations TNS
         setCotisationsTNS: tns.set,
+        setCotisationsTNSRows: tns.setRows,
         addCotisationTNS: (id) => tns.add(id, createEmptyCotisationTNS()),
         updateCotisationTNS: tns.update,
         removeCotisationTNS: tns.remove,
@@ -284,6 +374,7 @@ export const usePersonnelStore = create<PersonnelState>()(
 
         // Taxes sur salaires
         setTaxesSalaires: tax.set,
+        setTaxesSalairesRows: tax.setRows,
         addTaxeSalaire: (id) => tax.add(id, createEmptyTaxeSalaire()),
         updateTaxeSalaire: tax.update,
         removeTaxeSalaire: tax.remove,
@@ -292,6 +383,7 @@ export const usePersonnelStore = create<PersonnelState>()(
 
         // Autres charges
         setAutresCharges: aut.set,
+        setAutresChargesRows: aut.setRows,
         addAutreCharge: (id) => aut.add(id, createEmptyChargePersonnel("AUTRE")),
         updateAutreCharge: aut.update,
         removeAutreCharge: aut.remove,
@@ -300,6 +392,7 @@ export const usePersonnelStore = create<PersonnelState>()(
 
         // Remboursements
         setRemboursements: rem.set,
+        setRemboursementsRows: rem.setRows,
         addRemboursement: (id) => rem.add(id, createEmptyChargePersonnel("REMBOURSEMENT")),
         updateRemboursement: rem.update,
         removeRemboursement: rem.remove,
@@ -308,6 +401,7 @@ export const usePersonnelStore = create<PersonnelState>()(
 
         // Participations
         setParticipations: par.set,
+        setParticipationsRows: par.setRows,
         addParticipation: (id) => par.add(id, createEmptyChargePersonnel("PARTICIPATION")),
         updateParticipation: par.update,
         removeParticipation: par.remove,
@@ -326,12 +420,21 @@ export const usePersonnelStore = create<PersonnelState>()(
           set((s) => {
             const draft = s.drafts[dossierId] ?? getEmptyDraft();
             const ids = draft.simulateurInjectedIds ?? [];
+
             if (ids.includes(salarieId)) return s;
-            return { drafts: patchDraft(s.drafts, dossierId, { simulateurInjectedIds: [...ids, salarieId] }) };
+
+            return {
+              drafts: patchDraft(s.drafts, dossierId, {
+                simulateurInjectedIds: [...ids, salarieId],
+              }),
+            };
           }),
       };
     },
-    { name: "previsia-personnel", partialize: (s) => ({ drafts: s.drafts }) },
+    {
+      name: "previsia-personnel",
+      partialize: (s) => ({ drafts: s.drafts }),
+    },
   ),
 );
 

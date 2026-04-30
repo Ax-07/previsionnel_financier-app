@@ -60,6 +60,7 @@ export interface ChargesState {
 
 function createEmptyFourniture(): ChargeExploitationRow {
   return {
+    id: `__new__${crypto.randomUUID()}`,
     libelle: "",
     categorie: "FOURNITURE_CONSOMMABLE",
     actif: true,
@@ -79,6 +80,7 @@ function createEmptyFourniture(): ChargeExploitationRow {
 
 function createEmptyService(): ChargeExploitationRow {
   return {
+    id: `__new__${crypto.randomUUID()}`,
     libelle: "",
     categorie: "SERVICE_EXTERIEUR",
     actif: true,
@@ -98,6 +100,7 @@ function createEmptyService(): ChargeExploitationRow {
 
 function createEmptyImpot(): ImpotTaxeRow {
   return {
+    id: `__new__${crypto.randomUUID()}`,
     libelle: "",
     actif: true,
     hypothese: "COMMUNE",
@@ -123,6 +126,9 @@ function getEmptyDraft(): ChargesDraft {
   };
 }
 
+/** Référence stable pour getDraft() quand aucun draft n'existe. */
+const EMPTY_CHARGES_DRAFT: ChargesDraft = getEmptyDraft();
+
 // ── Store ────────────────────────────────────────────────────────────────────
 
 export const useChargesStore = create<ChargesState>()(
@@ -136,7 +142,7 @@ export const useChargesStore = create<ChargesState>()(
       },
 
       getDraft(dossierId) {
-        return get().drafts[dossierId] ?? getEmptyDraft();
+        return get().drafts[dossierId] ?? EMPTY_CHARGES_DRAFT;
       },
 
       hasUnsavedChanges(dossierId) {

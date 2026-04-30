@@ -31,6 +31,12 @@ export interface ActiviteState {
   getDraft: (dossierId: string) => ActiviteDraft;
   hasUnsavedChanges: (dossierId: string) => boolean;
 
+  // ── Setters batch pour DnD (marque dirty=true) ─────────────────────────────
+  setActivitesRows: (dossierId: string, rows: ActiviteRow[]) => void;
+  setCommissionsRows: (dossierId: string, rows: ActiviteCommissionRow[]) => void;
+  setProductionsRows: (dossierId: string, rows: ProductionImmobiliseeRow[]) => void;
+  setSubventionsRows: (dossierId: string, rows: SubventionExploitationRow[]) => void;
+
   // ── Setters Activités (Chiffre d'affaires) ────────────────────────────────
   setActivites: (dossierId: string, activites: ActiviteRow[]) => void;
   addActivite: (dossierId: string) => void;
@@ -71,6 +77,7 @@ export interface ActiviteState {
 
 function createEmptyActivite(): ActiviteRow {
   return {
+    id: `__new__${crypto.randomUUID()}`,
     libelle: "",
     secteur: "PRODUCTION",
     hypothese: "COMMUNE",
@@ -91,6 +98,7 @@ function createEmptyActivite(): ActiviteRow {
 
 function createEmptyCommission(): ActiviteCommissionRow {
   return {
+    id: `__new__${crypto.randomUUID()}`,
     libelle: "",
     hypothese: "COMMUNE",
     montantN: 0,
@@ -109,6 +117,7 @@ function createEmptyCommission(): ActiviteCommissionRow {
 
 function createEmptyProductionImmobilisee(): ProductionImmobiliseeRow {
   return {
+    id: `__new__${crypto.randomUUID()}`,
     libelle: "",
     nature: "CORPOREL",
     hypothese: "COMMUNE",
@@ -123,6 +132,7 @@ function createEmptyProductionImmobilisee(): ProductionImmobiliseeRow {
 
 function createEmptySubvention(): SubventionExploitationRow {
   return {
+    id: `__new__${crypto.randomUUID()}`,
     libelle: "",
     hypothese: "COMMUNE",
     montantN: 0,
@@ -147,6 +157,9 @@ function getEmptyDraft(): ActiviteDraft {
   };
 }
 
+/** Référence stable pour getDraft() quand aucun draft n'existe. */
+const EMPTY_ACTIVITE_DRAFT: ActiviteDraft = getEmptyDraft();
+
 // ── Store ────────────────────────────────────────────────────────────────────
 
 export const useActiviteStore = create<ActiviteState>()(
@@ -155,9 +168,7 @@ export const useActiviteStore = create<ActiviteState>()(
       drafts: {},
 
       // ── Getters ────────────────────────────────────────────────────────────
-      getDraft: (dossierId) => {
-        return get().drafts[dossierId] ?? getEmptyDraft();
-      },
+      getDraft: (dossierId) => get().drafts[dossierId] ?? EMPTY_ACTIVITE_DRAFT,
 
       hasUnsavedChanges: (dossierId) => {
         const draft = get().drafts[dossierId];
@@ -240,9 +251,9 @@ export const useActiviteStore = create<ActiviteState>()(
           const draft = state.drafts[dossierId] ?? getEmptyDraft();
           const source = draft.activites[index];
           if (!source) return state;
-          const { id, ...rest } = source;
+          const { id: _id, ...rest } = source;
           const rows = [...draft.activites];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` });
           return {
             drafts: {
               ...state.drafts,
@@ -337,9 +348,9 @@ export const useActiviteStore = create<ActiviteState>()(
           const draft = state.drafts[dossierId] ?? getEmptyDraft();
           const source = draft.activitesCommissionnees[index];
           if (!source) return state;
-          const { id, ...rest } = source;
+          const { id: _id, ...rest } = source;
           const rows = [...draft.activitesCommissionnees];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` });
           return {
             drafts: {
               ...state.drafts,
@@ -434,9 +445,9 @@ export const useActiviteStore = create<ActiviteState>()(
           const draft = state.drafts[dossierId] ?? getEmptyDraft();
           const source = draft.productionsImmobilisees[index];
           if (!source) return state;
-          const { id, ...rest } = source;
+          const { id: _id, ...rest } = source;
           const rows = [...draft.productionsImmobilisees];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` });
           return {
             drafts: {
               ...state.drafts,
@@ -531,9 +542,9 @@ export const useActiviteStore = create<ActiviteState>()(
           const draft = state.drafts[dossierId] ?? getEmptyDraft();
           const source = draft.subventionsExploitation[index];
           if (!source) return state;
-          const { id, ...rest } = source;
+          const { id: _id, ...rest } = source;
           const rows = [...draft.subventionsExploitation];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` });
           return {
             drafts: {
               ...state.drafts,
@@ -550,6 +561,59 @@ export const useActiviteStore = create<ActiviteState>()(
             [dossierId]: {
               ...(state.drafts[dossierId] ?? getEmptyDraft()),
               hasUnsavedSubventions: false,
+            },
+          },
+        }));
+      },
+
+      // ── Setters batch pour DnD (marque dirty=true) ─────────────────────────
+      setActivitesRows: (dossierId, rows) => {
+        set((state) => ({
+          drafts: {
+            ...state.drafts,
+            [dossierId]: {
+              ...(state.drafts[dossierId] ?? getEmptyDraft()),
+              activites: rows,
+              hasUnsavedActivites: true,
+            },
+          },
+        }));
+      },
+
+      setCommissionsRows: (dossierId, rows) => {
+        set((state) => ({
+          drafts: {
+            ...state.drafts,
+            [dossierId]: {
+              ...(state.drafts[dossierId] ?? getEmptyDraft()),
+              activitesCommissionnees: rows,
+              hasUnsavedCommissions: true,
+            },
+          },
+        }));
+      },
+
+      setProductionsRows: (dossierId, rows) => {
+        set((state) => ({
+          drafts: {
+            ...state.drafts,
+            [dossierId]: {
+              ...(state.drafts[dossierId] ?? getEmptyDraft()),
+              productionsImmobilisees: rows,
+              hasUnsavedProductions: true,
+            },
+          },
+        }));
+      },
+
+      setSubventionsRows: (dossierId, rows) => {
+        set((state) => ({
+          drafts: {
+            ...state.drafts,
+            [dossierId]: {
+              ...(state.drafts[dossierId] ?? getEmptyDraft()),
+              subventionsExploitation: rows,
+              hasUnsavedSubventions: true,
             },
           },
         }));

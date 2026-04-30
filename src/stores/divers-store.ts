@@ -40,6 +40,7 @@ export interface DiversState {
 
   // --- Remboursements C/C ---
   setRemboursementsCC: (dossierId: string, rows: DiversFluxDateRow[]) => void;
+  setRemboursementsCCRows: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   addRemboursementCC: (dossierId: string) => void;
   updateRemboursementCC: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
   removeRemboursementCC: (dossierId: string, index: number) => void;
@@ -48,6 +49,7 @@ export interface DiversState {
 
   // --- Dividendes ---
   setDividendes: (dossierId: string, rows: DiversFluxDateRow[]) => void;
+  setDividendesRows: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   addDividende: (dossierId: string) => void;
   updateDividende: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
   removeDividende: (dossierId: string, index: number) => void;
@@ -56,6 +58,7 @@ export interface DiversState {
 
   // --- Déblocages participation ---
   setDeblocagesParticipation: (dossierId: string, rows: DiversFluxDateRow[]) => void;
+  setDeblocagesParticipationRows: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   addDeblocageParticipation: (dossierId: string) => void;
   updateDeblocageParticipation: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
   removeDeblocageParticipation: (dossierId: string, index: number) => void;
@@ -64,6 +67,7 @@ export interface DiversState {
 
   // --- Encaissements ---
   setEncaissements: (dossierId: string, rows: DiversFluxDateRow[]) => void;
+  setEncaissementsRows: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   addEncaissement: (dossierId: string) => void;
   updateEncaissement: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
   removeEncaissement: (dossierId: string, index: number) => void;
@@ -72,6 +76,7 @@ export interface DiversState {
 
   // --- Décaissements ---
   setDecaissements: (dossierId: string, rows: DiversFluxDateRow[]) => void;
+  setDecaissementsRows: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   addDecaissement: (dossierId: string) => void;
   updateDecaissement: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
   removeDecaissement: (dossierId: string, index: number) => void;
@@ -80,6 +85,7 @@ export interface DiversState {
 
   // --- Augmentations de capital ---
   setAugmentationsCapital: (dossierId: string, rows: DiversOperationCapitalRow[]) => void;
+  setAugmentationsCapitalRows: (dossierId: string, rows: DiversOperationCapitalRow[]) => void;
   addAugmentationCapital: (dossierId: string) => void;
   updateAugmentationCapital: (dossierId: string, index: number, data: Partial<DiversOperationCapitalRow>) => void;
   removeAugmentationCapital: (dossierId: string, index: number) => void;
@@ -88,6 +94,7 @@ export interface DiversState {
 
   // --- Réductions de capital ---
   setReductionsCapital: (dossierId: string, rows: DiversOperationCapitalRow[]) => void;
+  setReductionsCapitalRows: (dossierId: string, rows: DiversOperationCapitalRow[]) => void;
   addReductionCapital: (dossierId: string) => void;
   updateReductionCapital: (dossierId: string, index: number, data: Partial<DiversOperationCapitalRow>) => void;
   removeReductionCapital: (dossierId: string, index: number) => void;
@@ -96,6 +103,7 @@ export interface DiversState {
 
   // --- Prêts inter-entreprises ---
   setPrets: (dossierId: string, rows: DiversPretRow[]) => void;
+  setPretsRows: (dossierId: string, rows: DiversPretRow[]) => void;
   addPret: (dossierId: string) => void;
   updatePret: (dossierId: string, index: number, data: Partial<DiversPretRow>) => void;
   removePret: (dossierId: string, index: number) => void;
@@ -127,6 +135,13 @@ function emptyDraft(): DiversDraft {
     hasUnsavedPrets: false,
   };
 }
+
+/**
+ * Référence stable pour getDraft quand aucun draft n'existe encore.
+ * Évite de créer un nouvel objet à chaque appel (qui causerait des
+ * boucles infinies de re-render dans les hooks utilisant useGroupedDnd).
+ */
+const EMPTY_DIVERS_DRAFT: DiversDraft = emptyDraft();
 
 function emptyFlux(type: DiversFluxDateRow["type"]): DiversFluxDateRow {
   return {
@@ -183,7 +198,7 @@ export const useDiversStore = create<DiversState>()(
     (set, get) => ({
       drafts: {},
 
-      getDraft: (dossierId) => get().drafts[dossierId] ?? emptyDraft(),
+      getDraft: (dossierId) => get().drafts[dossierId] ?? EMPTY_DIVERS_DRAFT,
 
       hasUnsavedChanges: (dossierId) => {
         const d = get().drafts[dossierId];
@@ -206,6 +221,13 @@ export const useDiversStore = create<DiversState>()(
           drafts: {
             ...s.drafts,
             [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), remboursementsCC: rows, hasUnsavedRemboursementsCC: false },
+          },
+        })),
+      setRemboursementsCCRows: (dossierId, rows) =>
+        set((s) => ({
+          drafts: {
+            ...s.drafts,
+            [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), remboursementsCC: rows, hasUnsavedRemboursementsCC: true },
           },
         })),
       addRemboursementCC: (dossierId) =>
@@ -269,6 +291,13 @@ export const useDiversStore = create<DiversState>()(
             [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), dividendes: rows, hasUnsavedDividendes: false },
           },
         })),
+      setDividendesRows: (dossierId, rows) =>
+        set((s) => ({
+          drafts: {
+            ...s.drafts,
+            [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), dividendes: rows, hasUnsavedDividendes: true },
+          },
+        })),
       addDividende: (dossierId) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
@@ -328,6 +357,13 @@ export const useDiversStore = create<DiversState>()(
           drafts: {
             ...s.drafts,
             [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), deblocagesParticipation: rows, hasUnsavedDeblocagesParticipation: false },
+          },
+        })),
+      setDeblocagesParticipationRows: (dossierId, rows) =>
+        set((s) => ({
+          drafts: {
+            ...s.drafts,
+            [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), deblocagesParticipation: rows, hasUnsavedDeblocagesParticipation: true },
           },
         })),
       addDeblocageParticipation: (dossierId) =>
@@ -391,6 +427,13 @@ export const useDiversStore = create<DiversState>()(
             [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), encaissements: rows, hasUnsavedEncaissements: false },
           },
         })),
+      setEncaissementsRows: (dossierId, rows) =>
+        set((s) => ({
+          drafts: {
+            ...s.drafts,
+            [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), encaissements: rows, hasUnsavedEncaissements: true },
+          },
+        })),
       addEncaissement: (dossierId) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
@@ -450,6 +493,13 @@ export const useDiversStore = create<DiversState>()(
           drafts: {
             ...s.drafts,
             [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), decaissements: rows, hasUnsavedDecaissements: false },
+          },
+        })),
+      setDecaissementsRows: (dossierId, rows) =>
+        set((s) => ({
+          drafts: {
+            ...s.drafts,
+            [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), decaissements: rows, hasUnsavedDecaissements: true },
           },
         })),
       addDecaissement: (dossierId) =>
@@ -513,6 +563,13 @@ export const useDiversStore = create<DiversState>()(
             [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), augmentationsCapital: rows, hasUnsavedAugmentationsCapital: false },
           },
         })),
+      setAugmentationsCapitalRows: (dossierId, rows) =>
+        set((s) => ({
+          drafts: {
+            ...s.drafts,
+            [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), augmentationsCapital: rows, hasUnsavedAugmentationsCapital: true },
+          },
+        })),
       addAugmentationCapital: (dossierId) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
@@ -574,6 +631,13 @@ export const useDiversStore = create<DiversState>()(
             [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), reductionsCapital: rows, hasUnsavedReductionsCapital: false },
           },
         })),
+      setReductionsCapitalRows: (dossierId, rows) =>
+        set((s) => ({
+          drafts: {
+            ...s.drafts,
+            [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), reductionsCapital: rows, hasUnsavedReductionsCapital: true },
+          },
+        })),
       addReductionCapital: (dossierId) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
@@ -633,6 +697,13 @@ export const useDiversStore = create<DiversState>()(
           drafts: {
             ...s.drafts,
             [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), prets: rows, hasUnsavedPrets: false },
+          },
+        })),
+      setPretsRows: (dossierId, rows) =>
+        set((s) => ({
+          drafts: {
+            ...s.drafts,
+            [dossierId]: { ...(s.drafts[dossierId] ?? emptyDraft()), prets: rows, hasUnsavedPrets: true },
           },
         })),
       addPret: (dossierId) =>

@@ -58,7 +58,8 @@ function emptyDraft(): ImpotssFiscauxDraft {
     hasUnsavedParametresIS: false,
   };
 }
-
+/** Référence stable pour getDraft() quand aucun draft n'existe. */
+const EMPTY_IMPOTS_DRAFT: ImpotssFiscauxDraft = emptyDraft();
 // ── Store ─────────────────────────────────────────────────────────────────────
 
 export const useImpotsFiscauxStore = create<ImpotsFiscauxState>()(
@@ -66,7 +67,7 @@ export const useImpotsFiscauxStore = create<ImpotsFiscauxState>()(
     (set, get) => ({
       drafts: {},
 
-      getDraft: (dossierId) => get().drafts[dossierId] ?? emptyDraft(),
+      getDraft: (dossierId) => get().drafts[dossierId] ?? EMPTY_IMPOTS_DRAFT,
 
       hasUnsavedChanges: (dossierId) => {
         const d = get().drafts[dossierId];
@@ -91,6 +92,7 @@ export const useImpotsFiscauxStore = create<ImpotsFiscauxState>()(
         set((s) => {
           const draft = s.drafts[dossierId] ?? emptyDraft();
           const newRow: AjustementFiscalRow = {
+            id: `__new__${crypto.randomUUID()}`,
             type: "REINTEGRATION",
             actif: true,
             hypothese: "COMMUNE",
@@ -144,8 +146,8 @@ export const useImpotsFiscauxStore = create<ImpotsFiscauxState>()(
           const source = draft.reintegrations[index];
           if (!source) return s;
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { id, ...rest } = source;
-          const clone = { ...rest, libelle: `${rest.libelle} (copie)` };
+          const { id: _id, ...rest } = source;
+          const clone = { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` };
           const rows = [...draft.reintegrations];
           rows.splice(index + 1, 0, clone);
           return {
@@ -184,6 +186,7 @@ export const useImpotsFiscauxStore = create<ImpotsFiscauxState>()(
         set((s) => {
           const draft = s.drafts[dossierId] ?? emptyDraft();
           const newRow: AjustementFiscalRow = {
+            id: `__new__${crypto.randomUUID()}`,
             type: "DEDUCTION",
             actif: true,
             hypothese: "COMMUNE",
@@ -237,8 +240,8 @@ export const useImpotsFiscauxStore = create<ImpotsFiscauxState>()(
           const source = draft.deductions[index];
           if (!source) return s;
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { id, ...rest } = source;
-          const clone = { ...rest, libelle: `${rest.libelle} (copie)` };
+          const { id: _id, ...rest } = source;
+          const clone = { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` };
           const rows = [...draft.deductions];
           rows.splice(index + 1, 0, clone);
           return {
@@ -309,17 +312,7 @@ export const useImpotsFiscauxStore = create<ImpotsFiscauxState>()(
     }),
     {
       name: "impots-fiscaux-drafts",
-      // Ne persiste que les données modifiées (hasUnsaved*)
-      partialize: (state) => ({
-        drafts: Object.fromEntries(
-          Object.entries(state.drafts).filter(
-            ([, d]) =>
-              d.hasUnsavedReintegrations ||
-              d.hasUnsavedDeductions ||
-              d.hasUnsavedParametresIS
-          )
-        ),
-      }),
+      partialize: (state) => ({ drafts: state.drafts }),
     }
   )
 );

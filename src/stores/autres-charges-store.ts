@@ -84,11 +84,12 @@ export interface AutresChargesState {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function emptyProvision(): AutreChargeProvisionRow {
-  return { libelle: "", actif: true, hypothese: "COMMUNE", nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
+  return { id: `__new__${crypto.randomUUID()}`, libelle: "", actif: true, hypothese: "COMMUNE", nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
 }
 
 function emptyDatee(categorie: "GESTION_COURANTE" | "FINANCIERE" | "EXCEPTIONNELLE"): AutreChargeDateeRow {
   return {
+    id: `__new__${crypto.randomUUID()}`,
     libelle: "",
     actif: true,
     hypothese: "COMMUNE",
@@ -106,7 +107,7 @@ function emptyDatee(categorie: "GESTION_COURANTE" | "FINANCIERE" | "EXCEPTIONNEL
 }
 
 function emptyBilan(type: "CHARGE_CONSTATEE_AVANCE" | "CHARGE_A_PAYER"): AutreChargeBilanRow {
-  return { libelle: "", actif: true, hypothese: "COMMUNE", type, nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
+  return { id: `__new__${crypto.randomUUID()}`, libelle: "", actif: true, hypothese: "COMMUNE", type, nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
 }
 
 function getEmptyDraft(): AutresChargesDraft {
@@ -206,9 +207,10 @@ export const useAutresChargesStore = create<AutresChargesState>()(
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           const source = d.provisions[index];
           if (!source) return s;
-          const { id, ...rest } = source;
+          const { id: _id, ...rest } = source;
+          const clone = { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` };
           const rows = [...d.provisions];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, clone);
           return patchDraft(s, dossierId, { provisions: rows, hasUnsavedProvisions: true });
         });
       },
@@ -253,9 +255,10 @@ export const useAutresChargesStore = create<AutresChargesState>()(
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           const source = d.gestionCourante[index];
           if (!source) return s;
-          const { id, ...rest } = source;
+          const { id: _id, ...rest } = source;
+          const clone = { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` };
           const rows = [...d.gestionCourante];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, clone);
           return patchDraft(s, dossierId, { gestionCourante: rows, hasUnsavedGestionCourante: true });
         });
       },
@@ -300,9 +303,10 @@ export const useAutresChargesStore = create<AutresChargesState>()(
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           const source = d.financieres[index];
           if (!source) return s;
-          const { id, ...rest } = source;
+          const { id: _id, ...rest } = source;
+          const clone = { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` };
           const rows = [...d.financieres];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, clone);
           return patchDraft(s, dossierId, { financieres: rows, hasUnsavedFinancieres: true });
         });
       },
@@ -347,9 +351,10 @@ export const useAutresChargesStore = create<AutresChargesState>()(
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           const source = d.exceptionnelles[index];
           if (!source) return s;
-          const { id, ...rest } = source;
+          const { id: _id, ...rest } = source;
+          const clone = { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` };
           const rows = [...d.exceptionnelles];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, clone);
           return patchDraft(s, dossierId, { exceptionnelles: rows, hasUnsavedExceptionnelles: true });
         });
       },
@@ -394,9 +399,10 @@ export const useAutresChargesStore = create<AutresChargesState>()(
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           const source = d.cca[index];
           if (!source) return s;
-          const { id, ...rest } = source;
+          const { id: _id, ...rest } = source;
+          const clone = { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` };
           const rows = [...d.cca];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, clone);
           return patchDraft(s, dossierId, { cca: rows, hasUnsavedCCA: true });
         });
       },
@@ -441,9 +447,10 @@ export const useAutresChargesStore = create<AutresChargesState>()(
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           const source = d.cap[index];
           if (!source) return s;
-          const { id, ...rest } = source;
+          const { id: _id, ...rest } = source;
+          const clone = { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` };
           const rows = [...d.cap];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, clone);
           return patchDraft(s, dossierId, { cap: rows, hasUnsavedCAP: true });
         });
       },
