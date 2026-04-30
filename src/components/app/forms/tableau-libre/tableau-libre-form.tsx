@@ -35,6 +35,7 @@ import {
   TabsContent,
 } from "@/components/ui/tabs";
 import { cn, numVal } from "@/lib/utils";
+import { formatNumber } from "@/lib/format";
 
 import {
   FORMAT_OPTIONS,
@@ -49,37 +50,18 @@ import {
 import { useTableauxLibresStore } from "@/stores/tableau-libre-store";
 import { saveTableauxLibres } from "@/app/actions/tableau-libre";
 import { useInvalidateControleStores } from "@/hooks/use-invalidate-controle-stores";
+import { cellInput, cellSelect, cellNum } from "../helpers/cell-styles";
+import { Th } from "../helpers/table-helpers";
 
-// ── Styles utilitaires ────────────────────────────────────────────────────────
-
-const cellInput =
-  "h-7 w-full border-0 bg-transparent px-1 text-sm focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none min-w-0";
-const cellSelect =
-  "h-7 w-full border-0 bg-transparent px-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none cursor-pointer";
-const cellNum =
-  "h-7 w-full border-0 bg-transparent px-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none min-w-0";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function fmt(v: number): string {
-  if (v === 0) return "—";
-  return v.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-}
+const fmt = (v: number): string => v === 0 ? "—" : formatNumber(v);
 
-function pct(v: number): string {
-  if (v === 0) return "—";
-  return v.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + " %";
-}
+const pct = (v: number): string => v === 0 ? "—" : formatNumber(v) + " %";
 
 // ── Composants basiques ───────────────────────────────────────────────────────
 
-function Th({ children, className }: { children?: React.ReactNode; className?: string }) {
-  return (
-    <th className={cn("px-2 py-1.5 text-left text-xs font-medium text-muted-foreground whitespace-nowrap", className)}>
-      {children}
-    </th>
-  );
-}
 
 function Td({ children, className }: { children: React.ReactNode; className?: string }) {
   return <td className={cn("px-0 py-0 align-middle border-r last:border-r-0 border-border/40", className)}>{children}</td>;
