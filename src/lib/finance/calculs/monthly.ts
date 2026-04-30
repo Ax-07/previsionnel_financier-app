@@ -744,16 +744,17 @@ export function buildMonthlyCalc(
 
     const immoSeries = emptyAcc();
 
+    const ex1S = anneeDebut * 12 + moisDebut;
+    const ex2S = ex1S + nMoisCtx.y1;
+    const ex3S = ex2S + nMoisCtx.y2;
+    const exStarts = [ex1S, ex2S, ex3S];
+    const exNMoisArr = [nMoisCtx.y1, nMoisCtx.y2, nMoisCtx.y3];
+
     if (immo.modeAmortissement !== "DEGRESSIF") {
       // ── LINEAIRE : intersection par exercice ─ O(3×12) au lieu de O(durée×12)
       const acqAbsMonth = acqYear * 12 + acqMois;
       const totalMonths = Math.round(dur * 12);
       const dotMois     = montant / totalMonths;
-      const ex1S = anneeDebut * 12 + moisDebut;
-      const ex2S = ex1S + nMoisCtx.y1;
-      const ex3S = ex2S + nMoisCtx.y2;
-      const exStarts = [ex1S, ex2S, ex3S];
-      const exNMoisArr = [nMoisCtx.y1, nMoisCtx.y2, nMoisCtx.y3];
       for (let e = 0; e < 3; e++) {
         const exStart = exStarts[e]!;
         const exEnd   = exStart + exNMoisArr[e]!;
