@@ -37,12 +37,11 @@ function buildTresoRows(fc: FinCalcResult): TresorerieRow[] {
   const regimeTVA = scenario.parametres?.regimeTVA ?? "REEL_NORMAL";
   const isFranchise = regimeTVA === "FRANCHISE";
   const effectiveMoisPaiement = scenario.parametres?.moisPaiementSalaires ?? 1;
-  const delaiClients = scenario.parametres?.delaiPaiementClients ?? 30;
 
   const anneeDebut = dateDemarrage.getFullYear();
   const moisDebut = dateDemarrage.getMonth();
 
-  const ctx = buildTemporelCtx(dateDemarrage, isFranchise, delaiClients);
+  const ctx = buildTemporelCtx(dateDemarrage, isFranchise);
   const enc = calcEncaissements(d, ctx);
   const dec = calcDecaissements(d, ctx, effectiveMoisPaiement, fc.isParAnnee, fc.tva);
 

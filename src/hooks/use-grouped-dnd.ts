@@ -119,6 +119,8 @@ export function useGroupedDnd<T extends GroupableRow>({
       const kept = prev.filter((k) => currentSet.has(k));
       const keptSet = new Set(kept);
       const added = [...groupKeys, ...rowKeys].filter((k) => !keptSet.has(k));
+      // Bail out si rien n'a changé — évite les boucles infinies de re-render
+      if (added.length === 0 && kept.length === prev.length) return prev;
       return [...kept, ...added];
     });
   }, [groups, ungroupedRows]);
