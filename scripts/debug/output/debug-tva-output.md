@@ -1,4 +1,4 @@
-# Diagnostic TVA — Dossier `cmmjoradm0001kohp15on2xe1`
+# Diagnostic TVA — Dossier `cmo8p96h40001schp26dfdknv`
 
 > **⚠ Ce fichier est généré automatiquement — ne pas modifier manuellement.**
 
@@ -10,17 +10,17 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 
 | Paramètre | Valeur |
 | --- | --- |
-| Dossier ID | `cmmjoradm0001kohp15on2xe1` |
+| Dossier ID | `cmo8p96h40001schp26dfdknv` |
 | Date de démarrage | 01/05/2026 |
 | Exercices | 2026–2027 · 2027–2028 · 2028–2029 |
 | Régime TVA | REEL_NORMAL |
 | Franchise de base | Non |
 | Périodicité déclaration | mensuel |
-| Activités actives | 5 |
-| dont commerce/production | 5 |
+| Activités actives | 9 |
+| dont commerce/production | 9 |
 | Fournitures | 6 |
 | Services | 16 |
-| Immobilisations récupérables | 12 |
+| Immobilisations récupérables | 13 |
 
 
 ## 1. Tableau TVA — totaux annuels
@@ -33,8 +33,6 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | \  Vente pizza | normal | 9 480,00 | 9 954,00 | 10 451,70 |
 | \  Vente boisson | normal | 600,00 | 630,00 | 661,50 |
 | \  Vente alcool | normal | 839,40 | 881,37 | 925,44 |
-| \  Vente pizza (copie) | normal | 9 085,00 | 9 539,25 | 10 016,21 |
-| \  Vente pizza (copie) (copie) | normal | 9 875,00 | 10 368,75 | 10 887,19 |
 | **Total TVA collectée** | subtotal | **10 919,40** | **11 465,37** | **12 038,64** |
 | **TVA DÉDUCTIBLE** | section | | | |
 | TVA sur immobilisations | normal | 0,00 | 0,00 | 0,00 |
@@ -46,16 +44,15 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | \  Provision pour frais de greffe et journal (constitution société) | normal | 0,00 | 0,00 | 0,00 |
 | \  Enseigne et communication | normal | 200,00 | 0,00 | 0,00 |
 | \  Droit d'enregistrement | normal | 0,00 | 0,00 | 0,00 |
-| \  Fond de commerce | normal | 0,00 | 0,00 | 0,00 |
 | \  Caisse enregistreuse (airkitchen) | normal | 177,80 | 0,00 | 0,00 |
+| \  Fond de commerce | normal | 0,00 | 0,00 | 0,00 |
 | \  Meuble pizza | normal | 244,60 | 0,00 | 0,00 |
 | \  Frais de garantie "BPI" | normal | 0,00 | 0,00 | 0,00 |
+| \  Formation HACCP | normal | 151,80 | 0,00 | 0,00 |
 | TVA sur achats de matières | normal | 1 900,41 | 1 904,08 | 2 007,29 |
 | \  Vente pizza | normal | 1 468,73 | 1 478,81 | 1 555,16 |
 | \  Vente boisson | normal | 121,46 | 120,37 | 127,59 |
 | \  Vente alcool | normal | 310,22 | 304,90 | 324,55 |
-| \  Vente pizza (copie) | normal | 1 407,63 | 1 417,10 | 1 490,36 |
-| \  Vente pizza (copie) (copie) | normal | 1 529,83 | 1 540,52 | 1 619,96 |
 | TVA sur charges externes | normal | 6 877,80 | 6 896,74 | 6 994,99 |
 | \  Embalages | normal | 248,85 | 261,29 | 274,36 |
 | \  Electricité | normal | 900,00 | 918,00 | 936,36 |
@@ -64,6 +61,11 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | \  Produits d'entretiens | normal | 120,00 | 122,40 | 124,85 |
 | \  Fournitures administratives | normal | 90,00 | 91,80 | 93,64 |
 | \  Vetements de travail | normal | 20,00 | 20,00 | 20,00 |
+| \  Frais divers | normal | 100,00 | 102,00 | 104,04 |
+| \  Déplacements | normal | 40,00 | 40,00 | 40,00 |
+| \  Abonnement logiciel de caisse (airkitchen) | normal | 162,00 | 162,00 | 162,00 |
+| \  Services bancaires | normal | 116,80 | 119,14 | 121,52 |
+| \  Frais titre restaurant | normal | 79,00 | 82,95 | 87,10 |
 | \  Commission CB | normal | 0,00 | 0,00 | 0,00 |
 | \  offerts | normal | 493,75 | 518,44 | 544,36 |
 | \  Location immobilière | normal | 3 025,20 | 3 025,20 | 3 025,20 |
@@ -74,15 +76,10 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | \  Honoraires comptable et juridiques | normal | 560,00 | 571,20 | 582,62 |
 | \  Honoraires juridiques | normal | 120,00 | 126,00 | 132,30 |
 | \  Publicité, publications | normal | 200,00 | 100,00 | 100,00 |
-| \  Frais divers | normal | 100,00 | 102,00 | 104,04 |
-| \  Déplacements | normal | 40,00 | 40,00 | 40,00 |
-| \  Abonnement logiciel de caisse (airkitchen) | normal | 162,00 | 162,00 | 162,00 |
-| \  Services bancaires | normal | 116,80 | 119,14 | 121,52 |
-| \  Frais titre restaurant | normal | 79,00 | 82,95 | 87,10 |
 | **Total TVA déductible** | subtotal | **8 778,21** | **8 800,82** | **9 002,29** |
 | **TVA nette du mois** | result | **2 141,19** | **2 664,55** | **3 036,35** |
-| Crédit TVA reporté | normal | 27,81 | 0,00 | 0,00 |
-| **TVA à payer** | highlight | **0,00** | **2 636,74** | **3 036,35** |
+| Crédit TVA reporté | normal | 179,61 | 0,00 | 0,00 |
+| **TVA à payer** | highlight | **0,00** | **2 484,94** | **3 036,35** |
 
 
 ### Détail mensuel 2026–2027
@@ -93,7 +90,7 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | **Total TVA collectée** | 1 237,17 | 1 197,86 | 1 237,17 | 1 485,04 | 957,63 | 646,43 | 622,41 | 622,41 | 646,43 | 574,36 | 858,26 | 834,24 | **10 919,40** |
 | **Total TVA déductible** | 977,76 | 779,03 | 784,63 | 843,53 | 720,72 | 651,01 | 649,30 | 652,00 | 659,39 | 642,83 | 711,83 | 706,19 | **8 778,21** |
 | **TVA nette du mois** | 259,41 | 418,83 | 452,54 | 641,51 | 236,91 | -4,58 | -26,90 | -29,59 | -12,97 | -68,47 | 146,44 | 128,05 | **2 141,19** |
-| **Crédit TVA reporté** | 1 909,59 | 1 490,75 | 1 038,21 | 396,70 | 159,79 | 164,37 | 191,27 | 220,86 | 233,83 | 302,30 | 155,86 | 27,81 | **27,81** |
+| **Crédit TVA reporté** | 2 061,39 | 1 642,55 | 1 190,01 | 548,50 | 311,59 | 316,17 | 343,07 | 372,66 | 385,63 | 454,10 | 307,66 | 179,61 | **179,61** |
 | **TVA à payer** | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | **0,00** |
 
 
@@ -106,7 +103,7 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | **Total TVA déductible** | 816,31 | 806,01 | 815,86 | 878,81 | 745,30 | 666,61 | 660,66 | 660,73 | 666,85 | 648,57 | 720,61 | 714,51 | **8 800,82** |
 | **TVA nette du mois** | 482,71 | 451,74 | 483,17 | 680,48 | 260,21 | 12,14 | -7,13 | -7,20 | 11,90 | -45,49 | 180,57 | 161,44 | **2 664,55** |
 | **Crédit TVA reporté** | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 7,13 | 14,33 | 2,43 | 47,92 | 0,00 | 0,00 | **0,00** |
-| **TVA à payer** | 454,90 | 451,74 | 483,17 | 680,48 | 260,21 | 12,14 | 0,00 | 0,00 | 0,00 | 0,00 | 132,65 | 161,44 | **2 636,74** |
+| **TVA à payer** | 303,10 | 451,74 | 483,17 | 680,48 | 260,21 | 12,14 | 0,00 | 0,00 | 0,00 | 0,00 | 132,65 | 161,44 | **2 484,94** |
 
 
 ### Détail mensuel 2028–2029
@@ -137,7 +134,7 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | 9 | [2027–2028] TVA nette mensuelle = collectée − déductible (12 mois) | ✅ | `12/12 mois OK` |
 | 10 | [2027–2028] Total collectée = somme des 12 mois | ✅ | `11 465,37 ≟ 11 465,37` |
 | 11 | [2027–2028] Total déductible = somme des 12 mois | ✅ | `8 800,82 ≟ 8 800,82` |
-| 12 | [2027–2028] Total TVA à payer = somme des 12 mois | ✅ | `2 636,74 ≟ 2 636,74` |
+| 12 | [2027–2028] Total TVA à payer = somme des 12 mois | ✅ | `2 484,94 ≟ 2 484,94` |
 | 13 | [2028–2029] Total déductible = immo + achats + charges | ✅ | `9 002,29 ≟ 9 002,29` |
 | 14 | [2028–2029] TVA nette totale = collectée − déductible (totaux annuels) | ✅ | `3 036,35 ≟ 3 036,35` |
 | 15 | [2028–2029] TVA nette mensuelle = collectée − déductible (12 mois) | ✅ | `12/12 mois OK` |
@@ -152,7 +149,7 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | 24 | [2028–2029] Crédit TVA reporté mensuel = computeTVAMonthly (12 mois) | ✅ | `12/12 mois OK` |
 | 25 | Crédit final 2026–2027 reporté sur 2027–2028 (computeTVAMonthly) | ✅ | `finalCredit y1 = 0,00, initialCredit y2 = 0,00` |
 | 26 | [2026–2027] Balance TVA : àPayer + créditInit = tvaNet + créditFin | ❌ | `0,00 + 0,00 = 2 141,19 + 0,00 ⟹ 0,00 ≟ 2 141,19` |
-| 27 | [2027–2028] Balance TVA : àPayer + créditInit = tvaNet + créditFin | ❌ | `2 636,74 + 0,00 = 2 664,55 + 0,00 ⟹ 2 636,74 ≟ 2 664,55` |
+| 27 | [2027–2028] Balance TVA : àPayer + créditInit = tvaNet + créditFin | ❌ | `2 484,94 + 0,00 = 2 664,55 + 0,00 ⟹ 2 484,94 ≟ 2 664,55` |
 | 28 | [2028–2029] Balance TVA : àPayer + créditInit = tvaNet + créditFin | ✅ | `3 036,35 + 0,00 = 3 036,35 + 0,00 ⟹ 3 036,35 ≟ 3 036,35` |
 
 **Total : 23 OK, 5 KO sur 28 vérifications.**
@@ -166,8 +163,6 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Vente pizza | 9 480,00 | 9 954,00 | 10 451,70 |
 | Vente boisson | 600,00 | 630,00 | 661,50 |
 | Vente alcool | 839,40 | 881,37 | 925,44 |
-| Vente pizza (copie) | 9 085,00 | 9 539,25 | 10 016,21 |
-| Vente pizza (copie) (copie) | 9 875,00 | 10 368,75 | 10 887,19 |
 
 
 ## 5. Détail TVA déductible
@@ -187,10 +182,11 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Provision pour frais de greffe et journal (constitution société) | 0,00 | 0,00 | 0,00 |
 | Enseigne et communication | 200,00 | 0,00 | 0,00 |
 | Droit d'enregistrement | 0,00 | 0,00 | 0,00 |
-| Fond de commerce | 0,00 | 0,00 | 0,00 |
 | Caisse enregistreuse (airkitchen) | 177,80 | 0,00 | 0,00 |
+| Fond de commerce | 0,00 | 0,00 | 0,00 |
 | Meuble pizza | 244,60 | 0,00 | 0,00 |
 | Frais de garantie "BPI" | 0,00 | 0,00 | 0,00 |
+| Formation HACCP | 151,80 | 0,00 | 0,00 |
 
 
 ### 5b. Achats de matières
@@ -201,8 +197,6 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Vente pizza | 1 468,73 | 1 478,81 | 1 555,16 |
 | Vente boisson | 121,46 | 120,37 | 127,59 |
 | Vente alcool | 310,22 | 304,90 | 324,55 |
-| Vente pizza (copie) | 1 407,63 | 1 417,10 | 1 490,36 |
-| Vente pizza (copie) (copie) | 1 529,83 | 1 540,52 | 1 619,96 |
 
 
 ### 5c. Charges externes
@@ -217,6 +211,11 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Produits d'entretiens | 120,00 | 122,40 | 124,85 |
 | Fournitures administratives | 90,00 | 91,80 | 93,64 |
 | Vetements de travail | 20,00 | 20,00 | 20,00 |
+| Frais divers | 100,00 | 102,00 | 104,04 |
+| Déplacements | 40,00 | 40,00 | 40,00 |
+| Abonnement logiciel de caisse (airkitchen) | 162,00 | 162,00 | 162,00 |
+| Services bancaires | 116,80 | 119,14 | 121,52 |
+| Frais titre restaurant | 79,00 | 82,95 | 87,10 |
 | Commission CB | 0,00 | 0,00 | 0,00 |
 | offerts | 493,75 | 518,44 | 544,36 |
 | Location immobilière | 3 025,20 | 3 025,20 | 3 025,20 |
@@ -227,11 +226,6 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Honoraires comptable et juridiques | 560,00 | 571,20 | 582,62 |
 | Honoraires juridiques | 120,00 | 126,00 | 132,30 |
 | Publicité, publications | 200,00 | 100,00 | 100,00 |
-| Frais divers | 100,00 | 102,00 | 104,04 |
-| Déplacements | 40,00 | 40,00 | 40,00 |
-| Abonnement logiciel de caisse (airkitchen) | 162,00 | 162,00 | 162,00 |
-| Services bancaires | 116,80 | 119,14 | 121,52 |
-| Frais titre restaurant | 79,00 | 82,95 | 87,10 |
 
 
 ## 6. Récapitulatif
@@ -240,7 +234,7 @@ Toutes les valeurs sont calculées via **les mêmes fonctions que l'application*
 | Exercice | TVA collectée (€) | TVA déductible (€) | TVA nette (€) | TVA à payer (€) | Crédit final (€) |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | 2026–2027 | 10 919,40 | 8 778,21 | 2 141,19 | 0,00 | **0,00** |
-| 2027–2028 | 11 465,37 | 8 800,82 | 2 664,55 | 2 636,74 | **0,00** |
+| 2027–2028 | 11 465,37 | 8 800,82 | 2 664,55 | 2 484,94 | **0,00** |
 | 2028–2029 | 12 038,64 | 9 002,29 | 3 036,35 | 3 036,35 | **0,00** |
 
 **Score : 23/28 checks OK — ⚠ 5 anomalie(s) détectée(s)**

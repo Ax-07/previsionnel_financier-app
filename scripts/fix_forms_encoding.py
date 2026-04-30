@@ -1,11 +1,5 @@
-"""Fix UTF-8/CP1252 mojibake in all .ts files under src/app/actions/controle.
-
-Strategy: process text char-by-char, trying to re-encode sequences of length
-3, 2, then 1 as cp1252 and decode as utf-8.  Chars that can't encode to cp1252
-(already-correct Unicode like box-drawing U+2500) are kept as-is.
-"""
+"""Fix UTF-8/CP1252 mojibake in form TSX files."""
 import os
-import glob
 
 
 def fix_mojibake(text: str) -> str:
@@ -34,14 +28,12 @@ def fix_mojibake(text: str) -> str:
     return "".join(result)
 
 
-folder = r"e:\Projet Nextjs\Clone RCA previsionnel\previsionnel-app\src\components\charts"
-
-patterns = ["*.ts", "*.tsx"]
-files = []
-for pattern in patterns:
-    files.extend(glob.glob(os.path.join(folder, pattern)))
-
-files = sorted(files)
+base = r"e:\Projet Nextjs\Clone RCA previsionnel\previsionnel-app\src\components\app\forms"
+files = [
+    os.path.join(base, "charges", "charges-form.tsx"),
+    os.path.join(base, "autres-charges", "autres-charges-form.tsx"),
+    os.path.join(base, "autres-produits", "autres-produits-form.tsx"),
+]
 
 for path in files:
     with open(path, "r", encoding="utf-8") as f:
@@ -52,4 +44,4 @@ for path in files:
             f.write(fixed)
         print(f"CORRIGE: {os.path.basename(path)}")
     else:
-        print(f"OK: {os.path.basename(path)}")
+        print(f"OK (pas de changement): {os.path.basename(path)}")
