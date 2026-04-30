@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Modal Détail Rémunération Salarié
@@ -31,6 +31,7 @@ import {
   type DetailMensuelExercice,
 } from "@/lib/schemas/personnel";
 import { numVal } from "@/lib/utils";
+import { formatNumber } from "@/lib/format";
 import type {
   ExerciceCalendrierEntry,
   ExerciceConfig,
@@ -147,11 +148,6 @@ function buildExercicesConfig(
   };
 }
 
-// ── Constantes ────────────────────────────────────────────────────────────────
-
-function fmt(v: number) {
-  return v.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-}
 
 /**
  * Reporte le détail mensuel d'un exercice source vers un exercice cible.
@@ -295,7 +291,7 @@ function TableauMensuel({
                   />
                 </td>
                 <td className="px-2 py-1.5 text-right tabular-nums text-sm text-muted-foreground">
-                  {total > 0 ? fmt(total) : "—"}
+                  {total > 0 ? formatNumber(total) : "—"}
                 </td>
               </tr>
             );
@@ -318,7 +314,7 @@ function TableauMensuel({
                   Répartir uniformément
                 </Button>
                 <span className="text-xs font-semibold text-muted-foreground mr-1">
-                  Total : <span className="text-foreground font-bold tabular-nums">{fmt(totalAnnuel)} €</span>
+                  Total : <span className="text-foreground font-bold tabular-nums">{formatNumber(totalAnnuel)} €</span>
                 </span>
               </div>
             </td>
@@ -402,16 +398,18 @@ export function ModalDetailSalarie({
   );
 
   const handleApply = useCallback(() => {
-    // Les montants annuels sont toujours recalculés depuis le total du détail mensuel
+    // Les montants annuels sont toujours recalculés depuis le total du détail mensuel.
+    // Si le total est nul, on n'enregistre pas le détail (évite un détail stale à zéro
+    // qui bloquerait le calcul si l'utilisateur modifie montantN directement ensuite).
     const patch: Partial<LigneSalarieRow> = {
       hasCommission,
       hasPrime,
       cotisationConges,
       tauxCotSal,
       tauxCotPat,
-      detailMensuelN: detailN,
-      detailMensuelN1: detailN1,
-      detailMensuelN2: detailN2,
+      detailMensuelN:  totalN  > 0 ? detailN  : undefined,
+      detailMensuelN1: totalN1 > 0 ? detailN1 : undefined,
+      detailMensuelN2: totalN2 > 0 ? detailN2 : undefined,
       montantN: totalN,
       montantN1: totalN1,
       montantN2: totalN2,
@@ -532,7 +530,7 @@ export function ModalDetailSalarie({
                   Exercice N
                   {totalN > 0 && (
                     <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">
-                      ({fmt(totalN)} €)
+                      ({formatNumber(totalN)} €)
                     </span>
                   )}
                 </TabsTrigger>
@@ -540,7 +538,7 @@ export function ModalDetailSalarie({
                   Exercice N+1
                   {totalN1 > 0 && (
                     <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">
-                      ({fmt(totalN1)} €)
+                      ({formatNumber(totalN1)} €)
                     </span>
                   )}
                 </TabsTrigger>
@@ -548,7 +546,7 @@ export function ModalDetailSalarie({
                   Exercice N+2
                   {totalN2 > 0 && (
                     <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">
-                      ({fmt(totalN2)} €)
+                      ({formatNumber(totalN2)} €)
                     </span>
                   )}
                 </TabsTrigger>
@@ -622,3 +620,4 @@ export function ModalDetailSalarie({
     </Dialog>
   );
 }
+

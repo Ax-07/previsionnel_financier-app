@@ -40,7 +40,7 @@ export function PersonnelForm({
   exercices,
 }: PersonnelFormProps) {
   return (
-    <div className="flex flex-col h-full gap-10 overflow-y-auto">
+    <div className="h-full space-y-10 overflow-y-auto py-8 px-32">
       <ParamsGlobauxSection dossierId={dossierId} />
       <TableauSalaries dossierId={dossierId} initialData={salaries} dateDebutExerciceN={dateDebutExerciceN} exercices={exercices} />
       <TableauDirigeant dossierId={dossierId} initialData={dirigeants} dateDebutExerciceN={dateDebutExerciceN} exercices={exercices} />

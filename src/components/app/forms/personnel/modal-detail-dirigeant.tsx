@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Modal Détail Rémunération Dirigeant
@@ -27,6 +27,7 @@ import {
   type DetailMensuelExercice,
 } from "@/lib/schemas/personnel";
 import { numVal } from "@/lib/utils";
+import { formatNumber } from "@/lib/format";
 import type {
   ExerciceCalendrierEntry,
   ExerciceConfig,
@@ -144,10 +145,6 @@ function initDetailFromMontant(
 }
 
 // ── Constantes ────────────────────────────────────────────────────────────────
-
-function fmt(v: number) {
-  return v.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-}
 
 /** Somme des montants mensuels d'un exercice (effectif × brut ou montant direct). */
 function totalFromDetail(detail: DetailMensuelExercice): number {
@@ -273,7 +270,7 @@ function TableauMensuel({
                   Répartir uniformément
                 </Button>
                 <span className="text-xs font-semibold mr-1">
-                  Total : <span className="text-primary font-bold tabular-nums">{fmt(totalAnnuel)} €</span>
+                  Total : <span className="text-primary font-bold tabular-nums">{formatNumber(totalAnnuel)} €</span>
                 </span>
               </div>
             </td>
@@ -322,11 +319,13 @@ export function ModalDetailDirigeant({
   const hasDetailN2 = totalN2 > 0;
 
   const handleApply = useCallback(() => {
-    // Les montants annuels sont toujours recalculés depuis le total du détail mensuel
+    // Les montants annuels sont toujours recalculés depuis le total du détail mensuel.
+    // Si le total est nul, on n'enregistre pas le détail (évite un détail stale à zéro
+    // qui bloquerait le calcul si l'utilisateur modifie montantN directement ensuite).
     const patch: Partial<LigneDirigeantRow> = {
-      detailMensuelN:  detailN,
-      detailMensuelN1: detailN1,
-      detailMensuelN2: detailN2,
+      detailMensuelN:  totalN  > 0 ? detailN  : undefined,
+      detailMensuelN1: totalN1 > 0 ? detailN1 : undefined,
+      detailMensuelN2: totalN2 > 0 ? detailN2 : undefined,
       montantN:  totalN,
       montantN1: totalN1,
       montantN2: totalN2,
@@ -351,7 +350,7 @@ export function ModalDetailDirigeant({
               Exercice N
               {hasDetailN && (
                 <Badge variant="secondary" className="h-4 px-1 text-[10px]">
-                  {fmt(totalN)} €
+                  {formatNumber(totalN)} €
                 </Badge>
               )}
             </TabsTrigger>
@@ -359,7 +358,7 @@ export function ModalDetailDirigeant({
               Exercice N+1
               {hasDetailN1 && (
                 <Badge variant="secondary" className="h-4 px-1 text-[10px]">
-                  {fmt(totalN1)} €
+                  {formatNumber(totalN1)} €
                 </Badge>
               )}
             </TabsTrigger>
@@ -367,7 +366,7 @@ export function ModalDetailDirigeant({
               Exercice N+2
               {hasDetailN2 && (
                 <Badge variant="secondary" className="h-4 px-1 text-[10px]">
-                  {fmt(totalN2)} €
+                  {formatNumber(totalN2)} €
                 </Badge>
               )}
             </TabsTrigger>
@@ -396,3 +395,4 @@ export function ModalDetailDirigeant({
     </Dialog>
   );
 }
+

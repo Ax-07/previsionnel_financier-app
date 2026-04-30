@@ -9,6 +9,7 @@ import { Loader2, Plus, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "@/lib/format";
 import { filterByHypothese } from "@/lib/schemas/hypothese";
 import { useHypotheseStore } from "@/stores/hypothese-store";
 import type { LigneSalarieRow } from "@/lib/schemas/personnel";
@@ -22,11 +23,6 @@ export const cellSelect =
   "h-7 w-full border-0 bg-transparent px-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none cursor-pointer";
 
 // ── Helpers de formatage et de calcul ────────────────────────────────────────
-
-/** Formate un nombre en locale fr-FR sans décimales superflues. */
-export function fmt(v: number) {
-  return v.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-}
 
 /** Applique un taux d'évolution (en %) à un montant et arrondit à 2 décimales. */
 export function applyEvolution(montant: number, evol: number): number {
@@ -150,11 +146,11 @@ export function TotauxRow({
         <td colSpan={colSpanBefore} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
           Total (actifs)
         </td>
-        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(totalN)}</td>
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{formatNumber(totalN, 0)}</td>
         <td />
-        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(totalN1)}</td>
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{formatNumber(totalN1, 0)}</td>
         <td />
-        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(totalN2)}</td>
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{formatNumber(totalN2, 0)}</td>
         <td colSpan={4} />
       </tr>
     </tfoot>
@@ -180,33 +176,33 @@ export function TotauxSalariesRow({ rows, dossierId }: { rows: LigneSalarieRow[]
         <td colSpan={5} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
           Total brut (actifs)
         </td>
-        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(totalN)}</td>
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{formatNumber(totalN,0)}</td>
         <td />
-        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(totalN1)}</td>
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{formatNumber(totalN1,0)}</td>
         <td />
-        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(totalN2)}</td>
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{formatNumber(totalN2,0)}</td>
         <td colSpan={4} />
       </tr>
       <tr className="border-t border-dashed border-border/50">
         <td colSpan={5} className="px-2 py-1.5 text-xs font-medium text-right text-muted-foreground">
           Charges patronales (calc.)
         </td>
-        <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-600 dark:text-amber-400">{fmt(patN)}</td>
+        <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-600 dark:text-amber-400">{formatNumber(patN,0)}</td>
         <td />
-        <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-600 dark:text-amber-400">{fmt(patN1)}</td>
+        <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-600 dark:text-amber-400">{formatNumber(patN1,0)}</td>
         <td />
-        <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-600 dark:text-amber-400">{fmt(patN2)}</td>
+        <td className="px-2 py-1.5 text-xs font-medium text-right tabular-nums text-amber-600 dark:text-amber-400">{formatNumber(patN2,0)}</td>
         <td colSpan={4} />
       </tr>
       <tr className="border-t border-border bg-muted/50">
         <td colSpan={5} className="px-2 py-1.5 text-xs font-bold text-right text-muted-foreground">
           Coût total employeur
         </td>
-        <td className="px-2 py-1.5 text-xs font-bold text-right tabular-nums">{fmt(totalN + patN)}</td>
+        <td className="px-2 py-1.5 text-xs font-bold text-right tabular-nums">{formatNumber(totalN + patN, 0)}</td>
         <td />
-        <td className="px-2 py-1.5 text-xs font-bold text-right tabular-nums">{fmt(totalN1 + patN1)}</td>
+        <td className="px-2 py-1.5 text-xs font-bold text-right tabular-nums">{formatNumber(totalN1 + patN1, 0)}</td>
         <td />
-        <td className="px-2 py-1.5 text-xs font-bold text-right tabular-nums">{fmt(totalN2 + patN2)}</td>
+        <td className="px-2 py-1.5 text-xs font-bold text-right tabular-nums">{formatNumber(totalN2 + patN2, 0)}</td>
         <td colSpan={4} />
       </tr>
     </tfoot>

@@ -134,8 +134,7 @@ export function SimulateurDrawer({
     const updatedRows = personnelStore.getDraft(dossierId).salaries;
     const result = await saveLignesSalaries(dossierId, updatedRows);
 
-    if (result.success) {
-      await useScenarioDataStore.getState().reload(dossierId);
+    if (result.success) {      personnelStore.markSalariesSaved(dossierId);      await useScenarioDataStore.getState().reload(dossierId);
       toast.success(
         `Taux patronal ${data.tauxCotPat.toFixed(2)} % appliqué à « ${libelle || "salarié"} » et sauvegardé.`,
       );
@@ -168,8 +167,7 @@ export function SimulateurDrawer({
     const updatedRows = personnelStore.getDraft(dossierId).salaries;
     const result = await saveLignesSalaries(dossierId, updatedRows);
 
-    if (result.success) {
-      await useScenarioDataStore.getState().reload(dossierId);
+    if (result.success) {      personnelStore.markSalariesSaved(dossierId);      await useScenarioDataStore.getState().reload(dossierId);
       toast.success(
         `Détail mensuel injecté pour « ${libelle || "salarié"} » — brut total N : ${data.montantN.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €.`,
       );

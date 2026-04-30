@@ -13,19 +13,18 @@ import { fetchMoisPaiementSalaires, saveMoisPaiementSalaires } from "@/app/actio
  * Seul paramètre global des salariés persistant en base.
  */
 export function ParamsGlobauxSection({ dossierId }: { dossierId: string }) {
-  const store = usePersonnelStore();
-  const moisPaiement = store.getDraft(dossierId).paramsGlobaux.moisPaiement;
+  const moisPaiement = usePersonnelStore(s => s.drafts[dossierId]?.paramsGlobaux?.moisPaiement ?? 0);
+  const updateParamsGlobaux = usePersonnelStore(s => s.updateParamsGlobaux);
 
   // Initialisation depuis la DB au montage
   useEffect(() => {
     fetchMoisPaiementSalaires(dossierId)
-      .then((v) => store.updateParamsGlobaux(dossierId, { moisPaiement: v }))
+      .then((v) => usePersonnelStore.getState().updateParamsGlobaux(dossierId, { moisPaiement: v }))
       .catch(() => null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dossierId]);
 
   function handleChange(value: number) {
-    store.updateParamsGlobaux(dossierId, { moisPaiement: value });
+    updateParamsGlobaux(dossierId, { moisPaiement: value });
     saveMoisPaiementSalaires(dossierId, value)
       .then((res) => { if (res.success) useScenarioDataStore.getState().reload(dossierId); })
       .catch(() => null);
