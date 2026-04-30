@@ -173,8 +173,8 @@ export default function BudgetTab({ dossierId }: BudgetTabProps) {
   }, [data, expandAll]);
 
   const handleCollapseAll = collapseAll;
-  const caTotal = data?.nodes.find((n) => n.key === "ca_total")?.values[activeYear]?.total ?? 0;
-  const resultatNet = data?.nodes.find((n) => n.key === "resultat_net")?.values[activeYear]?.total ?? 0;
+  const caTotal = data?.nodes.find((n) => n.key === "ca")?.values[activeYear]?.total ?? 0;
+  const resultatNet = data?.nodes.find((n) => n.key === "res_net")?.values[activeYear]?.total ?? 0;
   // ── Rendu ────────────────────────────────────────────────────────────────
 
   return (
