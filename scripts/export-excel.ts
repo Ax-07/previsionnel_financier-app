@@ -376,12 +376,8 @@ function writeSheetParametres(wb: ExcelJS.Workbook, data: SFD, y1L: string, y2L:
   addSectionHeader(sheet, "Paramètres fiscaux & sociaux", 2, C.HEADER);
   const fiscal: [string, string | number | undefined][] = [
     ["Régime fiscal", par?.regimeFiscal ?? "—"],
-    ["Taux IS normal", par?.tauxIs != null ? fmtPct(toNum(par.tauxIs)) : "—"],
-    ["Taux IS réduit", par?.tauxIsReduit != null ? fmtPct(toNum(par.tauxIsReduit)) : "—"],
-    ["Plafond IS réduit", par?.plafondIsReduit != null ? fmtNum(toNum(par.plafondIsReduit)) : "—"],
     ["Régime TVA", par?.regimeTVA ?? "—"],
     ["Périodicité déclaration TVA", par?.periodiciteDeclarationTVA ?? "—"],
-    ["Taux TVA standard", par?.tauxTvaStandard != null ? fmtPct(toNum(par.tauxTvaStandard)) : "—"],
     ["Mois paiement salaires", par?.moisPaiementSalaires ?? 1],
     ["Régime social TNS", par?.tnsRegimeSocial ?? "—"],
     ["Mode calcul TNS", par?.tnsModeCalcul ?? "—"],
