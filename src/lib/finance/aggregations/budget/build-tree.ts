@@ -224,7 +224,7 @@ export function buildBudgetTree(
       "Salaires bruts",
       mc.salairesBruts,
       "normal",
-      childSimpleNodes(data.salaries, "salaires_bruts"),
+      childSimpleNodes(data.salaries, "salaires_bruts", mc.moisDebut),
       data.salaries.length === 0,
     ),
 
@@ -244,7 +244,7 @@ export function buildBudgetTree(
       "Rémunération dirigeant",
       mc.remuDirigeant,
       "normal",
-      childSimpleNodes(data.dirigeants, "remunerations_dir"),
+      childSimpleNodes(data.dirigeants, "remunerations_dir", mc.moisDebut),
       data.dirigeants.length === 0,
     ),
 
@@ -253,7 +253,7 @@ export function buildBudgetTree(
       "Cotisations TNS",
       mc.cotisationsTNS,
       "normal",
-      childSimpleNodes(data.cotisationsTNS, "cotisations_tns"),
+      childSimpleNodes(data.cotisationsTNS, "cotisations_tns", mc.moisDebut),
       data.cotisationsTNS.length === 0,
     ),
 
@@ -262,7 +262,7 @@ export function buildBudgetTree(
       "Taxes assises sur les salaires",
       mc.taxesSalaires,
       "normal",
-      childSimpleNodes(data.taxesSalaires, "taxes_salaires"),
+      childSimpleNodes(data.taxesSalaires, "taxes_salaires", mc.moisDebut),
       data.taxesSalaires.length === 0,
     ),
 

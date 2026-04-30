@@ -107,18 +107,49 @@ export function childChargeNodes(
 }
 
 export function childSimpleNodes(
-  rows: { montantN: unknown; montantN1: unknown; montantN2: unknown; libelle: string; actif?: boolean | null }[],
+  rows: {
+    montantN: unknown;
+    montantN1: unknown;
+    montantN2: unknown;
+    libelle: string;
+    actif?: boolean | null;
+    detailMensuelN?: unknown;
+    detailMensuelN1?: unknown;
+    detailMensuelN2?: unknown;
+  }[],
   parentKey: string,
+  moisDebut = 0,
 ): BudgetNode[] {
   const nv = (v: unknown) => Number(v ?? 0);
+
+  function parseDetailMensuel(json: unknown): { effectif: number[]; brutIndividuel: number[] } | null {
+    if (!json || typeof json !== "object") return null;
+    const obj = json as Record<string, unknown>;
+    if (!Array.isArray(obj["effectif"]) || !Array.isArray(obj["brutIndividuel"])) return null;
+    if ((obj["effectif"] as unknown[]).length < 12 || (obj["brutIndividuel"] as unknown[]).length < 12) return null;
+    return { effectif: obj["effectif"] as number[], brutIndividuel: obj["brutIndividuel"] as number[] };
+  }
+
+  function detailOrUniform(json: unknown, fallbackTotal: number): MonthlySeries {
+    const detail = parseDetailMensuel(json);
+    if (!detail) return Array(12).fill(fallbackTotal / 12) as MonthlySeries;
+    // Sécurité : détail entièrement à zéro mais montant non nul → répartition uniforme
+    const detailTotal = detail.brutIndividuel.reduce((s, v) => s + v, 0);
+    if (detailTotal === 0 && fallbackTotal > 0) return Array(12).fill(fallbackTotal / 12) as MonthlySeries;
+    return Array.from({ length: 12 }, (_, i) => {
+      const m = (moisDebut + i) % 12;
+      return (detail.effectif[m] ?? 0) * (detail.brutIndividuel[m] ?? 0);
+    }) as MonthlySeries;
+  }
+
   return rows
     .filter((r) => r.actif !== false)
     .filter((r) => nv(r.montantN) !== 0 || nv(r.montantN1) !== 0 || nv(r.montantN2) !== 0)
     .map((r, i) => {
       const series: MonthlyAcc = {
-        y1: Array(12).fill(nv(r.montantN) / 12) as MonthlySeries,
-        y2: Array(12).fill(nv(r.montantN1) / 12) as MonthlySeries,
-        y3: Array(12).fill(nv(r.montantN2) / 12) as MonthlySeries,
+        y1: detailOrUniform(r.detailMensuelN, nv(r.montantN)),
+        y2: detailOrUniform(r.detailMensuelN1, nv(r.montantN1)),
+        y3: detailOrUniform(r.detailMensuelN2, nv(r.montantN2)),
       };
       return budgetNode(`${parentKey}_c${i}`, r.libelle, series, "normal", undefined, true);
     });
