@@ -8,7 +8,7 @@
 
 import { useCallback, useTransition, useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Save, Loader2, FileText, CheckIcon, Copy } from "lucide-react";
+import { Plus, Save, Loader2, FileText, CheckIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,6 +30,10 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { cn, numVal } from "@/lib/utils";
+
+import { GroupedDndTable } from "@/components/ui/grouped-dnd-table";
+import { useGroupedDnd } from "@/hooks/use-grouped-dnd";
+import { DragHandleCell, SortableTableRow } from "@/components/ui/sortable-table-row";
 
 import {
   TYPES_APPORT,
@@ -62,102 +66,14 @@ import {
 } from "@/stores/financement-store";
 
 import { resumeEmprunt } from "@/lib/calcul/echeancier";
+import { formatEur, formatDate } from "@/lib/format";
+import { cellInput, cellSelect } from "./helpers/cell-styles";
+import { SectionHeader } from "./helpers/section-header";
+import { intVal, tempId, ThBordered as Th, TdBordered as Td } from "./helpers/table-helpers";
+import { RowActions } from "./helpers/row-actions";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const cellInput =
-  "h-7 w-full border-0 bg-transparent px-1 text-xs focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none min-w-0";
-
-const cellSelect =
-  "h-7 w-full border-0 bg-transparent px-1 text-xs focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none cursor-pointer";
-
-function intVal(v: string): number {
-  const n = parseInt(v, 10);
-  return isNaN(n) ? 0 : n;
-}
-
-function tempId() {
-  return `__new__${crypto.randomUUID()}`;
-}
-
-function fmtEur(n: number) {
-  return n.toLocaleString("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 });
-}
-
-function fmtDate(dateStr: string) {
-  if (!dateStr) return "—";
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("fr-FR");
-}
-
-// ── Sous-composants ───────────────────────────────────────────────────────────
-
-function SectionHeader({
-  title,
-  description,
-  isDirty,
-  isSaving,
-  onAdd,
-  onSave,
-}: {
-  title: string;
-  description: string;
-  isDirty: boolean;
-  isSaving: boolean;
-  onAdd: () => void;
-  onSave: () => void;
-}) {
-  return (
-    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between pb-3 border-b">
-      <div>
-        <h3 className="text-base font-semibold leading-snug">{title}</h3>
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </div>
-      <div className="flex items-center gap-2">
-        {isDirty && (
-          <Badge variant="outline" className="text-amber-600 border-amber-400 text-xs gap-1">
-            Modifications non enregistrées
-          </Badge>
-        )}
-        {isDirty && (
-          <Button
-            size="sm"
-            variant="default"
-            className="h-7 gap-1 text-xs"
-            onClick={onSave}
-            disabled={isSaving}
-          >
-            {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-            Enregistrer
-          </Button>
-        )}
-        <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={onAdd}>
-          <Plus className="h-3 w-3" />
-          Ajouter
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function Th({ children, className }: { children?: React.ReactNode; className?: string }) {
-  return (
-    <th className={cn(
-      "border-r border-border last:border-r-0 px-1.5 py-1.5 text-left text-xs font-medium text-muted-foreground whitespace-nowrap",
-      className
-    )}>
-      {children}
-    </th>
-  );
-}
-
-function Td({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <td className={cn("border-r border-border last:border-r-0 p-0 align-middle", className)}>
-      {children}
-    </td>
-  );
-}
+const fmtEur = (n: number) => formatEur(n);
+const fmtDate = (dateStr: string) => dateStr ? formatDate(dateStr) : "—";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODAL DÉTAILS EMPRUNT — FORMULAIRE ÉDITABLE
@@ -532,7 +448,11 @@ function TableauApports({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dossierId]);
 
-  const rows    = _storeRows ?? initialData.map((d) => ({ ...d, _dirty: false }));
+  const fallbackApports = useMemo(
+    () => initialData.map((d) => ({ ...d, _dirty: false })),
+    [initialData]
+  )
+  const rows    = _storeRows ?? fallbackApports;
   const setRows = useCallback(
     (updater: (prev: LocalApport[]) => LocalApport[]) => setApports(dossierId, updater),
     [dossierId, setApports]
@@ -555,7 +475,37 @@ function TableauApports({
         hypothese:    "COMMUNE" as const,
         actif:        true,
         ordre:        prev.length,
+        groupe:       undefined,
         _dirty:       true,
+      } satisfies LocalApport,
+    ]);
+  }, [setRows, dateDebutExerciceN]);
+
+  const addGroupe = useCallback(() => {
+    const existing = new Set(rows.filter((r) => r.groupe).map((r) => r.groupe!));
+    let n = 1;
+    while (existing.has(`Groupe ${n}`)) n++;
+    const name = `Groupe ${n}`;
+    setRows((prev) => [
+      ...prev,
+      {
+        id: tempId(), libelle: "", type: "CAPITAL", montant: 0,
+        dateApport: dateDebutExerciceN ?? new Date().toISOString().slice(0, 10),
+        remboursable: false, hypothese: "COMMUNE" as const,
+        actif: true, ordre: 0, groupe: name, _dirty: true,
+      } satisfies LocalApport,
+    ]);
+  }, [rows, setRows, dateDebutExerciceN]);
+
+  const addRowToGroupe = useCallback((g: string) => {
+    setRows((prev) => [
+      ...prev,
+      {
+        id: tempId(), libelle: "", type: "CAPITAL", montant: 0,
+        dateApport: dateDebutExerciceN ?? new Date().toISOString().slice(0, 10),
+        remboursable: false, hypothese: "COMMUNE" as const,
+        actif: true, ordre: prev.filter((r) => r.groupe === g).length,
+        groupe: g, _dirty: true,
       } satisfies LocalApport,
     ]);
   }, [setRows, dateDebutExerciceN]);
@@ -639,6 +589,76 @@ function TableauApports({
   const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
   const totalApports = filterByHypothese(rows, hypotheseActive).reduce((sum, r) => sum + (r.actif !== false ? r.montant : 0), 0);
 
+  const dnd = useGroupedDnd({ rows, setRows });
+
+  const renderRow = useCallback((row: LocalApport & { id: string }, isLastInGroup = false) => {
+    const idx = rows.findIndex((r) => r.id === row.id);
+    return (
+      <SortableTableRow
+        key={row.id}
+        id={row.id}
+        className={cn(
+          "border-t border-border border-l-2 border-l-transparent bg-background hover:bg-muted/30 transition-colors",
+          row.groupe && "border-l-primary/20 bg-primary/5 hover:bg-primary/10",
+          row.groupe && isLastInGroup && "border-b-2 border-b-primary/20",
+          row._dirty && "bg-amber-50/40 dark:bg-amber-900/10",
+          !(row.actif ?? true) && "opacity-50"
+        )}
+      >
+        <DragHandleCell />
+        <Td className="text-center text-xs text-muted-foreground px-1">{idx + 1}</Td>
+        <Td className="text-center px-1">
+          <input
+            type="checkbox"
+            checked={row.actif ?? true}
+            onChange={(e) => updateRow(idx, "actif", e.target.checked)}
+            className="h-3.5 w-3.5 cursor-pointer accent-primary"
+          />
+        </Td>
+        <Td>
+          <input className={cellInput} value={row.libelle} placeholder="Libellé"
+            onChange={(e) => updateRow(idx, "libelle", e.target.value)} />
+        </Td>
+        <Td>
+          <select className={cellSelect} value={row.hypothese}
+            onChange={(e) => updateRow(idx, "hypothese", e.target.value as ApportRow["hypothese"])}>
+            {HYPOTHESE_TYPE_OPTIONS.map((h) => (
+              <option key={h.value} value={h.value} className="bg-background text-foreground">{h.label}</option>
+            ))}
+          </select>
+        </Td>
+        <Td>
+          <select className={cellSelect} value={row.type}
+            onChange={(e) => updateRow(idx, "type", e.target.value as ApportRow["type"])}>
+            {TYPES_APPORT.map((t) => (
+              <option key={t.value} value={t.value} className="bg-background text-foreground">{t.label}</option>
+            ))}
+          </select>
+        </Td>
+        <Td>
+          <input type="date" className={cellInput} value={row.dateApport}
+            onChange={(e) => updateRow(idx, "dateApport", e.target.value)} />
+        </Td>
+        <Td>
+          <input type="number" min={0} step={0.01}
+            className={cn(cellInput, "text-right")}
+            value={row.montant === 0 ? "" : row.montant} placeholder="0"
+            onChange={(e) => updateRow(idx, "montant", numVal(e.target.value))} />
+        </Td>
+        <Td className="text-center px-1">
+          <input type="checkbox" checked={row.remboursable ?? false}
+            disabled={row.type !== "COMPTE_COURANT"}
+            onChange={(e) => updateRow(idx, "remboursable", e.target.checked)}
+            className="h-3.5 w-3.5 cursor-pointer accent-primary disabled:opacity-30"
+            title={row.type !== "COMPTE_COURANT" ? "Option disponible uniquement pour les CCA" : ""} />
+        </Td>
+        <Td className="text-center">
+          <RowActions onDuplicate={() => duplicateRow(idx)} onDelete={() => removeRow(idx)} isPending={isPending} />
+        </Td>
+      </SortableTableRow>
+    );
+  }, [rows, isPending, updateRow, duplicateRow, removeRow]);
+
   return (
     <div className="space-y-3">
       <SectionHeader
@@ -648,134 +668,19 @@ function TableauApports({
         isSaving={isPending}
         onAdd={addRow}
         onSave={saveAll}
+        onAddGroup={addGroupe}
       />
-      <div className="overflow-x-auto rounded border border-border">
-        <table className="w-full text-sm border-collapse">
-          <thead className="bg-muted/50">
-            <tr>
-              <Th className="w-8">#</Th>
-              <Th className="w-8 text-center">Actif</Th>
-              <Th className="min-w-48">Libellé</Th>
-              <Th className="w-28">Hypothèse</Th>
-              <Th className="w-40">Type</Th>
-              <Th className="w-32">Date</Th>
-              <Th className="w-28">Montant (€)</Th>
-              <Th className="w-28 text-center">Remboursable</Th>
-              <Th className="w-8"></Th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={9} className="text-center text-muted-foreground text-xs py-6">
-                  Aucun apport. Cliquez sur « Ajouter » pour commencer.
-                </td>
-              </tr>
-            )}
-            {rows.map((row, idx) => (
-              <tr
-                key={row.id}
-                className={cn(
-                  "border-t border-border bg-background hover:bg-muted/30 transition-colors",
-                  row._dirty && "bg-amber-50/40 dark:bg-amber-900/10",
-                  !(row.actif ?? true) && "opacity-50"
-                )}
-              >
-                <Td className="text-center text-xs text-muted-foreground px-1">{idx + 1}</Td>
-                <Td className="text-center px-1">
-                  <input
-                    type="checkbox"
-                    checked={row.actif ?? true}
-                    onChange={(e) => updateRow(idx, "actif", e.target.checked)}
-                    className="h-3.5 w-3.5 cursor-pointer accent-primary"
-                  />
-                </Td>
-                <Td>
-                  <input
-                    className={cellInput}
-                    value={row.libelle}
-                    placeholder="Libellé"
-                    onChange={(e) => updateRow(idx, "libelle", e.target.value)}
-                  />
-                </Td>
-                <Td>
-                  <select
-                    className={cellSelect}
-                    value={row.hypothese}
-                    onChange={(e) => updateRow(idx, "hypothese", e.target.value as ApportRow["hypothese"])}
-                  >
-                    {HYPOTHESE_TYPE_OPTIONS.map((h) => (
-                      <option key={h.value} value={h.value} className="bg-background text-foreground">{h.label}</option>
-                    ))}
-                  </select>
-                </Td>
-                <Td>
-                  <select
-                    className={cellSelect}
-                    value={row.type}
-                    onChange={(e) => updateRow(idx, "type", e.target.value as ApportRow["type"])}
-                  >
-                    {TYPES_APPORT.map((t) => (
-                      <option key={t.value} value={t.value} className="bg-background text-foreground">
-                        {t.label}
-                      </option>
-                    ))}
-                  </select>
-                </Td>
-                <Td>
-                  <input
-                    type="date"
-                    className={cellInput}
-                    value={row.dateApport}
-                    onChange={(e) => updateRow(idx, "dateApport", e.target.value)}
-                  />
-                </Td>
-                <Td>
-                  <input
-                    type="number" min={0} step={0.01}
-                    className={cn(cellInput, "text-right")}
-                    value={row.montant === 0 ? "" : row.montant}
-                    placeholder="0"
-                    onChange={(e) => updateRow(idx, "montant", numVal(e.target.value))}
-                  />
-                </Td>
-                <Td className="text-center px-1">
-                  <input
-                    type="checkbox"
-                    checked={row.remboursable ?? false}
-                    disabled={row.type !== "COMPTE_COURANT"}
-                    onChange={(e) => updateRow(idx, "remboursable", e.target.checked)}
-                    className="h-3.5 w-3.5 cursor-pointer accent-primary disabled:opacity-30"
-                    title={row.type !== "COMPTE_COURANT" ? "Option disponible uniquement pour les CCA" : ""}
-                  />
-                </Td>
-                <Td className="text-center">
-                  <div className="flex items-center justify-center gap-0.5">
-                    <button
-                      className="p-1 text-muted-foreground hover:text-primary transition-colors"
-                      onClick={() => duplicateRow(idx)}
-                      title="Dupliquer"
-                      disabled={isPending}
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                      onClick={() => removeRow(idx)}
-                      title="Supprimer"
-                      disabled={isPending}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-          {rows.length > 0 && (
+      <GroupedDndTable
+        dnd={dnd}
+        colSpan={10}
+        onAddRowToGroupe={addRowToGroupe}
+        renderRow={renderRow}
+        emptyMessage="Aucun apport. Cliquez sur « Ajouter » pour commencer."
+        footer={
+          rows.length > 0 ? (
             <tfoot className="border-t border-border bg-muted/50">
               <tr>
-                <td colSpan={6} className="text-right text-xs font-medium text-muted-foreground px-2 py-1.5">
+                <td colSpan={7} className="text-right text-xs font-medium text-muted-foreground px-2 py-1.5">
                   Total apports actifs
                 </td>
                 <td className="text-right text-xs font-semibold px-2 py-1.5 tabular-nums">
@@ -784,9 +689,24 @@ function TableauApports({
                 <td colSpan={2}></td>
               </tr>
             </tfoot>
-          )}
-        </table>
-      </div>
+          ) : undefined
+        }
+      >
+        <thead className="bg-muted/50">
+          <tr>
+            <Th className="w-7"></Th>
+            <Th className="w-8">#</Th>
+            <Th className="w-8 text-center">Actif</Th>
+            <Th className="min-w-48">Libellé</Th>
+            <Th className="w-28">Hypothèse</Th>
+            <Th className="w-40">Type</Th>
+            <Th className="w-32">Date</Th>
+            <Th className="w-28">Montant (€)</Th>
+            <Th className="w-28 text-center">Remboursable</Th>
+            <Th className="w-8"></Th>
+          </tr>
+        </thead>
+      </GroupedDndTable>
     </div>
   );
 }
@@ -845,8 +765,44 @@ function TableauEmprunts({
         hypothese:             "COMMUNE" as const,
         actif:                 true,
         ordre:                 prev.length,
+        groupe:                undefined,
         lignesEcheancier:      [],
         _dirty:                true,
+      } satisfies LocalEmprunt,
+    ]);
+  }, [setRows, dateDebutExerciceN]);
+
+  const addGroupe = useCallback(() => {
+    const existing = new Set(rows.filter((r) => r.groupe).map((r) => r.groupe!));
+    let n = 1;
+    while (existing.has(`Groupe ${n}`)) n++;
+    const name = `Groupe ${n}`;
+    setRows((prev) => [
+      ...prev,
+      {
+        id: tempId(), libelle: "", montant: 0, tauxAnnuel: 3.5, tauxAssurance: 0.3,
+        dureeEnMois: 84, periodicite: "MENSUEL",
+        dateDéblocage: dateDebutExerciceN ?? new Date().toISOString().slice(0, 10),
+        typeEmprunt: "AMORTISSABLE", modaliteRemboursement: "ECHEANCE_CONSTANTE",
+        typeDiffere: "AUCUN", dureeDiffereEnMois: 0, modeAssurance: "CAPITAL_RESTANT",
+        fraisDossier: 0, hypothese: "COMMUNE" as const, actif: true,
+        ordre: 0, groupe: name, lignesEcheancier: [], _dirty: true,
+      } satisfies LocalEmprunt,
+    ]);
+  }, [rows, setRows, dateDebutExerciceN]);
+
+  const addRowToGroupe = useCallback((g: string) => {
+    setRows((prev) => [
+      ...prev,
+      {
+        id: tempId(), libelle: "", montant: 0, tauxAnnuel: 3.5, tauxAssurance: 0.3,
+        dureeEnMois: 84, periodicite: "MENSUEL",
+        dateDéblocage: dateDebutExerciceN ?? new Date().toISOString().slice(0, 10),
+        typeEmprunt: "AMORTISSABLE", modaliteRemboursement: "ECHEANCE_CONSTANTE",
+        typeDiffere: "AUCUN", dureeDiffereEnMois: 0, modeAssurance: "CAPITAL_RESTANT",
+        fraisDossier: 0, hypothese: "COMMUNE" as const, actif: true,
+        ordre: prev.filter((r) => r.groupe === g).length, groupe: g,
+        lignesEcheancier: [], _dirty: true,
       } satisfies LocalEmprunt,
     ]);
   }, [setRows, dateDebutExerciceN]);
@@ -962,6 +918,98 @@ function TableauEmprunts({
   const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
   const totalEmprunts = filterByHypothese(rows, hypotheseActive).reduce((sum, r) => sum + (r.actif !== false ? r.montant : 0), 0);
 
+  const dnd = useGroupedDnd({ rows, setRows });
+
+  const renderRow = useCallback((row: LocalEmprunt & { id: string }, isLastInGroup = false) => {
+    const idx = rows.findIndex((r) => r.id === row.id);
+    const loyer = calculerLoyerMensuel(row);
+    const { echeanceMoyenne, premierRembourement } = resumeEmprunt({ ...row, fraisDossier: row.fraisDossier });
+    const nbPeriodes = nbPeriodesFromMois(row.dureeEnMois, row.periodicite);
+    return (
+      <SortableTableRow
+        key={row.id}
+        id={row.id}
+        className={cn(
+          "border-t border-border border-l-2 border-l-transparent bg-background hover:bg-muted/30 transition-colors",
+          row.groupe && "border-l-primary/20 bg-primary/5 hover:bg-primary/10",
+          row.groupe && isLastInGroup && "border-b-2 border-b-primary/20",
+          row._dirty && "bg-amber-50/40 dark:bg-amber-900/10",
+          !(row.actif ?? true) && "opacity-50"
+        )}
+      >
+        <DragHandleCell />
+        <Td className="text-center text-xs text-muted-foreground px-1">{idx + 1}</Td>
+        <Td className="text-center px-1">
+          <input type="checkbox" checked={row.actif ?? true}
+            onChange={(e) => updateRow(idx, "actif", e.target.checked)}
+            className="h-3.5 w-3.5 cursor-pointer accent-primary" />
+        </Td>
+        <Td>
+          <input className={cellInput} value={row.libelle} placeholder="Libellé"
+            onChange={(e) => updateRow(idx, "libelle", e.target.value)} />
+        </Td>
+        <Td>
+          <select className={cellSelect} value={row.hypothese}
+            onChange={(e) => updateRow(idx, "hypothese", e.target.value as EmpruntRow["hypothese"])}>
+            {HYPOTHESE_TYPE_OPTIONS.map((h) => (
+              <option key={h.value} value={h.value} className="bg-background text-foreground">{h.label}</option>
+            ))}
+          </select>
+        </Td>
+        <Td className="text-center px-1">
+          <button className="p-1 text-muted-foreground hover:text-primary transition-colors"
+            title="Voir les détails" onClick={() => setModalEmprunt(row)} disabled={isPending}>
+            <FileText className="h-3.5 w-3.5" />
+          </button>
+        </Td>
+        <Td>
+          <input type="date" className={cellInput} value={row.dateDéblocage}
+            onChange={(e) => updateRow(idx, "dateDéblocage", e.target.value)} />
+        </Td>
+        <Td>
+          <input type="number" min={0} step={0.01} className={cn(cellInput, "text-right")}
+            value={row.montant === 0 ? "" : row.montant} placeholder="0"
+            onChange={(e) => updateRow(idx, "montant", numVal(e.target.value))} />
+        </Td>
+        <Td>
+          <input type="number" min={1} step={1} className={cn(cellInput, "text-right")}
+            value={row.dureeEnMois}
+            onChange={(e) => updateRow(idx, "dureeEnMois", intVal(e.target.value))} />
+        </Td>
+        <Td>
+          <input type="number" min={0} max={100} step={0.01} className={cn(cellInput, "text-right")}
+            value={row.tauxAnnuel === 0 ? "" : row.tauxAnnuel} placeholder="0"
+            onChange={(e) => updateRow(idx, "tauxAnnuel", numVal(e.target.value))} />
+        </Td>
+        <Td>
+          <input type="number" min={0} step={1} className={cn(cellInput, "text-right")}
+            value={row.dureeDiffereEnMois === 0 ? "" : row.dureeDiffereEnMois} placeholder="0"
+            onChange={(e) => updateRow(idx, "dureeDiffereEnMois", intVal(e.target.value))} />
+        </Td>
+        <Td>
+          <select className={cellSelect} value={row.periodicite}
+            onChange={(e) => updateRow(idx, "periodicite", e.target.value as EmpruntRow["periodicite"])}>
+            {PERIODICITES_EMPRUNT.map((p) => (
+              <option key={p.value} value={p.value} className="bg-background text-foreground">{p.label}</option>
+            ))}
+          </select>
+        </Td>
+        <Td className="text-right px-2 text-xs text-muted-foreground bg-muted/20 tabular-nums">
+          {echeanceMoyenne > 0 ? echeanceMoyenne.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+        </Td>
+        <Td className="text-right px-2 text-xs text-muted-foreground bg-muted/20 tabular-nums">
+          {fmtDate(premierRembourement)}
+        </Td>
+        <Td className="text-right px-2 text-xs text-muted-foreground bg-muted/20 tabular-nums">
+          {loyer > 0 && nbPeriodes > 0 ? loyer.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+        </Td>
+        <Td className="text-center">
+          <RowActions onDuplicate={() => duplicateRow(idx)} onDelete={() => removeRow(idx)} isPending={isPending} />
+        </Td>
+      </SortableTableRow>
+    );
+  }, [rows, isPending, updateRow, duplicateRow, removeRow, setModalEmprunt]);
+
   return (
     <div className="space-y-3">
       <SectionHeader
@@ -971,200 +1019,51 @@ function TableauEmprunts({
         isSaving={isPending}
         onAdd={addRow}
         onSave={saveAll}
+        onAddGroup={addGroupe}
       />
-      <div className="overflow-x-auto rounded border border-border">
-        <table className="w-full text-sm border-collapse">
-          <thead className="bg-muted/50">
-            <tr>
-              <Th className="w-8">#</Th>
-              <Th className="w-8 text-center">Actif</Th>
-              <Th className="min-w-40">Libellé</Th>
-              <Th className="w-28">Hypothèse</Th>
-              <Th className="w-8 text-center">Détail</Th>
-              <Th className="w-32">Date déblocage</Th>
-              <Th className="w-28">Montant (€)</Th>
-              <Th className="w-20">Durée (mois)</Th>
-              <Th className="w-16">Taux %</Th>
-              <Th className="w-24">Différé (mois)</Th>
-              <Th className="w-28">Périodicité</Th>
-              <Th className="w-28 italic">Échéance (€)</Th>
-              <Th className="w-32 italic">1er rembt.</Th>
-              <Th className="w-28 italic">Loyer (€)</Th>
-              <Th className="w-8"></Th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={15} className="text-center text-muted-foreground text-xs py-6">
-                  Aucun emprunt. Cliquez sur « Ajouter » pour commencer.
-                </td>
-              </tr>
-            )}
-            {rows.map((row, idx) => {
-              const loyer = calculerLoyerMensuel(row);
-              const {
-                echeanceMoyenne,
-                premierRembourement,
-              } = resumeEmprunt({ ...row, fraisDossier: row.fraisDossier });
-              const nbPeriodes = nbPeriodesFromMois(row.dureeEnMois, row.periodicite);
-
-              return (
-                <tr
-                  key={row.id}
-                  className={cn(
-                    "border-t border-border bg-background hover:bg-muted/30 transition-colors",
-                    row._dirty && "bg-amber-50/40 dark:bg-amber-900/10",
-                    !(row.actif ?? true) && "opacity-50"
-                  )}
-                >
-                  <Td className="text-center text-xs text-muted-foreground px-1">{idx + 1}</Td>
-                  <Td className="text-center px-1">
-                    <input
-                      type="checkbox"
-                      checked={row.actif ?? true}
-                      onChange={(e) => updateRow(idx, "actif", e.target.checked)}
-                      className="h-3.5 w-3.5 cursor-pointer accent-primary"
-                    />
-                  </Td>
-                  <Td>
-                    <input
-                      className={cellInput}
-                      value={row.libelle}
-                      placeholder="Libellé"
-                      onChange={(e) => updateRow(idx, "libelle", e.target.value)}
-                    />
-                  </Td>
-                  <Td>
-                    <select
-                      className={cellSelect}
-                      value={row.hypothese}
-                      onChange={(e) => updateRow(idx, "hypothese", e.target.value as EmpruntRow["hypothese"])}
-                    >
-                      {HYPOTHESE_TYPE_OPTIONS.map((h) => (
-                        <option key={h.value} value={h.value} className="bg-background text-foreground">{h.label}</option>
-                      ))}
-                    </select>
-                  </Td>
-                  <Td className="text-center px-1">
-                    <button
-                      className="p-1 text-muted-foreground hover:text-primary transition-colors"
-                      title="Voir les détails"
-                      onClick={() => setModalEmprunt(row)}
-                      disabled={isPending}
-                    >
-                      <FileText className="h-3.5 w-3.5" />
-                    </button>
-                  </Td>
-                  <Td>
-                    <input
-                      type="date"
-                      className={cellInput}
-                      value={row.dateDéblocage}
-                      onChange={(e) => updateRow(idx, "dateDéblocage", e.target.value)}
-                    />
-                  </Td>
-                  <Td>
-                    <input
-                      type="number" min={0} step={0.01}
-                      className={cn(cellInput, "text-right")}
-                      value={row.montant === 0 ? "" : row.montant}
-                      placeholder="0"
-                      onChange={(e) => updateRow(idx, "montant", numVal(e.target.value))}
-                    />
-                  </Td>
-                  <Td>
-                    <input
-                      type="number" min={1} step={1}
-                      className={cn(cellInput, "text-right")}
-                      value={row.dureeEnMois}
-                      onChange={(e) => updateRow(idx, "dureeEnMois", intVal(e.target.value))}
-                    />
-                  </Td>
-                  <Td>
-                    <input
-                      type="number" min={0} max={100} step={0.01}
-                      className={cn(cellInput, "text-right")}
-                      value={row.tauxAnnuel === 0 ? "" : row.tauxAnnuel}
-                      placeholder="0"
-                      onChange={(e) => updateRow(idx, "tauxAnnuel", numVal(e.target.value))}
-                    />
-                  </Td>
-                  <Td>
-                    <input
-                      type="number" min={0} step={1}
-                      className={cn(cellInput, "text-right")}
-                      value={row.dureeDiffereEnMois === 0 ? "" : row.dureeDiffereEnMois}
-                      placeholder="0"
-                      onChange={(e) => updateRow(idx, "dureeDiffereEnMois", intVal(e.target.value))}
-                    />
-                  </Td>
-                  <Td>
-                    <select
-                      className={cellSelect}
-                      value={row.periodicite}
-                      onChange={(e) =>
-                        updateRow(idx, "periodicite", e.target.value as EmpruntRow["periodicite"])
-                      }
-                    >
-                      {PERIODICITES_EMPRUNT.map((p) => (
-                        <option key={p.value} value={p.value} className="bg-background text-foreground">
-                          {p.label}
-                        </option>
-                      ))}
-                    </select>
-                  </Td>
-                  {/* Colonnes calculées (lecture seule) */}
-                  <Td className="text-right px-2 text-xs text-muted-foreground bg-muted/20 tabular-nums">
-                    {echeanceMoyenne > 0 ? echeanceMoyenne.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
-                  </Td>
-                  <Td className="text-right px-2 text-xs text-muted-foreground bg-muted/20 tabular-nums">
-                    {fmtDate(premierRembourement)}
-                  </Td>
-                  <Td className="text-right px-2 text-xs text-muted-foreground bg-muted/20 tabular-nums">
-                    {loyer > 0 && nbPeriodes > 0
-                      ? loyer.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                      : "—"}
-                  </Td>
-                  <Td className="text-center">
-                    <div className="flex items-center justify-center gap-0.5">
-                      <button
-                        className="p-1 text-muted-foreground hover:text-primary transition-colors"
-                        onClick={() => duplicateRow(idx)}
-                        title="Dupliquer"
-                        disabled={isPending}
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                        onClick={() => removeRow(idx)}
-                        title="Supprimer"
-                        disabled={isPending}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </Td>
-                </tr>
-              );
-            })}
-          </tbody>
-          {rows.length > 0 && (
+      <GroupedDndTable
+        dnd={dnd}
+        colSpan={16}
+        onAddRowToGroupe={addRowToGroupe}
+        renderRow={renderRow}
+        emptyMessage="Aucun emprunt. Cliquez sur « Ajouter » pour commencer."
+        footer={
+          rows.length > 0 ? (
             <tfoot className="border-t border-border bg-muted/50">
               <tr>
-                <td colSpan={6} className="text-right text-xs font-medium text-muted-foreground px-2 py-1.5">
+                <td colSpan={7} className="text-right text-xs font-medium text-muted-foreground px-2 py-1.5">
                   Total emprunts actifs
                 </td>
                 <td className="text-right text-xs font-semibold px-2 py-1.5 tabular-nums">
                   {fmtEur(totalEmprunts)}
                 </td>
-                <td colSpan={8}></td>
+                <td colSpan={9}></td>
               </tr>
             </tfoot>
-          )}
-        </table>
-      </div>
+          ) : undefined
+        }
+      >
+        <thead className="bg-muted/50">
+          <tr>
+            <Th className="w-7"></Th>
+            <Th className="w-8">#</Th>
+            <Th className="w-8 text-center">Actif</Th>
+            <Th className="min-w-40">Libellé</Th>
+            <Th className="w-28">Hypothèse</Th>
+            <Th className="w-8 text-center">Détail</Th>
+            <Th className="w-32">Date déblocage</Th>
+            <Th className="w-28">Montant (€)</Th>
+            <Th className="w-20">Durée (mois)</Th>
+            <Th className="w-16">Taux %</Th>
+            <Th className="w-24">Différé (mois)</Th>
+            <Th className="w-28">Périodicité</Th>
+            <Th className="w-28 italic">Échéance (€)</Th>
+            <Th className="w-32 italic">1er rembt.</Th>
+            <Th className="w-28 italic">Loyer (€)</Th>
+            <Th className="w-8"></Th>
+          </tr>
+        </thead>
+      </GroupedDndTable>
 
       <ModalDetailsEmprunt
         key={modalEmprunt?.id ?? "closed"}
@@ -1195,7 +1094,7 @@ export function FinancementForm({
   dateDebutExerciceN,
 }: FinancementFormProps) {
   return (
-    <div className="h-full space-y-10 overflow-y-auto">
+    <div className="h-full space-y-10 overflow-y-auto py-8 px-32">
       <TableauApports  dossierId={dossierId} initialData={apports} dateDebutExerciceN={dateDebutExerciceN} />
       <TableauEmprunts dossierId={dossierId} initialData={emprunts} dateDebutExerciceN={dateDebutExerciceN} />
     </div>

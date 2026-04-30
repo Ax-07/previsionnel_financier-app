@@ -9,12 +9,11 @@
 
 import { useCallback, useMemo, useTransition, useEffect } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Save, Loader2, FolderPlus, Copy } from "lucide-react";
+
 import { GroupedDndTable } from "@/components/ui/grouped-dnd-table";
 import { useGroupedDnd } from "@/hooks/use-grouped-dnd";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn, numVal } from "@/lib/utils";
+import { formatNumber } from "@/lib/format";
 
 import {
   NATURES_IMMOBILISATION,
@@ -48,107 +47,16 @@ import {
 import { DragHandleCell, SortableTableRow } from "@/components/ui/sortable-table-row";
 import { HYPOTHESE_TYPE_OPTIONS, filterByHypothese } from "@/lib/schemas/hypothese";
 import { useHypotheseStore } from "@/stores/hypothese-store";
+import { cellInput, cellSelect } from "./helpers/cell-styles";
+import { SectionHeader } from "./helpers/section-header";
+import { intVal, tempId, ThBordered as Th, TdBordered as Td, ActiveCheckbox } from "./helpers/table-helpers";
+import { RowActions } from "./helpers/row-actions";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
-const cellInput =
-  "h-7 w-full border-0 bg-transparent px-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none min-w-0";
-
-const cellSelect =
-  "h-7 w-full border-0 bg-transparent px-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none cursor-pointer";
-
-function intVal(v: string): number {
-  const n = parseInt(v, 10);
-  return isNaN(n) ? 0 : n;
-}
-
-function tempId() {
-  return `__new__${crypto.randomUUID()}`;
-}
-
-// ── Composants utilitaires ────────────────────────────────────────────────────
-
-function SectionHeader({
-  title,
-  description,
-  isDirty,
-  isSaving,
-  onAdd,
-  onSave,
-  onAddGroup,
-}: {
-  title: string;
-  description: string;
-  isDirty: boolean;
-  isSaving: boolean;
-  onAdd: () => void;
-  onSave: () => void;
-  onAddGroup?: () => void;
-}) {
-  return (
-    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between pb-3 border-b">
-      <div>
-        <h3 className="text-base font-semibold leading-snug">{title}</h3>
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </div>
-      <div className="flex items-center gap-2">
-        {isDirty && (
-          <Badge variant="outline" className="text-amber-600 border-amber-400 text-xs gap-1">
-            Modifications non enregistrées
-          </Badge>
-        )}
-        {isDirty && (
-          <Button
-            size="sm"
-            variant="default"
-            className="h-7 gap-1 text-xs"
-            onClick={onSave}
-            disabled={isSaving}
-          >
-            {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-            Enregistrer
-          </Button>
-        )}
-        {onAddGroup && (
-          <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs text-muted-foreground" onClick={onAddGroup}>
-            <FolderPlus className="h-3 w-3" />
-            Groupe
-          </Button>
-        )}
-        <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={onAdd}>
-          <Plus className="h-3 w-3" />
-          Ajouter
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function Th({ children, className }: { children?: React.ReactNode; className?: string }) {
-  return (
-    <th
-      className={cn(
-        "border-r border-border last:border-r-0 px-1.5 py-1.5 text-left text-xs font-medium text-muted-foreground whitespace-nowrap",
-        className
-      )}
-    >
-      {children}
-    </th>
-  );
-}
-
-function Td({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <td className={cn("border-r border-border last:border-r-0 p-0 align-middle", className)}>
-      {children}
-    </td>
-  );
-}
 
 // ── Lignes de totaux ──────────────────────────────────────────────────────────
 
-const fmt = (v: number) =>
-  v.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
 
 function TotauxImmos({ rows, dossierId }: { rows: LocalImmo[]; dossierId: string }) {
   const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
@@ -162,7 +70,7 @@ function TotauxImmos({ rows, dossierId }: { rows: LocalImmo[]; dossierId: string
           Total Montant HT (actifs)
         </td>
         <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
-          {fmt(total)}
+          {formatNumber(total)}
         </td>
         {/* amortissement, différé, durée, tauxTVA, typeTva, actions */}
         <td colSpan={6} />
@@ -183,8 +91,8 @@ function TotauxCessions({ rows, dossierId }: { rows: LocalCession[]; dossierId: 
         <td colSpan={7} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
           Total (actifs)
         </td>
-        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(totalVente)}</td>
-        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(totalAchat)}</td>
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{formatNumber(totalVente)}</td>
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{formatNumber(totalAchat)}</td>
         {/* dejaAmortie, resteAAmortir, plusValue, pvLT, tauxTVA, actions */}
         <td colSpan={6} />
       </tr>
@@ -204,10 +112,10 @@ function TotauxCreditBail({ rows, dossierId }: { rows: LocalCredit[]; dossierId:
         <td colSpan={6} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
           Total (actifs)
         </td>
-        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(totalMontant)}</td>
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{formatNumber(totalMontant)}</td>
         {/* taux, durée, périodicité, dateEcheance, valeurResiduelle, premierLoyer */}
         <td colSpan={6} />
-        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{fmt(totalLoyer)}</td>
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">{formatNumber(totalLoyer)}</td>
         {/* tauxTVA, actions */}
         <td colSpan={2} />
       </tr>
@@ -548,24 +456,11 @@ function TableauImmobilisations({
           </select>
         </Td>
         <Td className="text-center px-1">
-          <div className="flex items-center justify-center gap-0.5">
-            <button
-              className="p-1 text-muted-foreground hover:text-primary transition-colors"
-              onClick={() => duplicateRow(idx)}
-              title="Dupliquer"
-              disabled={isPending}
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-            <button
-              className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-              onClick={() => removeRow(idx)}
-              title="Supprimer"
-              disabled={isPending}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
+          <RowActions
+            onDuplicate={() => duplicateRow(idx)}
+            onDelete={() => removeRow(idx)}
+            isPending={isPending}
+          />
         </Td>
       </SortableTableRow>
     );
@@ -596,7 +491,7 @@ function TableauImmobilisations({
           const total = actifs.reduce((s, r) => s + (r.montantHT ?? 0), 0);
           return (
             <>
-              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums text-muted-foreground/80">{fmt(total)}</td>
+              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums text-muted-foreground/80">{formatNumber(total)}</td>
               <td colSpan={5} />
             </>
           );
@@ -832,12 +727,9 @@ function TableauCessions({
         <DragHandleCell />
         <Td className="text-center text-xs text-muted-foreground px-1">{idx + 1}</Td>
         <Td className="text-center px-1">
-          <input
-            type="checkbox"
+          <ActiveCheckbox
             checked={row.actif ?? true}
-            onChange={(e) => updateRow(idx, "actif", e.target.checked)}
-            className="h-3.5 w-3.5 cursor-pointer accent-primary"
-            title={(row.actif ?? true) ? "Désactiver" : "Activer"}
+            onChange={(v) => updateRow(idx, "actif", v)}
           />
         </Td>
         <Td>
@@ -929,24 +821,11 @@ function TableauCessions({
           </select>
         </Td>
         <Td className="text-center px-1">
-          <div className="flex items-center justify-center gap-0.5">
-            <button
-              className="p-1 text-muted-foreground hover:text-primary transition-colors"
-              onClick={() => duplicateRow(idx)}
-              title="Dupliquer"
-              disabled={isPending}
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-            <button
-              className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-              onClick={() => removeRow(idx)}
-              title="Supprimer"
-              disabled={isPending}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
+          <RowActions
+            onDuplicate={() => duplicateRow(idx)}
+            onDelete={() => removeRow(idx)}
+            isPending={isPending}
+          />
         </Td>
       </SortableTableRow>
     );
@@ -978,8 +857,8 @@ function TableauCessions({
           const achat = actifs.reduce((s, r) => s + (r.prixAchat ?? 0), 0);
           return (
             <>
-              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums text-muted-foreground/80 border-r border-border">{fmt(vente)}</td>
-              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums text-muted-foreground/80 border-r border-border">{fmt(achat)}</td>
+              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums text-muted-foreground/80 border-r border-border">{formatNumber(vente)}</td>
+              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums text-muted-foreground/80 border-r border-border">{formatNumber(achat)}</td>
               <td colSpan={5} />
             </>
           );
@@ -1215,12 +1094,9 @@ function TableauCreditBail({
         <DragHandleCell />
         <Td className="text-center text-xs text-muted-foreground px-1">{idx + 1}</Td>
         <Td className="text-center px-1">
-          <input
-            type="checkbox"
+          <ActiveCheckbox
             checked={row.actif ?? true}
-            onChange={(e) => updateRow(idx, "actif", e.target.checked)}
-            className="h-3.5 w-3.5 cursor-pointer accent-primary"
-            title={(row.actif ?? true) ? "Désactiver" : "Activer"}
+            onChange={(v) => updateRow(idx, "actif", v)}
           />
         </Td>
         <Td>
@@ -1334,24 +1210,11 @@ function TableauCreditBail({
           </select>
         </Td>
         <Td className="text-center px-1">
-          <div className="flex items-center justify-center gap-0.5">
-            <button
-              className="p-1 text-muted-foreground hover:text-primary transition-colors"
-              onClick={() => duplicateRow(idx)}
-              title="Dupliquer"
-              disabled={isPending}
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-            <button
-              className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-              onClick={() => removeRow(idx)}
-              title="Supprimer"
-              disabled={isPending}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
+          <RowActions
+            onDuplicate={() => duplicateRow(idx)}
+            onDelete={() => removeRow(idx)}
+            isPending={isPending}
+          />
         </Td>
       </SortableTableRow>
     );
@@ -1383,9 +1246,9 @@ function TableauCreditBail({
           const loyer = actifs.reduce((s, r) => s + (r.loyerHT ?? 0), 0);
           return (
             <>
-              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums text-muted-foreground/80 border-r border-border">{fmt(montant)}</td>
+              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums text-muted-foreground/80 border-r border-border">{formatNumber(montant)}</td>
               <td colSpan={6} />
-              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums text-muted-foreground/80 border-r border-border">{fmt(loyer)}</td>
+              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums text-muted-foreground/80 border-r border-border">{formatNumber(loyer)}</td>
               <td colSpan={1} />
             </>
           );
@@ -1436,13 +1299,14 @@ export function InvestissementForm({
   dateDebutExerciceN,
 }: InvestissementFormProps) {
   return (
-    <div className="h-full space-y-10 overflow-y-auto">
+    <div className="h-full space-y-10 overflow-y-auto py-8 px-32">
       <TableauImmobilisations dossierId={dossierId} initialData={immobilisations} dateDebutExerciceN={dateDebutExerciceN} />
       <TableauCessions dossierId={dossierId} initialData={cessions} dateDebutExerciceN={dateDebutExerciceN} />
       <TableauCreditBail dossierId={dossierId} initialData={creditsBaux} dateDebutExerciceN={dateDebutExerciceN} />
     </div>
   );
 }
+
 
 
 

@@ -5,33 +5,15 @@ import { useForm, useWatch } from "react-hook-form";
 import { usePorteurStore } from "@/stores/porteur-store";
 import { useInvalidateControleStores } from "@/hooks/use-invalidate-controle-stores";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { SaveIcon, CheckCircle2Icon, Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
-import {
-  porteurSchema,
-  type PorteurFormValues,
-  CIVILITES,
-  FONCTIONS,
-} from "@/lib/schemas/porteur";
+import { porteurSchema, type PorteurFormValues, CIVILITES, FONCTIONS } from "@/lib/schemas/porteur";
 import { upsertPorteur } from "@/app/actions/porteur";
 import { cn } from "@/lib/utils";
 import { DeleteDossierButton } from "@/components/app/delete-dossier-button";
@@ -45,39 +27,19 @@ interface PorteurFormProps {
 
 // ── Sous-composants ──────────────────────────────────────────────────────────
 
-function SectionTitle({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+function SectionTitle({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <h3
-      className={cn(
-        "text-sm font-semibold uppercase tracking-wide text-muted-foreground",
-        className
-      )}
-    >
-      {children}
-    </h3>
+    <h3 className={cn("text-sm font-semibold uppercase tracking-wide text-muted-foreground", className)}>{children}</h3>
   );
 }
 
 function FieldRow({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {children}
-    </div>
-  );
+  return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
 }
 
 // ── Composant principal ───────────────────────────────────────────────────────
 
-export default function PorteurForm({
-  dossierId,
-  defaultValues,
-}: PorteurFormProps) {
+export default function PorteurForm({ dossierId, defaultValues }: PorteurFormProps) {
   const [isPending, startTransition] = useTransition();
   const { getDraft, setDraft, clearDraft } = usePorteurStore();
   const invalidateControleStores = useInvalidateControleStores();
@@ -129,13 +91,11 @@ export default function PorteurForm({
     if (isDirty) {
       const dirtyFields = form.formState.dirtyFields;
       const dirtyValues = Object.fromEntries(
-        Object.entries(watchedValues).filter(
-          ([key]) => dirtyFields[key as keyof PorteurFormValues]
-        )
+        Object.entries(watchedValues).filter(([key]) => dirtyFields[key as keyof PorteurFormValues]),
       );
       setDraft(dossierId, dirtyValues as Partial<PorteurFormValues>);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchedValues, isDirty]);
 
   const onSubmit = useCallback(
@@ -152,7 +112,7 @@ export default function PorteurForm({
         }
       });
     },
-    [dossierId, form, clearDraft]
+    [dossierId, form, clearDraft],
   );
 
   // Status bar
@@ -180,15 +140,10 @@ export default function PorteurForm({
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="flex h-full flex-col"
-        noValidate
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col" noValidate>
         {/* ── Contenu scrollable ───────────────────────────────────────── */}
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-4xl space-y-8 p-6">
-
             {/* ── Section Dossier ──────────────────────────────────────── */}
             <section className="space-y-4">
               <SectionTitle>Dossier</SectionTitle>
@@ -217,8 +172,7 @@ export default function PorteurForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Nom de la société{" "}
-                        <span className="text-destructive">*</span>
+                        Nom de la société <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
                         <Input placeholder="Boulangerie Dupont" {...field} />
@@ -238,11 +192,7 @@ export default function PorteurForm({
                     <FormItem>
                       <FormLabel>SIRET</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="14 chiffres"
-                          maxLength={14}
-                          {...field}
-                        />
+                        <Input placeholder="14 chiffres" maxLength={14} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -257,10 +207,7 @@ export default function PorteurForm({
                     <FormItem className="sm:col-span-2 lg:col-span-1">
                       <FormLabel>Activité</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Ex. : Boulangerie-pâtisserie"
-                          {...field}
-                        />
+                        <Input placeholder="Ex. : Boulangerie-pâtisserie" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -282,10 +229,7 @@ export default function PorteurForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Civilité</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value ?? ""}
-                      >
+                      <Select onValueChange={field.onChange} value={field.value ?? ""}>
                         <FormControl>
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Sélectionner…" />
@@ -343,10 +287,7 @@ export default function PorteurForm({
                   render={({ field }) => (
                     <FormItem className="sm:col-span-2 lg:col-span-2">
                       <FormLabel>Fonction</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value ?? ""}
-                      >
+                      <Select onValueChange={field.onChange} value={field.value ?? ""}>
                         <FormControl>
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Sélectionner…" />
@@ -394,16 +335,10 @@ export default function PorteurForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Complément d&apos;adresse{" "}
-                        <span className="text-muted-foreground text-xs">
-                          (optionnel)
-                        </span>
+                        Complément d&apos;adresse <span className="text-muted-foreground text-xs">(optionnel)</span>
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Bâtiment A, étage 2…"
-                          {...field}
-                        />
+                        <Input placeholder="Bâtiment A, étage 2…" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -420,11 +355,7 @@ export default function PorteurForm({
                     <FormItem>
                       <FormLabel>Code postal</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="75001"
-                          maxLength={5}
-                          {...field}
-                        />
+                        <Input placeholder="75001" maxLength={5} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -471,11 +402,7 @@ export default function PorteurForm({
                     <FormItem>
                       <FormLabel>Téléphone</FormLabel>
                       <FormControl>
-                        <Input
-                          type="tel"
-                          placeholder="01 23 45 67 89"
-                          {...field}
-                        />
+                        <Input type="tel" placeholder="01 23 45 67 89" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -490,11 +417,7 @@ export default function PorteurForm({
                     <FormItem>
                       <FormLabel>Portable</FormLabel>
                       <FormControl>
-                        <Input
-                          type="tel"
-                          placeholder="06 12 34 56 78"
-                          {...field}
-                        />
+                        <Input type="tel" placeholder="06 12 34 56 78" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -509,11 +432,7 @@ export default function PorteurForm({
                     <FormItem>
                       <FormLabel>Télécopie</FormLabel>
                       <FormControl>
-                        <Input
-                          type="tel"
-                          placeholder="01 23 45 67 90"
-                          {...field}
-                        />
+                        <Input type="tel" placeholder="01 23 45 67 90" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -530,11 +449,7 @@ export default function PorteurForm({
                     <FormItem className="sm:col-span-2">
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="contact@societe.fr"
-                          {...field}
-                        />
+                        <Input type="email" placeholder="contact@societe.fr" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -551,17 +466,8 @@ export default function PorteurForm({
             <DeleteDossierButton dossierId={dossierId} />
             <div className="flex min-w-0 flex-1 items-center justify-end gap-3">
               {statusNode}
-              <Button
-                type="submit"
-                size="sm"
-                disabled={isPending || !isDirty}
-                className="gap-1.5"
-              >
-                {isPending ? (
-                  <Loader2Icon className="size-3.5 animate-spin" />
-                ) : (
-                  <SaveIcon className="size-3.5" />
-                )}
+              <Button type="submit" size="sm" disabled={isPending || !isDirty} className="gap-1.5">
+                {isPending ? <Loader2Icon className="size-3.5 animate-spin" /> : <SaveIcon className="size-3.5" />}
                 Enregistrer
               </Button>
             </div>
