@@ -48,26 +48,44 @@ export const fmtExercice = (start: number, moisDebut: number): string =>
 /**
  * Crée les helpers de mapping date → exercice fiscal à partir de la date de démarrage.
  *
+ * Si `exercices` est fourni, les bornes sont calculées depuis les vraies `dateCloture`
+ * de chaque exercice (borne = dateCloture + 1 jour). Sinon, fallback sur +1/+2/+3 ans.
+ *
  * @example
  * const { toExerciceKey, exBorne1 } = makeExerciceHelpers(new Date("2026-04-01"));
  * toExerciceKey(new Date("2026-10-15")) // → "y1"
  */
-export function makeExerciceHelpers(dateDemarrage: Date): ExerciceHelpers {
-  const exBorne1 = new Date(
-    dateDemarrage.getFullYear() + 1,
-    dateDemarrage.getMonth(),
-    dateDemarrage.getDate(),
-  );
-  const exBorne2 = new Date(
-    dateDemarrage.getFullYear() + 2,
-    dateDemarrage.getMonth(),
-    dateDemarrage.getDate(),
-  );
-  const exBorne3 = new Date(
-    dateDemarrage.getFullYear() + 3,
-    dateDemarrage.getMonth(),
-    dateDemarrage.getDate(),
-  );
+export function makeExerciceHelpers(
+  dateDemarrage: Date,
+  exercices?: Array<{ dateCloture: Date | string }>,
+): ExerciceHelpers {
+  function dateClotureToExBorne(cloture: Date | string): Date {
+    const d = cloture instanceof Date ? new Date(cloture) : new Date(String(cloture));
+    d.setDate(d.getDate() + 1);
+    return d;
+  }
+
+  const exBorne1 = exercices?.[0]?.dateCloture
+    ? dateClotureToExBorne(exercices[0].dateCloture)
+    : new Date(
+        dateDemarrage.getFullYear() + 1,
+        dateDemarrage.getMonth(),
+        dateDemarrage.getDate(),
+      );
+  const exBorne2 = exercices?.[1]?.dateCloture
+    ? dateClotureToExBorne(exercices[1].dateCloture)
+    : new Date(
+        dateDemarrage.getFullYear() + 2,
+        dateDemarrage.getMonth(),
+        dateDemarrage.getDate(),
+      );
+  const exBorne3 = exercices?.[2]?.dateCloture
+    ? dateClotureToExBorne(exercices[2].dateCloture)
+    : new Date(
+        dateDemarrage.getFullYear() + 3,
+        dateDemarrage.getMonth(),
+        dateDemarrage.getDate(),
+      );
 
   const moisDebut = dateDemarrage.getMonth();
   const pFin = moisDebut === 0 ? 0 : moisDebut / 12;
@@ -92,7 +110,6 @@ export interface TemporelCtx {
   moisDebut: number;
   yearStarts: readonly [Date, Date, Date, Date];
   isFranchise: boolean;
-  defaultDelaiClients: number;
 }
 
 /**
@@ -101,7 +118,6 @@ export interface TemporelCtx {
 export function buildTemporelCtx(
   dateDemarrage: Date,
   isFranchise: boolean,
-  defaultDelaiClients = 30,
 ): TemporelCtx {
   const anneeDebut = dateDemarrage.getFullYear();
   const moisDebut = dateDemarrage.getMonth();
@@ -115,7 +131,6 @@ export function buildTemporelCtx(
       new Date(anneeDebut + 3, moisDebut, 1),
     ] as const,
     isFranchise,
-    defaultDelaiClients,
   };
 }
 

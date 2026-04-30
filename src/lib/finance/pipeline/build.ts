@@ -92,7 +92,7 @@ export function buildFinCalc(
   const anneeDebut = dateDemarrage.getFullYear();
   const moisDebut = dateDemarrage.getMonth();
   const { toExerciceKey, exBorne1, exBorne2, exBorne3, pFin, pDeb } =
-    makeExerciceHelpers(dateDemarrage);
+    makeExerciceHelpers(dateDemarrage, d.scenario.parametres?.exercices ?? undefined);
 
   // Calcul TVA — source unique de vérité pour tout le pipeline
   const tva = calcTVA(d, { toExerciceKey, exBorne1, exBorne2, exBorne3 });
