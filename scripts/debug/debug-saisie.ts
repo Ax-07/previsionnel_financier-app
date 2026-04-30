@@ -130,12 +130,8 @@ async function main() {
   L(`| Date de démarrage | ${dateDem.toLocaleDateString("fr-FR")} |`);
   L(`| Durée projection | ${data.dureeProjection} an(s) |`);
   L(`| Régime fiscal | ${p?.regimeFiscal ?? "IS"} |`);
-  L(`| Taux IS normal | ${pct(p?.tauxIs ?? 25)} |`);
-  L(`| Taux IS réduit | ${pct(p?.tauxIsReduit ?? 15)} |`);
-  L(`| Plafond IS réduit | ${fmtM(p?.plafondIsReduit ?? 42500)} € |`);
   L(`| Régime TVA | ${p?.regimeTVA ?? "REEL_NORMAL"} |`);
   L(`| Périodicité déclaration TVA | ${p?.periodiciteDeclarationTVA ?? "mensuel"} |`);
-  L(`| Taux TVA standard | ${pct(p?.tauxTvaStandard ?? 20)} |`);
   L(`| Mois de paiement des salaires | ${int(p?.moisPaiementSalaires ?? 1)} |`);
   L(`| Régime social TNS | ${p?.tnsRegimeSocial ?? "—"} |`);
   L(`| Mode de calcul TNS | ${p?.tnsModeCalcul ?? "—"} |`);

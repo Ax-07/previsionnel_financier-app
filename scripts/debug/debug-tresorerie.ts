@@ -18,7 +18,6 @@ import { writeFileSync } from "fs";
 import { join } from "path";
 import { prisma } from "@/lib/prisma";
 import { fetchScenarioData } from "@/lib/finance/fetch-scenario";
-import { n } from "@/lib/finance/utils";
 import { buildFinCalc } from "@/lib/finance/calculs";
 import { buildMonthLabels, subSeries } from "@/lib/finance/calculs/monthly";
 import type { MonthlySeries } from "@/lib/finance/calculs/monthly";

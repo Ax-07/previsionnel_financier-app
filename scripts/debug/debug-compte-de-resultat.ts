@@ -148,8 +148,6 @@ async function main() {
     L(`| Date de démarrage | ${dateDemarrageDate.toLocaleDateString("fr-FR")} |`);
     L(`| Durée projection | ${data.dureeProjection} exercices |`);
     L(`| Régime fiscal | \`${par?.regimeFiscal ?? "IS"}\` |`);
-    L(`| Taux IS normal | ${par?.tauxIs ?? "—"} % |`);
-    L(`| Taux IS réduit | ${par?.tauxIsReduit ?? "—"} % · Plafond : ${par?.plafondIsReduit != null ? fmt(n(par.plafondIsReduit)) : "—"} € |`);
     L(`| Régime TVA | \`${par?.regimeTVA ?? "REEL_NORMAL"}\` |`);
     L(`| Mois paiement salaires | ${par?.moisPaiementSalaires ?? 1} |`);
     L(`| Régime social TNS | \`${par?.tnsRegimeSocial ?? "—"}\` |`);
