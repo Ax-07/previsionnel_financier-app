@@ -6,6 +6,7 @@
  */
 
 import type { Metadata } from "next";
+import { formatEur } from "@/lib/format";
 import {
   METADATA_MILLESIMES,
   REGISTRE_MILLESIMES,
@@ -41,13 +42,7 @@ function fmtTaux(n: number): string {
   return `${(n * 100).toFixed(4).replace(/\.?0+$/, "")} %`;
 }
 
-function fmtEuros(n: number): string {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-  }).format(n);
-}
+function fmtEuros(n: number): string { return formatEur(n); }
 
 export default function PageParametresPaie() {
   const millesimes = AVAILABLE_MILLESIMES;
