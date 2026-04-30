@@ -57,16 +57,15 @@ export async function fetchScenarioData(dossierId: string) {
       parametres: {
         select: {
           regimeFiscal: true,
-          tauxIs: true,
-          tauxIsReduit: true,
-          plafondIsReduit: true,
           regimeTVA: true,
           periodiciteDeclarationTVA: true,
-          tauxTvaStandard: true,
           moisPaiementSalaires: true,
           tnsRegimeSocial: true,
           tnsModeCalcul: true,
-          delaiPaiementClients: true,
+          exercices: {
+            orderBy: { ordre: "asc" },
+            select: { dateCloture: true, duree: true, ordre: true, annee: true },
+          },
         },
       },
     },

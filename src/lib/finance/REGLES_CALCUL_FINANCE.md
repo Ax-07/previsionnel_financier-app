@@ -645,15 +645,19 @@ IS = max(0, T1 × tauxRéduit/100 + T2 × tauxNormal/100 + contribution − cré
 
 ### 12.4 Paramètres IS par défaut
 
-| Paramètre           | Valeur par défaut | Référence      |
-| ------------------- | ----------------- | -------------- |
-| Plafond taux réduit | 42 500 €          | CGI art. 219 I |
-| Taux réduit         | 15 %              | CGI art. 219 I |
-| Taux normal         | 25 %              | CGI art. 219 I |
-| Crédit d'impôt      | 0 €               | Paramétrable   |
-| Contribution vol.   | 0 €               | Paramétrable   |
+| Paramètre           | Valeur par défaut | Référence      | Onglet d'édition |
+| ------------------- | ----------------- | -------------- | ---------------- |
+| Plafond taux réduit | 42 500 €          | CGI art. 219 I | `Saisie/Impôt`   |
+| Taux réduit         | 15 %              | CGI art. 219 I | `Saisie/Impôt`   |
+| Taux normal         | 25 %              | CGI art. 219 I | `Saisie/Impôt`   |
+| Crédit d'impôt      | 0 €               | Paramétrable   | `Saisie/Impôt`   |
+| Contribution vol.   | 0 €               | Paramétrable   | `Saisie/Impôt`   |
 
 > Les paramètres sont personnalisables par exercice (N, N+1, N+2).
+> Le moteur applique les taux et plafonds de l'exercice fiscal concerné par le résultat courant.
+> Le crédit d'impôt et la contribution volontaire sont soustraits de l'IS calculé.
+> Le crédit d'impôt est un montant fixe (pas un pourcentage) saisi par l'utilisateur.
+> La contribution volontaire est un montant fixe (pas un pourcentage) saisi par l'utilisateur.
 
 ### 12.5 Report de déficit en avant (CGI art. 209 I)
 
