@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 import type { KpiGroup } from "@/hooks/controle/use-dashboard-kpi-data";
 import type { YearKey } from "@/lib/finance/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { findGroupCard, formatAmount } from "./utils";
+import { findGroupCard, formatKpiValue } from "./utils";
+import { formatNumber } from "@/lib/format";
 
 // ── Statuts ────────────────────────────────────────────────────────────────────
 
@@ -98,8 +99,7 @@ export function SoliditeFinancierePanel({ groups, yk }: SoliditeFinancierePanelP
   const couvertureBesoins = besoinTotal > 0 ? (ressourcesTotal / besoinTotal) * 100 : 0;
   const soldePf = ressourcesTotal - besoinTotal;
 
-  const frCurrency = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  const fmtEur = (v: number | null | undefined) => v == null || !Number.isFinite(v) ? "—" : `${frCurrency.format(Math.round(v))} €`;
+  const fmtEur = (v: number | null | undefined) => v == null || !Number.isFinite(v) ? "—" : `${formatNumber(Math.round(v), 0)} €`;
   const cafStatus = getCouvertureCafStatus(cafVal?.amount ?? 0);
   const endettementStatus = getTauxEndettementStatus(endettementVal?.amount ?? 0);
   const apportsStatus = getApportsStatus(apportsVal?.amount ?? 0, totalFinancement);
@@ -136,7 +136,7 @@ export function SoliditeFinancierePanel({ groups, yk }: SoliditeFinancierePanelP
           </span>
         </div>
         <p className="text-xl font-bold tabular-nums">
-          {cafVal ? formatAmount(cafVal.amount, cafCard!.format) : "—"}
+          {cafVal ? formatKpiValue(cafVal.amount, cafCard!.format) : "—"}
         </p>
         {((cafMontantVal?.amount ?? 0) !== 0 || (remboursementVal?.amount ?? 0) !== 0) && (
           <p className="mt-1.5 text-[10px] text-muted-foreground">
@@ -176,7 +176,7 @@ export function SoliditeFinancierePanel({ groups, yk }: SoliditeFinancierePanelP
           </span>
         </div>
         <p className="text-xl font-bold tabular-nums">
-          {endettementVal ? formatAmount(endettementVal.amount, endettementCard!.format) : "—"}
+          {endettementVal ? formatKpiValue(endettementVal.amount, endettementCard!.format) : "—"}
         </p>
         {((dettesVal?.amount ?? 0) !== 0 || (capitauxPropresVal?.amount ?? 0) !== 0) && (
           <p className="mt-1.5 text-[10px] text-muted-foreground">
@@ -216,7 +216,7 @@ export function SoliditeFinancierePanel({ groups, yk }: SoliditeFinancierePanelP
           </span>
         </div>
         <p className="text-xl font-bold tabular-nums">
-          {apportsVal ? formatAmount(apportsVal.amount, apportsCard!.format) : "—"}
+          {apportsVal ? formatKpiValue(apportsVal.amount, apportsCard!.format) : "—"}
         </p>
         {apportsPct > 0 && (
           <p className="mt-1.5 text-[10px] text-muted-foreground">

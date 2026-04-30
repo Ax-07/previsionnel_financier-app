@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
-import type { KpiGroup } from "@/hooks/controle/use-dashboard-kpi-data";
+import type { KpiGroup, KpiCard } from "@/hooks/controle/use-dashboard-kpi-data";
 import type { YearKey } from "@/lib/finance/utils";
-import { YEAR_KEYS, formatAmount } from "./utils";
+import { YEAR_KEYS, formatKpiValue } from "./utils";
+
 import { TrendBadge } from "./trend-badge";
 
 // Besoins de financement
@@ -32,7 +33,7 @@ export function FinancementKpisPanel({
       : null;
     let cls = isGood === null ? "text-muted-foreground" : isGood ? "text-foreground" : "text-destructive";
     if (extra) cls = extra;
-    return <span className={cn("font-medium", cls)}>{formatAmount(amount, format as Parameters<typeof formatAmount>[1])}</span>;
+    return <span className={cn("font-medium", cls)}>{formatKpiValue(amount, format as KpiCard["format"])}</span>;
   }
 
   function renderKpiSection(title: string, keys: string[]) {

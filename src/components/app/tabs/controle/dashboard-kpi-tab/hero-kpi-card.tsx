@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { KpiCard } from "@/hooks/controle/use-dashboard-kpi-data";
 import type { YearKey } from "@/lib/finance/utils";
-import { formatAmount } from "./utils";
+import { formatKpiValue } from "./utils";
 import { TrendBadge } from "./trend-badge";
 
 export function HeroKpiCard({
@@ -44,7 +44,7 @@ export function HeroKpiCard({
               : "text-destructive",
         )}
       >
-        {val ? formatAmount(val.amount, card!.format) : "—"}
+        {val ? formatKpiValue(val.amount, card!.format) : "—"}
       </p>
       <div className="flex flex-wrap items-center gap-1.5">
         {val?.trend !== null && val?.trend !== undefined ? (

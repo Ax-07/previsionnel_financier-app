@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { KpiCard, KpiGroup } from "@/hooks/controle/use-dashboard-kpi-data";
 import type { YearKey } from "@/lib/finance/utils";
-import { YEAR_KEYS, findGroupCard, formatAmount } from "./utils";
+import { YEAR_KEYS, findGroupCard, formatKpiValue } from "./utils";
 import { TrendBadge } from "./trend-badge";
 import { Fragment } from "react/jsx-runtime";
 
@@ -88,7 +88,7 @@ export function KpisSecondairesPanel({
                                       : "text-destructive",
                                 )}
                               >
-                                {formatAmount(val.amount, card.format)}
+                                {formatKpiValue(val.amount, card.format)}
                               </span>
                               {val.trend != null && <TrendBadge trend={val.trend} positive={card.positive} />}
                             </div>

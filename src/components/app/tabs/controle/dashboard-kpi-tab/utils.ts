@@ -1,25 +1,23 @@
 import type { KpiCard, KpiGroup } from "@/hooks/controle/use-dashboard-kpi-data";
 import { YEAR_KEYS_3 as YEAR_KEYS } from "@/lib/finance/utils";
+import { formatEurCompact } from "@/lib/format";
 
 export { YEAR_KEYS };
 
-export const frCurrency = new Intl.NumberFormat("fr-FR", {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-});
+/**
+ * Alias de `formatEurCompact` pour les graphiques et cartes KPI.
+ * Conservé pour rétrocompatibilité avec les imports existants.
+ */
+export { formatEurCompact as fmtK } from "@/lib/format";
 
-export function fmtK(v: number): string {
-  if (v === 0) return "0";
-  const abs = Math.abs(v);
-  if (abs >= 1_000_000) return `${(v / 1_000_000).toFixed(1)} M€`;
-  if (abs >= 1_000) return `${Math.round(v / 1_000)} k€`;
-  return `${Math.round(v)} €`;
-}
-
-export function formatAmount(amount: number, format: KpiCard["format"]): string {
+/**
+ * Formate une valeur KPI selon son type (currency, percent, days, ratio, months).
+ * Remplace l'ancienne fonction `formatAmount` pour éviter le conflit de nommage.
+ */
+export function formatKpiValue(amount: number, format: KpiCard["format"]): string {
   if (format === "currency") {
     if (amount === 0) return "—";
-    return frCurrency.format(Math.round(amount));
+    return formatEurCompact(amount);
   }
   if (format === "percent") {
     if (amount === 0) return "—";

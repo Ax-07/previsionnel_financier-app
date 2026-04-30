@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
 import type { KpiGroup } from "@/hooks/controle/use-dashboard-kpi-data";
 import type { YearKey } from "@/lib/finance/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { findGroupCard, formatAmount } from "./utils";
+import { findGroupCard, formatKpiValue } from "./utils";
+import { formatNumber } from "@/lib/format";
 
 /** Formateur monétaire FR, hoisted au niveau module pour éviter une instanciation à chaque render. */
-const FR_CURRENCY = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 // ── Statuts ────────────────────────────────────────────────────────────────────
 
@@ -108,7 +108,7 @@ export function RentabilitePanel({ groups, yk }: RentabilitePanelProps) {
   const tresoStatus  = getTresoStatus(tresoVal?.amount ?? 0, runwayVal?.amount ?? 0);
 
   const fmtEur = (v: number | null | undefined) =>
-    v == null || !Number.isFinite(v) ? "—" : `${FR_CURRENCY.format(Math.round(v))} €`;
+    v == null || !Number.isFinite(v) ? "—" : `${formatNumber(Math.round(v), 0)} €`;
   const fmtPct = (v: number | null | undefined) =>
     v == null || !Number.isFinite(v) ? "" : ` (${v.toFixed(1)} % du CA)`;
 
@@ -144,7 +144,7 @@ export function RentabilitePanel({ groups, yk }: RentabilitePanelProps) {
             </span>
           </div>
           <p className="text-xl font-bold tabular-nums">
-            {resNetVal ? formatAmount(resNetVal.amount, resNetCard!.format) : "—"}
+            {resNetVal ? formatKpiValue(resNetVal.amount, resNetCard!.format) : "—"}
           </p>
           {resNetVal?.pctOfCa != null && (
             <p className="mt-1.5 text-[10px] text-muted-foreground">
@@ -181,7 +181,7 @@ export function RentabilitePanel({ groups, yk }: RentabilitePanelProps) {
             </span>
           </div>
           <p className="text-xl font-bold tabular-nums">
-            {ebeVal ? formatAmount(ebeVal.amount, ebeCard!.format) : "—"}
+            {ebeVal ? formatKpiValue(ebeVal.amount, ebeCard!.format) : "—"}
           </p>
           {ebeVal?.pctOfCa != null && (
             <p className="mt-1.5 text-[10px] text-muted-foreground">
@@ -218,7 +218,7 @@ export function RentabilitePanel({ groups, yk }: RentabilitePanelProps) {
             </span>
           </div>
           <p className="text-xl font-bold tabular-nums">
-            {seuilVal ? formatAmount(seuilVal.amount, seuilCard!.format) : "—"}
+            {seuilVal ? formatKpiValue(seuilVal.amount, seuilCard!.format) : "—"}
           </p>
           {seuilStatus === "bon" && caVal && seuilVal && seuilVal.amount > 0 && (
             <p className="mt-1.5 text-[10px] text-muted-foreground">
@@ -260,11 +260,11 @@ export function RentabilitePanel({ groups, yk }: RentabilitePanelProps) {
             </span>
           </div>
           <p className="text-xl font-bold tabular-nums">
-            {tresoVal ? formatAmount(tresoVal.amount, tresoCard!.format) : "—"}
+            {tresoVal ? formatKpiValue(tresoVal.amount, tresoCard!.format) : "—"}
           </p>
           {runwayVal && runwayVal.amount > 0 && (
             <p className="mt-1.5 text-[10px] text-muted-foreground">
-              Autonomie {formatAmount(runwayVal.amount, runwayCard!.format)}
+              Autonomie {formatKpiValue(runwayVal.amount, runwayCard!.format)}
             </p>
           )}
         </div>
