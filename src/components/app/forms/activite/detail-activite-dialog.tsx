@@ -16,6 +16,7 @@ import {
   buildExercicesConfig,
   useActiviteCalculs,
 } from "@/hooks/use-activite-calculs";
+import { cellInput, cellSelect, intVal, Th } from "./activite-table-helpers";
 
 // ── Types locaux ─────────────────────────────────────────────────────────────
 
@@ -31,26 +32,6 @@ interface DetailActiviteDialogProps {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function intVal(v: string): number {
-  const n = parseInt(v, 10);
-  return isNaN(n) ? 0 : n;
-}
-
-// Styles identiques à activite-form.tsx
-const cellInput =
-  "h-7 w-full border-0 bg-transparent px-1 text-sm focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none min-w-0";
-
-const cellSelect =
-  "h-7 w-full border-0 bg-transparent px-1 text-sm focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary rounded-none cursor-pointer";
-
-function Th({ children, className }: { children?: React.ReactNode; className?: string }) {
-  return (
-    <th className={cn("px-2 py-1.5 text-left text-xs font-medium text-muted-foreground whitespace-nowrap", className)}>
-      {children}
-    </th>
-  );
-}
 
 function ParamLabel({ children }: { children?: React.ReactNode }) {
   return (
