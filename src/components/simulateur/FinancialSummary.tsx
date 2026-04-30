@@ -61,7 +61,7 @@ export function FinancialSummary({ resultat, onInjectPrevi }: FinancialSummaryPr
         <MetricCard
           icon={<TrendingDownIcon className="size-4" />}
           label="Charges salariales"
-          value={formatPct(tauxSal)}
+          value={formatPct(tauxSal, 2)}
           sublabel="sur brut"
           accent="default"
         />
@@ -131,7 +131,7 @@ export function FinancialSummary({ resultat, onInjectPrevi }: FinancialSummaryPr
           <em>Taux Cot. Pat.</em> du salarié dans votre prévisionnel.
         </p>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Taux brut total charges : <strong>{formatPct(tauxChargesTotal)}</strong>
+          Taux brut total charges : <strong>{formatPct(tauxChargesTotal, 2)}</strong>
         </p>
         {onInjectPrevi && (
           <Button

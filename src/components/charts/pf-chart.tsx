@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import type { PfChartPoint } from "@/hooks/controle/use-dashboard-kpi-data";
-import { fmtK, frCurrency } from "../app/tabs/controle/dashboard-kpi-tab/utils";
+import { fmtK } from "../app/tabs/controle/dashboard-kpi-tab/utils";
+import { formatNumber } from "@/lib/format";
 import { useChartExpanded } from "../app/tabs/controle/dashboard-kpi-tab/chart-tooltip";
 
 // Palette Besoins — famille froide, 4 teintes distinctes
@@ -39,7 +40,7 @@ function PfTooltip({ active, payload, label }: {
       <div key={key} className="flex items-center gap-1.5">
         <span className="size-1.5 rounded-full shrink-0" style={{ background: p.color }} />
         <span className="text-muted-foreground">{p.name} :</span>
-        <span className="font-medium tabular-nums">{frCurrency.format(p.value)} €</span>
+        <span className="font-medium tabular-nums">{formatNumber(Math.round(p.value), 0)} €</span>
       </div>
     );
   };
@@ -68,7 +69,7 @@ function PfTooltip({ active, payload, label }: {
           <div className="flex items-center gap-1.5">
             <span className="size-1.5 rounded-full shrink-0" style={{ background: solde.color }} />
             <span className="text-muted-foreground">{solde.name} :</span>
-            <span className="font-medium tabular-nums">{frCurrency.format(solde.value ?? 0)} €</span>
+            <span className="font-medium tabular-nums">{formatNumber(Math.round(solde.value ?? 0), 0)} €</span>
           </div>
         </div>
       )}
@@ -174,4 +175,5 @@ export function PfChart({ data }: { data: PfChartPoint[] }) {
     </div>
   );
 }
+
 

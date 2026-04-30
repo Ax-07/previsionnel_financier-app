@@ -91,9 +91,10 @@ export function ContratResultats({ resultat, estCDD, dateDemarrage, onInjectDeta
   function handleInjectDetail() {
     if (!dateDemarrage || !onInjectDetail) return;
     const detail = buildDetailFromContrat(bulletins, dateDemarrage);
-    const { brutTotal, cotisationsPatronalesTotal, cotisationsSalarialesTotal } = totaux;
+    const { brutTotal, cotisationsPatronalesTotal, cotisationsSalarialesTotal, rgduTotal } = totaux;
+    // Taux patronal net de RGDU (cohérent avec coutEmployeur = brut + totalPat − RGDU)
     const tauxCotPat =
-      brutTotal > 0 ? parseFloat((cotisationsPatronalesTotal / brutTotal * 100).toFixed(2)) : 0;
+      brutTotal > 0 ? parseFloat(((cotisationsPatronalesTotal - rgduTotal) / brutTotal * 100).toFixed(2)) : 0;
     const tauxCotSal =
       brutTotal > 0 ? parseFloat((cotisationsSalarialesTotal / brutTotal * 100).toFixed(2)) : 0;
     onInjectDetail({ ...detail, tauxCotPat, tauxCotSal });

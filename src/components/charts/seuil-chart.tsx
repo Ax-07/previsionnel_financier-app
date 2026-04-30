@@ -2,8 +2,9 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "@/lib/format";
 import type { SeuilBarPoint } from "@/hooks/controle/use-dashboard-kpi-data";
-import { fmtK, formatAmount } from "../app/tabs/controle/dashboard-kpi-tab/utils";
+import { fmtK, formatKpiValue } from "../app/tabs/controle/dashboard-kpi-tab/utils";
 import { useChartExpanded } from "../app/tabs/controle/dashboard-kpi-tab/chart-tooltip";
 
 // -- Couleurs ------------------------------------------------------------------
@@ -28,8 +29,7 @@ interface TooltipEntry {
   color?: string;
 }
 
-const frCurrency = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-function fmtEur(v: number) { return `${frCurrency.format(Math.round(v))}\u202f\u20ac`; }
+const fmtEur = (v: number) => `${formatNumber(Math.round(v), 0)} €`;
 
 function SeuilTooltip({ active, payload, label }: {
   active?: boolean;
@@ -82,7 +82,7 @@ function MargeBadges({ data }: { data: SeuilBarPoint[] }) {
             <span className="font-medium text-muted-foreground">{pt.exercice}&nbsp;:</span>
             <span className={cn("font-semibold tabular-nums", ok ? "text-emerald-700 dark:text-emerald-400" : "text-destructive")}>
               {ok ? "+" : ""}
-              {formatAmount(ecart, "currency")}
+              {formatKpiValue(ecart, "currency")}
             </span>
             <span className={cn("text-[9px]", ok ? "text-emerald-500" : "text-destructive/70")}>
               ({ok ? "+" : ""}{pct}&nbsp;%)

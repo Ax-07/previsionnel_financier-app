@@ -12,18 +12,12 @@ import {
 } from "recharts";
 import type { AnnuelBarPoint } from "@/hooks/controle/use-dashboard-kpi-data";
 import { fmtK } from "../app/tabs/controle/dashboard-kpi-tab/utils";
+import { formatNumber } from "@/lib/format";
 import { useChartExpanded } from "../app/tabs/controle/dashboard-kpi-tab/chart-tooltip";
 
 // -- Formatage -----------------------------------------------------------------
 
-const frCurrency = new Intl.NumberFormat("fr-FR", {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-});
-
-function fmtEur(value: number): string {
-  return `${frCurrency.format(Math.round(value))}\u202f\u20ac`;
-}
+const fmtEur = (v: number): string => `${formatNumber(Math.round(v), 0)} €`;
 
 // -- Couleurs ------------------------------------------------------------------
 

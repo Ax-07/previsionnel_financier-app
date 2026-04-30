@@ -23,7 +23,7 @@ export default function DossierWorkspace({
   dossierId,
 }: DossierWorkspaceProps) {
   return (
-    <Tabs defaultValue="saisie" className="h-full gap-0">
+    <Tabs defaultValue="saisie" className="min-h-0 h-full gap-0">
       {/* ── Barre d'onglets principale ─────────────────────────── */}
       <TablistContainer>
         <TabsList variant="line" className="h-11 gap-0 rounded-none bg-transparent">
@@ -47,19 +47,19 @@ export default function DossierWorkspace({
       </TablistContainer>
 
       {/* ── Contenus ───────────────────────────────────────────── */}
-      <TabsContent value="saisie" className="flex-1 overflow-hidden">
+      <TabsContent value="saisie" className="flex-1 min-h-0 overflow-hidden">
         <SaisieTab dossierId={dossierId} />
       </TabsContent>
 
-      <TabsContent value="controle" className="flex-1 overflow-hidden">
+      <TabsContent value="controle" className="flex-1 min-h-0 overflow-hidden">
         <ControleTab dossierId={dossierId} />
       </TabsContent>
 
-      <TabsContent value="imports" className="flex-1 overflow-hidden">
+      <TabsContent value="imports" className="flex-1 min-h-0 overflow-hidden">
         <ImportsTab />
       </TabsContent>
 
-      <TabsContent value="diaporama" className="flex-1 overflow-hidden">
+      <TabsContent value="diaporama" className="flex-1 min-h-0 overflow-hidden">
         <DiaporamaTab />
       </TabsContent>
     </Tabs>
