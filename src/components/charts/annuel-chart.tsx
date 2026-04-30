@@ -16,8 +16,8 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import type { AnnuelBarPoint, MonthlyBarPoint } from "@/hooks/controle/use-dashboard-kpi-data";
-import { fmtK } from "../app/tabs/controle/dashboard-kpi-tab/utils";
 import { TooltipCurrency } from "../app/tabs/controle/dashboard-kpi-tab/chart-tooltip";
+import { formatKpiValue } from "../app/tabs/controle/dashboard-kpi-tab/utils";
 
 export function AnnuelChart({
   data,
@@ -70,7 +70,7 @@ export function AnnuelChart({
           <ComposedChart data={chartData as object[]} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barCategoryGap="30%">
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} vertical={false} />
             <XAxis dataKey={xKey} tick={{ fontSize: 9 }} tickLine={false} axisLine={false} />
-            <YAxis tickFormatter={fmtK} tick={{ fontSize: 9 }} tickLine={false} axisLine={false} width={48} />
+            <YAxis tickFormatter={(value) => formatKpiValue(value, "currency")} tick={{ fontSize: 9 }} tickLine={false} axisLine={false} width={48} />
             <Tooltip content={<TooltipCurrency />} />
             <Legend iconSize={8} wrapperStyle={{ fontSize: "9px", paddingTop: "4px" }} />
             <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1} />

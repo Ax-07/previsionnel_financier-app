@@ -2,7 +2,7 @@ import { AlertTriangleIcon, CheckCircle2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DashboardChartData, KpiGroup } from "@/hooks/controle/use-dashboard-kpi-data";
 import type { YearKey } from "@/lib/finance/utils";
-import { YEAR_KEYS, fmtK } from "./utils";
+import { formatKpiValue, YEAR_KEYS } from "./utils";
 
 export interface Alerte {
   severity: "danger" | "warning" | "info";
@@ -41,7 +41,7 @@ export function AlertesPanel({
     if (maxSolde > 0 && minSolde < maxSolde * 0.2 && minPoint) {
       alertes.push({
         severity: "warning",
-        message: `Trésorerie basse en ${minPoint.mois} (${fmtK(minSolde)})`,
+        message: `Trésorerie basse en ${minPoint.mois} (${formatKpiValue(minSolde, "currency")})`,
       });
     }
   }
@@ -66,7 +66,7 @@ export function AlertesPanel({
     if (s && s.caRealise < s.seuilEco && s.seuilEco > 0) {
       alertes.push({
         severity: yk === "y1" ? "danger" : "warning",
-        message: `CA < Seuil en ${yearLabels[yk]} (manque ${fmtK(s.seuilEco - s.caRealise)})`,
+        message: `CA < Seuil en ${yearLabels[yk]} (manque ${formatKpiValue(s.seuilEco - s.caRealise, "currency")})`,
       });
     }
   });

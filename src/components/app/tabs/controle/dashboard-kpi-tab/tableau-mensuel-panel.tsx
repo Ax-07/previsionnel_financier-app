@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { DashboardChartData } from "@/hooks/controle/use-dashboard-kpi-data";
 import type { YearKey } from "@/lib/finance/utils";
-import { YEAR_KEYS, fmtK } from "./utils";
+import { formatKpiValue, YEAR_KEYS } from "./utils";
 
 export function TableauMensuelPanel({
   data,
@@ -71,16 +71,16 @@ export function TableauMensuelPanel({
                 >
                   <td className="px-3 py-1.5 font-medium">{p.mois}</td>
                   <td className="px-3 py-1.5 text-right tabular-nums text-blue-600 dark:text-blue-400">
-                    {fmtK(p.ca)}
+                    {formatKpiValue(p.ca, "currency")}
                   </td>
                   <td className="px-3 py-1.5 text-right tabular-nums text-orange-600 dark:text-orange-400">
-                    {fmtK(p.charges)}
+                    {formatKpiValue(p.charges, "currency")}
                   </td>
                   <td className="px-3 py-1.5 text-right tabular-nums text-emerald-600 dark:text-emerald-400">
-                    {fmtK(p.encaissements)}
+                    {formatKpiValue(p.encaissements, "currency")}
                   </td>
                   <td className="px-3 py-1.5 text-right tabular-nums text-destructive">
-                    {fmtK(p.decaissements)}
+                    {formatKpiValue(p.decaissements, "currency")}
                   </td>
                   <td
                     className={cn(
@@ -88,7 +88,7 @@ export function TableauMensuelPanel({
                       variation >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive",
                     )}
                   >
-                    {variation >= 0 ? "+" : ""}{fmtK(variation)}
+                    {variation >= 0 ? "+" : ""}{formatKpiValue(variation, "currency")}
                   </td>
                   <td
                     className={cn(
@@ -96,7 +96,7 @@ export function TableauMensuelPanel({
                       p.solde >= 0 ? "text-foreground" : "text-destructive",
                     )}
                   >
-                    {fmtK(p.solde)}
+                    {formatKpiValue(p.solde, "currency")}
                   </td>
                 </tr>
               );
@@ -106,19 +106,19 @@ export function TableauMensuelPanel({
             <tr className="border-t-2 bg-muted/30">
               <td className="px-3 py-1.5 text-[11px] font-semibold">Total</td>
               <td className="px-3 py-1.5 text-right tabular-nums font-semibold text-blue-600 dark:text-blue-400">
-                {fmtK(points.reduce((s, p) => s + p.ca, 0))}
+                {formatKpiValue(points.reduce((s, p) => s + p.ca, 0), "currency")}
               </td>
               <td className="px-3 py-1.5 text-right tabular-nums font-semibold text-orange-600 dark:text-orange-400">
-                {fmtK(points.reduce((s, p) => s + p.charges, 0))}
+                {formatKpiValue(points.reduce((s, p) => s + p.charges, 0), "currency")}
               </td>
               <td className="px-3 py-1.5 text-right tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
-                {fmtK(points.reduce((s, p) => s + p.encaissements, 0))}
+                {formatKpiValue(points.reduce((s, p) => s + p.encaissements, 0), "currency")}
               </td>
               <td className="px-3 py-1.5 text-right tabular-nums font-semibold text-destructive">
-                {fmtK(points.reduce((s, p) => s + p.decaissements, 0))}
+                {formatKpiValue(points.reduce((s, p) => s + p.decaissements, 0), "currency")}
               </td>
               <td className="px-3 py-1.5 text-right tabular-nums font-semibold">
-                {fmtK(points.reduce((s, p) => s + (p.encaissements - p.decaissements), 0))}
+                {formatKpiValue(points.reduce((s, p) => s + (p.encaissements - p.decaissements), 0), "currency")}
               </td>
               <td
                 className={cn(
@@ -126,7 +126,7 @@ export function TableauMensuelPanel({
                   (points[points.length - 1]?.solde ?? 0) >= 0 ? "text-foreground" : "text-destructive",
                 )}
               >
-                {fmtK(points[points.length - 1]?.solde ?? 0)}
+                {formatKpiValue(points[points.length - 1]?.solde ?? 0, "currency")}
               </td>
             </tr>
           </tfoot>

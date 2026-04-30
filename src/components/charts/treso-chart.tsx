@@ -12,8 +12,8 @@ import {
 } from "recharts";
 import type { DashboardChartData } from "@/hooks/controle/use-dashboard-kpi-data";
 import type { YearKey } from "@/lib/finance/utils";
-import { fmtK } from "../app/tabs/controle/dashboard-kpi-tab/utils";
 import { TooltipCurrency } from "../app/tabs/controle/dashboard-kpi-tab/chart-tooltip";
+import { formatKpiValue } from "../app/tabs/controle/dashboard-kpi-tab/utils";
 
 export function TresoChart({
   data,
@@ -37,7 +37,7 @@ export function TresoChart({
           <ComposedChart data={points} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barCategoryGap="20%">
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} vertical={false} />
             <XAxis dataKey="mois" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} />
-            <YAxis tickFormatter={fmtK} tick={{ fontSize: 9 }} tickLine={false} axisLine={false} width={48} />
+            <YAxis tickFormatter={(value) => formatKpiValue(value, "currency")} tick={{ fontSize: 9 }} tickLine={false} axisLine={false} width={48} />
             <Tooltip content={<TooltipCurrency />} />
             <ReferenceLine
               y={0}

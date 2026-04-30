@@ -5,7 +5,7 @@ import { Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { fmtK } from "./utils";
+import { formatKpiValue } from "./utils";
 
 export const ChartExpandedContext = createContext(false);
 
@@ -30,7 +30,7 @@ export const TooltipCurrency = ({
         <div key={p.name} className="flex items-center gap-1.5">
           <span className="size-2 rounded-full" style={{ background: p.color }} />
           <span className="text-muted-foreground">{p.name} :</span>
-          <span className="font-medium tabular-nums">{fmtK(p.value)}</span>
+          <span className="font-medium tabular-nums">{formatKpiValue(p.value, "currency")}</span>
         </div>
       ))}
     </div>

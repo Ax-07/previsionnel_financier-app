@@ -3,7 +3,7 @@
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import type { ChargesBreakdownPoint } from "@/hooks/controle/use-dashboard-kpi-data";
 import type { YearKey } from "@/lib/finance/utils";
-import { YEAR_KEYS, fmtK } from "../app/tabs/controle/dashboard-kpi-tab/utils";
+import { formatKpiValue, YEAR_KEYS } from "../app/tabs/controle/dashboard-kpi-tab/utils";
 
 type ChargesKey = keyof Omit<ChargesBreakdownPoint, "exercice">;
 
@@ -35,7 +35,7 @@ function PieTooltipCompact({
         <span className="font-medium">{p.name}</span>
       </div>
       <p className="tabular-nums text-muted-foreground">
-        {fmtK(p.value)} · {pct} %
+        {formatKpiValue(p.value, "currency")} · {pct} %
       </p>
     </div>
   );

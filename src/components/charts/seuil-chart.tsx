@@ -4,7 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/lib/format";
 import type { SeuilBarPoint } from "@/hooks/controle/use-dashboard-kpi-data";
-import { fmtK, formatKpiValue } from "../app/tabs/controle/dashboard-kpi-tab/utils";
+import { formatKpiValue } from "../app/tabs/controle/dashboard-kpi-tab/utils";
 import { useChartExpanded } from "../app/tabs/controle/dashboard-kpi-tab/chart-tooltip";
 
 // -- Couleurs ------------------------------------------------------------------
@@ -141,7 +141,7 @@ export function SeuilChart({ data }: { data: SeuilBarPoint[] }) {
               interval={expanded ? 0 : "preserveStartEnd"}
             />
             <YAxis
-              tickFormatter={fmtK}
+              tickFormatter={(value) => formatKpiValue(value, "currency")}
               tick={{ fontSize: 9 }}
               tickLine={false}
               axisLine={false}

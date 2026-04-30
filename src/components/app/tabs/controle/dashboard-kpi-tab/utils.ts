@@ -5,12 +5,6 @@ import { formatEurCompact } from "@/lib/format";
 export { YEAR_KEYS };
 
 /**
- * Alias de `formatEurCompact` pour les graphiques et cartes KPI.
- * Conservé pour rétrocompatibilité avec les imports existants.
- */
-export { formatEurCompact as fmtK } from "@/lib/format";
-
-/**
  * Formate une valeur KPI selon son type (currency, percent, days, ratio, months).
  * Remplace l'ancienne fonction `formatAmount` pour éviter le conflit de nommage.
  */

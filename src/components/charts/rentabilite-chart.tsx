@@ -11,9 +11,9 @@ import {
   ReferenceLine,
 } from "recharts";
 import type { AnnuelBarPoint } from "@/hooks/controle/use-dashboard-kpi-data";
-import { fmtK } from "../app/tabs/controle/dashboard-kpi-tab/utils";
 import { formatNumber } from "@/lib/format";
 import { useChartExpanded } from "../app/tabs/controle/dashboard-kpi-tab/chart-tooltip";
+import { formatKpiValue } from "../app/tabs/controle/dashboard-kpi-tab/utils";
 
 // -- Formatage -----------------------------------------------------------------
 
@@ -109,7 +109,7 @@ export function RentabiliteChart({ data }: RentabiliteChartProps) {
               interval={expanded ? 0 : "preserveStartEnd"}
             />
             <YAxis
-              tickFormatter={fmtK}
+              tickFormatter={(value) => formatKpiValue(value, "currency")}
               tick={{ fontSize: 9 }}
               tickLine={false}
               axisLine={false}

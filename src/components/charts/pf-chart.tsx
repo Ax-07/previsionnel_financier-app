@@ -2,9 +2,9 @@
 
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import type { PfChartPoint } from "@/hooks/controle/use-dashboard-kpi-data";
-import { fmtK } from "../app/tabs/controle/dashboard-kpi-tab/utils";
 import { formatNumber } from "@/lib/format";
 import { useChartExpanded } from "../app/tabs/controle/dashboard-kpi-tab/chart-tooltip";
+import { formatKpiValue } from "../app/tabs/controle/dashboard-kpi-tab/utils";
 
 // Palette Besoins — famille froide, 4 teintes distinctes
 const B_INCORPO = "hsl(231 72% 40%)"; // indigo profond
@@ -150,7 +150,7 @@ export function PfChart({ data }: { data: PfChartPoint[] }) {
               tick={{ fontSize: 9 }}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(v) => fmtK(v as number)}
+              tickFormatter={(v) => formatKpiValue(v as number, "currency")}
               tickCount={expanded ? 12 : 5}
               width={56}
             />
