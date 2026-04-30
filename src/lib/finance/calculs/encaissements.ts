@@ -67,7 +67,7 @@ export function calcEncaissements(
   >,
   ctx: TemporelCtx,
 ): EncaissementsResult {
-  const { yearStarts, isFranchise, defaultDelaiClients } = ctx;
+  const { yearStarts, isFranchise } = ctx;
 
   // ── Apports capital & comptes courants ──────────────────────────────────────
   const encApportsCapital: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
@@ -97,7 +97,7 @@ export function calcEncaissements(
   // ── Production vendue TTC (avec décalage client) ────────────────────────────
   const activitesEncData = data.activites.map((act) => {
     const coefTTC = isFranchise ? 1 : 1 + n(act.tauxTVA) / 100;
-    const delaiMois = n(act.reglementClients ?? defaultDelaiClients) / 30;
+    const delaiMois = n(act.reglementClients ?? 30) / 30;
     const r1 = seasonalMonthly(n(act.montantN) * coefTTC, act.saisonnaliteCA, "N");
     const r2 = seasonalMonthly(n(act.montantN1) * coefTTC, act.saisonnaliteCA, "N1");
     const r3 = seasonalMonthly(n(act.montantN2) * coefTTC, act.saisonnaliteCA, "N2");
@@ -200,9 +200,10 @@ export function calcEncoursFournisseurs(
     paid: MonthlySeries,
     initialEncours: number,
   ): MonthlySeries {
-    const result = zeroSeries();
+    const nMois = raw.length;
+    const result = zeroSeries(nMois);
     let running = initialEncours;
-    for (let m = 0; m < 12; m++) {
+    for (let m = 0; m < nMois; m++) {
       running = running + (raw[m] ?? 0) - (paid[m] ?? 0);
       result[m] = Math.max(0, running);
     }
@@ -210,7 +211,7 @@ export function calcEncoursFournisseurs(
   }
 
   const y1 = computeYear(decAchatsRaw.y1, decAchats.y1, 0);
-  const y2 = computeYear(decAchatsRaw.y2, decAchats.y2, y1[11] ?? 0);
-  const y3 = computeYear(decAchatsRaw.y3, decAchats.y3, y2[11] ?? 0);
+  const y2 = computeYear(decAchatsRaw.y2, decAchats.y2, y1[y1.length - 1] ?? 0);
+  const y3 = computeYear(decAchatsRaw.y3, decAchats.y3, y2[y2.length - 1] ?? 0);
   return { y1, y2, y3 };
 }

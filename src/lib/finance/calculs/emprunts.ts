@@ -1,12 +1,12 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import { n, type YearKey, type YearAcc } from "@/lib/finance/utils";
 
-// â”€â”€ IntÃ©rÃªts d'emprunts (depuis l'Ã©chÃ©ancier) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Intérêts d'emprunts (depuis l'échéancier) ────────────────────────────────
 
 /**
- * AgrÃ¨ge intÃ©rÃªts + assurances de tous les emprunts actifs par exercice fiscal.
+ * Agrège intérêts + assurances de tous les emprunts actifs par exercice fiscal.
  *
- * @param toExerciceKey â€“ mappeur date â†’ "y1"|"y2"|"y3"|null (de makeExerciceHelpers)
+ * @param toExerciceKey – mappeur date → "y1"|"y2"|"y3"|null (de makeExerciceHelpers)
  */
 export function calcInteretsEmprunts(
   data: Pick<ScenarioFinData, "emprunts">,
@@ -28,10 +28,10 @@ export function calcInteretsEmprunts(
   return acc;
 }
 
-// â”€â”€ Capital remboursÃ© (depuis l'Ã©chÃ©ancier) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Capital remboursé (depuis l'échéancier) ───────────────────────────────────
 
 /**
- * AgrÃ¨ge le capital amorti (remboursement principal) par exercice fiscal.
+ * Agrège le capital amorti (remboursement principal) par exercice fiscal.
  * Utile pour le tableau de financement et le bilan.
  */
 export function calcCapitalRembourse(
@@ -54,10 +54,10 @@ export function calcCapitalRembourse(
   return acc;
 }
 
-// â”€â”€ Frais de dossier (depuis l'Ã©chÃ©ancier) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Frais de dossier (depuis l'échéancier) ───────────────────────────────────
 
 /**
- * AgrÃ¨ge les frais de dossier par exercice fiscal.
+ * Agrège les frais de dossier par exercice fiscal.
  * Source unique : emprunt.fraisDossier + emprunt.dateDéblocage (champs directs DB).
  */
 export function calcFraisDossier(

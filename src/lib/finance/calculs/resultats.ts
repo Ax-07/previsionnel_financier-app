@@ -1,7 +1,7 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import { n, sumBy, type YearAcc } from "@/lib/finance/utils";
 
-// â”€â”€ Produits financiers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Produits financiers ───────────────────────────────────────────────────────
 
 export function calcProduitsFinanciers(
   data: Pick<ScenarioFinData, "financiersProduits">,
@@ -14,7 +14,7 @@ export function calcProduitsFinanciers(
   };
 }
 
-// â”€â”€ Charges financières hors intérêts emprunts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Charges financières hors intérêts emprunts ────────────────────────────────
 
 export function calcAutresChargesFinancieres(
   data: Pick<ScenarioFinData, "chargesFinancieres">,
@@ -27,10 +27,10 @@ export function calcAutresChargesFinancieres(
   };
 }
 
-// â”€â”€ Résultat financier â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Résultat financier ────────────────────────────────────────────────────────
 
 /**
- * ResFin = ProduitsFinanciers âˆ’ (InteretsEmprunts + FraisDossierEmprunts + AutresChargesFinancieres)
+ * ResFin = ProduitsFinanciers − (InteretsEmprunts + FraisDossierEmprunts + AutresChargesFinancieres)
  * Cohérent avec monthly.ts : chargesFinancièresAcc = interets + fraisDossier + autresChargesFinancières
  */
 export function calcResFin(
@@ -46,7 +46,7 @@ export function calcResFin(
   };
 }
 
-// â”€â”€ Résultat courant â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Résultat courant ──────────────────────────────────────────────────────────
 
 export function calcResCourant(resExpl: YearAcc, resFin: YearAcc): YearAcc {
   return {
@@ -56,7 +56,7 @@ export function calcResCourant(resExpl: YearAcc, resFin: YearAcc): YearAcc {
   };
 }
 
-// â”€â”€ Résultat exceptionnel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Résultat exceptionnel ─────────────────────────────────────────────────────
 
 export function calcResExcep(
   data: Pick<ScenarioFinData, "exceptionnelsProduits" | "chargesExceptionnelles">,
@@ -70,10 +70,10 @@ export function calcResExcep(
   };
 }
 
-// â”€â”€ Résultat net â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Résultat net ──────────────────────────────────────────────────────────────
 
 /**
- * ResNet = ResCourant + ResExcep âˆ’ IS
+ * ResNet = ResCourant + ResExcep − IS
  */
 export function calcResNet(
   resCourant: YearAcc,

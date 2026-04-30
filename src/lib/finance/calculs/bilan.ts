@@ -3,9 +3,9 @@ import { n, type YearAcc } from "@/lib/finance/utils";
 import { distribuerAmortParExercice } from "./amortissements";
 import type { FinCalcResult } from "./index";
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// â”€â”€ Immobilisations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Immobilisations ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export interface ImmoBilanResult {
   immoBruteIncorp: YearAcc;
@@ -23,11 +23,11 @@ export interface ImmoBilanResult {
 }
 
 /**
- * Calcule les immobilisations brutes, amortissements cumulÃ©s et valeurs nettes
+ * Calcule les immobilisations brutes, amortissements cumulés et valeurs nettes
  * (incorporelles + corporelles) pour les 3 exercices fiscaux.
  *
  * Si `dotationsParImmo` est fourni (issu de `FinCalcResult.dotationsParImmoAcc`),
- * les dotations annuelles sont lues directement depuis ce tableau, Ã©vitant de
+ * les dotations annuelles sont lues directement depuis ce tableau, évitant de
  * relancer `distribuerAmortParExercice` sur chaque immobilisation.
  */
 export function calcImmosBilan(
@@ -51,26 +51,41 @@ export function calcImmosBilan(
     const dAcq = new Date(String(immo.dateAcquisition));
     const montant = n(immo.montantHT);
     const target =
-      immo.nature === "INCORPOREL" ? immoBruteIncorp
-      : immo.nature === "FINANCIER" ? immoBruteFin
-      : immoBruteCorp;
+      immo.nature === "INCORPOREL"
+        ? immoBruteIncorp
+        : immo.nature === "FINANCIER"
+          ? immoBruteFin
+          : immoBruteCorp;
 
-    if (dAcq <= exBorne1) { target.y1 += montant; immoAcquises.y1 += montant; }
-    if (dAcq < exBorne2) { target.y2 += montant; immoAcquises.y2 += montant; }
-    if (dAcq < exBorne3) { target.y3 += montant; immoAcquises.y3 += montant; }
-    // Convention : borne inclusive pour exBorne1 (immo acquise le 1er jour de Y1 â†’ prÃ©sente en Y1).
-    // Borne exclusive pour exBorne2/3 : immo acquise sur exBorne2 appartient Ã  Y2, pas Y1.
+    if (dAcq <= exBorne1) {
+      target.y1 += montant;
+      immoAcquises.y1 += montant;
+    }
+    if (dAcq < exBorne2) {
+      target.y2 += montant;
+      immoAcquises.y2 += montant;
+    }
+    if (dAcq < exBorne3) {
+      target.y3 += montant;
+      immoAcquises.y3 += montant;
+    }
+    // Convention : borne inclusive pour exBorne1 (immo acquise le 1er jour de Y1 → présente en Y1).
+    // Borne exclusive pour exBorne2/3 : immo acquise sur exBorne2 appartient à Y2, pas Y1.
   }
 
   const dotIncorp: YearAcc = { ...zero };
   const dotCorp: YearAcc = { ...zero };
   const dotFin: YearAcc = { ...zero };
+
   if (dotationsParImmo) {
     for (const { immo, values } of dotationsParImmo) {
       const acc =
-        immo.nature === "INCORPOREL" ? dotIncorp
-        : immo.nature === "FINANCIER" ? dotFin
-        : dotCorp;
+        immo.nature === "INCORPOREL"
+          ? dotIncorp
+          : immo.nature === "FINANCIER"
+            ? dotFin
+            : dotCorp;
+
       acc.y1 += values.y1;
       acc.y2 += values.y2;
       acc.y3 += values.y3;
@@ -79,9 +94,12 @@ export function calcImmosBilan(
     for (const immo of actives) {
       const dot = distribuerAmortParExercice(immo, anneeDebut, moisDebut);
       const acc =
-        immo.nature === "INCORPOREL" ? dotIncorp
-        : immo.nature === "FINANCIER" ? dotFin
-        : dotCorp;
+        immo.nature === "INCORPOREL"
+          ? dotIncorp
+          : immo.nature === "FINANCIER"
+            ? dotFin
+            : dotCorp;
+
       acc.y1 += dot.y1;
       acc.y2 += dot.y2;
       acc.y3 += dot.y3;
@@ -93,11 +111,13 @@ export function calcImmosBilan(
     y2: dotIncorp.y1 + dotIncorp.y2,
     y3: dotIncorp.y1 + dotIncorp.y2 + dotIncorp.y3,
   };
+
   const amortCumulCorp: YearAcc = {
     y1: dotCorp.y1,
     y2: dotCorp.y1 + dotCorp.y2,
     y3: dotCorp.y1 + dotCorp.y2 + dotCorp.y3,
   };
+
   const amortCumulFin: YearAcc = {
     y1: dotFin.y1,
     y2: dotFin.y1 + dotFin.y2,
@@ -109,16 +129,19 @@ export function calcImmosBilan(
     y2: immoBruteIncorp.y2 - amortCumulIncorp.y2,
     y3: immoBruteIncorp.y3 - amortCumulIncorp.y3,
   };
+
   const immoNetteCorp: YearAcc = {
     y1: immoBruteCorp.y1 - amortCumulCorp.y1,
     y2: immoBruteCorp.y2 - amortCumulCorp.y2,
     y3: immoBruteCorp.y3 - amortCumulCorp.y3,
   };
+
   const immoNetteFin: YearAcc = {
     y1: immoBruteFin.y1 - amortCumulFin.y1,
     y2: immoBruteFin.y2 - amortCumulFin.y2,
     y3: immoBruteFin.y3 - amortCumulFin.y3,
   };
+
   const immoNette: YearAcc = {
     y1: immoNetteIncorp.y1 + immoNetteCorp.y1 + immoNetteFin.y1,
     y2: immoNetteIncorp.y2 + immoNetteCorp.y2 + immoNetteFin.y2,
@@ -140,27 +163,27 @@ export function calcImmosBilan(
   };
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// â”€â”€ Apports cumulatifs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Apports cumulatifs ───────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export interface ApportsCumulResult {
-  /** Capital social + apports en nature cumulÃ©s Ã  fin de chaque exercice. */
+  /** Capital social + apports en nature cumulés à fin de chaque exercice. */
   apportsCapital: YearAcc;
-  /** Comptes courants associÃ©s cumulÃ©s Ã  fin de chaque exercice. */
+  /** Comptes courants associés cumulés à fin de chaque exercice. */
   apportsCC: YearAcc;
 }
 
 /**
- * Calcule les apports en capital et les comptes courants associÃ©s de faÃ§on
+ * Calcule les apports en capital et les comptes courants associés de façon
  * cumulative pour chaque exercice fiscal.
- * Les prÃªts d'honneur (TypeSubvention = PRET_HONNEUR) sont intÃ©grÃ©s dans
- * les comptes courants associÃ©s pour rester cohÃ©rent avec le plan de
- * financement et le tableau de trÃ©sorerie.
+ * Les prêts d'honneur (TypeSubvention = PRET_HONNEUR) sont intégrés dans
+ * les comptes courants associés pour rester cohérent avec le plan de
+ * financement et le tableau de trésorerie.
  *
  * Les remboursements de compte courant (TypeDiversFlux.REMBOURSEMENT_CC) sont
- * dÃ©duits de l'apportsCC pour donner la position nette (la dette rÃ©elle envers
- * les associÃ©s), cohÃ©rente avec le flux de trÃ©sorerie (decDivers).
+ * déduits de l'apportsCC pour donner la position nette (la dette réelle envers
+ * les associés), cohérente avec le flux de trésorerie (decDivers).
  */
 export function calcApportsCumulatifs(
   data: Pick<ScenarioFinData, "apports" | "subventions" | "diversRemboursementsCC">,
@@ -192,38 +215,46 @@ export function calcApportsCumulatifs(
     }
   }
 
-  // PrÃªts d'honneur : traitÃ©s comme comptes courants associÃ©s
-  // (cohÃ©rence avec plan-financement et trÃ©sorerie mensuelle)
+  // Prêts d'honneur : traités comme comptes courants associés
+  // (cohérence avec plan-financement et trésorerie mensuelle)
   for (const subv of data.subventions) {
     if (subv.type !== "PRET_HONNEUR") continue;
+
     const d = subv.dateEncaissement ?? subv.dateObtention;
     if (!d) continue;
+
     const dSubv = new Date(String(d));
     const montant = n(subv.montant);
+
     if (dSubv <= exBorne1) apportsCC.y1 += montant;
     if (dSubv < exBorne2) apportsCC.y2 += montant;
     if (dSubv < exBorne3) apportsCC.y3 += montant;
   }
 
-  // Remboursements CC : rÃ©duction de la dette envers les associÃ©s.
-  // On dÃ©duit le cumul des remboursements pour obtenir la position nette.
+  // Remboursements CC : réduction de la dette envers les associés.
+  // On déduit le cumul des remboursements pour obtenir la position nette.
   for (const flux of data.diversRemboursementsCC) {
     if (flux.dateN) {
       const d = new Date(String(flux.dateN));
       const m = n(flux.montantN);
+
       if (d <= exBorne1) apportsCC.y1 -= m;
       if (d < exBorne2) apportsCC.y2 -= m;
       if (d < exBorne3) apportsCC.y3 -= m;
     }
+
     if (flux.dateN1) {
       const d = new Date(String(flux.dateN1));
       const m = n(flux.montantN1);
+
       if (d < exBorne2) apportsCC.y2 -= m;
       if (d < exBorne3) apportsCC.y3 -= m;
     }
+
     if (flux.dateN2) {
       const d = new Date(String(flux.dateN2));
       const m = n(flux.montantN2);
+
       if (d < exBorne3) apportsCC.y3 -= m;
     }
   }
@@ -231,22 +262,22 @@ export function calcApportsCumulatifs(
   return { apportsCapital, apportsCC };
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// â”€â”€ Emprunts passif â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Emprunts passif ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export interface EmpruntsPassifResult {
-  /** Capital restant dÃ» (haut de bilan passif) par exercice. */
+  /** Capital restant dû (haut de bilan passif) par exercice. */
   capitalRestantDu: YearAcc;
-  /** Cumul des montants dÃ©bloquÃ©s pour le calcul du solde de trÃ©sorerie. */
+  /** Cumul des montants débloqués pour le calcul du solde de trésorerie. */
   empruntsDebloques: YearAcc;
-  /** Cumul des remboursements en capital pour le calcul du solde de trÃ©sorerie. */
+  /** Cumul des remboursements en capital pour le calcul du solde de trésorerie. */
   remboursementsCumul: YearAcc;
 }
 
 /**
- * Calcule le capital restant dÃ» sur les emprunts (passif) ainsi que les flux
- * cumulatifs (dÃ©blocages et remboursements) nÃ©cessaires au calcul de trÃ©sorerie.
+ * Calcule le capital restant dû sur les emprunts (passif) ainsi que les flux
+ * cumulatifs (déblocages et remboursements) nécessaires au calcul de trésorerie.
  */
 export function calcEmpruntsPassif(
   data: Pick<ScenarioFinData, "emprunts">,
@@ -270,12 +301,23 @@ export function calcEmpruntsPassif(
     let cumY1 = 0;
     let cumY2 = 0;
     let cumY3 = 0;
+
     for (const ligne of emprunt.lignesEcheancier) {
       const dl = new Date(String(ligne.dateEcheance));
       const cap = n(ligne.capitalRembourse);
-      if (dl <= exBorne1) { cumY1 += cap; remboursementsCumul.y1 += cap; }
-      if (dl < exBorne2) { cumY2 += cap; remboursementsCumul.y2 += cap; }
-      if (dl < exBorne3) { cumY3 += cap; remboursementsCumul.y3 += cap; }
+
+      if (dl <= exBorne1) {
+        cumY1 += cap;
+        remboursementsCumul.y1 += cap;
+      }
+      if (dl < exBorne2) {
+        cumY2 += cap;
+        remboursementsCumul.y2 += cap;
+      }
+      if (dl < exBorne3) {
+        cumY3 += cap;
+        remboursementsCumul.y3 += cap;
+      }
     }
 
     capitalRestantDu.y1 += Math.max(0, totalCapital - cumY1);
@@ -286,13 +328,13 @@ export function calcEmpruntsPassif(
   return { capitalRestantDu, empruntsDebloques, remboursementsCumul };
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// â”€â”€ Provisions cumulÃ©es â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Provisions cumulées ──────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Calcule la provision nette cumulÃ©e (dotations âˆ’ reprises) visible au passif.
- * La valeur est cumulative sur les 3 exercices pour reflÃ©ter le stock de provisions.
+ * Calcule la provision nette cumulée (dotations − reprises) visible au passif.
+ * La valeur est cumulative sur les 3 exercices pour refléter le stock de provisions.
  */
 export function calcProvisionsCumul(
   fc: Pick<FinCalcResult, "dotationsProvisions" | "reprises">,
@@ -300,6 +342,7 @@ export function calcProvisionsCumul(
   const net1 = fc.dotationsProvisions.y1 - fc.reprises.y1;
   const net2 = fc.dotationsProvisions.y2 - fc.reprises.y2;
   const net3 = fc.dotationsProvisions.y3 - fc.reprises.y3;
+
   return {
     y1: net1,
     y2: net1 + net2,
@@ -307,21 +350,21 @@ export function calcProvisionsCumul(
   };
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// â”€â”€ Capitaux propres â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Capitaux propres ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export interface CapitauxPropresResult {
   capitalSocial: YearAcc;
   comptesCoursants: YearAcc;
-  /** Cumul des rÃ©sultats des exercices antÃ©rieurs (report Ã  nouveau). */
+  /** Cumul des résultats des exercices antérieurs (report à nouveau). */
   reportANouveau: YearAcc;
   capitauxPropres: YearAcc;
 }
 
 /**
  * Calcule les capitaux propres du passif.
- * Le report Ã  nouveau est le cumul des rÃ©sultats nets des exercices prÃ©cÃ©dents.
+ * Le report à nouveau est le cumul des résultats nets des exercices précédents.
  */
 export function calcCapitauxPropres(
   apportsCapital: YearAcc,
@@ -333,11 +376,13 @@ export function calcCapitauxPropres(
     y2: resultatNet.y1,
     y3: resultatNet.y1 + resultatNet.y2,
   };
+
   const capitauxPropres: YearAcc = {
     y1: apportsCapital.y1 + apportsCC.y1 + reportANouveau.y1 + resultatNet.y1,
     y2: apportsCapital.y2 + apportsCC.y2 + reportANouveau.y2 + resultatNet.y2,
     y3: apportsCapital.y3 + apportsCC.y3 + reportANouveau.y3 + resultatNet.y3,
   };
+
   return {
     capitalSocial: apportsCapital,
     comptesCoursants: apportsCC,
@@ -346,33 +391,33 @@ export function calcCapitauxPropres(
   };
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// â”€â”€ TrÃ©sorerie bilan â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Trésorerie bilan ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export interface TresorerieBilanResult {
-  /** TrÃ©sorerie positive en fin d'exercice (actif circulant). */
+  /** Trésorerie positive en fin d'exercice (actif circulant). */
   disponibilites: YearAcc;
-  /** DÃ©couvert bancaire en fin d'exercice (concours bancaires courants, passif). */
+  /** Découvert bancaire en fin d'exercice (concours bancaires courants, passif). */
   decouvert: YearAcc;
 }
 
 /**
- * Calcule le solde de trÃ©sorerie de fin d'exercice Ã  partir des flux cumulatifs.
+ * Calcule le solde de trésorerie de fin d'exercice à partir des flux cumulatifs.
  *
  * Formule :
- *   trÃ©so = apports + cafCumul + empruntsDebloques + encFluxNonPL
- *           âˆ’ immoAcquises âˆ’ stocksCumul âˆ’ remboursementsCumul âˆ’ decFluxNonPL
+ *   tréso = apports + cafCumul + empruntsDebloques + encFluxNonPL
+ *           − immoAcquises − stocksCumul − remboursementsCumul − decFluxNonPL
  * Correction :
- *   trÃ©so corrigÃ©e = trÃ©so + totalDettesExploitation
+ *   tréso corrigée = tréso + totalDettesExploitation
  *   (les dettes d'exploitation sont des ressources cash implicites)
  *
- * Les flux non-P&L (`encFluxNonPL` / `decFluxNonPL`) permettent d'intÃ©grer
- * les subventions d'investissement et les encaissements/dÃ©caissements divers
- * qui ne transitent pas par le compte de rÃ©sultat mais sont bien des flux cash
- * dans le tableau de trÃ©sorerie.
+ * Les flux non-P&L (`encFluxNonPL` / `decFluxNonPL`) permettent d'intégrer
+ * les subventions d'investissement et les encaissements/décaissements divers
+ * qui ne transitent pas par le compte de résultat mais sont bien des flux cash
+ * dans le tableau de trésorerie.
  *
- * Note : les remboursements de CC sont dÃ©jÃ  intÃ©grÃ©s via `apportsCC` (net).
+ * Note : les remboursements de CC sont déjà intégrés via `apportsCC` (net).
  */
 export function calcTresorerieBilan(params: {
   caf: YearAcc;
@@ -380,7 +425,7 @@ export function calcTresorerieBilan(params: {
   apportsCC: YearAcc;
   empruntsDebloques: YearAcc;
   immoAcquises: YearAcc;
-  /** Besoins BFR non-cash en fin d'exercice : stocks de matiÃ¨res + crÃ©dit de TVA. */
+  /** Besoins BFR non-cash en fin d'exercice : stocks de matières + crédit de TVA. */
   stocksCumul: YearAcc;
   /** Total dettes d'exploitation (= totalRessources issu de calcBfr). */
   totalDettesExploitation: YearAcc;
@@ -392,8 +437,8 @@ export function calcTresorerieBilan(params: {
    */
   encFluxNonPLCumul?: YearAcc;
   /**
-   * DÃ©caissements cumulatifs non-P&L : dÃ©caissements divers
-   * (TypeDiversFlux.DECAISSEMENT) â€” hors remboursements CC dÃ©jÃ  dÃ©duits d'apportsCC.
+   * Décaissements cumulatifs non-P&L : décaissements divers
+   * (TypeDiversFlux.DECAISSEMENT) — hors remboursements CC déjà déduits d'apportsCC.
    * @default { y1: 0, y2: 0, y3: 0 }
    */
   decFluxNonPLCumul?: YearAcc;
@@ -418,18 +463,39 @@ export function calcTresorerieBilan(params: {
   };
 
   const tresorerie: YearAcc = {
-    y1: apportsCapital.y1 + apportsCC.y1 + empruntsDebloques.y1 + cafCumul.y1
-      + encFluxNonPLCumul.y1 - decFluxNonPLCumul.y1
-      - immoAcquises.y1 - stocksCumul.y1 - remboursementsCumul.y1,
-    y2: apportsCapital.y2 + apportsCC.y2 + empruntsDebloques.y2 + cafCumul.y2
-      + encFluxNonPLCumul.y2 - decFluxNonPLCumul.y2
-      - immoAcquises.y2 - stocksCumul.y2 - remboursementsCumul.y2,
-    y3: apportsCapital.y3 + apportsCC.y3 + empruntsDebloques.y3 + cafCumul.y3
-      + encFluxNonPLCumul.y3 - decFluxNonPLCumul.y3
-      - immoAcquises.y3 - stocksCumul.y3 - remboursementsCumul.y3,
+    y1:
+      apportsCapital.y1 +
+      apportsCC.y1 +
+      empruntsDebloques.y1 +
+      cafCumul.y1 +
+      encFluxNonPLCumul.y1 -
+      decFluxNonPLCumul.y1 -
+      immoAcquises.y1 -
+      stocksCumul.y1 -
+      remboursementsCumul.y1,
+    y2:
+      apportsCapital.y2 +
+      apportsCC.y2 +
+      empruntsDebloques.y2 +
+      cafCumul.y2 +
+      encFluxNonPLCumul.y2 -
+      decFluxNonPLCumul.y2 -
+      immoAcquises.y2 -
+      stocksCumul.y2 -
+      remboursementsCumul.y2,
+    y3:
+      apportsCapital.y3 +
+      apportsCC.y3 +
+      empruntsDebloques.y3 +
+      cafCumul.y3 +
+      encFluxNonPLCumul.y3 -
+      decFluxNonPLCumul.y3 -
+      immoAcquises.y3 -
+      stocksCumul.y3 -
+      remboursementsCumul.y3,
   };
 
-  // Les dettes d'exploitation sont des ressources implicites (cash non encore dÃ©caissÃ©)
+  // Les dettes d'exploitation sont des ressources implicites (cash non encore décaissé)
   const tresorerieCor: YearAcc = {
     y1: tresorerie.y1 + totalDettesExploitation.y1,
     y2: tresorerie.y2 + totalDettesExploitation.y2,
@@ -450,23 +516,23 @@ export function calcTresorerieBilan(params: {
   };
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// â”€â”€ Flux non-P&L cumulatifs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Flux non-P&L cumulatifs ──────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export interface FluxNonPLResult {
   /** Encaissements cumulatifs non-P&L : subventions d'investissement (hors PRET_HONNEUR) + divers encaissements. */
   encFluxNonPLCumul: YearAcc;
-  /** DÃ©caissements cumulatifs non-P&L : divers dÃ©caissements (hors remboursements CC dÃ©jÃ  dans apportsCC). */
+  /** Décaissements cumulatifs non-P&L : divers décaissements (hors remboursements CC déjà dans apportsCC). */
   decFluxNonPLCumul: YearAcc;
 }
 
 /**
- * Calcule les flux non-P&L cumulatifs (subventions d'investissement + encaissements/dÃ©caissements divers)
- * nÃ©cessaires Ã  l'Ã©quation de trÃ©sorerie du bilan et des ratios.
+ * Calcule les flux non-P&L cumulatifs (subventions d'investissement + encaissements/décaissements divers)
+ * nécessaires à l'équation de trésorerie du bilan et des ratios.
  *
- * Source unique de vÃ©ritÃ© partagÃ©e par `aggregations/bilan.ts` et `aggregations/ratios.ts`
- * pour garantir la cohÃ©rence de la trÃ©sorerie entre le bilan et les ratios.
+ * Source unique de vérité partagée par `aggregations/bilan.ts` et `aggregations/ratios.ts`
+ * pour garantir la cohérence de la trésorerie entre le bilan et les ratios.
  */
 export function calcFluxNonPLCumul(
   data: Pick<ScenarioFinData, "subventions" | "diversEncaissements" | "diversDecaissements">,
@@ -477,37 +543,100 @@ export function calcFluxNonPLCumul(
   const encFluxNonPLCumul: YearAcc = { y1: 0, y2: 0, y3: 0 };
   const decFluxNonPLCumul: YearAcc = { y1: 0, y2: 0, y3: 0 };
 
-  // Subventions d'investissement (hors PRET_HONNEUR dÃ©jÃ  dans apportsCC)
+  // Subventions d'investissement (hors PRET_HONNEUR déjà dans apportsCC)
   for (const subv of data.subventions) {
     if (subv.type === "PRET_HONNEUR") continue;
+
     const d = subv.dateEncaissement ?? subv.dateObtention;
     if (!d) continue;
+
     const dt = new Date(String(d));
     const m = n(subv.montant);
+
     if (dt < exBorne1) encFluxNonPLCumul.y1 += m;
     if (dt < exBorne2) encFluxNonPLCumul.y2 += m;
     if (dt < exBorne3) encFluxNonPLCumul.y3 += m;
   }
 
   // Encaissements divers (TypeDiversFlux.ENCAISSEMENT)
-  // Flux sans date â†’ distribuÃ©s uniformÃ©ment dans l'exercice (cumulativement prÃ©sent en Y1, Y2, Y3).
+  // Flux sans date → distribués uniformément dans l'exercice (cumulativement présent en Y1, Y2, Y3).
   for (const flux of data.diversEncaissements) {
-    if (flux.dateN) { const dt = new Date(String(flux.dateN)); const m = n(flux.montantN); if (dt < exBorne1) encFluxNonPLCumul.y1 += m; if (dt < exBorne2) encFluxNonPLCumul.y2 += m; if (dt < exBorne3) encFluxNonPLCumul.y3 += m; }
-    else { const m = n(flux.montantN); encFluxNonPLCumul.y1 += m; encFluxNonPLCumul.y2 += m; encFluxNonPLCumul.y3 += m; }
-    if (flux.dateN1) { const dt = new Date(String(flux.dateN1)); const m = n(flux.montantN1); if (dt < exBorne2) encFluxNonPLCumul.y2 += m; if (dt < exBorne3) encFluxNonPLCumul.y3 += m; }
-    else { const m = n(flux.montantN1); encFluxNonPLCumul.y2 += m; encFluxNonPLCumul.y3 += m; }
-    if (flux.dateN2) { const dt = new Date(String(flux.dateN2)); const m = n(flux.montantN2); if (dt < exBorne3) encFluxNonPLCumul.y3 += m; }
-    else { encFluxNonPLCumul.y3 += n(flux.montantN2); }
+    if (flux.dateN) {
+      const dt = new Date(String(flux.dateN));
+      const m = n(flux.montantN);
+
+      if (dt < exBorne1) encFluxNonPLCumul.y1 += m;
+      if (dt < exBorne2) encFluxNonPLCumul.y2 += m;
+      if (dt < exBorne3) encFluxNonPLCumul.y3 += m;
+    } else {
+      const m = n(flux.montantN);
+
+      encFluxNonPLCumul.y1 += m;
+      encFluxNonPLCumul.y2 += m;
+      encFluxNonPLCumul.y3 += m;
+    }
+
+    if (flux.dateN1) {
+      const dt = new Date(String(flux.dateN1));
+      const m = n(flux.montantN1);
+
+      if (dt < exBorne2) encFluxNonPLCumul.y2 += m;
+      if (dt < exBorne3) encFluxNonPLCumul.y3 += m;
+    } else {
+      const m = n(flux.montantN1);
+
+      encFluxNonPLCumul.y2 += m;
+      encFluxNonPLCumul.y3 += m;
+    }
+
+    if (flux.dateN2) {
+      const dt = new Date(String(flux.dateN2));
+      const m = n(flux.montantN2);
+
+      if (dt < exBorne3) encFluxNonPLCumul.y3 += m;
+    } else {
+      encFluxNonPLCumul.y3 += n(flux.montantN2);
+    }
   }
 
-  // DÃ©caissements divers (TypeDiversFlux.DECAISSEMENT)
+  // Décaissements divers (TypeDiversFlux.DECAISSEMENT)
   for (const flux of data.diversDecaissements) {
-    if (flux.dateN) { const dt = new Date(String(flux.dateN)); const m = n(flux.montantN); if (dt < exBorne1) decFluxNonPLCumul.y1 += m; if (dt < exBorne2) decFluxNonPLCumul.y2 += m; if (dt < exBorne3) decFluxNonPLCumul.y3 += m; }
-    else { const m = n(flux.montantN); decFluxNonPLCumul.y1 += m; decFluxNonPLCumul.y2 += m; decFluxNonPLCumul.y3 += m; }
-    if (flux.dateN1) { const dt = new Date(String(flux.dateN1)); const m = n(flux.montantN1); if (dt < exBorne2) decFluxNonPLCumul.y2 += m; if (dt < exBorne3) decFluxNonPLCumul.y3 += m; }
-    else { const m = n(flux.montantN1); decFluxNonPLCumul.y2 += m; decFluxNonPLCumul.y3 += m; }
-    if (flux.dateN2) { const dt = new Date(String(flux.dateN2)); const m = n(flux.montantN2); if (dt < exBorne3) decFluxNonPLCumul.y3 += m; }
-    else { decFluxNonPLCumul.y3 += n(flux.montantN2); }
+    if (flux.dateN) {
+      const dt = new Date(String(flux.dateN));
+      const m = n(flux.montantN);
+
+      if (dt < exBorne1) decFluxNonPLCumul.y1 += m;
+      if (dt < exBorne2) decFluxNonPLCumul.y2 += m;
+      if (dt < exBorne3) decFluxNonPLCumul.y3 += m;
+    } else {
+      const m = n(flux.montantN);
+
+      decFluxNonPLCumul.y1 += m;
+      decFluxNonPLCumul.y2 += m;
+      decFluxNonPLCumul.y3 += m;
+    }
+
+    if (flux.dateN1) {
+      const dt = new Date(String(flux.dateN1));
+      const m = n(flux.montantN1);
+
+      if (dt < exBorne2) decFluxNonPLCumul.y2 += m;
+      if (dt < exBorne3) decFluxNonPLCumul.y3 += m;
+    } else {
+      const m = n(flux.montantN1);
+
+      decFluxNonPLCumul.y2 += m;
+      decFluxNonPLCumul.y3 += m;
+    }
+
+    if (flux.dateN2) {
+      const dt = new Date(String(flux.dateN2));
+      const m = n(flux.montantN2);
+
+      if (dt < exBorne3) decFluxNonPLCumul.y3 += m;
+    } else {
+      decFluxNonPLCumul.y3 += n(flux.montantN2);
+    }
   }
 
   return { encFluxNonPLCumul, decFluxNonPLCumul };

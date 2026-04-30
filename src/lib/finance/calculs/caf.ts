@@ -1,9 +1,9 @@
 import type { YearAcc } from "@/lib/finance/utils";
 
-// â”€â”€ Capacité d'autofinancement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Capacité d'autofinancement ────────────────────────────────────────────────
 
 /**
- * CAF = ResNet + DotAmort + DotProv âˆ’ Reprises
+ * CAF = ResNet + DotAmort + DotProv − Reprises
  *
  * La CAF représente la ressource interne dégagée par l'activité,
  * avant prise en compte des flux d'investissement et de financement.

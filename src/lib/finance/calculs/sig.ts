@@ -1,11 +1,11 @@
 import type { YearAcc } from "@/lib/finance/utils";
 
-// â”€â”€ Valeur ajoutée â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Valeur ajoutée ────────────────────────────────────────────────────────────
 
 /**
- * VA = CA âˆ’ AchatsConsommés âˆ’ ChargesExternes
+ * VA = CA − AchatsConsommés − ChargesExternes
  *
- * Convention PCG SIG : les subventions d'exploitation apparaissent Ã  l'EBE,
+ * Convention PCG SIG : les subventions d'exploitation apparaissent à l'EBE,
  * pas dans la VA. Les productions immobilisées ne sont pas gérées dans ce modèle.
  */
 export function calcValeurAjoutee(
@@ -20,12 +20,12 @@ export function calcValeurAjoutee(
   };
 }
 
-// â”€â”€ EBE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── EBE ───────────────────────────────────────────────────────────────────────
 
 /**
- * EBE = ValeurAjoutée + SubventionsExploitation âˆ’ ImpôtsTaxes âˆ’ ChargesPersonnel
+ * EBE = ValeurAjoutée + SubventionsExploitation − ImpôtsTaxes − ChargesPersonnel
  *
- * Convention PCG SIG : les subventions d'exploitation s'ajoutent Ã  ce niveau.
+ * Convention PCG SIG : les subventions d'exploitation s'ajoutent à ce niveau.
  */
 export function calcEBE(
   valeurAjoutee: YearAcc,
@@ -40,10 +40,10 @@ export function calcEBE(
   };
 }
 
-// â”€â”€ Résultat d'exploitation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Résultat d'exploitation ───────────────────────────────────────────────────
 
 /**
- * ResExpl = EBE âˆ’ DotAmort âˆ’ DotProv + Reprises
+ * ResExpl = EBE − DotAmort − DotProv + Reprises
  */
 export function calcResExpl(
   ebe: YearAcc,

@@ -1,11 +1,11 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import { n, calcIS, type YearAcc } from "@/lib/finance/utils";
 
-// â”€â”€ Ajustements fiscaux â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Ajustements fiscaux ───────────────────────────────────────────────────────
 
 /**
- * Calcule le solde net des ajustements fiscaux (réintégrations âˆ’ déductions).
- * Réintégrations (+), Déductions (âˆ’).
+ * Calcule le solde net des ajustements fiscaux (réintégrations − déductions).
+ * Réintégrations (+), Déductions (−).
  */
 export function calcAjustementNet(
   data: Pick<ScenarioFinData, "ajustementsFiscaux">,
@@ -20,14 +20,14 @@ export function calcAjustementNet(
   return acc;
 }
 
-// â”€â”€ Impôt sur les Sociétés â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Impôt sur les Sociétés ────────────────────────────────────────────────────
 
 /**
- * Calcule l'IS pour chaque exercice Ã  partir du résultat fiscal.
+ * Calcule l'IS pour chaque exercice à partir du résultat fiscal.
  *
  * Le résultat fiscal = resCourant + resExcep + ajustementNet
  *
- * Retourne zéro pour les entreprises soumises Ã  l'IR (isIS = false)
+ * Retourne zéro pour les entreprises soumises à l'IR (isIS = false)
  * ou si les paramètres IS sont désactivés (isEnabled = false).
  */
 export function calcISParAnnee(
@@ -42,7 +42,7 @@ export function calcISParAnnee(
   }
   const p = parametresIS;
 
-  // â”€â”€ Exercice Y1 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Exercice Y1 ───────────────────────────────────────────────────────────
   const base1 = resCourant.y1 + resExcep.y1 + ajustementNet.y1;
   const y1 = calcIS(
     base1,
@@ -57,7 +57,7 @@ export function calcISParAnnee(
   // le solde négatif est reporté indéfiniment sur les exercices bénéficiaires suivants.
   const reportY1 = Math.min(0, base1);
 
-  // â”€â”€ Exercice Y2 (avec éventuel report Y1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Exercice Y2 (avec éventuel report Y1) ────────────────────────────────
   const base2 = resCourant.y2 + resExcep.y2 + ajustementNet.y2 + reportY1;
   const y2 = calcIS(
     base2,
@@ -71,7 +71,7 @@ export function calcISParAnnee(
   // Report résiduel après Y2 (si base2 encore négative, le déficit non absorbé se reporte)
   const reportY2 = Math.min(0, base2);
 
-  // â”€â”€ Exercice Y3 (avec éventuel report Y2) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Exercice Y3 (avec éventuel report Y2) ────────────────────────────────
   const base3 = resCourant.y3 + resExcep.y3 + ajustementNet.y3 + reportY2;
   const y3 = calcIS(
     base3,

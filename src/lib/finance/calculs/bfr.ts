@@ -110,18 +110,19 @@ function calcDettesPersonnelTNS(
   data: ScenarioFinData,
   moisDebut: number,
 ): { y1: number; y2: number; y3: number } {
-  // Convention RCA : 0=mois courant (M), 1=M+1, 2=M+2, 3=M+3.
-  // Si paiement en mois courant (delay=0), tout est payé dans le mois → aucune
-  // dette résiduelle à la clôture. Si delay=1, le mois 12 (décembre) est encore dû.
-  // Si delay=2, les mois 11 et 12 sont encore dus, etc.
-  // Cohérent avec shiftYk3(series, moisPaiementSalaires) dans decaissements.ts.
+  const _exercices = data.scenario.parametres?.exercices ?? [];
+  const nMoisCtx = {
+    y1: _exercices[0]?.duree ?? 12,
+    y2: _exercices[1]?.duree ?? 12,
+    y3: _exercices[2]?.duree ?? 12,
+  };
   const delaiPaie = Math.max(0, n(data.scenario.parametres?.moisPaiementSalaires ?? 1));
 
   /** Somme des derniers `delay` mois d'une série mensuelle (encours fin d'exercice). */
-  function sumLastMonths(series: MonthlySeries, delay: number): number {
+  function sumLastMonths(series: MonthlySeries, delay: number, nMois: number): number {
     if (delay <= 0) return 0;
     let acc = 0;
-    for (let i = Math.max(0, 12 - delay); i < 12; i++) acc += series[i] ?? 0;
+    for (let i = Math.max(0, nMois - delay); i < nMois; i++) acc += series[i] ?? 0;
     return acc;
   }
 
@@ -134,18 +135,18 @@ function calcDettesPersonnelTNS(
     const b3 = salarieMonthlyBrut(n(sal.montantN2), sal.detailMensuelN2, moisDebut);
     // Coût total employeur = brut × (1 + tCotPat) — les cotisations salariales
     // sont reversées à l'organisme par l'employeur donc comptent dans la dette.
-    lastPersonnelY1 += sumLastMonths(b1, delaiPaie) * (1 + tCotPat);
-    lastPersonnelY2 += sumLastMonths(b2, delaiPaie) * (1 + tCotPat);
-    lastPersonnelY3 += sumLastMonths(b3, delaiPaie) * (1 + tCotPat);
+    lastPersonnelY1 += sumLastMonths(b1, delaiPaie, nMoisCtx.y1) * (1 + tCotPat);
+    lastPersonnelY2 += sumLastMonths(b2, delaiPaie, nMoisCtx.y2) * (1 + tCotPat);
+    lastPersonnelY3 += sumLastMonths(b3, delaiPaie, nMoisCtx.y3) * (1 + tCotPat);
   }
 
   for (const d of (data.dirigeants ?? []).filter((d) => d.actif !== false)) {
     const b1 = salarieMonthlyBrut(n(d.montantN), d.detailMensuelN, moisDebut);
     const b2 = salarieMonthlyBrut(n(d.montantN1), d.detailMensuelN1, moisDebut);
     const b3 = salarieMonthlyBrut(n(d.montantN2), d.detailMensuelN2, moisDebut);
-    lastPersonnelY1 += sumLastMonths(b1, delaiPaie);
-    lastPersonnelY2 += sumLastMonths(b2, delaiPaie);
-    lastPersonnelY3 += sumLastMonths(b3, delaiPaie);
+    lastPersonnelY1 += sumLastMonths(b1, delaiPaie, nMoisCtx.y1);
+    lastPersonnelY2 += sumLastMonths(b2, delaiPaie, nMoisCtx.y2);
+    lastPersonnelY3 += sumLastMonths(b3, delaiPaie, nMoisCtx.y3);
   }
 
   // TNS : calcul de la dette URSSAF en fin d'exercice selon le mode de calcul.
@@ -221,26 +222,26 @@ function calcDettesPersonnelTNS(
     const provN2 = treso[2].totalPaye - treso[2].regularisation;     // = provisionnelN2
 
     // URSSAF obligatoires : régularisation de fin d'exercice + transit en cours de paiement
-    lastPersonnelY1 += Math.max(0, tnsUrssafY1 - provN)  + treso[0].totalPaye / 12 * delaiPaie;
-    lastPersonnelY2 += Math.max(0, tnsUrssafY2 - provN1) + treso[1].totalPaye / 12 * delaiPaie;
-    lastPersonnelY3 += Math.max(0, tnsUrssafY3 - provN2) + treso[2].totalPaye / 12 * delaiPaie;
+    lastPersonnelY1 += Math.max(0, tnsUrssafY1 - provN)  + treso[0].totalPaye / nMoisCtx.y1 * delaiPaie;
+    lastPersonnelY2 += Math.max(0, tnsUrssafY2 - provN1) + treso[1].totalPaye / nMoisCtx.y2 * delaiPaie;
+    lastPersonnelY3 += Math.max(0, tnsUrssafY3 - provN2) + treso[2].totalPaye / nMoisCtx.y3 * delaiPaie;
     // Cotisations facultatives (Madelin etc.) : traitement DEFINITIF (encours mensuel uniforme)
-    lastPersonnelY1 += tnsFacY1 / 12 * delaiPaie;
-    lastPersonnelY2 += tnsFacY2 / 12 * delaiPaie;
-    lastPersonnelY3 += tnsFacY3 / 12 * delaiPaie;
+    lastPersonnelY1 += tnsFacY1 / nMoisCtx.y1 * delaiPaie;
+    lastPersonnelY2 += tnsFacY2 / nMoisCtx.y2 * delaiPaie;
+    lastPersonnelY3 += tnsFacY3 / nMoisCtx.y3 * delaiPaie;
   } else {
     // Mode DEFINITIF : encours de paiement standard — derniers delaiPaie mois d'appels uniformes.
     // Si paiement mois courant (delay=0), aucune dette en fin d'exercice.
-    lastPersonnelY1 += tnsDefY1 / 12 * delaiPaie;
-    lastPersonnelY2 += tnsDefY2 / 12 * delaiPaie;
-    lastPersonnelY3 += tnsDefY3 / 12 * delaiPaie;
+    lastPersonnelY1 += tnsDefY1 / nMoisCtx.y1 * delaiPaie;
+    lastPersonnelY2 += tnsDefY2 / nMoisCtx.y2 * delaiPaie;
+    lastPersonnelY3 += tnsDefY3 / nMoisCtx.y3 * delaiPaie;
   }
 
   // Taxes sur salaires : si date précise → déjà payée avant clôture → 0 ; sinon encours × delay
   for (const taxe of data.taxesSalaires ?? []) {
-    if (!taxe.dateN) lastPersonnelY1 += n(taxe.montantN) / 12 * delaiPaie;
-    if (!taxe.dateN1) lastPersonnelY2 += n(taxe.montantN1) / 12 * delaiPaie;
-    if (!taxe.dateN2) lastPersonnelY3 += n(taxe.montantN2) / 12 * delaiPaie;
+    if (!taxe.dateN) lastPersonnelY1 += n(taxe.montantN) / nMoisCtx.y1 * delaiPaie;
+    if (!taxe.dateN1) lastPersonnelY2 += n(taxe.montantN1) / nMoisCtx.y2 * delaiPaie;
+    if (!taxe.dateN2) lastPersonnelY3 += n(taxe.montantN2) / nMoisCtx.y3 * delaiPaie;
   }
 
   return { y1: lastPersonnelY1, y2: lastPersonnelY2, y3: lastPersonnelY3 };
@@ -261,6 +262,12 @@ export function calcBfr(
   fc: Pick<FinCalcResult, "stockFinal" | "tva" | "moisDebut" | "isParAnnee">,
 ): BfrCalcResult {
   const { isIS, activites, fournitures, services, immobilisations, scenario } = data;
+  const _exercices = data.scenario.parametres?.exercices ?? [];
+  const nMoisCtx = {
+    y1: _exercices[0]?.duree ?? 12,
+    y2: _exercices[1]?.duree ?? 12,
+    y3: _exercices[2]?.duree ?? 12,
+  };
   const actifsActifs = activites.filter((a) => a.actif !== false);
   const achatsActifsMois = actifsActifs.filter((a) => a.typeActivite !== "PRESTATION_SERVICES");
   const allChargesActif = [
@@ -286,17 +293,17 @@ export function calcBfr(
       const joursFournisseur = n(a.reglementFournisseurs ?? 30);
       const delaiFournMois = joursFournisseur / 30;
       // Séries mensuelles saisonnalisées (achats consommés HT)
-      const sm1 = seasonalMonthly(n(a.montantN) * coef, a.saisonnaliteAchats, "N");
-      const sm2 = seasonalMonthly(n(a.montantN1) * coef, a.saisonnaliteAchats, "N1");
-      const sm3 = seasonalMonthly(n(a.montantN2) * coef, a.saisonnaliteAchats, "N2");
+      const sm1 = seasonalMonthly(n(a.montantN) * coef, a.saisonnaliteAchats, "N", nMoisCtx.y1);
+      const sm2 = seasonalMonthly(n(a.montantN1) * coef, a.saisonnaliteAchats, "N1", nMoisCtx.y2);
+      const sm3 = seasonalMonthly(n(a.montantN2) * coef, a.saisonnaliteAchats, "N2", nMoisCtx.y3);
       // Achats ponctuels par mois
-      const p1 = ponctuelMonthly(a.achatsStockPonctuel, "N");
-      const p2 = ponctuelMonthly(a.achatsStockPonctuel, "N1");
-      const p3 = ponctuelMonthly(a.achatsStockPonctuel, "N2");
+      const p1 = ponctuelMonthly(a.achatsStockPonctuel, "N", nMoisCtx.y1);
+      const p2 = ponctuelMonthly(a.achatsStockPonctuel, "N1", nMoisCtx.y2);
+      const p3 = ponctuelMonthly(a.achatsStockPonctuel, "N2", nMoisCtx.y3);
       // Séries mensuelles cumulatives RCA (cohérentes avec monthly.ts)
-      const rY1 = computeStocksAchatsSeries(sm1, p1, joursStock, 0);
-      const rY2 = computeStocksAchatsSeries(sm2, p2, joursStock, rY1.sfFinal);
-      const rY3 = computeStocksAchatsSeries(sm3, p3, joursStock, rY2.sfFinal);
+      const rY1 = computeStocksAchatsSeries(sm1, p1, joursStock, 0, nMoisCtx.y1);
+      const rY2 = computeStocksAchatsSeries(sm2, p2, joursStock, rY1.sfFinal, nMoisCtx.y2);
+      const rY3 = computeStocksAchatsSeries(sm3, p3, joursStock, rY2.sfFinal, nMoisCtx.y3);
       // coefTTC : identique à decaissements.ts (coefTVA = isFranchise ? 1 : 1 + tauxTVA)
       const coefTTC = isFranchise ? 1 : 1 + n(a.tvaAchats ?? 20) / 100;
       return {
@@ -353,20 +360,20 @@ export function calcBfr(
     const delaiMois = n(a.reglementFournisseurs ?? 30) / 30;
     const coefTTC = isFranchise ? 1 : 1 + n(a.tvaAchats ?? 20) / 100;
     const jours = n(a.stocks ?? 0);
-    const m1 = seasonalMonthly(n(a.montantN) * coef, a.saisonnaliteAchats, "N");
-    const m2 = seasonalMonthly(n(a.montantN1) * coef, a.saisonnaliteAchats, "N1");
-    const m3 = seasonalMonthly(n(a.montantN2) * coef, a.saisonnaliteAchats, "N2");
-    const p1 = ponctuelMonthly(a.achatsStockPonctuel, "N");
-    const p2 = ponctuelMonthly(a.achatsStockPonctuel, "N1");
-    const p3 = ponctuelMonthly(a.achatsStockPonctuel, "N2");
-    // Série cumulative RCA — pour avoir achatsEff[11] exact
-    const rY1 = computeStocksAchatsSeries(m1, p1, jours, 0);
-    const rY2 = computeStocksAchatsSeries(m2, p2, jours, rY1.sfFinal);
-    const rY3 = computeStocksAchatsSeries(m3, p3, jours, rY2.sfFinal);
-    // Dette fournisseur = achatsEffectués_mois11 TTC × délai
-    dfY1 += (rY1.achatsEffSeries[11] ?? 0) * coefTTC * delaiMois;
-    dfY2 += (rY2.achatsEffSeries[11] ?? 0) * coefTTC * delaiMois;
-    dfY3 += (rY3.achatsEffSeries[11] ?? 0) * coefTTC * delaiMois;
+    const m1 = seasonalMonthly(n(a.montantN) * coef, a.saisonnaliteAchats, "N", nMoisCtx.y1);
+    const m2 = seasonalMonthly(n(a.montantN1) * coef, a.saisonnaliteAchats, "N1", nMoisCtx.y2);
+    const m3 = seasonalMonthly(n(a.montantN2) * coef, a.saisonnaliteAchats, "N2", nMoisCtx.y3);
+    const p1 = ponctuelMonthly(a.achatsStockPonctuel, "N", nMoisCtx.y1);
+    const p2 = ponctuelMonthly(a.achatsStockPonctuel, "N1", nMoisCtx.y2);
+    const p3 = ponctuelMonthly(a.achatsStockPonctuel, "N2", nMoisCtx.y3);
+    // Série cumulative RCA — pour avoir achatsEff[nMois-1] exact
+    const rY1 = computeStocksAchatsSeries(m1, p1, jours, 0, nMoisCtx.y1);
+    const rY2 = computeStocksAchatsSeries(m2, p2, jours, rY1.sfFinal, nMoisCtx.y2);
+    const rY3 = computeStocksAchatsSeries(m3, p3, jours, rY2.sfFinal, nMoisCtx.y3);
+    // Dette fournisseur = achatsEffectés_dernier_mois TTC × délai
+    dfY1 += (rY1.achatsEffSeries[nMoisCtx.y1 - 1] ?? 0) * coefTTC * delaiMois;
+    dfY2 += (rY2.achatsEffSeries[nMoisCtx.y2 - 1] ?? 0) * coefTTC * delaiMois;
+    dfY3 += (rY3.achatsEffSeries[nMoisCtx.y3 - 1] ?? 0) * coefTTC * delaiMois;
   }
   const dettesFournisseurs: YearAcc4 = { y0: 0, y1: dfY1, y2: dfY2, y3: dfY3 };
 
@@ -377,9 +384,9 @@ export function calcBfr(
   ].map((c) => {
     const delaiMois = n(c.delaiReglement ?? 30) / 30;
     const coefTTC = isFranchise ? 1 : 1 + n(c.tauxTVA ?? 20) / 100;
-    const cs1 = chargeExplMonthly(n(c.montantN), c, "N");
-    const cs2 = chargeExplMonthly(n(c.montantN1), c, "N1");
-    const cs3 = chargeExplMonthly(n(c.montantN2), c, "N2");
+    const cs1 = chargeExplMonthly(n(c.montantN), c, "N", nMoisCtx.y1);
+    const cs2 = chargeExplMonthly(n(c.montantN1), c, "N1", nMoisCtx.y2);
+    const cs3 = chargeExplMonthly(n(c.montantN2), c, "N2", nMoisCtx.y3);
     return {
       libelle: c.libelle,
       montantN: n(c.montantN),
@@ -387,11 +394,10 @@ export function calcBfr(
       montantN2: n(c.montantN2),
       delaiReglement: n(c.delaiReglement ?? 30),
       tauxTVA: n(c.tauxTVA ?? 20),
-      // Dettes charges ext TTC : M12(HT) × coefTTC × délai — conforme §12.2
-      // TTC cohérent avec buildChargeExt (decaissements.ts : coefTVA = isFranchise ? 1 : 1+taux)
-      m11ChargeY1: (cs1[11] ?? 0) * coefTTC * delaiMois,
-      m11ChargeY2: (cs2[11] ?? 0) * coefTTC * delaiMois,
-      m11ChargeY3: (cs3[11] ?? 0) * coefTTC * delaiMois,
+      // Dettes charges ext TTC : M_dernier(HT) × coefTTC × délai — conforme §12.2
+      m11ChargeY1: (cs1[nMoisCtx.y1 - 1] ?? 0) * coefTTC * delaiMois,
+      m11ChargeY2: (cs2[nMoisCtx.y2 - 1] ?? 0) * coefTTC * delaiMois,
+      m11ChargeY3: (cs3[nMoisCtx.y3 - 1] ?? 0) * coefTTC * delaiMois,
     };
   });
 
@@ -403,12 +409,12 @@ export function calcBfr(
   for (const c of allChargesActif) {
     const delaiMois = n(c.delaiReglement ?? 30) / 30;
     const coefTTC = isFranchise ? 1 : 1 + n(c.tauxTVA ?? 20) / 100;
-    const s1 = chargeExplMonthly(n(c.montantN), c, "N");
-    const s2 = chargeExplMonthly(n(c.montantN1), c, "N1");
-    const s3 = chargeExplMonthly(n(c.montantN2), c, "N2");
-    dceY1 += (s1[11] ?? 0) * coefTTC * delaiMois;
-    dceY2 += (s2[11] ?? 0) * coefTTC * delaiMois;
-    dceY3 += (s3[11] ?? 0) * coefTTC * delaiMois;
+    const s1 = chargeExplMonthly(n(c.montantN), c, "N", nMoisCtx.y1);
+    const s2 = chargeExplMonthly(n(c.montantN1), c, "N1", nMoisCtx.y2);
+    const s3 = chargeExplMonthly(n(c.montantN2), c, "N2", nMoisCtx.y3);
+    dceY1 += (s1[nMoisCtx.y1 - 1] ?? 0) * coefTTC * delaiMois;
+    dceY2 += (s2[nMoisCtx.y2 - 1] ?? 0) * coefTTC * delaiMois;
+    dceY3 += (s3[nMoisCtx.y3 - 1] ?? 0) * coefTTC * delaiMois;
   }
   const dettesChargesExternes: YearAcc4 = { y0: 0, y1: dceY1, y2: dceY2, y3: dceY3 };
 
@@ -424,9 +430,9 @@ export function calcBfr(
   // TVA à payer = dernier mois de tvaAPayerMonthly (règle dernier mois §12.2)
   const tvaAPayer: YearAcc4 = {
     y0: 0,
-    y1: fc.tva.y1.tvaAPayerMonthly[11] ?? 0,
-    y2: fc.tva.y2.tvaAPayerMonthly[11] ?? 0,
-    y3: fc.tva.y3.tvaAPayerMonthly[11] ?? 0,
+    y1: fc.tva.y1.tvaAPayerMonthly[fc.tva.y1.tvaAPayerMonthly.length - 1] ?? 0,
+    y2: fc.tva.y2.tvaAPayerMonthly[fc.tva.y2.tvaAPayerMonthly.length - 1] ?? 0,
+    y3: fc.tva.y3.tvaAPayerMonthly[fc.tva.y3.tvaAPayerMonthly.length - 1] ?? 0,
   };
 
   // ── Dettes fiscales et sociales ──────────────────────────────────────────
@@ -466,12 +472,12 @@ export function calcBfr(
     // isFranchise : pas de TVA collectée → créances = HT uniquement (cohérent avec encaissements.ts)
     const coefTTC = isFranchise ? 1 : 1 + n(a.tauxTVA) / 100;
     const delaiMois = n(a.reglementClients ?? 30) / 30;
-    const s1 = seasonalMonthly(n(a.montantN), a.saisonnaliteCA, "N");
-    const s2 = seasonalMonthly(n(a.montantN1), a.saisonnaliteCA, "N1");
-    const s3 = seasonalMonthly(n(a.montantN2), a.saisonnaliteCA, "N2");
-    creancesClients.y1 += (s1[11] ?? 0) * coefTTC * delaiMois;
-    creancesClients.y2 += (s2[11] ?? 0) * coefTTC * delaiMois;
-    creancesClients.y3 += (s3[11] ?? 0) * coefTTC * delaiMois;
+    const s1 = seasonalMonthly(n(a.montantN), a.saisonnaliteCA, "N", nMoisCtx.y1);
+    const s2 = seasonalMonthly(n(a.montantN1), a.saisonnaliteCA, "N1", nMoisCtx.y2);
+    const s3 = seasonalMonthly(n(a.montantN2), a.saisonnaliteCA, "N2", nMoisCtx.y3);
+    creancesClients.y1 += (s1[nMoisCtx.y1 - 1] ?? 0) * coefTTC * delaiMois;
+    creancesClients.y2 += (s2[nMoisCtx.y2 - 1] ?? 0) * coefTTC * delaiMois;
+    creancesClients.y3 += (s3[nMoisCtx.y3 - 1] ?? 0) * coefTTC * delaiMois;
   }
 
   // ── Totaux BFR ───────────────────────────────────────────────────────────

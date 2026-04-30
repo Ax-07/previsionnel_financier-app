@@ -1,7 +1,7 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import { n, sumBy, type YearAcc } from "@/lib/finance/utils";
 
-// â”€â”€ CA par type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── CA par type ──────────────────────────────────────────────────────────────
 
 export function calcCA(data: Pick<ScenarioFinData, "activites">): YearAcc {
   const rows = data.activites.filter((a) => a.actif !== false);
@@ -26,7 +26,7 @@ export function calcCAByType(
   };
 }
 
-// â”€â”€ Charges externes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Charges externes ─────────────────────────────────────────────────────────
 
 export function calcChargesExternes(
   data: Pick<ScenarioFinData, "fournitures" | "services">,
@@ -48,7 +48,7 @@ export function calcChargesExternes(
   };
 }
 
-// â”€â”€ Subventions d'exploitation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Subventions d'exploitation ────────────────────────────────────────────────
 
 export function calcSubventions(
   data: Pick<ScenarioFinData, "subventionsExploitation">,
@@ -61,7 +61,7 @@ export function calcSubventions(
   };
 }
 
-// â”€â”€ Impôts et taxes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Impôts et taxes ───────────────────────────────────────────────────────────
 
 export function calcImpotsTaxes(
   data: Pick<ScenarioFinData, "impotsTaxes">,
@@ -74,7 +74,7 @@ export function calcImpotsTaxes(
   };
 }
 
-// â”€â”€ Commissions d'activité â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Commissions d'activité ────────────────────────────────────────────────────
 
 export function calcCommissions(
   data: Pick<ScenarioFinData, "activiteCommissions">,
@@ -87,7 +87,7 @@ export function calcCommissions(
   };
 }
 
-// â”€â”€ Productions immobilisées â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Productions immobilisées ──────────────────────────────────────────────────
 
 export function calcProdImmo(
   data: Pick<ScenarioFinData, "productionsImmobilisees">,
@@ -102,7 +102,7 @@ export function calcProdImmo(
   return acc;
 }
 
-// â”€â”€ Transferts de charges (produits) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Transferts de charges (produits) ─────────────────────────────────────────
 
 export function calcTransferts(
   data: Pick<ScenarioFinData, "transfertsProduits">,
@@ -115,7 +115,7 @@ export function calcTransferts(
   };
 }
 
-// â”€â”€ Autres produits de gestion courante â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Autres produits de gestion courante ──────────────────────────────────────
 
 export function calcAutresProdGestion(
   data: Pick<ScenarioFinData, "gestionCouranteProduits">,
@@ -128,7 +128,7 @@ export function calcAutresProdGestion(
   };
 }
 
-// â”€â”€ Autres charges de gestion courante â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Autres charges de gestion courante ───────────────────────────────────────
 
 export function calcAutresChargesGestion(
   data: Pick<ScenarioFinData, "chargesGestionCourante">,

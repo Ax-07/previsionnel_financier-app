@@ -1,7 +1,7 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import { n, sumBy, type YearAcc } from "@/lib/finance/utils";
 
-// â”€â”€ Salariés â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Salariés ─────────────────────────────────────────────────────────────────
 
 export function calcSalaires(
   data: Pick<ScenarioFinData, "salaries">,
@@ -21,7 +21,7 @@ export function calcSalaires(
   };
 }
 
-// â”€â”€ Dirigeants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Dirigeants ───────────────────────────────────────────────────────────────
 
 export function calcDirigeants(
   data: Pick<ScenarioFinData, "dirigeants">,
@@ -34,7 +34,7 @@ export function calcDirigeants(
   };
 }
 
-// â”€â”€ Cotisations TNS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Cotisations TNS ──────────────────────────────────────────────────────────
 
 export function calcCotisationsTNS(
   data: Pick<ScenarioFinData, "cotisationsTNS">,
@@ -47,7 +47,7 @@ export function calcCotisationsTNS(
   };
 }
 
-// â”€â”€ Taxes assises sur les salaires â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Taxes assises sur les salaires ───────────────────────────────────────────
 
 export function calcTaxesSalaires(
   data: Pick<ScenarioFinData, "taxesSalaires">,
@@ -60,7 +60,7 @@ export function calcTaxesSalaires(
   };
 }
 
-// â”€â”€ Charges de personnel (total) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Charges de personnel (total) ─────────────────────────────────────────────
 
 export function calcChargesPersonnel(
   data: Pick<
