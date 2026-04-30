@@ -49,6 +49,7 @@ export const apportSchema = z.object({
   remboursable: z.boolean().optional(),
   actif:  z.boolean().optional(),
   ordre:  z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type ApportRow = z.infer<typeof apportSchema>;
@@ -86,6 +87,7 @@ export const empruntSchema = z.object({
 
   actif: z.boolean().optional(),
   ordre: z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type EmpruntRow = z.infer<typeof empruntSchema>;

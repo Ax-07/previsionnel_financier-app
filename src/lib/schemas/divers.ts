@@ -46,6 +46,7 @@ export const diversFluxDateSchema = z.object({
   dateN2: z.string().optional(),
   montantN2: z.number().min(0, "≥ 0"),
   ordre: z.number().int().default(0),
+  groupe: z.string().optional().nullable(),
 });
 
 export type DiversFluxDateRow = z.infer<typeof diversFluxDateSchema>;
@@ -62,6 +63,7 @@ export const diversOperationCapitalSchema = z.object({
   montantN1: z.number().min(0, "≥ 0"),
   montantN2: z.number().min(0, "≥ 0"),
   ordre: z.number().int().default(0),
+  groupe: z.string().optional().nullable(),
 });
 
 export type DiversOperationCapitalRow = z.infer<typeof diversOperationCapitalSchema>;
@@ -78,6 +80,7 @@ export const diversPretSchema = z.object({
   dureeMois: z.number().int().min(1, "≥ 1"),
   periodicite: z.enum(["MENSUELLE", "TRIMESTRIELLE", "ANNUELLE"]).default("MENSUELLE"),
   ordre: z.number().int().default(0),
+  groupe: z.string().optional().nullable(),
 });
 
 export type DiversPretRow = z.infer<typeof diversPretSchema>;

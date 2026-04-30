@@ -73,6 +73,8 @@ export const chargeExploitationSchema = z.object({
     // Sélection des activités { "0": true, "1": false }
     activitesSel: z.record(z.string(), z.boolean()).optional(),
   }).optional(),
+  ordre: z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type ChargeExploitationRow = z.infer<typeof chargeExploitationSchema>;
@@ -98,6 +100,8 @@ export const impotTaxeSchema = z.object({
   montantN1: z.number().min(0, "≥ 0"),
   dateN2: z.string().optional(),
   montantN2: z.number().min(0, "≥ 0"),
+  ordre: z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type ImpotTaxeRow = z.infer<typeof impotTaxeSchema>;

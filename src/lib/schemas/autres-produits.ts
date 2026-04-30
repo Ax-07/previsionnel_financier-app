@@ -51,6 +51,7 @@ export const autreProduitRepriseSchema = z.object({
   montantN1: z.number().min(0, "≥ 0"),
   montantN2: z.number().min(0, "≥ 0"),
   ordre: z.number().int().default(0),
+  groupe: z.string().optional().nullable(),
 });
 
 export type AutreProduitRepriseRow = z.infer<typeof autreProduitRepriseSchema>;
@@ -76,6 +77,7 @@ export const autreProduitDateSchema = z.object({
     .nullable()
     .optional(),
   ordre: z.number().int().default(0),
+  groupe: z.string().optional().nullable(),
 });
 
 export type AutreProduitDateRow = z.infer<typeof autreProduitDateSchema>;
@@ -91,6 +93,7 @@ export const autreProduitConstateSchema = z.object({
   montantN1: z.number().min(0, "≥ 0"),
   montantN2: z.number().min(0, "≥ 0"),
   ordre: z.number().int().default(0),
+  groupe: z.string().optional().nullable(),
 });
 
 export type AutreProduitConstateRow = z.infer<typeof autreProduitConstateSchema>;

@@ -31,35 +31,9 @@ export const entrepriseSchema = z.object({
 
   regimeTVA: z.enum(["FRANCHISE", "REEL_SIMPLIFIE", "REEL_NORMAL"]),
 
-  // ── Imposition ───────────────────────────────────────────────────────────
-  tauxIs: z.number().min(0, "Minimum : 0").max(100, "Maximum : 100"),
-  tauxIsReduit: z.number().min(0).max(100).optional(),
-  plafondIsReduit: z.number().min(0).optional(),
-
   // ── TVA ──────────────────────────────────────────────────────────────────
-  tauxTvaStandard: z.number().min(0, "Minimum : 0").max(100, "Maximum : 100"),
-  tauxTvaReduit: z.number().min(0).max(100).optional(),
   periodiciteDeclarationTVA: z.enum(["mensuel", "trimestriel"]),
 
-  // ── Délais de paiement / BFR ─────────────────────────────────────────────
-  delaiPaiementClients: z
-    .number()
-    .int("Entier requis")
-    .min(0, "Minimum : 0"),
-  delaiPaiementFournisseurs: z
-    .number()
-    .int("Entier requis")
-    .min(0, "Minimum : 0"),
-  joursStockMoyen: z.number().int().min(0).optional(),
-
-  // ── Paramètres avancés ───────────────────────────────────────────────────
-  repartitionResultat: z.number().min(0).max(100).optional(),
-  activite: z.string().max(255).optional().or(z.literal("")),
-  codeNAF: z
-    .string()
-    .regex(/^[0-9]{4}[A-Z]$/, "Format NAF invalide (ex. : 4711D)")
-    .optional()
-    .or(z.literal("")),
 
   // ── Période prévisionnelle ────────────────────────────────────────────────
   dateDebutExerciceN: z

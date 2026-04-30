@@ -12,6 +12,8 @@ export const ajustementFiscalSchema = z.object({
   montantN: z.number().min(0, "≥ 0"),
   montantN1: z.number().min(0, "≥ 0"),
   montantN2: z.number().min(0, "≥ 0"),
+  ordre: z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type AjustementFiscalRow = z.infer<typeof ajustementFiscalSchema>;

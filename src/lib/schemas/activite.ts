@@ -72,6 +72,8 @@ export const activiteSchema = z.object({
   achatsStockPonctuel: z.record(z.string(), z.array(z.number())).optional(),
 
   actif: z.boolean().optional(),
+  ordre: z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type ActiviteRow = z.infer<typeof activiteSchema>;
@@ -96,6 +98,8 @@ export const activiteCommissionSchema = z.object({
   reglementFournisseurs: z.number().int().min(0).optional(),
   
   actif: z.boolean().optional(),
+  ordre: z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type ActiviteCommissionRow = z.infer<typeof activiteCommissionSchema>;
@@ -114,6 +118,8 @@ export const productionImmobiliseeSchema = z.object({
   duree: z.number().int().min(0).optional(),
   
   actif: z.boolean().optional(),
+  ordre: z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type ProductionImmobiliseeRow = z.infer<typeof productionImmobiliseeSchema>;
@@ -136,6 +142,8 @@ export const subventionExploitationSchema = z.object({
   typeTva: z.enum(["RECUPERABLE", "NON_RECUPERABLE", "EXONEREE"]),
   
   actif: z.boolean().optional(),
+  ordre: z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type SubventionExploitationRow = z.infer<typeof subventionExploitationSchema>;

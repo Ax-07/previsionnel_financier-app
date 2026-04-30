@@ -63,6 +63,7 @@ export const autreChargeProvisionSchema = z.object({
   montantN1: z.number().min(0, "≥ 0"),
   montantN2: z.number().min(0, "≥ 0"),
   ordre: z.number().int().default(0),
+  groupe: z.string().optional().nullable(),
 });
 
 export type AutreChargeProvisionRow = z.infer<typeof autreChargeProvisionSchema>;
@@ -83,6 +84,7 @@ export const autreChargeDateeSchema = z.object({
   tauxTVA: z.number().min(0).max(100).default(0),
   typeTVA: z.enum(["FACTURATION", "DECAISSEMENT", "NON_RECUPERABLE"]).nullable().optional(),
   ordre: z.number().int().default(0),
+  groupe: z.string().optional().nullable(),
 });
 
 export type AutreChargeDateeRow = z.infer<typeof autreChargeDateeSchema>;
@@ -99,6 +101,7 @@ export const autreChargeBilanSchema = z.object({
   montantN1: z.number().min(0, "≥ 0"),
   montantN2: z.number().min(0, "≥ 0"),
   ordre: z.number().int().default(0),
+  groupe: z.string().optional().nullable(),
 });
 
 export type AutreChargeBilanRow = z.infer<typeof autreChargeBilanSchema>;

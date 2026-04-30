@@ -103,9 +103,11 @@ export const ligneSalarieSchema = z.object({
   hasCommission:   z.boolean().default(false),
   hasPrime:        z.boolean().default(false),
   cotisationConges: z.boolean().default(false),
-  detailMensuelN:  detailMensuelSchema.optional(),
-  detailMensuelN1: detailMensuelSchema.optional(),
-  detailMensuelN2: detailMensuelSchema.optional(),
+  detailMensuelN:  detailMensuelSchema.nullish(),
+  detailMensuelN1: detailMensuelSchema.nullish(),
+  detailMensuelN2: detailMensuelSchema.nullish(),
+  ordre: z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type LigneSalarieRow = z.infer<typeof ligneSalarieSchema>;
@@ -126,9 +128,11 @@ export const ligneDirigeantSchema = z.object({
   conjointCollaborateur: z.boolean().default(false),
   tauxFixe: z.number().min(0).max(100).default(100),
   // Détail mensuel (modal)
-  detailMensuelN:  detailMensuelSchema.optional(),
-  detailMensuelN1: detailMensuelSchema.optional(),
-  detailMensuelN2: detailMensuelSchema.optional(),
+  detailMensuelN:  detailMensuelSchema.nullish(),
+  detailMensuelN1: detailMensuelSchema.nullish(),
+  detailMensuelN2: detailMensuelSchema.nullish(),
+  ordre: z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type LigneDirigeantRow = z.infer<typeof ligneDirigeantSchema>;
@@ -145,6 +149,8 @@ export const ligneCotisationTNSSchema = z.object({
   montantN: z.number().min(0, "≥ 0"),
   montantN1: z.number().min(0, "≥ 0"),
   montantN2: z.number().min(0, "≥ 0"),
+  ordre: z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type LigneCotisationTNSRow = z.infer<typeof ligneCotisationTNSSchema>;
@@ -177,6 +183,8 @@ export const ligneTaxeSalaireSchema = z.object({
   montantN1: z.number().min(0, "≥ 0"),
   dateN2: z.string().optional().default(""),
   montantN2: z.number().min(0, "≥ 0"),
+  ordre: z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type LigneTaxeSalaireRow = z.infer<typeof ligneTaxeSalaireSchema>;
@@ -197,6 +205,8 @@ export const ligneChargePersonnelSchema = z.object({
   montantN1: z.number().min(0, "≥ 0"),
   dateN2: z.string().optional().default(""),
   montantN2: z.number().min(0, "≥ 0"),
+  ordre: z.number().int().min(0).optional(),
+  groupe: z.string().optional().nullable(),
 });
 
 export type LigneChargePersonnelRow = z.infer<typeof ligneChargePersonnelSchema>;
