@@ -36,7 +36,7 @@ export interface CumulsAnnuels {
   montantRGDUCumul: number;
   /** Cumul cotisations salariales */
   cotisationsSalarialesCumul: number;
-  /** Cumul cotisations patronales (nettes de RGDU) */
+  /** Cumul cotisations patronales brutes (hors RGDU) — voir montantRGDUCumul pour la réduction */
   cotisationsPatronalesCumul: number;
   /** Nombre de bulletins déjà intégrés */
   nbBulletins: number;
@@ -52,7 +52,7 @@ export interface BulletinPourCumul {
   baseT2: number;
   montantRGDU: number;
   totalCotisationsSalariales: number;
-  /** Total cotisations patronales nettes (après RGDU) */
+  /** Total cotisations patronales brutes (hors RGDU) — voir montantRGDU pour la réduction */
   totalCotisationsPatronales: number;
 }
 
@@ -115,7 +115,7 @@ export function integrerBulletin(
       base.cotisationsSalarialesCumul + bulletin.totalCotisationsSalariales,
     ),
     cotisationsPatronalesCumul: roundMontant(
-      base.cotisationsPatronalesCumul + bulletin.totalCotisationsPatronales,
+      base.cotisationsPatronalesCumul + bulletin.totalCotisationsPatronales
     ),
     nbBulletins: base.nbBulletins + 1,
     derniereMiseAJour: new Date().toISOString(),
@@ -127,16 +127,19 @@ export function integrerBulletin(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Calcule le taux de cotisations patronales effectif basé sur les cumuls annuels.
+ * Calcule le taux de cotisations patronales effectif (net de RGDU) basé sur les cumuls annuels.
+ *
+ * Formule : (cotisations patronales brutes − RGDU) / brut soumis × 100
+ * Cohérent avec `coutEmployeur = brut + totalPat − RGDU`.
  *
  * Utile pour la régularisation de fin d'année ou la projection prévisionnel.
  *
- * @returns Taux en % (ex. 42.5 pour 42,5 %)
+ * @returns Taux en % (ex. 6.7 pour 6,7 %)
  */
 export function tauxPatronalEffectifCumule(cumuls: CumulsAnnuels): number {
   if (cumuls.brutSoumisCumul <= 0) return 0;
   return roundMontant(
-    (cumuls.cotisationsPatronalesCumul / cumuls.brutSoumisCumul) * 100,
+    ((cumuls.cotisationsPatronalesCumul - cumuls.montantRGDUCumul) / cumuls.brutSoumisCumul) * 100,
   );
 }
 

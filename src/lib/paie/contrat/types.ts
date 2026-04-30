@@ -97,7 +97,7 @@ export interface TotauxContrat {
   coutEmployeurTotalAvecCP: number;
   /** Total cotisations salariales cumulées */
   cotisationsSalarialesTotal: number;
-  /** Total cotisations patronales cumulées */
+  /** Total cotisations patronales brutes cumulées (hors RGDU) — voir rgduTotal pour la réduction */
   cotisationsPatronalesTotal: number;
   /** Provision congés payés cumulée sur toute la période */
   provisionCPTotale: number;
