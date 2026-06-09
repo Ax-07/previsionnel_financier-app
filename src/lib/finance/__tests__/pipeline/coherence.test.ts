@@ -382,12 +382,7 @@ describe("Cohérence — DecTVA = TVA nette décalée M+1 (C11)", () => {
 describe("Cohérence — soldeTrésorerie mensuel M12 = disponibilités − découvert bilan", () => {
   function buildSoldeM12(data: typeof SCENARIO_CREATION, result: FinCalcResult) {
     const isFranchise = data.scenario.parametres?.regimeTVA === "FRANCHISE";
-    const delaiClients = data.activites?.[0]?.reglementClients ?? 0;
-    const ctx = buildTemporelCtx(
-      data.dateDemarrage as unknown as Date,
-      isFranchise,
-      delaiClients,
-    );
+    const ctx = buildTemporelCtx(result.calendar, isFranchise);
 
     const enc = calcEncaissements(data, ctx);
     const dec = calcDecaissements(
@@ -405,13 +400,13 @@ describe("Cohérence — soldeTrésorerie mensuel M12 = disponibilités − déc
     };
 
     const y1Sol = computeSoldeMonthly(variation.y1, 0);
-    const y2Sol = computeSoldeMonthly(variation.y2, y1Sol.soldeFinal[11] ?? 0);
-    const y3Sol = computeSoldeMonthly(variation.y3, y2Sol.soldeFinal[11] ?? 0);
+    const y2Sol = computeSoldeMonthly(variation.y2, y1Sol.soldeFinal[y1Sol.soldeFinal.length - 1] ?? 0);
+    const y3Sol = computeSoldeMonthly(variation.y3, y2Sol.soldeFinal[y2Sol.soldeFinal.length - 1] ?? 0);
 
     return {
-      y1: y1Sol.soldeFinal[11] ?? 0,
-      y2: y2Sol.soldeFinal[11] ?? 0,
-      y3: y3Sol.soldeFinal[11] ?? 0,
+      y1: y1Sol.soldeFinal[y1Sol.soldeFinal.length - 1] ?? 0,
+      y2: y2Sol.soldeFinal[y2Sol.soldeFinal.length - 1] ?? 0,
+      y3: y3Sol.soldeFinal[y3Sol.soldeFinal.length - 1] ?? 0,
     };
   }
 

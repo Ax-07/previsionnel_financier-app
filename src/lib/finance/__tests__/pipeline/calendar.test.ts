@@ -18,6 +18,7 @@ import { describe, it, expect } from "vitest";
 import {
   makeExerciceHelpers,
   fmtExercice,
+  buildScenarioCalendar,
   buildTemporelCtx,
   dateToSlot,
 } from "@/lib/finance/pipeline/calendar";
@@ -205,5 +206,63 @@ describe("dateToSlot", () => {
     const ctxD = buildTemporelCtx(new Date("2026-04-01"), false);
     const d = new Date("2026-07-01");
     expect(dateToSlot(d, ctxD.yearStarts)).toEqual({ yk: "y1", mi: 3 });
+  });
+});
+
+describe("buildScenarioCalendar — calendrier canonique", () => {
+  it("priorise les exercices parametres avec un premier exercice court de 4 mois", () => {
+    const calendar = buildScenarioCalendar({
+      dossierDateDemarrage: new Date("2026-01-01"),
+      dossierDureeProjection: 3,
+      parametres: {
+        dateDebutExerciceN: "2026-09-01",
+        exercices: [
+          { ordre: 1, dateCloture: "2026-12-31", duree: 4, annee: 2026 },
+          { ordre: 2, dateCloture: "2027-12-31", duree: 12, annee: 2027 },
+          { ordre: 3, dateCloture: "2028-12-31", duree: 12, annee: 2028 },
+        ],
+      },
+    });
+
+    expect(calendar.source).toBe("parametres");
+    expect(calendar.dateDebut.getMonth()).toBe(8);
+    expect(calendar.dureesMois).toEqual({ y1: 4, y2: 12, y3: 12 });
+    expect(calendar.toExerciceKey("2026-12-31")).toBe("y1");
+    expect(calendar.toExerciceKey("2027-01-01")).toBe("y2");
+    expect(calendar.dateToSlot("2026-09-15")).toEqual({ yk: "y1", mi: 0 });
+    expect(calendar.dateToSlot("2026-12-15")).toEqual({ yk: "y1", mi: 3 });
+  });
+
+  it("supporte un exercice long de 18 mois sans borner l'index a 11", () => {
+    const calendar = buildScenarioCalendar({
+      dossierDateDemarrage: new Date("2026-01-01"),
+      dossierDureeProjection: 3,
+      parametres: {
+        dateDebutExerciceN: "2026-01-01",
+        exercices: [
+          { ordre: 1, dateCloture: "2027-06-30", duree: 18, annee: 2027 },
+          { ordre: 2, dateCloture: "2028-06-30", duree: 12, annee: 2028 },
+          { ordre: 3, dateCloture: "2029-06-30", duree: 12, annee: 2029 },
+        ],
+      },
+    });
+
+    expect(calendar.dureesMois.y1).toBe(18);
+    expect(calendar.dateToSlot("2027-06-15")).toEqual({ yk: "y1", mi: 17 });
+    expect(calendar.dateToSlot("2027-07-01")).toEqual({ yk: "y2", mi: 0 });
+  });
+
+  it("fallback legacy sans exercices = 3 x 12 mois", () => {
+    const calendar = buildScenarioCalendar({
+      dossierDateDemarrage: new Date("2026-04-01"),
+      dossierDureeProjection: 5,
+      parametres: null,
+    });
+
+    expect(calendar.source).toBe("dossier");
+    expect(calendar.dureeProjection).toBe(3);
+    expect(calendar.dureesMois).toEqual({ y1: 12, y2: 12, y3: 12 });
+    expect(calendar.toExerciceKey("2027-03-31")).toBe("y1");
+    expect(calendar.toExerciceKey("2027-04-01")).toBe("y2");
   });
 });

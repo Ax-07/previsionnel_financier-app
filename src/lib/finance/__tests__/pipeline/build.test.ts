@@ -151,3 +151,36 @@ describe("buildFinCalc — anneeDebut / moisDebut", () => {
     expect(fcDecale.moisDebut).toBe(3);
   });
 });
+
+describe("buildFinCalc — exercices reels", () => {
+  it("produit des series mensuelles a la longueur reelle et conserve le total annuel", () => {
+    const scenarioCourt = {
+      ...SCENARIO_CREATION,
+      dateDemarrage: new Date("2026-01-01"),
+      dureeProjection: 3,
+      scenario: {
+        ...SCENARIO_CREATION.scenario,
+        parametres: {
+          ...(SCENARIO_CREATION.scenario.parametres ?? {}),
+          dateDebutExerciceN: new Date("2026-09-01"),
+          dureePrevisionnelle: 3,
+          exercices: [
+            { ordre: 1, dateCloture: new Date("2026-12-31"), duree: 4, annee: 2026 },
+            { ordre: 2, dateCloture: new Date("2027-12-31"), duree: 12, annee: 2027 },
+            { ordre: 3, dateCloture: new Date("2028-12-31"), duree: 12, annee: 2028 },
+          ],
+        },
+      },
+    } as typeof SCENARIO_CREATION;
+
+    const result = buildFinCalc(scenarioCourt, new Date("2026-01-01"));
+
+    expect(result.calendar.source).toBe("parametres");
+    expect(result.moisDebut).toBe(8);
+    expect(result.monthlyCalc.ca.y1).toHaveLength(4);
+    expect(result.ca.y1).toBeCloseTo(180000, 2);
+    expect(result.tva.tvaCollectee.y1).toHaveLength(4);
+    expect(result.toExerciceKey("2026-12-31")).toBe("y1");
+    expect(result.toExerciceKey("2027-01-01")).toBe("y2");
+  });
+});
