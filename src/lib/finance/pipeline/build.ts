@@ -13,7 +13,7 @@ import type { FinCalcResult } from "@/lib/finance/types/results";
 import type { YearAcc } from "@/lib/finance/types/series";
 import type { HypotheseType } from "@/lib/schemas/hypothese";
 import { HYPOTHESE_ACTIVE_DEFAULT } from "@/lib/schemas/hypothese";
-import { makeExerciceHelpers, fmtExercice } from "./calendar";
+import { buildScenarioCalendar } from "./calendar";
 import { n } from "@/lib/finance/utils";
 
 import { calcCapitalRembourse } from "@/lib/finance/calculs/emprunts";
@@ -89,21 +89,33 @@ export function buildFinCalc(
     ajustementsFiscaux: filterByHypothese(data.ajustementsFiscaux, hypotheseActive),
   };
 
-  const anneeDebut = dateDemarrage.getFullYear();
-  const moisDebut = dateDemarrage.getMonth();
-  const { toExerciceKey, exBorne1, exBorne2, exBorne3, pFin, pDeb } =
-    makeExerciceHelpers(dateDemarrage, d.scenario.parametres?.exercices ?? undefined);
+  const existingCalendar =
+    typeof d.calendar?.dateToSlot === "function" ? d.calendar : null;
+  const calendar = existingCalendar ?? buildScenarioCalendar({
+    dossierDateDemarrage: dateDemarrage,
+    dossierDureeProjection: d.dureeProjection,
+    parametres: d.scenario.parametres,
+  });
+  d.dateDemarrage = calendar.dateDebut;
+  d.dureeProjection = calendar.dureeProjection;
+  d.calendar = calendar;
+  const anneeDebut = calendar.dateDebut.getFullYear();
+  const moisDebut = calendar.dateDebut.getMonth();
+  const { toExerciceKey, exBorne1, exBorne2, exBorne3, pFin, pDeb } = calendar;
 
   // Calcul TVA — source unique de vérité pour tout le pipeline
-  const tva = calcTVA(d, { toExerciceKey, exBorne1, exBorne2, exBorne3 });
+  const tva = calcTVA(d, {
+    toExerciceKey,
+    exBorne1,
+    exBorne2,
+    exBorne3,
+    dureesMois: calendar.dureesMois,
+    dateToSlot: calendar.dateToSlot,
+  });
 
-  const yearLabels = {
-    y1: fmtExercice(anneeDebut, moisDebut),
-    y2: fmtExercice(anneeDebut + 1, moisDebut),
-    y3: fmtExercice(anneeDebut + 2, moisDebut),
-  };
+  const yearLabels = calendar.yearLabels;
 
-  const dureeProjection = ((d.dureeProjection ?? 3) as 1 | 2 | 3);
+  const dureeProjection = calendar.dureeProjection;
 
   // ── IS : nécessite resCourant et resExcep calculés d'abord ────────────────
   const _capital = calcCapitalRembourse(d, toExerciceKey);
@@ -111,7 +123,7 @@ export function buildFinCalc(
   const _ajustementNet = calcAjustementNet(d);
 
   // Passe 1 : IS = 0 pour obtenir resCourant (IS dépend de RCAI → calcul après)
-  const mc0: MonthlyCalcResult = buildMonthlyCalc(d, dateDemarrage, { y1: 0, y2: 0, y3: 0 });
+  const mc0: MonthlyCalcResult = buildMonthlyCalc(d, calendar.dateDebut, { y1: 0, y2: 0, y3: 0 });
   const _resCourant = monthlyToYearAcc(mc0.resCourant);
 
   const isParAnnee = calcISParAnnee(
@@ -123,7 +135,7 @@ export function buildFinCalc(
   );
 
   // Passe 2 : re-calcul avec IS réel — séries mensuelles (resNet, caf, isSeries) correctes
-  const mc: MonthlyCalcResult = buildMonthlyCalc(d, dateDemarrage, isParAnnee);
+  const mc: MonthlyCalcResult = buildMonthlyCalc(d, calendar.dateDebut, isParAnnee);
 
   // ── Calcul des agrégats annuels (somme des séries mensuelles) ─────────────
   const sum = monthlyToYearAcc;
@@ -241,6 +253,7 @@ export function buildFinCalc(
     anneeDebut,
     moisDebut,
     dureeProjection,
+    calendar,
     yearLabels,
     toExerciceKey,
     exBorne1,
