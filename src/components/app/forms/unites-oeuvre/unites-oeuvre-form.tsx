@@ -385,7 +385,7 @@ export function UnitesDOeuvreForm({ dossierId, initialData = [] }: UnitesDOeuvre
   }, [dossierId, unites, store, invalidateControleStores]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 py-8 px-4 2xl:px-32">
       {/* En-tête de section */}
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b pb-3">
         <div>
