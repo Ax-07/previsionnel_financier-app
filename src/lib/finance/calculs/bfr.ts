@@ -111,7 +111,7 @@ function calcDettesPersonnelTNS(
   moisDebut: number,
 ): { y1: number; y2: number; y3: number } {
   const _exercices = data.scenario.parametres?.exercices ?? [];
-  const nMoisCtx = {
+  const nMoisCtx = data.calendar?.dureesMois ?? {
     y1: _exercices[0]?.duree ?? 12,
     y2: _exercices[1]?.duree ?? 12,
     y3: _exercices[2]?.duree ?? 12,
@@ -130,9 +130,9 @@ function calcDettesPersonnelTNS(
 
   for (const sal of (data.salaries ?? []).filter((s) => s.actif !== false)) {
     const tCotPat = n(sal.tauxCotPat) / 100;
-    const b1 = salarieMonthlyBrut(n(sal.montantN), sal.detailMensuelN, moisDebut);
-    const b2 = salarieMonthlyBrut(n(sal.montantN1), sal.detailMensuelN1, moisDebut);
-    const b3 = salarieMonthlyBrut(n(sal.montantN2), sal.detailMensuelN2, moisDebut);
+    const b1 = salarieMonthlyBrut(n(sal.montantN), sal.detailMensuelN, moisDebut, nMoisCtx.y1);
+    const b2 = salarieMonthlyBrut(n(sal.montantN1), sal.detailMensuelN1, moisDebut, nMoisCtx.y2);
+    const b3 = salarieMonthlyBrut(n(sal.montantN2), sal.detailMensuelN2, moisDebut, nMoisCtx.y3);
     // Coût total employeur = brut × (1 + tCotPat) — les cotisations salariales
     // sont reversées à l'organisme par l'employeur donc comptent dans la dette.
     lastPersonnelY1 += sumLastMonths(b1, delaiPaie, nMoisCtx.y1) * (1 + tCotPat);
@@ -141,9 +141,9 @@ function calcDettesPersonnelTNS(
   }
 
   for (const d of (data.dirigeants ?? []).filter((d) => d.actif !== false)) {
-    const b1 = salarieMonthlyBrut(n(d.montantN), d.detailMensuelN, moisDebut);
-    const b2 = salarieMonthlyBrut(n(d.montantN1), d.detailMensuelN1, moisDebut);
-    const b3 = salarieMonthlyBrut(n(d.montantN2), d.detailMensuelN2, moisDebut);
+    const b1 = salarieMonthlyBrut(n(d.montantN), d.detailMensuelN, moisDebut, nMoisCtx.y1);
+    const b2 = salarieMonthlyBrut(n(d.montantN1), d.detailMensuelN1, moisDebut, nMoisCtx.y2);
+    const b3 = salarieMonthlyBrut(n(d.montantN2), d.detailMensuelN2, moisDebut, nMoisCtx.y3);
     lastPersonnelY1 += sumLastMonths(b1, delaiPaie, nMoisCtx.y1);
     lastPersonnelY2 += sumLastMonths(b2, delaiPaie, nMoisCtx.y2);
     lastPersonnelY3 += sumLastMonths(b3, delaiPaie, nMoisCtx.y3);
@@ -207,13 +207,13 @@ function calcDettesPersonnelTNS(
     // Dette URSSAF = régularisation future + dernier delaiPaie mois de cash en transit.
     //
     // Formule par exercice i :
-    //   dettes_i = max(0, DEFINITIF_i - PROVISIONNEL_i) + totalPaye_i / 12 × delaiPaie
+    //   dettes_i = max(0, DEFINITIF_i - PROVISIONNEL_i) + totalPaye_i / nbMoisExercice_i × delaiPaie
     //
     // • DEFINITIF_i - PROVISIONNEL_i  = régularisation due à l'URSSAF l'exercice suivant.
     //   provN = totalPaye_i - regularisation_i (= appels provisionnels seuls, sans régul précédente).
     //   Note : treso[0].regularisation = 0 (pas de régul l'année 1).
     //
-    // • totalPaye_i / 12 × delaiPaie = transit (cotisations du dernier mois non encore décaissées).
+    // • totalPaye_i / nbMoisExercice_i × delaiPaie = transit (cotisations des derniers mois non encore décaissées).
     //   Cohérent avec shiftYk3(uniformMonthly(totalPaye), delaiPaie) dans decaissements.ts.
     //
     // Cette formule préserve l'égalité trésorerie-bilan = solde-tableau pour les 3 exercices.
@@ -261,9 +261,9 @@ export function calcBfr(
   data: ScenarioFinData,
   fc: Pick<FinCalcResult, "stockFinal" | "tva" | "moisDebut" | "isParAnnee">,
 ): BfrCalcResult {
-  const { isIS, activites, fournitures, services, immobilisations, scenario } = data;
+  const { isIS, activites, fournitures, services, scenario } = data;
   const _exercices = data.scenario.parametres?.exercices ?? [];
-  const nMoisCtx = {
+  const nMoisCtx = data.calendar?.dureesMois ?? {
     y1: _exercices[0]?.duree ?? 12,
     y2: _exercices[1]?.duree ?? 12,
     y3: _exercices[2]?.duree ?? 12,
@@ -319,22 +319,22 @@ export function calcBfr(
         ponctuelSommeY1: sumArr(ponctuelN),
         ponctuelSommeY2: sumArr(ponctuelN1),
         ponctuelSommeY3: sumArr(ponctuelN2),
-        // Stock fin d'exercice = dernier mois de la série cumulative RCA (= sfSeries[11])
+        // Stock fin d'exercice = dernier mois réel de la série cumulative RCA.
         m11StockY1: rY1.sfFinal,
         m11StockY2: rY2.sfFinal,
         m11StockY3: rY3.sfFinal,
         // Dettes fournisseurs TTC : achatsEffectués_mois11 × coefTTC × délai
-        // achatsEff[11] = conso[11] + sf[11] - si[11]  (= rYx.achatsEffSeries[11])
-        m11FournY1: (rY1.achatsEffSeries[11] ?? 0) * coefTTC * delaiFournMois,
-        m11FournY2: (rY2.achatsEffSeries[11] ?? 0) * coefTTC * delaiFournMois,
-        m11FournY3: (rY3.achatsEffSeries[11] ?? 0) * coefTTC * delaiFournMois,
+        // achatsEffDernierMois = conso + sf - si sur le dernier mois réel.
+        m11FournY1: (rY1.achatsEffSeries[nMoisCtx.y1 - 1] ?? 0) * coefTTC * delaiFournMois,
+        m11FournY2: (rY2.achatsEffSeries[nMoisCtx.y2 - 1] ?? 0) * coefTTC * delaiFournMois,
+        m11FournY3: (rY3.achatsEffSeries[nMoisCtx.y3 - 1] ?? 0) * coefTTC * delaiFournMois,
       };
     });
 
   // ── Stocks de matières en fin d'exercice ────────────────────────────────
   // Règle §4.6 + §12.2 : stockFin[y] = achatsConsommés_annuel[y] × joursStock / 360
   // Source : fc.stockFinal pré-calculé dans monthly.ts via la formule cumulative.
-  // ✅ fc.stockFinal = dernier mois de la série cumulative RCA (sfSeries[11]) par exercice
+  // fc.stockFinal = dernier mois réel de la série cumulative RCA par exercice.
   //    → niveau exact en clôture, cohérent avec monthly.ts et le bilan.
   //
   // Règle BFR initial : ponctuelN[0] est le stock initial ponctuel (mois de démarrage).
@@ -353,7 +353,7 @@ export function calcBfr(
 
   // ── Dettes fournisseurs (achats matières) ────────────────────────────────
   // Règle §12.3 : achatsEffectués_mois11 TTC × délai.
-  // achatsEff[11] = conso[11] + sf[11] − si[11] (formule RCA cumulative, via computeStocksAchatsSeries)
+  // achatsEff du dernier mois réel = conso + sf - si (formule RCA cumulative).
   let dfY1 = 0, dfY2 = 0, dfY3 = 0;
   for (const a of achatsActifsMois) {
     const coef = Math.max(0, 1 - n(a.tauxMarge) / 100);
@@ -438,12 +438,12 @@ export function calcBfr(
   // ── Dettes fiscales et sociales ──────────────────────────────────────────
   // Si l'impôt a une date précise (dateN), il est payé au mois exact dans le
   // tableau → aucune dette résiduelle en fin d'exercice.
-  // Si pas de date → lissage uniforme → 1 mois d'encours (montant / 12).
+  // Si pas de date → lissage uniforme → 1 mois d'encours (montant / nbMoisExercice).
   let diY1 = 0, diY2 = 0, diY3 = 0;
   for (const impot of data.impotsTaxes.filter((i) => i.actif !== false)) {
-    if (!impot.dateN)  diY1 += n(impot.montantN  ?? 0) / 12;
-    if (!impot.dateN1) diY2 += n(impot.montantN1 ?? 0) / 12;
-    if (!impot.dateN2) diY3 += n(impot.montantN2 ?? 0) / 12;
+    if (!impot.dateN)  diY1 += n(impot.montantN  ?? 0) / nMoisCtx.y1;
+    if (!impot.dateN1) diY2 += n(impot.montantN1 ?? 0) / nMoisCtx.y2;
+    if (!impot.dateN2) diY3 += n(impot.montantN2 ?? 0) / nMoisCtx.y3;
   }
   const dettesImpots: YearAcc4 = { y0: 0, y1: diY1, y2: diY2, y3: diY3 };
 
@@ -464,7 +464,7 @@ export function calcBfr(
   };
 
   // ── Créances clients (cash immobilisé en attente de paiement) ─────────────
-  // Règle §12.3 : créancesClients[y] = CA_TTC[y][11] × (délaiClients / 30)
+  // Règle §12.3 : créancesClients[y] = CA_TTC du dernier mois réel × (délaiClients / 30)
   // Toujours utiliser le dernier mois saisonnalisé (index 11), jamais montant_annuel × delai/360.
   // Pour les sociétés franchiséees TVA : tauxTVA = 0 → coefTTC = 1, créances = CA HT.
   const creancesClients: YearAcc4 = { y0: 0, y1: 0, y2: 0, y3: 0 };

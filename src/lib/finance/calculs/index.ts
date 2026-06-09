@@ -17,8 +17,8 @@ export type { TVACalcResult, TVACalcHelpers } from "@/lib/finance/calculs/calc-t
 export { calcTVA } from "@/lib/finance/calculs/calc-tva";
 
 // ── Helpers calendrier ────────────────────────────────────────────────────────
-export { makeExerciceHelpers, fmtExercice } from "@/lib/finance/pipeline/calendar";
-export type { ExerciceHelpers, TemporelCtx } from "@/lib/finance/pipeline/calendar";
+export { makeExerciceHelpers, fmtExercice, buildScenarioCalendar } from "@/lib/finance/pipeline/calendar";
+export type { ExerciceHelpers, TemporelCtx, ScenarioCalendar } from "@/lib/finance/pipeline/calendar";
 
 // ── Séries temporelles ────────────────────────────────────────────────────────
 export {
@@ -42,5 +42,4 @@ export {
   buildTemporelCtx, dateToSlot, addToYk3,
   shiftYk3,
 } from "./tresorerie";
-
 

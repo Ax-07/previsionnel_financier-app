@@ -20,6 +20,7 @@ import {
 } from "@/lib/finance/calculs/monthly";
 import { shiftSeriesWeighted } from "@/lib/finance/tresorerie-engine";
 import type { Yk3 } from "@/lib/finance/tresorerie-types";
+import type { YearKey } from "@/lib/finance/types/series";
 
 // ── Contexte temporel (définitions déplacées vers pipeline/calendar) ──────────
 import type { TemporelCtx } from "@/lib/finance/pipeline/calendar";
@@ -34,7 +35,23 @@ export function addToYk3(
   yearStarts: TemporelCtx["yearStarts"],
 ): void {
   const { yk, mi } = dateToSlot(date, yearStarts);
-  if (yk && mi >= 0) (series[yk] as number[])[mi] = ((series[yk] as number[])[mi] ?? 0) + amount;
+  if (yk && mi >= 0 && mi < series[yk].length) {
+    (series[yk] as number[])[mi] = ((series[yk] as number[])[mi] ?? 0) + amount;
+  }
+}
+
+const DEFAULT_DUREES: Record<YearKey, number> = { y1: 12, y2: 12, y3: 12 };
+
+function dureesFromCtx(ctx: Pick<TemporelCtx, "dureesMois">): Record<YearKey, number> {
+  return ctx.dureesMois ?? DEFAULT_DUREES;
+}
+
+function zeroYk3(durees: Record<YearKey, number>): Yk3 {
+  return {
+    y1: zeroSeries(durees.y1),
+    y2: zeroSeries(durees.y2),
+    y3: zeroSeries(durees.y3),
+  };
 }
 
 // ── Encaissements ─────────────────────────────────────────────────────────────
@@ -68,10 +85,11 @@ export function calcEncaissements(
   ctx: TemporelCtx,
 ): EncaissementsResult {
   const { yearStarts, isFranchise } = ctx;
+  const nMoisCtx = dureesFromCtx(ctx);
 
   // ── Apports capital & comptes courants ──────────────────────────────────────
-  const encApportsCapital: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
-  const encApportsCC: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+  const encApportsCapital: Yk3 = zeroYk3(nMoisCtx);
+  const encApportsCC: Yk3 = zeroYk3(nMoisCtx);
 
   for (const apport of data.apports) {
     const amt = n(apport.montant);
@@ -89,7 +107,7 @@ export function calcEncaissements(
   }
 
   // ── Déblocages emprunts ─────────────────────────────────────────────────────
-  const encEmprunts: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+  const encEmprunts: Yk3 = zeroYk3(nMoisCtx);
   for (const emprunt of data.emprunts) {
     addToYk3(encEmprunts, new Date(emprunt.dateDéblocage), n(emprunt.montant), yearStarts);
   }
@@ -98,31 +116,31 @@ export function calcEncaissements(
   const activitesEncData = data.activites.map((act) => {
     const coefTTC = isFranchise ? 1 : 1 + n(act.tauxTVA) / 100;
     const delaiMois = n(act.reglementClients ?? 30) / 30;
-    const r1 = seasonalMonthly(n(act.montantN) * coefTTC, act.saisonnaliteCA, "N");
-    const r2 = seasonalMonthly(n(act.montantN1) * coefTTC, act.saisonnaliteCA, "N1");
-    const r3 = seasonalMonthly(n(act.montantN2) * coefTTC, act.saisonnaliteCA, "N2");
+    const r1 = seasonalMonthly(n(act.montantN) * coefTTC, act.saisonnaliteCA, "N", nMoisCtx.y1);
+    const r2 = seasonalMonthly(n(act.montantN1) * coefTTC, act.saisonnaliteCA, "N1", nMoisCtx.y2);
+    const r3 = seasonalMonthly(n(act.montantN2) * coefTTC, act.saisonnaliteCA, "N2", nMoisCtx.y3);
     if (delaiMois <= 0) return { act, yk3: { y1: r1, y2: r2, y3: r3 } as Yk3 };
-    const { shifted: s1, overflow: ov1 } = shiftSeriesWeighted(r1, delaiMois);
-    const { shifted: s2, overflow: ov2 } = shiftSeriesWeighted(r2, delaiMois, ov1);
-    const { shifted: s3 } = shiftSeriesWeighted(r3, delaiMois, ov2);
+    const { shifted: s1, overflow: ov1 } = shiftSeriesWeighted(r1, delaiMois, undefined, nMoisCtx.y1, nMoisCtx.y2);
+    const { shifted: s2, overflow: ov2 } = shiftSeriesWeighted(r2, delaiMois, ov1, nMoisCtx.y2, nMoisCtx.y3);
+    const { shifted: s3 } = shiftSeriesWeighted(r3, delaiMois, ov2, nMoisCtx.y3, 0);
     return { act, yk3: { y1: s1, y2: s2, y3: s3 } as Yk3 };
   });
 
   const encProdVendue: Yk3 = {
-    y1: activitesEncData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y1), zeroSeries() as MonthlySeries),
-    y2: activitesEncData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y2), zeroSeries() as MonthlySeries),
-    y3: activitesEncData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y3), zeroSeries() as MonthlySeries),
+    y1: activitesEncData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y1), zeroSeries(nMoisCtx.y1) as MonthlySeries),
+    y2: activitesEncData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y2), zeroSeries(nMoisCtx.y2) as MonthlySeries),
+    y3: activitesEncData.reduce((acc, { yk3 }) => sumSeries(acc, yk3.y3), zeroSeries(nMoisCtx.y3) as MonthlySeries),
   };
 
   // ── Subventions d'exploitation ──────────────────────────────────────────────
   const encSubvExpl: Yk3 = {
-    y1: uniformMonthly(data.subventionsExploitation.reduce((s, sv) => s + n(sv.montantN), 0)),
-    y2: uniformMonthly(data.subventionsExploitation.reduce((s, sv) => s + n(sv.montantN1), 0)),
-    y3: uniformMonthly(data.subventionsExploitation.reduce((s, sv) => s + n(sv.montantN2), 0)),
+    y1: uniformMonthly(data.subventionsExploitation.reduce((s, sv) => s + n(sv.montantN), 0), nMoisCtx.y1),
+    y2: uniformMonthly(data.subventionsExploitation.reduce((s, sv) => s + n(sv.montantN1), 0), nMoisCtx.y2),
+    y3: uniformMonthly(data.subventionsExploitation.reduce((s, sv) => s + n(sv.montantN2), 0), nMoisCtx.y3),
   };
 
   // ── Subventions d'investissement (par date) ─────────────────────────────────
-  const encSubvInvest: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+  const encSubvInvest: Yk3 = zeroYk3(nMoisCtx);
   for (const subv of data.subventions) {
     if (subv.type === "PRET_HONNEUR") continue;
     const d = subv.dateEncaissement ?? subv.dateObtention;
@@ -130,14 +148,14 @@ export function calcEncaissements(
   }
 
   // ── Encaissements divers ────────────────────────────────────────────────────
-  const encDivers: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+  const encDivers: Yk3 = zeroYk3(nMoisCtx);
   for (const flux of data.diversEncaissements) {
     if (flux.dateN) addToYk3(encDivers, new Date(flux.dateN), n(flux.montantN), yearStarts);
-    else encDivers.y1 = sumSeries(encDivers.y1, uniformMonthly(n(flux.montantN)));
+    else encDivers.y1 = sumSeries(encDivers.y1, uniformMonthly(n(flux.montantN), nMoisCtx.y1));
     if (flux.dateN1) addToYk3(encDivers, new Date(flux.dateN1), n(flux.montantN1), yearStarts);
-    else encDivers.y2 = sumSeries(encDivers.y2, uniformMonthly(n(flux.montantN1)));
+    else encDivers.y2 = sumSeries(encDivers.y2, uniformMonthly(n(flux.montantN1), nMoisCtx.y2));
     if (flux.dateN2) addToYk3(encDivers, new Date(flux.dateN2), n(flux.montantN2), yearStarts);
-    else encDivers.y3 = sumSeries(encDivers.y3, uniformMonthly(n(flux.montantN2)));
+    else encDivers.y3 = sumSeries(encDivers.y3, uniformMonthly(n(flux.montantN2), nMoisCtx.y3));
   }
 
   // ── Total ───────────────────────────────────────────────────────────────────
@@ -168,20 +186,21 @@ export function calcEncaissements(
 export function calcAchatsRaw(
   activites: ScenarioFinData["activites"],
   isFranchise: boolean,
+  dureesMois: Record<YearKey, number> = DEFAULT_DUREES,
 ): Yk3 {
   const achatActivites = activites.filter((a) => a.typeActivite !== "PRESTATION_SERVICES");
-  const result: Yk3 = { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() };
+  const result: Yk3 = zeroYk3(dureesMois);
   for (const a of achatActivites) {
     const coef = Math.max(0, 1 - n(a.tauxMarge) / 100);
     const coefTVA = isFranchise ? 1 : 1 + n(a.tvaAchats ?? 20) / 100;
     // Achats récurrents TTC
-    result.y1 = sumSeries(result.y1, seasonalMonthly(n(a.montantN) * coef * coefTVA, a.saisonnaliteAchats, "N"));
-    result.y2 = sumSeries(result.y2, seasonalMonthly(n(a.montantN1) * coef * coefTVA, a.saisonnaliteAchats, "N1"));
-    result.y3 = sumSeries(result.y3, seasonalMonthly(n(a.montantN2) * coef * coefTVA, a.saisonnaliteAchats, "N2"));
+    result.y1 = sumSeries(result.y1, seasonalMonthly(n(a.montantN) * coef * coefTVA, a.saisonnaliteAchats, "N", dureesMois.y1));
+    result.y2 = sumSeries(result.y2, seasonalMonthly(n(a.montantN1) * coef * coefTVA, a.saisonnaliteAchats, "N1", dureesMois.y2));
+    result.y3 = sumSeries(result.y3, seasonalMonthly(n(a.montantN2) * coef * coefTVA, a.saisonnaliteAchats, "N2", dureesMois.y3));
     // Achats ponctuels TTC (délai = 0, donc raw == paid → n'influencent pas l'encours)
-    result.y1 = sumSeries(result.y1, ponctuelMonthly(a.achatsStockPonctuel, "N").map((v: number) => v * coefTVA) as MonthlySeries);
-    result.y2 = sumSeries(result.y2, ponctuelMonthly(a.achatsStockPonctuel, "N1").map((v: number) => v * coefTVA) as MonthlySeries);
-    result.y3 = sumSeries(result.y3, ponctuelMonthly(a.achatsStockPonctuel, "N2").map((v: number) => v * coefTVA) as MonthlySeries);
+    result.y1 = sumSeries(result.y1, ponctuelMonthly(a.achatsStockPonctuel, "N", dureesMois.y1).map((v: number) => v * coefTVA) as MonthlySeries);
+    result.y2 = sumSeries(result.y2, ponctuelMonthly(a.achatsStockPonctuel, "N1", dureesMois.y2).map((v: number) => v * coefTVA) as MonthlySeries);
+    result.y3 = sumSeries(result.y3, ponctuelMonthly(a.achatsStockPonctuel, "N2", dureesMois.y3).map((v: number) => v * coefTVA) as MonthlySeries);
   }
   return result;
 }

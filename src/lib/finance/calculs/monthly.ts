@@ -18,6 +18,7 @@
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import { n } from "@/lib/finance/utils";
 import type { YearKey } from "@/lib/finance/utils";
+import { buildScenarioCalendar } from "@/lib/finance/pipeline/calendar";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -50,7 +51,8 @@ export function subSeries(a: MonthlySeries, b: MonthlySeries): MonthlySeries {
 }
 
 export function sumAll(...series: MonthlySeries[]): MonthlySeries {
-  return series.reduce((acc, s) => sumSeries(acc, s), zeroSeries() as MonthlySeries);
+  const nMois = series[0]?.length ?? 12;
+  return series.reduce((acc, s) => sumSeries(acc, s), zeroSeries(nMois) as MonthlySeries);
 }
 
 export function totalOf(s: MonthlySeries): number {
@@ -67,8 +69,8 @@ export function uniformMonthly(total: number, nMois = 12): MonthlySeries {
 const uniform = uniformMonthly;
 
 /** Construit les labels de mois (ex: "Jan 2026") pour les 12 mois d'un exercice. */
-export function buildMonthLabels(startMonth: number, startYear: number): string[] {
-  return Array.from({ length: 12 }, (_, i) => {
+export function buildMonthLabels(startMonth: number, startYear: number, nMois = 12): string[] {
+  return Array.from({ length: nMois }, (_, i) => {
     const m = (startMonth + i) % 12;
     const y = startYear + Math.floor((startMonth + i) / 12);
     return `${FR_MONTHS[m]} ${y}`;
@@ -365,17 +367,20 @@ export function buildMonthlyCalc(
   dateDemarrage: Date,
   isParAnnee: Record<YearKey, number>,
 ): MonthlyCalcResult {
-  const anneeDebut = dateDemarrage.getFullYear();
-  const moisDebut = dateDemarrage.getMonth(); // 0-based
+  const existingCalendar =
+    typeof data.calendar?.dateToSlot === "function" ? data.calendar : null;
+  const calendar = existingCalendar ?? buildScenarioCalendar({
+    dossierDateDemarrage: dateDemarrage,
+    dossierDureeProjection: data.dureeProjection,
+    parametres: data.scenario.parametres,
+  });
+  const dateDebut = calendar.dateDebut;
+  const anneeDebut = dateDebut.getFullYear();
+  const moisDebut = dateDebut.getMonth(); // 0-based
   const pFin = moisDebut === 0 ? 0 : moisDebut / 12;
 
   // Durées réelles des exercices (en mois) — issues des ExercicesPrevisionnels
-  const _exercices = data.scenario.parametres?.exercices ?? [];
-  const nMoisCtx: Record<YearKey, number> = {
-    y1: _exercices[0]?.duree ?? 12,
-    y2: _exercices[1]?.duree ?? 12,
-    y3: _exercices[2]?.duree ?? 12,
-  };
+  const nMoisCtx: Record<YearKey, number> = calendar.dureesMois;
 
   // ── Helpers locaux ────────────────────────────────────────────────────────
 
@@ -387,24 +392,9 @@ export function buildMonthlyCalc(
   function ykAndMonthIdx(
     dateStr: string,
   ): { yk: YearKey; idx: number } | null {
-    const d = new Date(dateStr);
-    const year = d.getFullYear();
-    const month = d.getMonth(); // 0-based
-    const absDate = year * 12 + month;
-    const ex1Start = anneeDebut * 12 + moisDebut;
-    const ex2Start = ex1Start + nMoisCtx.y1;
-    const ex3Start = ex2Start + nMoisCtx.y2;
-    const bounds: [number, number, YearKey][] = [
-      [ex1Start, ex2Start, "y1"],
-      [ex2Start, ex3Start, "y2"],
-      [ex3Start, ex3Start + nMoisCtx.y3, "y3"],
-    ];
-    for (const [start, end, yk] of bounds) {
-      if (absDate >= start && absDate < end) {
-        return { yk, idx: absDate - start };
-      }
-    }
-    return null;
+    const { yk, mi } = calendar.dateToSlot(dateStr);
+    if (!yk || mi < 0 || mi >= nMoisCtx[yk]) return null;
+    return { yk, idx: mi };
   }
 
   // ── CA ────────────────────────────────────────────────────────────────────
@@ -831,7 +821,7 @@ export function buildMonthlyCalc(
           continue;
         }
       }
-      addSeries(prodImmoAcc, "y1", uniform(m));
+      addSeries(prodImmoAcc, "y1", uniform(m, nMoisCtx.y1));
     }
 
     const transfertsAcc = simpleUniform(data.transfertsProduits);
