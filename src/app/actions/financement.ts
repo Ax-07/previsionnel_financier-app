@@ -14,6 +14,7 @@ import {
 import { calculerEcheancier } from "@/lib/calcul/echeancier";
 import type { ActionResult } from "@/app/actions/types";
 import { isPrismaError } from "@/lib/utils/prisma-error";
+import { validateRows } from "@/lib/utils/validate-rows";
 
 // ── Helpers internes ─────────────────────────────────────────────────────────
 
@@ -265,6 +266,130 @@ export async function deleteEmprunt(id: string, dossierId: string): Promise<Acti
   } catch (err) {
     console.error("[deleteEmprunt]", err);
     if (isPrismaError(err, "P2025")) return { success: false, error: "Emprunt introuvable." };
+    return { success: false, error: err instanceof Error ? err.message : "Erreur inattendue." };
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// BULK SAVE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export async function saveApports(
+  dossierId: string,
+  dirtyRows: ApportRow[],
+  deletedIds: string[]
+): Promise<ActionResult & { idMap?: Record<string, string> }> {
+  
+  try {
+    const err = validateRows(dirtyRows, apportSchema);
+    if (err) return { success: false, error: err };
+
+    const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    const idMap: Record<string, string> = {};
+
+    await prisma.$transaction(async (tx) => {
+      if (deletedIds.length > 0) {
+        await tx.apport.deleteMany({
+          where: { id: { in: deletedIds }, scenarioId },
+        });
+      }
+
+      for (const row of dirtyRows) {
+        const payload = {
+          libelle:      row.libelle,
+          type:         row.type,
+          montant:      row.montant,
+          hypothese:    row.hypothese,
+          dateApport:   new Date(row.dateApport),
+          remboursable: row.remboursable ?? false,
+          scenarioId,
+        };
+
+        if (row.id && !row.id.startsWith("__new__")) {
+          await tx.apport.update({ where: { id: row.id }, data: payload });
+          idMap[row.id] = row.id;
+        } else {
+          const created = await tx.apport.create({ data: payload });
+          if (row.id) idMap[row.id] = created.id;
+        }
+      }
+    });
+
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
+    return { success: true, message: "Apports sauvegardés.", idMap };
+  } catch (err) {
+    console.error("[saveApports]", err);
+    return { success: false, error: err instanceof Error ? err.message : "Erreur inattendue." };
+  }
+}
+
+export async function saveEmprunts(
+  dossierId: string,
+  dirtyRows: EmpruntRow[],
+  deletedIds: string[]
+): Promise<ActionResult & { idMap?: Record<string, string> }> {
+  const err = validateRows(dirtyRows, empruntSchema);
+  if (err) return { success: false, error: err };
+
+  try {
+    const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    const idMap: Record<string, string> = {};
+
+    await prisma.$transaction(async (tx) => {
+      if (deletedIds.length > 0) {
+        const toDelete = await tx.emprunt.findMany({
+          where: { id: { in: deletedIds }, scenarioId },
+          select: { id: true },
+        });
+        const safeIds = toDelete.map((e) => e.id);
+        if (safeIds.length > 0) {
+          await tx.ligneEcheancier.deleteMany({ where: { empruntId: { in: safeIds } } });
+          await tx.emprunt.deleteMany({ where: { id: { in: safeIds } } });
+        }
+      }
+
+      for (const row of dirtyRows) {
+        const payload = {
+          libelle:               row.libelle,
+          montant:               row.montant,
+          hypothese:             row.hypothese,
+          tauxAnnuel:            row.tauxAnnuel,
+          tauxAssurance:         row.tauxAssurance,
+          dureeEnMois:           row.dureeEnMois,
+          periodicite:           row.periodicite,
+          dateDéblocage:         new Date(row.dateDéblocage),
+          typeDiffere:           row.typeDiffere,
+          dureeDiffereEnMois:    row.dureeDiffereEnMois,
+          fraisDossier:          row.fraisDossier,
+          typeEmprunt:           row.typeEmprunt,
+          modaliteRemboursement: row.modaliteRemboursement,
+          modeAssurance:         row.modeAssurance,
+          scenarioId,
+        };
+
+        let empruntId: string;
+        if (row.id && !row.id.startsWith("__new__")) {
+          await tx.emprunt.update({ where: { id: row.id }, data: payload });
+          empruntId = row.id;
+          idMap[row.id] = row.id;
+        } else {
+          const created = await tx.emprunt.create({ data: payload });
+          empruntId = created.id;
+          if (row.id) idMap[row.id] = created.id;
+        }
+
+        const lignes = buildLignesEcheancier(empruntId, row);
+        await tx.ligneEcheancier.deleteMany({ where: { empruntId } });
+        if (lignes.length > 0) {
+          await tx.ligneEcheancier.createMany({ data: lignes });
+        }
+      }
+    });
+
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
+    return { success: true, message: "Emprunts sauvegardés.", idMap };
+  } catch (err) {
+    console.error("[saveEmprunts]", err);
     return { success: false, error: err instanceof Error ? err.message : "Erreur inattendue." };
   }
 }

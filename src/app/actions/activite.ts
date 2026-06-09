@@ -93,18 +93,20 @@ export async function fetchActivites(dossierId: string): Promise<ActiviteRow[]> 
 export async function saveActivites(
   dossierId: string,
   rows: ActiviteRow[]
-): Promise<ActionResult> {
+): Promise<ActionResult & { idMap?: Record<string, string> }> {
   try {
     const err = validateRows(rows, activiteSchema);
     if (err) return { success: false, error: err };
 
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    const idMap: Record<string, string> = {};
 
     await prisma.$transaction(async (tx) => {
       const keepIds = rows
         .map((r) => r.id)
         .filter((id) => id && !id.startsWith("__new__")) as string[];
-      await tx.activite.deleteMany({
+      
+        await tx.activite.deleteMany({
         where: {
           scenarioId,
           ...(keepIds.length > 0 ? { id: { notIn: keepIds } } : {}),
@@ -144,36 +146,18 @@ export async function saveActivites(
         if (row.id && !row.id.startsWith("__new__")) {
           await tx.activite.update({ where: { id: row.id }, data });
         } else {
-          await tx.activite.create({ data: { ...data, scenarioId } });
+          const created = await tx.activite.create({ data: { ...data, scenarioId } });
+          if (row.id) idMap[row.id] = created.id;
         }
       }
     });
 
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
-    return { success: true, message: "Activités enregistrées avec succès" };
+    return { success: true, message: "Activités enregistrées avec succès", idMap };
   } catch (error) {
     console.error("[saveActivites] Erreur :", error);
     if (isPrismaError(error, "P2025")) return { success: false, error: "Dossier introuvable" };
     return { success: false, error: "Erreur lors de l'enregistrement" };
-  }
-}
-
-export async function deleteActivite(activiteId: string, dossierId: string): Promise<ActionResult> {
-  try {
-    // Vérifier que l'activité appartient bien au dossier (IDOR)
-    const activite = await prisma.activite.findFirst({
-      where: { id: activiteId, scenario: { dossierId } },
-      select: { id: true },
-    });
-    if (!activite) return { success: false, error: "Activité introuvable" };
-
-    await prisma.activite.delete({ where: { id: activiteId } });
-    revalidatePath(`/previsionnel/dossier/${dossierId}`);
-    return { success: true, message: "Activité supprimée" };
-  } catch (error) {
-    console.error("[deleteActivite] Erreur :", error);
-    if (isPrismaError(error, "P2025")) return { success: false, error: "Activité introuvable" };
-    return { success: false, error: "Erreur lors de la suppression" };
   }
 }
 
@@ -222,12 +206,13 @@ export async function fetchActivitesCommission(
 export async function saveActivitesCommission(
   dossierId: string,
   rows: ActiviteCommissionRow[]
-): Promise<ActionResult> {
+): Promise<ActionResult & { idMap?: Record<string, string> }> {
   try {
     const err = validateRows(rows, activiteCommissionSchema);
     if (err) return { success: false, error: err };
 
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    const idMap: Record<string, string> = {};
 
     await prisma.$transaction(async (tx) => {
       const keepIds = rows
@@ -266,11 +251,13 @@ export async function saveActivitesCommission(
         if (row.id && !row.id.startsWith("__new__")) {
           await tx.activiteCommission.update({ where: { id: row.id }, data });
         } else {
-          await tx.activiteCommission.create({ data: { ...data, scenarioId } });
+          const created = await tx.activiteCommission.create({ data: { ...data, scenarioId } });
+          if (row.id) idMap[row.id] = created.id;
         }
       }
     });
-    revalidatePath(`/previsionnel/dossier/${dossierId}`);    return { success: true, message: "Activités commissionnées enregistrées avec succès" };
+    revalidatePath(`/previsionnel/dossier/${dossierId}`);
+    return { success: true, message: "Activités commissionnées enregistrées avec succès", idMap };
   } catch (error) {
     console.error("[saveActivitesCommission] Erreur :", error);
     if (isPrismaError(error, "P2025")) return { success: false, error: "Dossier introuvable" };
@@ -319,12 +306,13 @@ export async function fetchProductionsImmobilisees(
 export async function saveProductionsImmobilisees(
   dossierId: string,
   rows: ProductionImmobiliseeRow[]
-): Promise<ActionResult> {
+): Promise<ActionResult & { idMap?: Record<string, string> }> {
   try {
     const err = validateRows(rows, productionImmobiliseeSchema);
     if (err) return { success: false, error: err };
 
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    const idMap: Record<string, string> = {};
 
     await prisma.$transaction(async (tx) => {
       const keepIds = rows
@@ -356,13 +344,14 @@ export async function saveProductionsImmobilisees(
         if (row.id && !row.id.startsWith("__new__")) {
           await tx.productionImmobilisee.update({ where: { id: row.id }, data });
         } else {
-          await tx.productionImmobilisee.create({ data: { ...data, scenarioId } });
+          const created = await tx.productionImmobilisee.create({ data: { ...data, scenarioId } });
+          if (row.id) idMap[row.id] = created.id;
         }
       }
     });
 
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
-    return { success: true, message: "Productions immobilisées enregistrées avec succès" };
+    return { success: true, message: "Productions immobilisées enregistrées avec succès", idMap };
   } catch (error) {
     console.error("[saveProductionsImmobilisees] Erreur :", error);
     if (isPrismaError(error, "P2025")) return { success: false, error: "Dossier introuvable" };
@@ -413,12 +402,13 @@ export async function fetchSubventionsExploitation(
 export async function saveSubventionsExploitation(
   dossierId: string,
   rows: SubventionExploitationRow[]
-): Promise<ActionResult> {
+): Promise<ActionResult & { idMap?: Record<string, string> }> {
   try {
     const err = validateRows(rows, subventionExploitationSchema);
     if (err) return { success: false, error: err };
 
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    const idMap: Record<string, string> = {};
 
     await prisma.$transaction(async (tx) => {
       const keepIds = rows
@@ -452,47 +442,17 @@ export async function saveSubventionsExploitation(
         if (row.id && !row.id.startsWith("__new__")) {
           await tx.subventionExploitation.update({ where: { id: row.id }, data });
         } else {
-          await tx.subventionExploitation.create({ data: { ...data, scenarioId } });
+          const created = await tx.subventionExploitation.create({ data: { ...data, scenarioId } });
+          if (row.id) idMap[row.id] = created.id;
         }
       }
     });
 
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
-    return { success: true, message: "Subventions d'exploitation enregistrées avec succès" };
+    return { success: true, message: "Subventions d'exploitation enregistrées avec succès", idMap };
   } catch (error) {
     console.error("[saveSubventionsExploitation] Erreur :", error);
     if (isPrismaError(error, "P2025")) return { success: false, error: "Dossier introuvable" };
     return { success: false, error: "Erreur lors de l'enregistrement" };
-  }
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// AUTRES PRODUITS (AutreProduit — table héritée)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-export async function fetchAutresProduits(
-  dossierId: string
-): Promise<Array<{ id: string; libelle: string; montant: number; annee: number }>> {
-  try {
-    const scenario = await prisma.scenario.findFirst({
-      where: { dossierId, isDefault: true },
-      select: { id: true },
-    });
-    if (!scenario) return [];
-
-    const produits = await prisma.autreProduit.findMany({
-      where: { scenarioId: scenario.id },
-      orderBy: { annee: "asc" },
-    });
-
-    return produits.map((p) => ({
-      id: p.id,
-      libelle: p.libelle,
-      montant: Number(p.montant),
-      annee: p.annee,
-    }));
-  } catch (error) {
-    console.error("[fetchAutresProduits] Erreur :", error);
-    throw new Error("Impossible de charger les autres produits");
   }
 }

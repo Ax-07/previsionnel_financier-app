@@ -57,12 +57,13 @@ export async function fetchFournitures(dossierId: string): Promise<ChargeExploit
 export async function saveFournitures(
   dossierId: string,
   rows: ChargeExploitationRow[]
-): Promise<ActionResult> {
+): Promise<ActionResult & { idMap?: Record<string, string> }> {
   try {
     const err = validateRows(rows, chargeExploitationSchema);
     if (err) return { success: false, error: err };
 
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    const idMap: Record<string, string> = {};
 
     await prisma.$transaction(async (tx) => {
       const keepIds = rows.map((r) => r.id).filter((id): id is string => Boolean(id) && !id?.startsWith("__new__"));
@@ -104,13 +105,14 @@ export async function saveFournitures(
             update: data,
           });
         } else {
-          await tx.chargeExploitation.create({ data });
+          const created = await tx.chargeExploitation.create({ data });
+          if (row.id) idMap[row.id] = created.id;
         }
       }
     });
 
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
-    return { success: true, message: "Fournitures consommables enregistrées." };
+    return { success: true, message: "Fournitures consommables enregistrées.", idMap };
   } catch (error) {
     console.error("[saveFournitures] Erreur :", error);
     return { success: false, error: "Erreur lors de la sauvegarde des fournitures." };
@@ -162,12 +164,13 @@ export async function fetchServices(dossierId: string): Promise<ChargeExploitati
 export async function saveServices(
   dossierId: string,
   rows: ChargeExploitationRow[]
-): Promise<ActionResult> {
+): Promise<ActionResult & { idMap?: Record<string, string> }> {
   try {
     const err = validateRows(rows, chargeExploitationSchema);
     if (err) return { success: false, error: err };
 
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    const idMap: Record<string, string> = {};
 
     await prisma.$transaction(async (tx) => {
       const keepIds = rows.map((r) => r.id).filter((id): id is string => Boolean(id) && !id?.startsWith("__new__"));
@@ -209,13 +212,14 @@ export async function saveServices(
             update: data,
           });
         } else {
-          await tx.chargeExploitation.create({ data });
+          const created = await tx.chargeExploitation.create({ data });
+          if (row.id) idMap[row.id] = created.id;
         }
       }
     });
 
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
-    return { success: true, message: "Services extérieurs enregistrés." };
+    return { success: true, message: "Services extérieurs enregistrés.", idMap };
   } catch (error) {
     console.error("[saveServices] Erreur :", error);
     return { success: false, error: "Erreur lors de la sauvegarde des services." };
@@ -265,7 +269,7 @@ export async function fetchImpots(dossierId: string): Promise<ImpotTaxeRow[]> {
 export async function saveImpots(
   dossierId: string,
   rows: ImpotTaxeRow[]
-): Promise<ActionResult> {
+): Promise<ActionResult & { idMap?: Record<string, string> }> {
   try {
     // Normaliser la ligne CFE (libelle peut être vide si le store l'a perdu)
     const normalizedRows = rows.map((r) =>
@@ -275,6 +279,7 @@ export async function saveImpots(
     if (err) return { success: false, error: err };
 
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    const idMap: Record<string, string> = {};
 
     await prisma.$transaction(async (tx) => {
       const keepIds = normalizedRows.map((r) => r.id).filter((id): id is string => Boolean(id) && !id?.startsWith("__new__"));
@@ -313,13 +318,14 @@ export async function saveImpots(
             update: data,
           });
         } else {
-          await tx.impotTaxe.create({ data });
+          const created = await tx.impotTaxe.create({ data });
+          if (row.id) idMap[row.id] = created.id;
         }
       }
     });
 
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
-    return { success: true, message: "Impôts et taxes enregistrés." };
+    return { success: true, message: "Impôts et taxes enregistrés.", idMap };
   } catch (error) {
     console.error("[saveImpots] Erreur :", error);
     return { success: false, error: "Erreur lors de la sauvegarde des impôts et taxes." };

@@ -14,8 +14,10 @@ import {
 } from "@/lib/schemas/investissement";
 import { calculerPlanAmortissement } from "@/lib/calcul/amortissement";
 import { calcCession } from "@/lib/calcul/cession";
+import { buildScenarioCalendar } from "@/lib/finance/pipeline/calendar";
 import type { ActionResult } from "@/app/actions/types";
 import { isPrismaError } from "@/lib/utils/prisma-error";
+import { validateRows } from "@/lib/utils/validate-rows";
 
 type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
@@ -24,15 +26,36 @@ type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 async function getDossierProjection(
   dossierId: string
 ): Promise<{ anneeDebut: number; nbAnnees: number }> {
-  const dossier = await prisma.dossier.findUnique({
-    where: { id: dossierId },
-    select: { dateDemarrage: true, dureeProjection: true },
+  const [dossier, scenario] = await Promise.all([
+    prisma.dossier.findUnique({
+      where: { id: dossierId },
+      select: { dateDemarrage: true, dureeProjection: true },
+    }),
+    prisma.scenario.findFirst({
+      where: { dossierId, isDefault: true },
+      select: {
+        parametres: {
+          select: {
+            dateDebutExerciceN: true,
+            dureePrevisionnelle: true,
+            exercices: {
+              orderBy: { ordre: "asc" },
+              select: { dateCloture: true, duree: true, ordre: true, annee: true },
+            },
+          },
+        },
+      },
+    }),
+  ]);
+  const calendar = buildScenarioCalendar({
+    dossierDateDemarrage: dossier?.dateDemarrage ?? new Date(),
+    dossierDureeProjection: dossier?.dureeProjection ?? 3,
+    parametres: scenario?.parametres,
   });
-  const anneeDebut = dossier?.dateDemarrage
-    ? new Date(dossier.dateDemarrage).getFullYear()
-    : new Date().getFullYear();
-  const nbAnnees = dossier?.dureeProjection ?? 3;
-  return { anneeDebut, nbAnnees };
+  return {
+    anneeDebut: calendar.dateDebut.getFullYear(),
+    nbAnnees: calendar.dureeProjection,
+  };
 }
 
 async function recalculerPlan(
@@ -118,88 +141,81 @@ export async function fetchImmobilisations(
   }
 }
 
-export async function upsertImmobilisation(
+export async function saveImmobilisations(
   dossierId: string,
-  rawData: ImmobilisationRow
-): Promise<ActionResult> {
-  const parsed = immobilisationSchema.safeParse(rawData);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Données invalides" };
-  }
-  const data = parsed.data;
-
+  rows: ImmobilisationRow[]
+): Promise<ActionResult & { idMap?: Record<string, string> }> {
   try {
+    const err = validateRows(rows, immobilisationSchema);
+    if (err) return { success: false, error: err };
+
     const [scenarioId, { anneeDebut, nbAnnees }] = await Promise.all([
       getOrCreateDefaultScenario(dossierId),
       getDossierProjection(dossierId),
     ]);
-    const dateAcquisition = new Date(data.dateAcquisition);
 
-    const payload = {
-      libelle: data.libelle,
-      nature: data.nature,
-      montantHT: data.montantHT,
-      tauxTVA: data.tauxTVA,
-      typeTva: data.typeTva,
-      dateAcquisition,
-      modeAmortissement: data.modeAmortissement,
-      differe: data.differe ?? 0,
-      dureeAmortissement: data.dureeAmortissement ?? 5,
-      hypothese: data.hypothese,
-      actif: data.actif ?? true,
-      ordre: data.ordre ?? 0,
-      groupe: data.groupe ?? null,
-      scenarioId,
-    };
+    const idMap: Record<string, string> = {};
 
-    const id = await prisma.$transaction(async (tx) => {
-      let immoId = data.id;
-      if (immoId) {
-        await tx.immobilisation.update({ where: { id: immoId }, data: payload });
-      } else {
-        const created = await tx.immobilisation.create({ data: payload });
-        immoId = created.id;
+    await prisma.$transaction(async (tx) => {
+      const keepIds = rows
+        .map((r) => r.id)
+        .filter((id): id is string => !!id && !id.startsWith("__new__"));
+
+      await tx.immobilisation.deleteMany({
+        where: {
+          scenarioId,
+          ...(keepIds.length > 0 ? { id: { notIn: keepIds } } : {}),
+        },
+      });
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i]!;
+        const dateAcquisition = new Date(row.dateAcquisition);
+
+        const payload = {
+          libelle: row.libelle,
+          nature: row.nature,
+          montantHT: row.montantHT,
+          tauxTVA: row.tauxTVA,
+          typeTva: row.typeTva,
+          dateAcquisition,
+          modeAmortissement: row.modeAmortissement,
+          differe: row.differe ?? 0,
+          dureeAmortissement: row.dureeAmortissement ?? 5,
+          hypothese: row.hypothese,
+          actif: row.actif ?? true,
+          ordre: i,
+          groupe: row.groupe ?? null,
+          scenarioId,
+        };
+
+        let immoId: string;
+        if (row.id && !row.id.startsWith("__new__")) {
+          await tx.immobilisation.update({ where: { id: row.id }, data: payload });
+          immoId = row.id;
+        } else {
+          const created = await tx.immobilisation.create({ data: payload });
+          immoId = created.id;
+          if (row.id) idMap[row.id] = immoId;
+        }
+
+        await recalculerPlan(
+          immoId,
+          row.montantHT,
+          row.dureeAmortissement ?? 5,
+          row.modeAmortissement,
+          dateAcquisition,
+          anneeDebut,
+          nbAnnees,
+          tx,
+        );
       }
-      await recalculerPlan(
-        immoId,
-        data.montantHT,
-        data.dureeAmortissement ?? 5,
-        data.modeAmortissement,
-        dateAcquisition,
-        anneeDebut,
-        nbAnnees,
-        tx,
-      );
-      return immoId;
     });
 
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
-    return {
-      success: true,
-      message: data.id ? "Immobilisation mise à jour." : "Immobilisation créée.",
-      id,
-    };
+    return { success: true, message: "Immobilisations enregistrées.", idMap };
   } catch (err) {
-    console.error("[upsertImmobilisation]", err);
-    if (isPrismaError(err, "P2025")) return { success: false, error: "Immobilisation introuvable." };
-    return { success: false, error: err instanceof Error ? err.message : "Erreur inattendue." };
-  }
-}
-
-export async function deleteImmobilisation(id: string, dossierId: string): Promise<ActionResult> {
-  try {
-    // Vérifier que l'immobilisation appartient bien au dossier (IDOR)
-    const immo = await prisma.immobilisation.findFirst({
-      where: { id, scenario: { dossierId } },
-      select: { id: true },
-    });
-    if (!immo) return { success: false, error: "Immobilisation introuvable." };
-
-    await prisma.immobilisation.delete({ where: { id } });
-    revalidatePath(`/previsionnel/dossier/${dossierId}`);
-    return { success: true, message: "Immobilisation supprimée." };
-  } catch (err) {
-    console.error("[deleteImmobilisation]", err);
+    console.error("[saveImmobilisations]", err);
     if (isPrismaError(err, "P2025")) return { success: false, error: "Immobilisation introuvable." };
     return { success: false, error: err instanceof Error ? err.message : "Erreur inattendue." };
   }
@@ -242,85 +258,73 @@ export async function fetchCessions(dossierId: string): Promise<CessionRow[]> {
   }
 }
 
-export async function upsertCession(
+export async function saveCessions(
   dossierId: string,
-  rawData: CessionRow
-): Promise<ActionResult> {
-  const parsed = cessionSchema.safeParse(rawData);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Données invalides" };
-  }
-  const data = parsed.data;
-
+  rows: CessionRow[]
+): Promise<ActionResult & { idMap?: Record<string, string> }> {
   try {
+    const err = validateRows(rows, cessionSchema);
+    if (err) return { success: false, error: err };
+
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
-    const dateCession = new Date(data.dateCession);
+    const idMap: Record<string, string> = {};
 
-    // Calcul des valeurs dérivées côté serveur (validation métier)
-    const { resteAAmortir, plusValue, pvLT } = calcCession(data);
-    if (resteAAmortir < 0 || data.prixVente < 0) {
-      return { success: false, error: "Montants de cession invalides." };
-    }
-    // Log PVLT pour traçabilité (pas encore stocké en base)
-    if (pvLT) {
-      console.info(`[upsertCession] PVLT détectée — ${data.libelle} : plus-value ${plusValue.toFixed(2)} €`);
-    }
+    await prisma.$transaction(async (tx) => {
+      const keepIds = rows
+        .map((r) => r.id)
+        .filter((id): id is string => !!id && !id.startsWith("__new__"));
 
-    const payload = {
-      libelle: data.libelle,
-      nature: data.nature,
-      dateCession,
-      prixVente: data.prixVente,
-      prixAchat: data.prixAchat,
-      dejaAmortie: data.dejaAmortie,
-      tauxTVA: data.tauxTVA,
-      hypothese: data.hypothese,
-      actif: data.actif ?? true,
-      ordre: data.ordre ?? 0,
-      groupe: data.groupe ?? null,
-      scenarioId,
-    };
+      await tx.cessionImmobilisation.deleteMany({
+        where: {
+          scenarioId,
+          ...(keepIds.length > 0 ? { id: { notIn: keepIds } } : {}),
+        },
+      });
 
-    let id = data.id;
-    if (id) {
-      await prisma.cessionImmobilisation.update({ where: { id }, data: payload });
-    } else {
-      const created = await prisma.cessionImmobilisation.create({ data: payload });
-      id = created.id;
-    }
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i]!;
 
-    revalidatePath(`/previsionnel/dossier/${dossierId}`);
-    return {
-      success: true,
-      message: data.id ? "Cession mise à jour." : "Cession créée.",
-      id,
-    };
-  } catch (err) {
-    console.error("[upsertCession]", err);
-    if (isPrismaError(err, "P2025")) return { success: false, error: "Cession introuvable." };
-    return { success: false, error: err instanceof Error ? err.message : "Erreur inattendue." };
-  }
-}
+        // Validation métier côté serveur
+        const { resteAAmortir, plusValue, pvLT } = calcCession(row);
+        if (resteAAmortir < 0 || row.prixVente < 0) {
+          throw new Error("Montants de cession invalides.");
+        }
+        if (pvLT) {
+          console.info(`[saveCessions] PVLT détectée — ${row.libelle} : plus-value ${plusValue.toFixed(2)} €`);
+        }
 
-export async function deleteCession(id: string, dossierId: string): Promise<ActionResult> {
-  try {
-    // Vérifier que la cession appartient bien au dossier (IDOR)
-    const cession = await prisma.cessionImmobilisation.findFirst({
-      where: { id, scenario: { dossierId } },
-      select: { id: true },
+        const payload = {
+          libelle: row.libelle,
+          nature: row.nature,
+          dateCession: new Date(row.dateCession),
+          prixVente: row.prixVente,
+          prixAchat: row.prixAchat,
+          dejaAmortie: row.dejaAmortie,
+          tauxTVA: row.tauxTVA,
+          hypothese: row.hypothese,
+          actif: row.actif ?? true,
+          ordre: i,
+          groupe: row.groupe ?? null,
+          scenarioId,
+        };
+
+        if (row.id && !row.id.startsWith("__new__")) {
+          await tx.cessionImmobilisation.update({ where: { id: row.id }, data: payload });
+        } else {
+          const created = await tx.cessionImmobilisation.create({ data: payload });
+          if (row.id) idMap[row.id] = created.id;
+        }
+      }
     });
-    if (!cession) return { success: false, error: "Cession introuvable." };
 
-    await prisma.cessionImmobilisation.delete({ where: { id } });
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
-    return { success: true, message: "Cession supprimée." };
+    return { success: true, message: "Cessions enregistrées.", idMap };
   } catch (err) {
-    console.error("[deleteCession]", err);
+    console.error("[saveCessions]", err);
     if (isPrismaError(err, "P2025")) return { success: false, error: "Cession introuvable." };
     return { success: false, error: err instanceof Error ? err.message : "Erreur inattendue." };
   }
 }
-
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CRÉDIT-BAIL / LOCATION FINANCIÈRE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -362,73 +366,64 @@ export async function fetchCreditsBaux(dossierId: string): Promise<CreditBailRow
   }
 }
 
-export async function upsertCreditBail(
+export async function saveCreditBails(
   dossierId: string,
-  rawData: CreditBailRow
-): Promise<ActionResult> {
-  const parsed = creditBailSchema.safeParse(rawData);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Données invalides" };
-  }
-  const data = parsed.data;
-
+  rows: CreditBailRow[]
+): Promise<ActionResult & { idMap?: Record<string, string> }> {
   try {
+    const err = validateRows(rows, creditBailSchema);
+    if (err) return { success: false, error: err };
+
     const scenarioId = await getOrCreateDefaultScenario(dossierId);
+    const idMap: Record<string, string> = {};
 
-    const payload = {
-      libelle: data.libelle,
-      dateDebut: new Date(data.dateDebut),
-      montantHT: data.montantHT,
-      taux: data.taux,
-      duree: data.duree,
-      periodicite: data.periodicite,
-      dateEcheance: data.dateEcheance ? new Date(data.dateEcheance) : null,
-      valeurResiduelle: data.valeurResiduelle ?? null,
-      premierLoyer: data.premierLoyer ?? null,
-      loyerHT: data.loyerHT ?? null,
-      tauxTVA: data.tauxTVA,
-      hypothese: data.hypothese,
-      actif: data.actif ?? true,
-      ordre: data.ordre ?? 0,
-      groupe: data.groupe ?? null,
-      scenarioId,
-    };
+    await prisma.$transaction(async (tx) => {
+      const keepIds = rows
+        .map((r) => r.id)
+        .filter((id): id is string => !!id && !id.startsWith("__new__"));
 
-    let id = data.id;
-    if (id) {
-      await prisma.creditBail.update({ where: { id }, data: payload });
-    } else {
-      const created = await prisma.creditBail.create({ data: payload });
-      id = created.id;
-    }
+      await tx.creditBail.deleteMany({
+        where: {
+          scenarioId,
+          ...(keepIds.length > 0 ? { id: { notIn: keepIds } } : {}),
+        },
+      });
 
-    revalidatePath(`/previsionnel/dossier/${dossierId}`);
-    return {
-      success: true,
-      message: data.id ? "Crédit-bail mis à jour." : "Crédit-bail créé.",
-      id,
-    };
-  } catch (err) {
-    console.error("[upsertCreditBail]", err);
-    if (isPrismaError(err, "P2025")) return { success: false, error: "Crédit-bail introuvable." };
-    return { success: false, error: err instanceof Error ? err.message : "Erreur inattendue." };
-  }
-}
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i]!;
 
-export async function deleteCreditBail(id: string, dossierId: string): Promise<ActionResult> {
-  try {
-    // Vérifier que le crédit-bail appartient bien au dossier (IDOR)
-    const cb = await prisma.creditBail.findFirst({
-      where: { id, scenario: { dossierId } },
-      select: { id: true },
+        const payload = {
+          libelle: row.libelle,
+          dateDebut: new Date(row.dateDebut),
+          montantHT: row.montantHT,
+          taux: row.taux,
+          duree: row.duree,
+          periodicite: row.periodicite,
+          dateEcheance: row.dateEcheance ? new Date(row.dateEcheance) : null,
+          valeurResiduelle: row.valeurResiduelle ?? null,
+          premierLoyer: row.premierLoyer ?? null,
+          loyerHT: row.loyerHT ?? null,
+          tauxTVA: row.tauxTVA,
+          hypothese: row.hypothese,
+          actif: row.actif ?? true,
+          ordre: i,
+          groupe: row.groupe ?? null,
+          scenarioId,
+        };
+
+        if (row.id && !row.id.startsWith("__new__")) {
+          await tx.creditBail.update({ where: { id: row.id }, data: payload });
+        } else {
+          const created = await tx.creditBail.create({ data: payload });
+          if (row.id) idMap[row.id] = created.id;
+        }
+      }
     });
-    if (!cb) return { success: false, error: "Crédit-bail introuvable." };
 
-    await prisma.creditBail.delete({ where: { id } });
     revalidatePath(`/previsionnel/dossier/${dossierId}`);
-    return { success: true, message: "Crédit-bail supprimé." };
+    return { success: true, message: "Crédit-baux enregistrés.", idMap };
   } catch (err) {
-    console.error("[deleteCreditBail]", err);
+    console.error("[saveCreditBails]", err);
     if (isPrismaError(err, "P2025")) return { success: false, error: "Crédit-bail introuvable." };
     return { success: false, error: err instanceof Error ? err.message : "Erreur inattendue." };
   }
@@ -443,31 +438,32 @@ export async function deleteCreditBail(id: string, dossierId: string): Promise<A
  * À appeler après chaque modification de `dureeProjection` ou `dateDemarrage`.
  */
 export async function recalculerTousLesPlans(dossierId: string): Promise<void> {
+  const { anneeDebut, nbAnnees } = await getDossierProjection(dossierId);
+  await recalculerTousLesPlansPourProjection(dossierId, anneeDebut, nbAnnees);
+}
+
+export async function recalculerTousLesPlansPourProjection(
+  dossierId: string,
+  anneeDebut: number,
+  nbAnnees: number,
+): Promise<void> {
+  const projectionAnnees = Math.min(3, Math.max(1, Math.trunc(nbAnnees)));
   const scenario = await prisma.scenario.findFirst({
     where: { dossierId, isDefault: true },
     select: { id: true },
   });
   if (!scenario) return;
 
-  const [dossier, immobilisations] = await Promise.all([
-    prisma.dossier.findUniqueOrThrow({
-      where: { id: dossierId },
-      select: { dateDemarrage: true, dureeProjection: true },
-    }),
-    prisma.immobilisation.findMany({
-      where: { scenarioId: scenario.id },
-      select: {
-        id: true,
-        montantHT: true,
-        dureeAmortissement: true,
-        modeAmortissement: true,
-        dateAcquisition: true,
-      },
-    }),
-  ]);
-
-  const anneeDebut = new Date(dossier.dateDemarrage).getFullYear();
-  const nbAnnees = dossier.dureeProjection;
+  const immobilisations = await prisma.immobilisation.findMany({
+    where: { scenarioId: scenario.id },
+    select: {
+      id: true,
+      montantHT: true,
+      dureeAmortissement: true,
+      modeAmortissement: true,
+      dateAcquisition: true,
+    },
+  });
 
   await Promise.all(
     immobilisations.map((immo) =>
@@ -478,7 +474,7 @@ export async function recalculerTousLesPlans(dossierId: string): Promise<void> {
         immo.modeAmortissement as "AUCUN" | "LINEAIRE" | "DEGRESSIF",
         immo.dateAcquisition,
         anneeDebut,
-        nbAnnees,
+        projectionAnnees,
       ),
     ),
   );

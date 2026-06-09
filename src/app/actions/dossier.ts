@@ -9,6 +9,10 @@ import {
 } from "@/lib/schemas/dossier";
 import { recalculerTousLesPlans } from "@/app/actions/investissement";
 import { isPrismaError } from "@/lib/utils/prisma-error";
+import {
+  buildDefaultExercices,
+  parseDateInput,
+} from "@/lib/entreprise/default-exercices";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -134,16 +138,51 @@ export async function createDossier(
   const cabinetId = await getOrCreateDemoCabinet();
 
   try {
-    const dossier = await prisma.dossier.create({
-      data: {
-        nom: data.nom,
-        typeDossier: data.typeDossier,
-        dateDemarrage: new Date(data.dateDemarrage),
-        dureeProjection: data.dureeProjection,
-        reference: data.reference || null,
-        cabinetId,
-      },
-      select: { id: true },
+    const startDate = parseDateInput(data.dateDemarrage);
+    const exercices = buildDefaultExercices(data.dateDemarrage, data.dureeProjection);
+
+    const dossier = await prisma.$transaction(async (tx) => {
+      const createdDossier = await tx.dossier.create({
+        data: {
+          nom: data.nom,
+          typeDossier: data.typeDossier,
+          dateDemarrage: startDate,
+          dureeProjection: data.dureeProjection,
+          reference: data.reference || null,
+          cabinetId,
+        },
+        select: { id: true },
+      });
+
+      const scenario = await tx.scenario.create({
+        data: {
+          nom: "ScÃ©nario rÃ©aliste",
+          isDefault: true,
+          dossierId: createdDossier.id,
+        },
+        select: { id: true },
+      });
+
+      const parametres = await tx.parametresEntreprise.create({
+        data: {
+          scenarioId: scenario.id,
+          dateDebutExerciceN: startDate,
+          dureePrevisionnelle: data.dureeProjection,
+        },
+        select: { id: true },
+      });
+
+      await tx.exercicePrevisionnel.createMany({
+        data: exercices.map((exercice, index) => ({
+          ordre: index + 1,
+          dateCloture: exercice.dateCloture,
+          duree: exercice.duree,
+          annee: exercice.annee,
+          parametresId: parametres.id,
+        })),
+      });
+
+      return createdDossier;
     });
 
     return { success: true, dossierId: dossier.id };

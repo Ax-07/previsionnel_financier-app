@@ -8,6 +8,31 @@ import {
 } from "@/lib/schemas/entreprise";
 import type { ActionResult } from "@/app/actions/types";
 import { isPrismaError } from "@/lib/utils/prisma-error";
+import { recalculerTousLesPlansPourProjection } from "@/app/actions/investissement";
+import {
+  buildDefaultExercicesForm,
+  toDateInputValue,
+} from "@/lib/entreprise/default-exercices";
+
+async function fetchEntrepriseParamsFallbackFromDossier(
+  dossierId: string,
+): Promise<Partial<EntrepriseFormValues> | null> {
+  const dossier = await prisma.dossier.findUnique({
+    where: { id: dossierId },
+    select: { dateDemarrage: true, dureeProjection: true },
+  });
+
+  if (!dossier) return null;
+
+  const dateDebutExerciceN = toDateInputValue(dossier.dateDemarrage);
+  const dureePrevisionnelle = Math.min(3, Math.max(1, dossier.dureeProjection));
+
+  return {
+    dateDebutExerciceN,
+    dureePrevisionnelle,
+    exercices: buildDefaultExercicesForm(dateDebutExerciceN, dureePrevisionnelle),
+  };
+}
 
 /**
  * Récupère les paramètres entreprise du scénario par défaut d'un dossier.
@@ -28,7 +53,9 @@ export async function fetchEntrepriseParams(
       },
     });
 
-    if (!scenario?.parametres) return null;
+    if (!scenario?.parametres) {
+      return fetchEntrepriseParamsFallbackFromDossier(dossierId);
+    }
 
     const p = scenario.parametres;
 
@@ -108,6 +135,14 @@ export async function upsertEntrepriseParams(
           parametresId: upserted.id,
         })),
       });
+    }
+
+    if (data.dateDebutExerciceN) {
+      await recalculerTousLesPlansPourProjection(
+        dossierId,
+        new Date(data.dateDebutExerciceN).getFullYear(),
+        Math.min(3, Math.max(1, data.exercices?.length ?? data.dureePrevisionnelle)),
+      );
     }
 
     return {

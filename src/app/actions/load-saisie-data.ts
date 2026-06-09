@@ -70,10 +70,11 @@ export async function loadSaisieData(dossierId: string) {
   });
 
   if (!scenario) {
+    const entreprise = await fetchEntrepriseParams(dossierId);
     // Pas de scénario → retourner des données vides (évite ~46 requêtes inutiles)
     return {
       porteur: null,
-      entreprise: null,
+      entreprise,
       immobilisations: [],
       cessions: [],
       creditsBaux: [],
