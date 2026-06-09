@@ -9,8 +9,9 @@ import {
 import { n } from "@/lib/finance/utils";
 import type { ScenarioFinData } from "@/lib/finance/fetch-scenario";
 import type { FinCalcResult } from "@/lib/finance/types/results";
-import { vatRow, dateToExercise } from "./helpers";
+import { vatRow } from "./helpers";
 import type { VATRow } from "./types";
+import type { YearKey } from "@/lib/finance/types/series";
 
 /**
  * Construit les lignes du tableau TVA.
@@ -23,7 +24,8 @@ export function buildTVARows(
   data: ScenarioFinData,
   fc: FinCalcResult,
 ): VATRow[] {
-  const { dateDemarrage, activites, fournitures, services, immobilisations } = data;
+  const { activites, fournitures, services, immobilisations } = data;
+  const nMoisCtx: Record<YearKey, number> = fc.calendar.dureesMois;
 
   // ── Totaux TVA (source unique : fc.tva) ───────────────────────────────────
   const tvaCollecteeSeries = fc.tva.tvaCollectee;
@@ -43,9 +45,9 @@ export function buildTVARows(
       `tva-ca-${a.id}`,
       a.libelle,
       {
-        y1: seasonalMonthly(n(a.montantN) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N"),
-        y2: seasonalMonthly(n(a.montantN1) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N1"),
-        y3: seasonalMonthly(n(a.montantN2) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N2"),
+        y1: seasonalMonthly(n(a.montantN) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N", nMoisCtx.y1),
+        y2: seasonalMonthly(n(a.montantN1) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N1", nMoisCtx.y2),
+        y3: seasonalMonthly(n(a.montantN2) * (n(a.tauxTVA) / 100), a.saisonnaliteCA, "N2", nMoisCtx.y3),
       },
       "normal",
       true,
@@ -56,12 +58,12 @@ export function buildTVARows(
     .filter((immo) => immo.actif !== false && immo.typeTva === "RECUPERABLE")
     .map((immo) => {
       const tvaImmo = n(immo.montantHT) * (n(immo.tauxTVA) / 100);
-      const y1s = zeroSeries(), y2s = zeroSeries(), y3s = zeroSeries();
+      const y1s = zeroSeries(nMoisCtx.y1), y2s = zeroSeries(nMoisCtx.y2), y3s = zeroSeries(nMoisCtx.y3);
       if (tvaImmo > 0) {
-        const { yk, monthIndex } = dateToExercise(dateDemarrage, new Date(immo.dateAcquisition));
-        if (yk === "y1" && monthIndex >= 0) y1s[monthIndex] = (y1s[monthIndex] ?? 0) + tvaImmo;
-        else if (yk === "y2" && monthIndex >= 0) y2s[monthIndex] = (y2s[monthIndex] ?? 0) + tvaImmo;
-        else if (yk === "y3" && monthIndex >= 0) y3s[monthIndex] = (y3s[monthIndex] ?? 0) + tvaImmo;
+        const { yk, mi } = fc.calendar.dateToSlot(new Date(immo.dateAcquisition));
+        if (yk === "y1" && mi >= 0 && mi < y1s.length) y1s[mi] = (y1s[mi] ?? 0) + tvaImmo;
+        else if (yk === "y2" && mi >= 0 && mi < y2s.length) y2s[mi] = (y2s[mi] ?? 0) + tvaImmo;
+        else if (yk === "y3" && mi >= 0 && mi < y3s.length) y3s[mi] = (y3s[mi] ?? 0) + tvaImmo;
       }
       return vatRow(`tva-immo-${immo.id}`, immo.libelle, { y1: y1s, y2: y2s, y3: y3s }, "normal", true);
     });
@@ -79,17 +81,17 @@ export function buildTVARows(
       const saisonnalite = a.saisonnaliteAchats ?? null;
       const ponctuel = a.achatsStockPonctuel ?? null;
 
-      const consY1 = seasonalMonthly(n(a.montantN) * coef, saisonnalite, "N");
-      const poncY1 = ponctuelMonthly(ponctuel, "N");
-      const rY1 = computeStocksAchatsSeries(consY1, poncY1, joursStk, 0);
+      const consY1 = seasonalMonthly(n(a.montantN) * coef, saisonnalite, "N", nMoisCtx.y1);
+      const poncY1 = ponctuelMonthly(ponctuel, "N", nMoisCtx.y1);
+      const rY1 = computeStocksAchatsSeries(consY1, poncY1, joursStk, 0, nMoisCtx.y1);
 
-      const consY2 = seasonalMonthly(n(a.montantN1) * coef, saisonnalite, "N1");
-      const poncY2 = ponctuelMonthly(ponctuel, "N1");
-      const rY2 = computeStocksAchatsSeries(consY2, poncY2, joursStk, rY1.sfFinal);
+      const consY2 = seasonalMonthly(n(a.montantN1) * coef, saisonnalite, "N1", nMoisCtx.y2);
+      const poncY2 = ponctuelMonthly(ponctuel, "N1", nMoisCtx.y2);
+      const rY2 = computeStocksAchatsSeries(consY2, poncY2, joursStk, rY1.sfFinal, nMoisCtx.y2);
 
-      const consY3 = seasonalMonthly(n(a.montantN2) * coef, saisonnalite, "N2");
-      const poncY3 = ponctuelMonthly(ponctuel, "N2");
-      const rY3 = computeStocksAchatsSeries(consY3, poncY3, joursStk, rY2.sfFinal);
+      const consY3 = seasonalMonthly(n(a.montantN2) * coef, saisonnalite, "N2", nMoisCtx.y3);
+      const poncY3 = ponctuelMonthly(ponctuel, "N2", nMoisCtx.y3);
+      const rY3 = computeStocksAchatsSeries(consY3, poncY3, joursStk, rY2.sfFinal, nMoisCtx.y3);
 
       const applyTva = (s: MonthlySeries): MonthlySeries =>
         s.map((v) => (v ?? 0) * tvaRate) as MonthlySeries;
@@ -113,9 +115,9 @@ export function buildTVARows(
       `tva-charges-f-${f.id}`,
       f.libelle,
       {
-        y1: chargeExplMonthly(n(f.montantN) * (n(f.tauxTVA) / 100), { frequence: f.frequence as string, detailCalc: f.detailCalc }, "N"),
-        y2: chargeExplMonthly(n(f.montantN1) * (n(f.tauxTVA) / 100), { frequence: f.frequence as string, detailCalc: f.detailCalc }, "N1"),
-        y3: chargeExplMonthly(n(f.montantN2) * (n(f.tauxTVA) / 100), { frequence: f.frequence as string, detailCalc: f.detailCalc }, "N2"),
+        y1: chargeExplMonthly(n(f.montantN) * (n(f.tauxTVA) / 100), { frequence: f.frequence as string, detailCalc: f.detailCalc }, "N", nMoisCtx.y1),
+        y2: chargeExplMonthly(n(f.montantN1) * (n(f.tauxTVA) / 100), { frequence: f.frequence as string, detailCalc: f.detailCalc }, "N1", nMoisCtx.y2),
+        y3: chargeExplMonthly(n(f.montantN2) * (n(f.tauxTVA) / 100), { frequence: f.frequence as string, detailCalc: f.detailCalc }, "N2", nMoisCtx.y3),
       },
       "normal",
       true,
@@ -124,9 +126,9 @@ export function buildTVARows(
       `tva-charges-s-${s.id}`,
       s.libelle,
       {
-        y1: chargeExplMonthly(n(s.montantN) * (n(s.tauxTVA) / 100), { frequence: s.frequence as string, detailCalc: s.detailCalc }, "N"),
-        y2: chargeExplMonthly(n(s.montantN1) * (n(s.tauxTVA) / 100), { frequence: s.frequence as string, detailCalc: s.detailCalc }, "N1"),
-        y3: chargeExplMonthly(n(s.montantN2) * (n(s.tauxTVA) / 100), { frequence: s.frequence as string, detailCalc: s.detailCalc }, "N2"),
+        y1: chargeExplMonthly(n(s.montantN) * (n(s.tauxTVA) / 100), { frequence: s.frequence as string, detailCalc: s.detailCalc }, "N", nMoisCtx.y1),
+        y2: chargeExplMonthly(n(s.montantN1) * (n(s.tauxTVA) / 100), { frequence: s.frequence as string, detailCalc: s.detailCalc }, "N1", nMoisCtx.y2),
+        y3: chargeExplMonthly(n(s.montantN2) * (n(s.tauxTVA) / 100), { frequence: s.frequence as string, detailCalc: s.detailCalc }, "N2", nMoisCtx.y3),
       },
       "normal",
       true,
@@ -135,12 +137,12 @@ export function buildTVARows(
 
   return [
     // ── Section TVA collectée ─────────────────────────────────────────────
-    vatRow("section-collectee", "TVA COLLECTÉE", { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() }, "section"),
+    vatRow("section-collectee", "TVA COLLECTÉE", { y1: zeroSeries(nMoisCtx.y1), y2: zeroSeries(nMoisCtx.y2), y3: zeroSeries(nMoisCtx.y3) }, "section"),
     vatRow("tva-ca", "TVA sur chiffre d'affaires", tvaCollecteeSeries, "normal", false, tvaCAChildren),
     vatRow("total-collectee", "Total TVA collectée", tvaCollecteeSeries, "subtotal"),
 
     // ── Section TVA déductible ────────────────────────────────────────────
-    vatRow("section-deductible", "TVA DÉDUCTIBLE", { y1: zeroSeries(), y2: zeroSeries(), y3: zeroSeries() }, "section"),
+    vatRow("section-deductible", "TVA DÉDUCTIBLE", { y1: zeroSeries(nMoisCtx.y1), y2: zeroSeries(nMoisCtx.y2), y3: zeroSeries(nMoisCtx.y3) }, "section"),
     vatRow("tva-immo", "TVA sur immobilisations", tvaImmoSeries, "normal", true, tvaImmoChildren),
     vatRow("tva-achats", "TVA sur achats de matières", tvaAchatsSeries, "normal", true, tvaAchatsChildren),
     vatRow("tva-charges", "TVA sur charges externes", tvaChargesSeries, "normal", true, tvaChargesChildren),
