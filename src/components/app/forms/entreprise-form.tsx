@@ -326,7 +326,7 @@ export default function EntrepriseForm({ dossierId, defaultValues }: EntrepriseF
         }
       });
     },
-    [dossierId, form, clearDraft],
+    [dossierId, form, clearDraft, invalidateControleStores],
   );
 
   // Recalcul automatique des exercices quand la date de début ou la durée change
@@ -447,13 +447,13 @@ export default function EntrepriseForm({ dossierId, defaultValues }: EntrepriseF
                           type="number"
                           step="1"
                           min={1}
-                          max={5}
+                          max={3}
                           placeholder="3"
                           {...field}
                           onChange={(e) => field.onChange(e.target.valueAsNumber)}
                         />
                       </FormControl>
-                      <FormDescription>Nombre d&apos;exercices prévisionnels (1 à 5)</FormDescription>
+                      <FormDescription>Nombre d&apos;exercices prévisionnels (1 à 3)</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
