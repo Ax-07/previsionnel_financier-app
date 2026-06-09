@@ -5,11 +5,11 @@ import type { YearKey } from "@/lib/finance/utils";
 import { budgetNode, n12, zeroAcc, childActivityNodes, childChargeNodes, childSimpleNodes } from "./helpers";
 import type { BudgetNode } from "./types";
 
-function sumGroup(groupe: { series: MonthlyAcc }[]): MonthlyAcc {
-  const tot = zeroAcc();
+function sumGroup(groupe: { series: MonthlyAcc }[], durees: Record<YearKey, number>): MonthlyAcc {
+  const tot = zeroAcc(durees);
   for (const d of groupe) {
     for (const yk of ["y1", "y2", "y3"] as YearKey[]) {
-      for (let i = 0; i < 12; i++) tot[yk][i]! += d.series[yk][i] ?? 0;
+      for (let i = 0; i < durees[yk]; i++) tot[yk][i]! += d.series[yk][i] ?? 0;
     }
   }
   return tot;
@@ -19,6 +19,11 @@ export function buildBudgetTree(
   data: ScenarioFinData,
   mc: MonthlyCalcResult,
 ): BudgetNode[] {
+  const durees: Record<YearKey, number> = {
+    y1: mc.ca.y1.length,
+    y2: mc.ca.y2.length,
+    y3: mc.ca.y3.length,
+  };
   const achatsEffY = {
     y1: totalOf(mc.achatsEffectues.y1),
     y2: totalOf(mc.achatsEffectues.y2),
@@ -190,7 +195,7 @@ export function buildBudgetTree(
       "Fournitures consommables",
       mc.fournitures,
       "normal",
-      childChargeNodes(data.fournitures, "fournitures"),
+      childChargeNodes(data.fournitures, "fournitures", durees),
       data.fournitures.length === 0,
     ),
 
@@ -199,7 +204,7 @@ export function buildBudgetTree(
       "Services extérieurs",
       mc.services,
       "normal",
-      childChargeNodes(data.services, "services"),
+      childChargeNodes(data.services, "services", durees),
       data.services.length === 0,
     ),
 
@@ -215,7 +220,7 @@ export function buildBudgetTree(
       "Impôts et taxes",
       mc.impotsTaxes,
       "normal",
-      childChargeNodes(data.impotsTaxes, "impots_taxes"),
+      childChargeNodes(data.impotsTaxes, "impots_taxes", durees),
       data.impotsTaxes.length === 0,
     ),
 
@@ -224,7 +229,7 @@ export function buildBudgetTree(
       "Salaires bruts",
       mc.salairesBruts,
       "normal",
-      childSimpleNodes(data.salaries, "salaires_bruts", mc.moisDebut),
+      childSimpleNodes(data.salaries, "salaires_bruts", mc.moisDebut, durees),
       data.salaries.length === 0,
     ),
 
@@ -244,7 +249,7 @@ export function buildBudgetTree(
       "Rémunération dirigeant",
       mc.remuDirigeant,
       "normal",
-      childSimpleNodes(data.dirigeants, "remunerations_dir", mc.moisDebut),
+      childSimpleNodes(data.dirigeants, "remunerations_dir", mc.moisDebut, durees),
       data.dirigeants.length === 0,
     ),
 
@@ -253,7 +258,7 @@ export function buildBudgetTree(
       "Cotisations TNS",
       mc.cotisationsTNS,
       "normal",
-      childSimpleNodes(data.cotisationsTNS, "cotisations_tns", mc.moisDebut),
+      childSimpleNodes(data.cotisationsTNS, "cotisations_tns", mc.moisDebut, durees),
       data.cotisationsTNS.length === 0,
     ),
 
@@ -262,7 +267,7 @@ export function buildBudgetTree(
       "Taxes assises sur les salaires",
       mc.taxesSalaires,
       "normal",
-      childSimpleNodes(data.taxesSalaires, "taxes_salaires", mc.moisDebut),
+      childSimpleNodes(data.taxesSalaires, "taxes_salaires", mc.moisDebut, durees),
       data.taxesSalaires.length === 0,
     ),
 
@@ -305,7 +310,7 @@ export function buildBudgetTree(
                 budgetNode(
                   "dot_amort_corp",
                   "Immobilisations corporelles",
-                  sumGroup(byNature.CORPOREL),
+                  sumGroup(byNature.CORPOREL, durees),
                   "normal",
                   byNature.CORPOREL.map((d, i) =>
                     budgetNode(
@@ -325,7 +330,7 @@ export function buildBudgetTree(
                 budgetNode(
                   "dot_amort_incorp",
                   "Immobilisations incorporelles",
-                  sumGroup(byNature.INCORPOREL),
+                  sumGroup(byNature.INCORPOREL, durees),
                   "normal",
                   byNature.INCORPOREL.map((d, i) =>
                     budgetNode(
@@ -345,7 +350,7 @@ export function buildBudgetTree(
                 budgetNode(
                   "dot_amort_fin",
                   "Immobilisations financières",
-                  sumGroup(byNature.FINANCIER),
+                  sumGroup(byNature.FINANCIER, durees),
                   "normal",
                   byNature.FINANCIER.map((d, i) =>
                     budgetNode(

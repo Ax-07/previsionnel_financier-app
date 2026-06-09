@@ -7,6 +7,8 @@ import {
 } from "@/lib/finance/calculs/monthly";
 import type { BudgetValue, BudgetNode, BudgetNodeStyle } from "./types";
 
+const DEFAULT_DUREES: Record<YearKey, number> = { y1: 12, y2: 12, y3: 12 };
+
 export function isAllZeroSeries(vals: MonthlyAcc): boolean {
   return (["y1", "y2", "y3"] as YearKey[]).every((k) =>
     vals[k].every((v) => v === 0),
@@ -17,9 +19,9 @@ export function budgetValue(months: MonthlySeries): BudgetValue {
   return { months, total: totalOf(months) };
 }
 
-export function buildBudgetMonthLabels(startMonth: number, startYear: number): string[] {
+export function buildBudgetMonthLabels(startMonth: number, startYear: number, nMois = 12): string[] {
   const FR_MONTHS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
-  return Array.from({ length: 12 }, (_, i) => {
+  return Array.from({ length: nMois }, (_, i) => {
     const m = (startMonth + i) % 12;
     const y = startYear + Math.floor((startMonth + i) / 12);
     return `${FR_MONTHS[m]} ${y}`;
@@ -61,11 +63,11 @@ export function n12(
   return budgetNode(key, label, vals, style, children, hideIfZero);
 }
 
-export function zeroAcc(): Record<YearKey, number[]> {
+export function zeroAcc(durees: Record<YearKey, number> = DEFAULT_DUREES): Record<YearKey, number[]> {
   return {
-    y1: Array(12).fill(0),
-    y2: Array(12).fill(0),
-    y3: Array(12).fill(0),
+    y1: Array(durees.y1).fill(0),
+    y2: Array(durees.y2).fill(0),
+    y3: Array(durees.y3).fill(0),
   };
 }
 
@@ -91,6 +93,7 @@ export function childChargeNodes(
     actif?: boolean | null;
   }[],
   parentKey: string,
+  durees: Record<YearKey, number> = DEFAULT_DUREES,
 ): BudgetNode[] {
   const nv = (v: unknown) => Number(v ?? 0);
   return rows
@@ -98,9 +101,9 @@ export function childChargeNodes(
     .filter((r) => nv(r.montantN) !== 0 || nv(r.montantN1) !== 0 || nv(r.montantN2) !== 0)
     .map((r, i) => {
       const series: MonthlyAcc = {
-        y1: distributeByFrequency(nv(r.montantN), r.frequence, r.moisPaiement),
-        y2: distributeByFrequency(nv(r.montantN1), r.frequence, r.moisPaiement),
-        y3: distributeByFrequency(nv(r.montantN2), r.frequence, r.moisPaiement),
+        y1: distributeByFrequency(nv(r.montantN), r.frequence, r.moisPaiement, durees.y1),
+        y2: distributeByFrequency(nv(r.montantN1), r.frequence, r.moisPaiement, durees.y2),
+        y3: distributeByFrequency(nv(r.montantN2), r.frequence, r.moisPaiement, durees.y3),
       };
       return budgetNode(`${parentKey}_c${i}`, r.libelle, series, "normal", undefined, true);
     });
@@ -119,6 +122,7 @@ export function childSimpleNodes(
   }[],
   parentKey: string,
   moisDebut = 0,
+  durees: Record<YearKey, number> = DEFAULT_DUREES,
 ): BudgetNode[] {
   const nv = (v: unknown) => Number(v ?? 0);
 
@@ -130,13 +134,13 @@ export function childSimpleNodes(
     return { effectif: obj["effectif"] as number[], brutIndividuel: obj["brutIndividuel"] as number[] };
   }
 
-  function detailOrUniform(json: unknown, fallbackTotal: number): MonthlySeries {
+  function detailOrUniform(json: unknown, fallbackTotal: number, nMois: number): MonthlySeries {
     const detail = parseDetailMensuel(json);
-    if (!detail) return Array(12).fill(fallbackTotal / 12) as MonthlySeries;
+    if (!detail) return Array(nMois).fill(fallbackTotal / nMois) as MonthlySeries;
     // Sécurité : détail entièrement à zéro mais montant non nul → répartition uniforme
     const detailTotal = detail.brutIndividuel.reduce((s, v) => s + v, 0);
-    if (detailTotal === 0 && fallbackTotal > 0) return Array(12).fill(fallbackTotal / 12) as MonthlySeries;
-    return Array.from({ length: 12 }, (_, i) => {
+    if (detailTotal === 0 && fallbackTotal > 0) return Array(nMois).fill(fallbackTotal / nMois) as MonthlySeries;
+    return Array.from({ length: nMois }, (_, i) => {
       const m = (moisDebut + i) % 12;
       return (detail.effectif[m] ?? 0) * (detail.brutIndividuel[m] ?? 0);
     }) as MonthlySeries;
@@ -147,9 +151,9 @@ export function childSimpleNodes(
     .filter((r) => nv(r.montantN) !== 0 || nv(r.montantN1) !== 0 || nv(r.montantN2) !== 0)
     .map((r, i) => {
       const series: MonthlyAcc = {
-        y1: detailOrUniform(r.detailMensuelN, nv(r.montantN)),
-        y2: detailOrUniform(r.detailMensuelN1, nv(r.montantN1)),
-        y3: detailOrUniform(r.detailMensuelN2, nv(r.montantN2)),
+        y1: detailOrUniform(r.detailMensuelN, nv(r.montantN), durees.y1),
+        y2: detailOrUniform(r.detailMensuelN1, nv(r.montantN1), durees.y2),
+        y3: detailOrUniform(r.detailMensuelN2, nv(r.montantN2), durees.y3),
       };
       return budgetNode(`${parentKey}_c${i}`, r.libelle, series, "normal", undefined, true);
     });
