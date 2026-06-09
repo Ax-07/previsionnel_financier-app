@@ -1,10 +1,11 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, devtools } from "zustand/middleware";
 import type {
   AutreProduitRepriseRow,
   AutreProduitDateRow,
   AutreProduitConstateRow,
 } from "@/lib/schemas/autres-produits";
+import { tempId } from "@/components/app/forms/helpers/table-helpers";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,9 +25,11 @@ export interface AutresProduitsDraft {
   hasUnsavedPCA: boolean;
 }
 
-export interface AutresProduitsState {
+interface AutresProduitsState {
   drafts: Record<string, AutresProduitsDraft>;
+}
 
+interface AutresProduitsActions {
   getDraft: (dossierId: string) => AutresProduitsDraft;
   hasUnsavedChanges: (dossierId: string) => boolean;
 
@@ -81,17 +84,19 @@ export interface AutresProduitsState {
   clearDraft: (dossierId: string) => void;
 }
 
+type AutresProduitsStore = AutresProduitsState & AutresProduitsActions;
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function emptyReprise(): AutreProduitRepriseRow {
-  return { id: `__new__${crypto.randomUUID()}`, libelle: "", actif: true, hypothese: "COMMUNE", nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
+  return { id: tempId(), libelle: "", actif: true, hypothese: "COMMUNE", nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
 }
 
 function emptyDate(
   categorie: "TRANSFERT" | "GESTION_COURANTE" | "FINANCIER" | "EXCEPTIONNEL"
 ): AutreProduitDateRow {
   return {
-    id: `__new__${crypto.randomUUID()}`,
+    id: tempId(),
     libelle: "",
     actif: true,
     hypothese: "COMMUNE",
@@ -109,7 +114,7 @@ function emptyDate(
 }
 
 function emptyConstate(): AutreProduitConstateRow {
-  return { id: `__new__${crypto.randomUUID()}`, libelle: "", actif: true, hypothese: "COMMUNE", nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
+  return { id: tempId(), libelle: "", actif: true, hypothese: "COMMUNE", nature: "", montantN: 0, montantN1: 0, montantN2: 0, ordre: 0 };
 }
 
 function getEmptyDraft(): AutresProduitsDraft {
@@ -128,6 +133,10 @@ function getEmptyDraft(): AutresProduitsDraft {
     hasUnsavedPCA: false,
   };
 }
+
+const EMPTY_DRAFT: AutresProduitsDraft = getEmptyDraft();
+
+const INITIAL_STATE: AutresProduitsState = { drafts: {} };
 
 function patchDraft(
   state: AutresProduitsState,
@@ -150,34 +159,33 @@ function updateRow<T>(rows: T[], index: number, data: Partial<T>): T[] {
 
 // ── Store ────────────────────────────────────────────────────────────────────
 
-export const useAutresProduitsStore = create<AutresProduitsState>()(
-  persist(
-    (set, get) => ({
-      drafts: {},
+export const useAutresProduitsStore = create<AutresProduitsStore>()(
+  devtools(
+    persist(
+      (set, get) => ({
+        ...INITIAL_STATE,
 
-      getDraft(dossierId) {
-        return get().drafts[dossierId] ?? getEmptyDraft();
-      },
+        getDraft: (dossierId) => get().drafts[dossierId] ?? EMPTY_DRAFT,
 
-      hasUnsavedChanges(dossierId) {
-        const d = get().drafts[dossierId];
-        if (!d) return false;
-        return (
-          d.hasUnsavedReprises ||
-          d.hasUnsavedTransferts ||
-          d.hasUnsavedGestionCourante ||
-          d.hasUnsavedFinanciers ||
-          d.hasUnsavedExceptionnels ||
-          d.hasUnsavedPCA
-        );
-      },
+        hasUnsavedChanges: (dossierId) => {
+          const d = get().drafts[dossierId];
+          if (!d) return false;
+          return (
+            d.hasUnsavedReprises ||
+            d.hasUnsavedTransferts ||
+            d.hasUnsavedGestionCourante ||
+            d.hasUnsavedFinanciers ||
+            d.hasUnsavedExceptionnels ||
+            d.hasUnsavedPCA
+          );
+        },
 
       // ── Reprises ─────────────────────────────────────────────────────────
 
-      setReprises(dossierId, rows) {
+      setReprises: (dossierId, rows) => {
         set((s) => patchDraft(s, dossierId, { reprises: rows, hasUnsavedReprises: false }));
       },
-      addReprise(dossierId) {
+      addReprise: (dossierId) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -186,7 +194,7 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      updateReprise(dossierId, index, data) {
+      updateReprise: (dossierId, index, data) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -195,7 +203,7 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      removeReprise(dossierId, index) {
+      removeReprise: (dossierId, index) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -204,27 +212,27 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      duplicateReprise(dossierId, index) {
+      duplicateReprise: (dossierId, index) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           const source = d.reprises[index];
           if (!source) return s;
           const { id: _id, ...rest } = source;
           const rows = [...d.reprises];
-          rows.splice(index + 1, 0, { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` });
           return patchDraft(s, dossierId, { reprises: rows, hasUnsavedReprises: true });
         });
       },
-      markReprisesSaved(dossierId, rows) {
+      markReprisesSaved: (dossierId, rows) => {
         set((s) => patchDraft(s, dossierId, { reprises: rows, hasUnsavedReprises: false }));
       },
 
       // ── Transferts ───────────────────────────────────────────────────────
 
-      setTransferts(dossierId, rows) {
+      setTransferts: (dossierId, rows) => {
         set((s) => patchDraft(s, dossierId, { transferts: rows, hasUnsavedTransferts: false }));
       },
-      addTransfert(dossierId) {
+      addTransfert: (dossierId) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -233,7 +241,7 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      updateTransfert(dossierId, index, data) {
+      updateTransfert: (dossierId, index, data) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -242,7 +250,7 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      removeTransfert(dossierId, index) {
+      removeTransfert: (dossierId, index) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -251,27 +259,27 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      duplicateTransfert(dossierId, index) {
+      duplicateTransfert: (dossierId, index) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           const source = d.transferts[index];
           if (!source) return s;
           const { id: _id, ...rest } = source;
           const rows = [...d.transferts];
-          rows.splice(index + 1, 0, { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` });
           return patchDraft(s, dossierId, { transferts: rows, hasUnsavedTransferts: true });
         });
       },
-      markTransfertsSaved(dossierId, rows) {
+      markTransfertsSaved: (dossierId, rows) => {
         set((s) => patchDraft(s, dossierId, { transferts: rows, hasUnsavedTransferts: false }));
       },
 
       // ── Gestion courante ─────────────────────────────────────────────────
 
-      setGestionCourante(dossierId, rows) {
+      setGestionCourante: (dossierId, rows) => {
         set((s) => patchDraft(s, dossierId, { gestionCourante: rows, hasUnsavedGestionCourante: false }));
       },
-      addGestionCourante(dossierId) {
+      addGestionCourante: (dossierId) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -280,7 +288,7 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      updateGestionCourante(dossierId, index, data) {
+      updateGestionCourante: (dossierId, index, data) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -289,7 +297,7 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      removeGestionCourante(dossierId, index) {
+      removeGestionCourante: (dossierId, index) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -298,27 +306,27 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      duplicateGestionCourante(dossierId, index) {
+      duplicateGestionCourante: (dossierId, index) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           const source = d.gestionCourante[index];
           if (!source) return s;
           const { id: _id, ...rest } = source;
           const rows = [...d.gestionCourante];
-          rows.splice(index + 1, 0, { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` });
           return patchDraft(s, dossierId, { gestionCourante: rows, hasUnsavedGestionCourante: true });
         });
       },
-      markGestionCouranteSaved(dossierId, rows) {
+      markGestionCouranteSaved: (dossierId, rows) => {
         set((s) => patchDraft(s, dossierId, { gestionCourante: rows, hasUnsavedGestionCourante: false }));
       },
 
       // ── Financiers ───────────────────────────────────────────────────────
 
-      setFinanciers(dossierId, rows) {
+      setFinanciers: (dossierId, rows) => {
         set((s) => patchDraft(s, dossierId, { financiers: rows, hasUnsavedFinanciers: false }));
       },
-      addFinancier(dossierId) {
+      addFinancier: (dossierId) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -327,7 +335,7 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      updateFinancier(dossierId, index, data) {
+      updateFinancier: (dossierId, index, data) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -336,7 +344,7 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      removeFinancier(dossierId, index) {
+      removeFinancier: (dossierId, index) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -345,27 +353,27 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      duplicateFinancier(dossierId, index) {
+      duplicateFinancier: (dossierId, index) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           const source = d.financiers[index];
           if (!source) return s;
           const { id: _id, ...rest } = source;
           const rows = [...d.financiers];
-          rows.splice(index + 1, 0, { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` });
           return patchDraft(s, dossierId, { financiers: rows, hasUnsavedFinanciers: true });
         });
       },
-      markFinanciersSaved(dossierId, rows) {
+      markFinanciersSaved: (dossierId, rows) => {
         set((s) => patchDraft(s, dossierId, { financiers: rows, hasUnsavedFinanciers: false }));
       },
 
       // ── Exceptionnels ────────────────────────────────────────────────────
 
-      setExceptionnels(dossierId, rows) {
+      setExceptionnels: (dossierId, rows) => {
         set((s) => patchDraft(s, dossierId, { exceptionnels: rows, hasUnsavedExceptionnels: false }));
       },
-      addExceptionnel(dossierId) {
+      addExceptionnel: (dossierId) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -374,7 +382,7 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      updateExceptionnel(dossierId, index, data) {
+      updateExceptionnel: (dossierId, index, data) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -383,7 +391,7 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      removeExceptionnel(dossierId, index) {
+      removeExceptionnel: (dossierId, index) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -392,27 +400,27 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      duplicateExceptionnel(dossierId, index) {
+      duplicateExceptionnel: (dossierId, index) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           const source = d.exceptionnels[index];
           if (!source) return s;
           const { id: _id, ...rest } = source;
           const rows = [...d.exceptionnels];
-          rows.splice(index + 1, 0, { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` });
           return patchDraft(s, dossierId, { exceptionnels: rows, hasUnsavedExceptionnels: true });
         });
       },
-      markExceptionnelsSaved(dossierId, rows) {
+      markExceptionnelsSaved: (dossierId, rows) => {
         set((s) => patchDraft(s, dossierId, { exceptionnels: rows, hasUnsavedExceptionnels: false }));
       },
 
       // ── PCA ──────────────────────────────────────────────────────────────
 
-      setPCA(dossierId, rows) {
+      setPCA: (dossierId, rows) => {
         set((s) => patchDraft(s, dossierId, { pca: rows, hasUnsavedPCA: false }));
       },
-      addPCA(dossierId) {
+      addPCA: (dossierId) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -421,7 +429,7 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      updatePCA(dossierId, index, data) {
+      updatePCA: (dossierId, index, data) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -430,7 +438,7 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      removePCA(dossierId, index) {
+      removePCA: (dossierId, index) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           return patchDraft(s, dossierId, {
@@ -439,22 +447,22 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
           });
         });
       },
-      duplicatePCA(dossierId, index) {
+      duplicatePCA: (dossierId, index) => {
         set((s) => {
           const d = s.drafts[dossierId] ?? getEmptyDraft();
           const source = d.pca[index];
           if (!source) return s;
           const { id: _id, ...rest } = source;
           const rows = [...d.pca];
-          rows.splice(index + 1, 0, { ...rest, id: `__new__${crypto.randomUUID()}`, libelle: `${rest.libelle} (copie)` });
+          rows.splice(index + 1, 0, { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` });
           return patchDraft(s, dossierId, { pca: rows, hasUnsavedPCA: true });
         });
       },
-      markPCASaved(dossierId, rows) {
+      markPCASaved: (dossierId, rows) => {
         set((s) => patchDraft(s, dossierId, { pca: rows, hasUnsavedPCA: false }));
       },
 
-      clearDraft(dossierId) {
+      clearDraft: (dossierId) => {
         set((s) => {
           const { [dossierId]: _, ...rest } = s.drafts;
           return { drafts: rest };
@@ -465,5 +473,6 @@ export const useAutresProduitsStore = create<AutresProduitsState>()(
       name: "autres-produits-store",
       partialize: (state) => ({ drafts: state.drafts }),
     }
-  )
-);
+  ),
+  { name: "AutresProduitsStore" }
+));

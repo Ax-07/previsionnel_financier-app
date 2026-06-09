@@ -1,66 +1,86 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+﻿import { create } from "zustand";
+import { persist, devtools } from "zustand/middleware";
 import type { ChargeExploitationRow, ImpotTaxeRow } from "@/lib/schemas/charges";
+import { tempId } from "@/components/app/forms/helpers/table-helpers";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export interface ChargesDraft {
-  // Lignes des 3 sections
-  fournitures: ChargeExploitationRow[];
-  services: ChargeExploitationRow[];
-  impots: ImpotTaxeRow[];
+export type LocalChargeExploitationRow = ChargeExploitationRow & { _dirty?: boolean };
+export type LocalImpotTaxeRow = ImpotTaxeRow & { _dirty?: boolean };
 
-  // Tracking des modifications par section
-  hasUnsavedFournitures: boolean;
-  hasUnsavedServices: boolean;
-  hasUnsavedImpots: boolean;
+export interface ChargesDraft {
+  fournitures: LocalChargeExploitationRow[];
+  services: LocalChargeExploitationRow[];
+  impots: LocalImpotTaxeRow[];
+  _deletedFournitureIds?: string[];
+  _deletedServiceIds?: string[];
+  _deletedImpotIds?: string[];
 }
 
-export interface ChargesState {
-  // Drafts par dossier
+interface ChargesState {
   drafts: Record<string, ChargesDraft>;
+}
 
-  // Indique si le store a été réhydraté depuis localStorage
-  _hasHydrated: boolean;
-  setHasHydrated: (val: boolean) => void;
-
+interface ChargesActions {
   // ── Getters ────────────────────────────────────────────────────────────────
   getDraft: (dossierId: string) => ChargesDraft;
   hasUnsavedChanges: (dossierId: string) => boolean;
 
-  // ── Setters Fournitures consommables ───────────────────────────────────────
-  setFournitures: (dossierId: string, rows: ChargeExploitationRow[]) => void;
-  addFourniture: (dossierId: string) => void;
-  updateFourniture: (dossierId: string, index: number, data: Partial<ChargeExploitationRow>) => void;
-  removeFourniture: (dossierId: string, index: number) => void;
-  duplicateFourniture: (dossierId: string, index: number) => void;
+  // ── Hydratation depuis le serveur (avec garde draft local) ─────────────────
+  hydrateFournitures: (dossierId: string, rows: LocalChargeExploitationRow[]) => void;
+  hydrateServices: (dossierId: string, rows: LocalChargeExploitationRow[]) => void;
+  hydrateImpots: (dossierId: string, rows: LocalImpotTaxeRow[]) => void;
+
+  // ── Setters updater (même API que useState — utilisés pour patcher les IDs post-save) ────
+  setFournitures: (dossierId: string, updater: (prev: LocalChargeExploitationRow[]) => LocalChargeExploitationRow[]) => void;
+  setServices: (dossierId: string, updater: (prev: LocalChargeExploitationRow[]) => LocalChargeExploitationRow[]) => void;
+  setImpots: (dossierId: string, updater: (prev: LocalImpotTaxeRow[]) => LocalImpotTaxeRow[]) => void;
+
+  // ── Setters batch pour DnD (marque _dirty=true sur chaque ligne) ───────────
+  setFournituresRows: (dossierId: string, rows: LocalChargeExploitationRow[]) => void;
+  setServicesRows: (dossierId: string, rows: LocalChargeExploitationRow[]) => void;
+  setImpotsRows: (dossierId: string, rows: LocalImpotTaxeRow[]) => void;
+
+  // ── Mutations Fournitures ─────────────────────────────────────────────────────────────
+  addFournitureRow: (dossierId: string) => void;
+  addFournitureGroup: (dossierId: string) => void;
+  addFournitureToGroup: (dossierId: string, groupe: string) => void;
+  updateFournitureRow: (dossierId: string, index: number, data: Partial<LocalChargeExploitationRow>) => void;
+  removeFournitureRow: (dossierId: string, index: number) => void;
+  duplicateFournitureRow: (dossierId: string, index: number) => void;
   markFournituresSaved: (dossierId: string) => void;
 
-  // ── Setters Services extérieurs ──────────────────────────────────────────────────
-  setServices: (dossierId: string, rows: ChargeExploitationRow[]) => void;
-  addService: (dossierId: string) => void;
-  updateService: (dossierId: string, index: number, data: Partial<ChargeExploitationRow>) => void;
-  removeService: (dossierId: string, index: number) => void;
-  duplicateService: (dossierId: string, index: number) => void;
+  // ── Mutations Services ─────────────────────────────────────────────────────────────
+  addServiceRow: (dossierId: string) => void;
+  addServiceGroup: (dossierId: string) => void;
+  addServiceToGroup: (dossierId: string, groupe: string) => void;
+  updateServiceRow: (dossierId: string, index: number, data: Partial<LocalChargeExploitationRow>) => void;
+  removeServiceRow: (dossierId: string, index: number) => void;
+  duplicateServiceRow: (dossierId: string, index: number) => void;
   markServicesSaved: (dossierId: string) => void;
 
-  // ── Setters Impôts et taxes ────────────────────────────────────────────────────
-  setImpots: (dossierId: string, rows: ImpotTaxeRow[]) => void;
-  addImpot: (dossierId: string) => void;
-  updateImpot: (dossierId: string, index: number, data: Partial<ImpotTaxeRow>) => void;
-  removeImpot: (dossierId: string, index: number) => void;
-  duplicateImpot: (dossierId: string, index: number) => void;
+  // ── Mutations Impots ─────────────────────────────────────────────────────────────
+  addImpotRow: (dossierId: string) => void;
+  addImpotGroup: (dossierId: string) => void;
+  addImpotToGroup: (dossierId: string, groupe: string) => void;
+  updateImpotRow: (dossierId: string, index: number, data: Partial<LocalImpotTaxeRow>) => void;
+  removeImpotRow: (dossierId: string, index: number) => void;
+  duplicateImpotRow: (dossierId: string, index: number) => void;
   markImpotsSaved: (dossierId: string) => void;
 
-  // ── Reset ──────────────────────────────────────────────────────────────────
+  // ── Reset ──────────────────────────────────────────────────────────────
   clearDraft: (dossierId: string) => void;
+  /** Alias de clearDraft, pour fermeture de dossier */
+  clearDossier: (dossierId: string) => void;
 }
+
+export type ChargesStore = ChargesState & ChargesActions;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function createEmptyFourniture(): ChargeExploitationRow {
+function emptyFourniture(groupe?: string): LocalChargeExploitationRow {
   return {
-    id: `__new__${crypto.randomUUID()}`,
+    id: tempId(),
     libelle: "",
     categorie: "FOURNITURE_CONSOMMABLE",
     actif: true,
@@ -75,12 +95,14 @@ function createEmptyFourniture(): ChargeExploitationRow {
     delaiReglement: 30,
     tauxTVA: 20,
     typeTVA: "FACTURATION",
+    ...(groupe !== undefined ? { groupe } : {}),
+    _dirty: true,
   };
 }
 
-function createEmptyService(): ChargeExploitationRow {
+function emptyService(groupe?: string): LocalChargeExploitationRow {
   return {
-    id: `__new__${crypto.randomUUID()}`,
+    id: tempId(),
     libelle: "",
     categorie: "SERVICE_EXTERIEUR",
     actif: true,
@@ -95,12 +117,14 @@ function createEmptyService(): ChargeExploitationRow {
     delaiReglement: 30,
     tauxTVA: 20,
     typeTVA: "FACTURATION",
+    ...(groupe !== undefined ? { groupe } : {}),
+    _dirty: true,
   };
 }
 
-function createEmptyImpot(): ImpotTaxeRow {
+function emptyImpot(groupe?: string): LocalImpotTaxeRow {
   return {
-    id: `__new__${crypto.randomUUID()}`,
+    id: tempId(),
     libelle: "",
     actif: true,
     hypothese: "COMMUNE",
@@ -112,361 +136,457 @@ function createEmptyImpot(): ImpotTaxeRow {
     montantN1: 0,
     dateN2: "",
     montantN2: 0,
+    ...(groupe !== undefined ? { groupe } : {}),
+    _dirty: true,
   };
 }
 
 function getEmptyDraft(): ChargesDraft {
-  return {
-    fournitures: [],
-    services: [],
-    impots: [],
-    hasUnsavedFournitures: false,
-    hasUnsavedServices: false,
-    hasUnsavedImpots: false,
-  };
+  return { fournitures: [], services: [], impots: [] };
 }
 
 /** Référence stable pour getDraft() quand aucun draft n'existe. */
 const EMPTY_CHARGES_DRAFT: ChargesDraft = getEmptyDraft();
+const INITIAL_STATE: ChargesState = { drafts: {} };
+const createNewGroup = (n: number) => `Groupe ${n}`;
 
-// ── Store ────────────────────────────────────────────────────────────────────
+/**
+ * Fusionne les données serveur avec le draft local.
+ * - Exclut les lignes dont l'ID est dans `deletedIds` (suppression pendante)
+ * - Préserve les lignes `_dirty` avec ID persisté (éditions en cours)
+ * - Conserve les nouvelles lignes `__new__` non encore sauvegardées
+ */
+function mergeRows<T extends { id?: string | null; _dirty?: boolean }>(
+  serverRows: T[],
+  localRows: T[],
+  deletedIds: string[]
+): T[] {
+  const deleted = new Set(deletedIds);
+  const dirtyMap = new Map(
+    localRows
+      .filter((r) => r._dirty && r.id && !r.id.startsWith("__new__"))
+      .map((r) => [r.id!, r])
+  );
+  const newRows = localRows.filter((r) => r._dirty && (!r.id || r.id.startsWith("__new__")));
+  const merged = serverRows
+    .filter((r) => !r.id || !deleted.has(r.id))
+    .map((r) => (r.id && dirtyMap.has(r.id) ? dirtyMap.get(r.id)! : r));
+  return [...merged, ...newRows];
+}
 
-export const useChargesStore = create<ChargesState>()(
-  persist(
-    (set, get) => ({
-      drafts: {},
+// Store
 
-      _hasHydrated: false,
-      setHasHydrated(val) {
-        set({ _hasHydrated: val });
-      },
+export const useChargesStore = create<ChargesStore>()(
+  devtools(
+    persist(
+      (set, get) => ({
+        ...INITIAL_STATE,
 
-      getDraft(dossierId) {
-        return get().drafts[dossierId] ?? EMPTY_CHARGES_DRAFT;
-      },
+        // ── Getters ────────────────────────────────────────────────────────────
+        getDraft(dossierId) {
+          return get().drafts[dossierId] ?? EMPTY_CHARGES_DRAFT;
+        },
 
-      hasUnsavedChanges(dossierId) {
-        const d = get().drafts[dossierId];
-        if (!d) return false;
-        return d.hasUnsavedFournitures || d.hasUnsavedServices || d.hasUnsavedImpots;
-      },
+        hasUnsavedChanges(dossierId) {
+          const draft = get().drafts[dossierId];
+          if (!draft) return false;
+          return (
+            (draft._deletedFournitureIds?.length ?? 0) > 0 ||
+            (draft._deletedServiceIds?.length ?? 0) > 0 ||
+            (draft._deletedImpotIds?.length ?? 0) > 0 ||
+            draft.fournitures.some((r) => r._dirty) ||
+            draft.services.some((r) => r._dirty) ||
+            draft.impots.some((r) => r._dirty)
+          );
+        },
 
-      // ── Fournitures ──────────────────────────────────────────────────────
+        // ── Hydratation depuis le serveur ──────────────────────────────────────
+        hydrateFournitures(dossierId, rows) {
+          set((state) => {
+            const draft = state.drafts[dossierId];
+            if (!draft) {
+              return { drafts: { ...state.drafts, [dossierId]: { ...getEmptyDraft(), fournitures: rows } } };
+            }
+            const merged = mergeRows(rows, draft.fournitures, draft._deletedFournitureIds ?? []);
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, fournitures: merged } } };
+          });
+        },
 
-      setFournitures(dossierId, rows) {
-        set((state) => ({
-          drafts: {
-            ...state.drafts,
-            [dossierId]: {
-              ...(state.drafts[dossierId] ?? getEmptyDraft()),
-              fournitures: rows,
-              hasUnsavedFournitures: false,
-            },
-          },
-        }));
-      },
+        hydrateServices(dossierId, rows) {
+          set((state) => {
+            const draft = state.drafts[dossierId];
+            if (!draft) {
+              return { drafts: { ...state.drafts, [dossierId]: { ...getEmptyDraft(), services: rows } } };
+            }
+            const merged = mergeRows(rows, draft.services, draft._deletedServiceIds ?? []);
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, services: merged } } };
+          });
+        },
 
-      addFourniture(dossierId) {
-        set((state) => {
-          const draft = state.drafts[dossierId] ?? getEmptyDraft();
-          return {
+        hydrateImpots(dossierId, rows) {
+          set((state) => {
+            const draft = state.drafts[dossierId];
+            if (!draft) {
+              return { drafts: { ...state.drafts, [dossierId]: { ...getEmptyDraft(), impots: rows } } };
+            }
+            const merged = mergeRows(rows, draft.impots, draft._deletedImpotIds ?? []);
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, impots: merged } } };
+          });
+        },
+
+        // ── Setters updater (patchage IDs post-save) ──────────────────────────
+        setFournitures(dossierId, updater) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, fournitures: updater(draft.fournitures) } } };
+          });
+        },
+
+        setServices(dossierId, updater) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, services: updater(draft.services) } } };
+          });
+        },
+
+        setImpots(dossierId, updater) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, impots: updater(draft.impots) } } };
+          });
+        },
+
+        // ── Setters batch pour DnD (marque dirty=true) ─────────────────────────
+        setFournituresRows(dossierId, rows) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, fournitures: rows.map((r) => ({ ...r, _dirty: true })) } } };
+          });
+        },
+
+        setServicesRows(dossierId, rows) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, services: rows.map((r) => ({ ...r, _dirty: true })) } } };
+          });
+        },
+
+        setImpotsRows(dossierId, rows) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, impots: rows.map((r) => ({ ...r, _dirty: true })) } } };
+          });
+        },
+
+        // ── Mutations Fournitures ─────────────────────────────────────────────────────────────
+        addFournitureRow(dossierId) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, fournitures: [...draft.fournitures, emptyFourniture()] } } };
+          });
+        },
+
+        addFournitureGroup(dossierId) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            const existing = new Set(draft.fournitures.filter((r) => r.groupe).map((r) => r.groupe!));
+            let n = 1;
+            while (existing.has(createNewGroup(n))) n++;
+            return {
+              drafts: {
+                ...state.drafts,
+                [dossierId]: {
+                  ...draft,
+                  fournitures: [...draft.fournitures, emptyFourniture(createNewGroup(n))]
+                }
+              }
+            };
+          });
+        },
+
+        addFournitureToGroup(dossierId, groupe) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, fournitures: [...draft.fournitures, emptyFourniture(groupe)] } } };
+          });
+        },
+
+        updateFournitureRow(dossierId, index, data) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            const rows = [...draft.fournitures];
+            const row = rows[index];
+            if (!row) return state;
+            const merged = { ...row, ...data };
+            const isPourcentageCA = merged.detailCalc?.modeCalc === "POURCENTAGE_CA";
+            if (!isPourcentageCA) {
+              if ("montantN" in data || "evolutionN1" in data) {
+                merged.montantN1 = parseFloat((merged.montantN * (1 + merged.evolutionN1 / 100)).toFixed(2));
+              }
+              if ("montantN1" in data || "evolutionN2" in data || "montantN" in data || "evolutionN1" in data) {
+                merged.montantN2 = parseFloat((merged.montantN1 * (1 + merged.evolutionN2 / 100)).toFixed(2));
+              }
+            }
+            rows[index] = { ...merged, _dirty: true };
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, fournitures: rows } } };
+          });
+        },
+
+        removeFournitureRow(dossierId, index) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            const row = draft.fournitures[index];
+            if (!row) return state;
+            const isPersisted = row.id && !row.id.startsWith("__new__");
+            return {
+              drafts: {
+                ...state.drafts,
+                [dossierId]: {
+                  ...draft,
+                  fournitures: draft.fournitures.filter((_, i) => i !== index),
+                  _deletedFournitureIds: isPersisted
+                    ? [...(draft._deletedFournitureIds ?? []), row.id!]
+                    : (draft._deletedFournitureIds ?? []),
+                },
+              },
+            };
+          });
+        },
+
+        duplicateFournitureRow(dossierId, index) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            const source = draft.fournitures[index];
+            if (!source) return state;
+            const copy: LocalChargeExploitationRow = { ...source, id: tempId(), libelle: `${source.libelle} (copie)`, _dirty: true };
+            const rows = [...draft.fournitures];
+            rows.splice(index + 1, 0, copy);
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, fournitures: rows } } };
+          });
+        },
+
+        markFournituresSaved(dossierId) {
+          set((state) => ({
             drafts: {
               ...state.drafts,
               [dossierId]: {
-                ...draft,
-                fournitures: [...draft.fournitures, createEmptyFourniture()],
-                hasUnsavedFournitures: true,
+                ...(state.drafts[dossierId] ?? getEmptyDraft()),
+                fournitures: (state.drafts[dossierId]?.fournitures ?? []).map((r) => ({ ...r, _dirty: false })),
+                _deletedFournitureIds: [],
               },
             },
-          };
-        });
-      },
+          }));
+        },
 
-      updateFourniture(dossierId, index, data) {
-        set((state) => {
-          const draft = state.drafts[dossierId] ?? getEmptyDraft();
-          const rows = [...draft.fournitures];
-          const row = rows[index];
+        // ── Mutations Services ─────────────────────────────────────────────────────────────
+        addServiceRow(dossierId) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, services: [...draft.services, emptyService()] } } };
+          });
+        },
 
-          if (!row) return state;
-          // Auto-calcul N+1 et N+2 si montantN ou évolution change
-          const merged = { ...row, ...data };
-          const isPourcentageCA = merged.detailCalc?.modeCalc === "POURCENTAGE_CA";
+        addServiceGroup(dossierId) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            const existing = new Set(draft.services.filter((r) => r.groupe).map((r) => r.groupe!));
+            let n = 1;
+            while (existing.has(createNewGroup(n))) n++;
+            return {
+              drafts: {
+                ...state.drafts,
+                [dossierId]: {
+                  ...draft,
+                  services: [...draft.services, emptyService(createNewGroup(n))]
+                }
+              }
+            };
+          });
+        },
 
-          if (!isPourcentageCA) {
-            if ("montantN" in data || "evolutionN1" in data) {
-              merged.montantN1 = parseFloat(
-                (merged.montantN * (1 + merged.evolutionN1 / 100)).toFixed(2)
-              );
+        addServiceToGroup(dossierId, groupe) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, services: [...draft.services, emptyService(groupe)] } } };
+          });
+        },
+
+        updateServiceRow(dossierId, index, data) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            const rows = [...draft.services];
+            const row = rows[index];
+            if (!row) return state;
+            const merged = { ...row, ...data };
+            const isPourcentageCA = merged.detailCalc?.modeCalc === "POURCENTAGE_CA";
+            if (!isPourcentageCA) {
+              if ("montantN" in data || "evolutionN1" in data) {
+                merged.montantN1 = parseFloat((merged.montantN * (1 + merged.evolutionN1 / 100)).toFixed(2));
+              }
+              if ("montantN1" in data || "evolutionN2" in data || "montantN" in data || "evolutionN1" in data) {
+                merged.montantN2 = parseFloat((merged.montantN1 * (1 + merged.evolutionN2 / 100)).toFixed(2));
+              }
             }
+            rows[index] = { ...merged, _dirty: true };
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, services: rows } } };
+          });
+        },
 
-            if ("montantN1" in data || "evolutionN2" in data || "montantN" in data || "evolutionN1" in data) {
-              merged.montantN2 = parseFloat(
-                (merged.montantN1 * (1 + merged.evolutionN2 / 100)).toFixed(2)
-              );
-            }
-          }
-          rows[index] = merged;
-          return {
-            drafts: {
-              ...state.drafts,
-              [dossierId]: { ...draft, fournitures: rows, hasUnsavedFournitures: true },
-            },
-          };
-        });
-      },
+        removeServiceRow(dossierId, index) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            const row = draft.services[index];
+            if (!row) return state;
+            const isPersisted = row.id && !row.id.startsWith("__new__");
+            return {
+              drafts: {
+                ...state.drafts,
+                [dossierId]: {
+                  ...draft,
+                  services: draft.services.filter((_, i) => i !== index),
+                  _deletedServiceIds: isPersisted
+                    ? [...(draft._deletedServiceIds ?? []), row.id!]
+                    : (draft._deletedServiceIds ?? []),
+                },
+              },
+            };
+          });
+        },
 
-      removeFourniture(dossierId, index) {
-        set((state) => {
-          const draft = state.drafts[dossierId] ?? getEmptyDraft();
-          const rows = draft.fournitures.filter((_, i) => i !== index);
-          return {
-            drafts: {
-              ...state.drafts,
-              [dossierId]: { ...draft, fournitures: rows, hasUnsavedFournitures: true },
-            },
-          };
-        });
-      },
+        duplicateServiceRow(dossierId, index) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            const source = draft.services[index];
+            if (!source) return state;
+            const copy: LocalChargeExploitationRow = { ...source, id: tempId(), libelle: `${source.libelle} (copie)`, _dirty: true };
+            const rows = [...draft.services];
+            rows.splice(index + 1, 0, copy);
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, services: rows } } };
+          });
+        },
 
-      duplicateFourniture(dossierId, index) {
-        set((state) => {
-          const draft = state.drafts[dossierId] ?? getEmptyDraft();
-          const source = draft.fournitures[index];
-          if (!source) return state;
-          const { id, ...rest } = source;
-          const rows = [...draft.fournitures];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
-          return {
-            drafts: {
-              ...state.drafts,
-              [dossierId]: { ...draft, fournitures: rows, hasUnsavedFournitures: true },
-            },
-          };
-        });
-      },
-
-      markFournituresSaved(dossierId) {
-        set((state) => ({
-          drafts: {
-            ...state.drafts,
-            [dossierId]: {
-              ...(state.drafts[dossierId] ?? getEmptyDraft()),
-              hasUnsavedFournitures: false,
-            },
-          },
-        }));
-      },
-
-      // ── Services extérieurs ──────────────────────────────────────────────
-
-      setServices(dossierId, rows) {
-        set((state) => ({
-          drafts: {
-            ...state.drafts,
-            [dossierId]: {
-              ...(state.drafts[dossierId] ?? getEmptyDraft()),
-              services: rows,
-              hasUnsavedServices: false,
-            },
-          },
-        }));
-      },
-
-      addService(dossierId) {
-        set((state) => {
-          const draft = state.drafts[dossierId] ?? getEmptyDraft();
-          return {
+        markServicesSaved(dossierId) {
+          set((state) => ({
             drafts: {
               ...state.drafts,
               [dossierId]: {
-                ...draft,
-                services: [...draft.services, createEmptyService()],
-                hasUnsavedServices: true,
+                ...(state.drafts[dossierId] ?? getEmptyDraft()),
+                services: (state.drafts[dossierId]?.services ?? []).map((r) => ({ ...r, _dirty: false })),
+                _deletedServiceIds: [],
               },
             },
-          };
-        });
-      },
+          }));
+        },
 
-      updateService(dossierId, index, data) {
-        set((state) => {
-          const draft = state.drafts[dossierId] ?? getEmptyDraft();
-          const rows = [...draft.services];
-          const row = rows[index];
-          if (!row) return state;
-          const merged = { ...row, ...data };
-          const isPourcentageCA = merged.detailCalc?.modeCalc === "POURCENTAGE_CA";
+        // ── Mutations Impots ─────────────────────────────────────────────────────────────
+        addImpotRow(dossierId) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, impots: [...draft.impots, emptyImpot()] } } };
+          });
+        },
 
-          if (!isPourcentageCA) {
-            if ("montantN" in data || "evolutionN1" in data) {
-              merged.montantN1 = parseFloat(
-                (merged.montantN * (1 + merged.evolutionN1 / 100)).toFixed(2)
-              );
-            }
-            if ("montantN1" in data || "evolutionN2" in data || "montantN" in data || "evolutionN1" in data) {
-              merged.montantN2 = parseFloat(
-                (merged.montantN1 * (1 + merged.evolutionN2 / 100)).toFixed(2)
-              );
-            }
-          }
-          rows[index] = merged;
-          return {
-            drafts: {
-              ...state.drafts,
-              [dossierId]: { ...draft, services: rows, hasUnsavedServices: true },
-            },
-          };
-        });
-      },
+        addImpotGroup(dossierId) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            const existing = new Set(draft.impots.filter((r) => r.groupe).map((r) => r.groupe!));
+            let n = 1;
+            while (existing.has(createNewGroup(n))) n++;
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, impots: [...draft.impots, emptyImpot(createNewGroup(n))] } } };
+          });
+        },
 
-      removeService(dossierId, index) {
-        set((state) => {
-          const draft = state.drafts[dossierId] ?? getEmptyDraft();
-          const rows = draft.services.filter((_, i) => i !== index);
-          return {
-            drafts: {
-              ...state.drafts,
-              [dossierId]: { ...draft, services: rows, hasUnsavedServices: true },
-            },
-          };
-        });
-      },
+        addImpotToGroup(dossierId, groupe) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            return {
+              drafts: {
+                ...state.drafts,
+                [dossierId]: {
+                  ...draft,
+                  impots: [...draft.impots, emptyImpot(groupe)]
+                }
+              }
+            };
+          });
+        },
 
-      duplicateService(dossierId, index) {
-        set((state) => {
-          const draft = state.drafts[dossierId] ?? getEmptyDraft();
-          const source = draft.services[index];
-          if (!source) return state;
-          const { id, ...rest } = source;
-          const rows = [...draft.services];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
-          return {
-            drafts: {
-              ...state.drafts,
-              [dossierId]: { ...draft, services: rows, hasUnsavedServices: true },
-            },
-          };
-        });
-      },
+        updateImpotRow(dossierId, index, data) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            const rows = [...draft.impots];
+            const row = rows[index];
+            if (!row) return state;
+            rows[index] = { ...row, ...data, _dirty: true };
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, impots: rows } } };
+          });
+        },
 
-      markServicesSaved(dossierId) {
-        set((state) => ({
-          drafts: {
-            ...state.drafts,
-            [dossierId]: {
-              ...(state.drafts[dossierId] ?? getEmptyDraft()),
-              hasUnsavedServices: false,
-            },
-          },
-        }));
-      },
+        removeImpotRow(dossierId, index) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            const row = draft.impots[index];
+            if (!row) return state;
+            const isPersisted = row.id && !row.id.startsWith("__new__");
+            return {
+              drafts: {
+                ...state.drafts,
+                [dossierId]: {
+                  ...draft,
+                  impots: draft.impots.filter((_, i) => i !== index),
+                  _deletedImpotIds: isPersisted
+                    ? [...(draft._deletedImpotIds ?? []), row.id!]
+                    : (draft._deletedImpotIds ?? []),
+                },
+              },
+            };
+          });
+        },
 
-      // ── Impôts et taxes ──────────────────────────────────────────────────
+        duplicateImpotRow(dossierId, index) {
+          set((state) => {
+            const draft = state.drafts[dossierId] ?? getEmptyDraft();
+            const source = draft.impots[index];
+            if (!source) return state;
+            const copy: LocalImpotTaxeRow = { ...source, id: tempId(), libelle: `${source.libelle} (copie)`, _dirty: true };
+            const rows = [...draft.impots];
+            rows.splice(index + 1, 0, copy);
+            return { drafts: { ...state.drafts, [dossierId]: { ...draft, impots: rows } } };
+          });
+        },
 
-      setImpots(dossierId, rows) {
-        set((state) => ({
-          drafts: {
-            ...state.drafts,
-            [dossierId]: {
-              ...(state.drafts[dossierId] ?? getEmptyDraft()),
-              impots: rows,
-              hasUnsavedImpots: false,
-            },
-          },
-        }));
-      },
-
-      addImpot(dossierId) {
-        set((state) => {
-          const draft = state.drafts[dossierId] ?? getEmptyDraft();
-          return {
+        markImpotsSaved(dossierId) {
+          set((state) => ({
             drafts: {
               ...state.drafts,
               [dossierId]: {
-                ...draft,
-                impots: [...draft.impots, createEmptyImpot()],
-                hasUnsavedImpots: true,
+                ...(state.drafts[dossierId] ?? getEmptyDraft()),
+                impots: (state.drafts[dossierId]?.impots ?? []).map((r) => ({ ...r, _dirty: false })),
+                _deletedImpotIds: [],
               },
             },
-          };
-        });
-      },
+          }));
+        },
 
-      updateImpot(dossierId, index, data) {
-        set((state) => {
-          const draft = state.drafts[dossierId] ?? getEmptyDraft();
-          const rows = [...draft.impots];
-          const row = rows[index];
-          if (!row) return state;
-          rows[index] = { ...row, ...data };
-          return {
-            drafts: {
-              ...state.drafts,
-              [dossierId]: { ...draft, impots: rows, hasUnsavedImpots: true },
-            },
-          };
-        });
-      },
+        // ── Reset ──────────────────────────────────────────────────────────────
+        clearDraft(dossierId) {
+          set((state) => {
+            const drafts = { ...state.drafts };
+            delete drafts[dossierId];
+            return { drafts };
+          });
+        },
 
-      removeImpot(dossierId, index) {
-        set((state) => {
-          const draft = state.drafts[dossierId] ?? getEmptyDraft();
-          const rows = draft.impots.filter((_, i) => i !== index);
-          return {
-            drafts: {
-              ...state.drafts,
-              [dossierId]: { ...draft, impots: rows, hasUnsavedImpots: true },
-            },
-          };
-        });
-      },
+        clearDossier(dossierId) {
+          get().clearDraft(dossierId);
+        },
 
-      duplicateImpot(dossierId, index) {
-        set((state) => {
-          const draft = state.drafts[dossierId] ?? getEmptyDraft();
-          const source = draft.impots[index];
-          if (!source) return state;
-          const { id, ...rest } = source;
-          const rows = [...draft.impots];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
-          return {
-            drafts: {
-              ...state.drafts,
-              [dossierId]: { ...draft, impots: rows, hasUnsavedImpots: true },
-            },
-          };
-        });
-      },
-
-      markImpotsSaved(dossierId) {
-        set((state) => ({
-          drafts: {
-            ...state.drafts,
-            [dossierId]: {
-              ...(state.drafts[dossierId] ?? getEmptyDraft()),
-              hasUnsavedImpots: false,
-            },
-          },
-        }));
-      },
-
-      // ── Reset ────────────────────────────────────────────────────────────
-
-      clearDraft(dossierId) {
-        set((state) => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { [dossierId]: _, ...rest } = state.drafts;
-          return { drafts: rest };
-        });
-      },
-    }),
-    {
-      name: "charges-store",
-      partialize: (state) => ({ drafts: state.drafts }),
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
-      },
-    }
+      }),
+      {
+        name: "previsia-charges-v2",
+        partialize: (state) => ({ drafts: state.drafts }),
+      }
+    ),
+    { name: "charges-store" }
   )
 );

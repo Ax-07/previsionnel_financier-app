@@ -6,7 +6,7 @@ import type {
   DiversPretRow,
 } from "@/lib/schemas/divers";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Types ────────────────────────────────────────────────────────────────────────────
 
 export interface DiversDraft {
   // Flux datés
@@ -42,78 +42,96 @@ export interface DiversState {
   setRemboursementsCC: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   setRemboursementsCCRows: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   addRemboursementCC: (dossierId: string) => void;
-  updateRemboursementCC: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
-  removeRemboursementCC: (dossierId: string, index: number) => void;
-  duplicateRemboursementCC: (dossierId: string, index: number) => void;
+  addRemboursementsCCGroup: (dossierId: string) => void;
+  addRemboursementsCCToGroup: (dossierId: string, groupe: string) => void;
+  updateRemboursementCC: (dossierId: string, id: string, data: Partial<DiversFluxDateRow>) => void;
+  removeRemboursementCC: (dossierId: string, id: string) => void;
+  duplicateRemboursementCC: (dossierId: string, id: string) => void;
   markRemboursementsCCSaved: (dossierId: string, rows: DiversFluxDateRow[]) => void;
 
   // --- Dividendes ---
   setDividendes: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   setDividendesRows: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   addDividende: (dossierId: string) => void;
-  updateDividende: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
-  removeDividende: (dossierId: string, index: number) => void;
-  duplicateDividende: (dossierId: string, index: number) => void;
+  addDividendesGroup: (dossierId: string) => void;
+  addDividendesToGroup: (dossierId: string, groupe: string) => void;
+  updateDividende: (dossierId: string, id: string, data: Partial<DiversFluxDateRow>) => void;
+  removeDividende: (dossierId: string, id: string) => void;
+  duplicateDividende: (dossierId: string, id: string) => void;
   markDividendesSaved: (dossierId: string, rows: DiversFluxDateRow[]) => void;
 
   // --- Déblocages participation ---
   setDeblocagesParticipation: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   setDeblocagesParticipationRows: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   addDeblocageParticipation: (dossierId: string) => void;
-  updateDeblocageParticipation: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
-  removeDeblocageParticipation: (dossierId: string, index: number) => void;
-  duplicateDeblocageParticipation: (dossierId: string, index: number) => void;
+  addDeblocagesParticipationGroup: (dossierId: string) => void;
+  addDeblocagesParticipationToGroup: (dossierId: string, groupe: string) => void;
+  updateDeblocageParticipation: (dossierId: string, id: string, data: Partial<DiversFluxDateRow>) => void;
+  removeDeblocageParticipation: (dossierId: string, id: string) => void;
+  duplicateDeblocageParticipation: (dossierId: string, id: string) => void;
   markDeblocagesParticipationSaved: (dossierId: string, rows: DiversFluxDateRow[]) => void;
 
   // --- Encaissements ---
   setEncaissements: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   setEncaissementsRows: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   addEncaissement: (dossierId: string) => void;
-  updateEncaissement: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
-  removeEncaissement: (dossierId: string, index: number) => void;
-  duplicateEncaissement: (dossierId: string, index: number) => void;
+  addEncaissementsGroup: (dossierId: string) => void;
+  addEncaissementsToGroup: (dossierId: string, groupe: string) => void;
+  updateEncaissement: (dossierId: string, id: string, data: Partial<DiversFluxDateRow>) => void;
+  removeEncaissement: (dossierId: string, id: string) => void;
+  duplicateEncaissement: (dossierId: string, id: string) => void;
   markEncaissementsSaved: (dossierId: string, rows: DiversFluxDateRow[]) => void;
 
   // --- Décaissements ---
   setDecaissements: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   setDecaissementsRows: (dossierId: string, rows: DiversFluxDateRow[]) => void;
   addDecaissement: (dossierId: string) => void;
-  updateDecaissement: (dossierId: string, index: number, data: Partial<DiversFluxDateRow>) => void;
-  removeDecaissement: (dossierId: string, index: number) => void;
-  duplicateDecaissement: (dossierId: string, index: number) => void;
+  addDecaissementsGroup: (dossierId: string) => void;
+  addDecaissementsToGroup: (dossierId: string, groupe: string) => void;
+  updateDecaissement: (dossierId: string, id: string, data: Partial<DiversFluxDateRow>) => void;
+  removeDecaissement: (dossierId: string, id: string) => void;
+  duplicateDecaissement: (dossierId: string, id: string) => void;
   markDecaissementsSaved: (dossierId: string, rows: DiversFluxDateRow[]) => void;
 
   // --- Augmentations de capital ---
   setAugmentationsCapital: (dossierId: string, rows: DiversOperationCapitalRow[]) => void;
   setAugmentationsCapitalRows: (dossierId: string, rows: DiversOperationCapitalRow[]) => void;
   addAugmentationCapital: (dossierId: string) => void;
-  updateAugmentationCapital: (dossierId: string, index: number, data: Partial<DiversOperationCapitalRow>) => void;
-  removeAugmentationCapital: (dossierId: string, index: number) => void;
-  duplicateAugmentationCapital: (dossierId: string, index: number) => void;
+  addAugmentationsCapitalGroup: (dossierId: string) => void;
+  addAugmentationsCapitalToGroup: (dossierId: string, groupe: string) => void;
+  updateAugmentationCapital: (dossierId: string, id: string, data: Partial<DiversOperationCapitalRow>) => void;
+  removeAugmentationCapital: (dossierId: string, id: string) => void;
+  duplicateAugmentationCapital: (dossierId: string, id: string) => void;
   markAugmentationsCapitalSaved: (dossierId: string, rows: DiversOperationCapitalRow[]) => void;
 
   // --- Réductions de capital ---
   setReductionsCapital: (dossierId: string, rows: DiversOperationCapitalRow[]) => void;
   setReductionsCapitalRows: (dossierId: string, rows: DiversOperationCapitalRow[]) => void;
   addReductionCapital: (dossierId: string) => void;
-  updateReductionCapital: (dossierId: string, index: number, data: Partial<DiversOperationCapitalRow>) => void;
-  removeReductionCapital: (dossierId: string, index: number) => void;
-  duplicateReductionCapital: (dossierId: string, index: number) => void;
+  addReductionsCapitalGroup: (dossierId: string) => void;
+  addReductionsCapitalToGroup: (dossierId: string, groupe: string) => void;
+  updateReductionCapital: (dossierId: string, id: string, data: Partial<DiversOperationCapitalRow>) => void;
+  removeReductionCapital: (dossierId: string, id: string) => void;
+  duplicateReductionCapital: (dossierId: string, id: string) => void;
   markReductionsCapitalSaved: (dossierId: string, rows: DiversOperationCapitalRow[]) => void;
 
   // --- Prêts inter-entreprises ---
   setPrets: (dossierId: string, rows: DiversPretRow[]) => void;
   setPretsRows: (dossierId: string, rows: DiversPretRow[]) => void;
   addPret: (dossierId: string) => void;
-  updatePret: (dossierId: string, index: number, data: Partial<DiversPretRow>) => void;
-  removePret: (dossierId: string, index: number) => void;
-  duplicatePret: (dossierId: string, index: number) => void;
+  addPretsGroup: (dossierId: string) => void;
+  addPretsToGroup: (dossierId: string, groupe: string) => void;
+  updatePret: (dossierId: string, id: string, data: Partial<DiversPretRow>) => void;
+  removePret: (dossierId: string, id: string) => void;
+  duplicatePret: (dossierId: string, id: string) => void;
   markPretsSaved: (dossierId: string, rows: DiversPretRow[]) => void;
 
   clearDraft: (dossierId: string) => void;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────────
+
+const tempId = () => `__new__${crypto.randomUUID()}`;
 
 function emptyDraft(): DiversDraft {
   return {
@@ -137,14 +155,15 @@ function emptyDraft(): DiversDraft {
 }
 
 /**
- * Référence stable pour getDraft quand aucun draft n'existe encore.
+ * Référence stable pour getDraft quand aucun draft n’existe encore.
  * Évite de créer un nouvel objet à chaque appel (qui causerait des
  * boucles infinies de re-render dans les hooks utilisant useGroupedDnd).
  */
 const EMPTY_DIVERS_DRAFT: DiversDraft = emptyDraft();
 
-function emptyFlux(type: DiversFluxDateRow["type"]): DiversFluxDateRow {
+function emptyFlux(type: DiversFluxDateRow["type"], groupe?: string | null): DiversFluxDateRow {
   return {
+    id: tempId(),
     libelle: "",
     actif: true,
     hypothese: "COMMUNE",
@@ -156,11 +175,13 @@ function emptyFlux(type: DiversFluxDateRow["type"]): DiversFluxDateRow {
     dateN2: "",
     montantN2: 0,
     ordre: 0,
+    groupe: groupe ?? null,
   };
 }
 
-function emptyOperationCapital(type: DiversOperationCapitalRow["type"]): DiversOperationCapitalRow {
+function emptyOperationCapital(type: DiversOperationCapitalRow["type"], groupe?: string | null): DiversOperationCapitalRow {
   return {
+    id: tempId(),
     libelle: "",
     actif: true,
     hypothese: "COMMUNE",
@@ -170,11 +191,13 @@ function emptyOperationCapital(type: DiversOperationCapitalRow["type"]): DiversO
     montantN1: 0,
     montantN2: 0,
     ordre: 0,
+    groupe: groupe ?? null,
   };
 }
 
-function emptyPret(): DiversPretRow {
+function emptyPret(groupe?: string | null): DiversPretRow {
   return {
+    id: tempId(),
     libelle: "",
     actif: true,
     hypothese: "COMMUNE",
@@ -184,14 +207,19 @@ function emptyPret(): DiversPretRow {
     dureeMois: 12,
     periodicite: "MENSUELLE",
     ordre: 0,
+    groupe: groupe ?? null,
   };
 }
 
-function updateAt<T>(arr: T[], index: number, data: Partial<T>): T[] {
-  return arr.map((item, i) => (i === index ? { ...item, ...data } : item));
+// helper to auto-generate group name
+function nextGroupName(rows: { groupe?: string | null }[]): string {
+  const existing = new Set(rows.filter((r) => r.groupe).map((r) => r.groupe!));
+  let n = 1;
+  while (existing.has(`Groupe ${n}`)) n++;
+  return `Groupe ${n}`;
 }
 
-// ── Store ────────────────────────────────────────────────────────────────────
+// ── Store ────────────────────────────────────────────────────────────────────────────
 
 export const useDiversStore = create<DiversState>()(
   persist(
@@ -215,7 +243,7 @@ export const useDiversStore = create<DiversState>()(
         );
       },
 
-      // ── Remboursements C/C ──────────────────────────────────────────────────
+      // ── RemboursementsCC ──
       setRemboursementsCC: (dossierId, rows) =>
         set((s) => ({
           drafts: {
@@ -240,34 +268,55 @@ export const useDiversStore = create<DiversState>()(
             },
           };
         }),
-      updateRemboursementCC: (dossierId, index, data) =>
+      addRemboursementsCCGroup: (dossierId) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, remboursementsCC: updateAt(d.remboursementsCC, index, data), hasUnsavedRemboursementsCC: true },
+              [dossierId]: { ...d, remboursementsCC: [...d.remboursementsCC, emptyFlux("REMBOURSEMENT_CC", nextGroupName(d.remboursementsCC))], hasUnsavedRemboursementsCC: true },
             },
           };
         }),
-      removeRemboursementCC: (dossierId, index) =>
+      addRemboursementsCCToGroup: (dossierId, groupe) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, remboursementsCC: d.remboursementsCC.filter((_, i) => i !== index), hasUnsavedRemboursementsCC: true },
+              [dossierId]: { ...d, remboursementsCC: [...d.remboursementsCC, emptyFlux("REMBOURSEMENT_CC", groupe)], hasUnsavedRemboursementsCC: true },
             },
           };
         }),
-      duplicateRemboursementCC: (dossierId, index) =>
+      updateRemboursementCC: (dossierId, id, data) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
-          const source = d.remboursementsCC[index];
-          if (!source) return s;
-          const { id, ...rest } = source;
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, remboursementsCC: d.remboursementsCC.map((r) => (r.id === id ? { ...r, ...data } : r)), hasUnsavedRemboursementsCC: true },
+            },
+          };
+        }),
+      removeRemboursementCC: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, remboursementsCC: d.remboursementsCC.filter((r) => r.id !== id), hasUnsavedRemboursementsCC: true },
+            },
+          };
+        }),
+      duplicateRemboursementCC: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const idx = d.remboursementsCC.findIndex((r) => r.id === id);
+          if (idx === -1) return s;
+          const { id: _id, ...rest } = d.remboursementsCC[idx];
+          const copy = { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` };
           const rows = [...d.remboursementsCC];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(idx + 1, 0, copy);
           return {
             drafts: {
               ...s.drafts,
@@ -283,7 +332,7 @@ export const useDiversStore = create<DiversState>()(
           },
         })),
 
-      // ── Dividendes ──────────────────────────────────────────────────────────
+      // ── Dividendes ──
       setDividendes: (dossierId, rows) =>
         set((s) => ({
           drafts: {
@@ -308,34 +357,55 @@ export const useDiversStore = create<DiversState>()(
             },
           };
         }),
-      updateDividende: (dossierId, index, data) =>
+      addDividendesGroup: (dossierId) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, dividendes: updateAt(d.dividendes, index, data), hasUnsavedDividendes: true },
+              [dossierId]: { ...d, dividendes: [...d.dividendes, emptyFlux("DIVIDENDE", nextGroupName(d.dividendes))], hasUnsavedDividendes: true },
             },
           };
         }),
-      removeDividende: (dossierId, index) =>
+      addDividendesToGroup: (dossierId, groupe) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, dividendes: d.dividendes.filter((_, i) => i !== index), hasUnsavedDividendes: true },
+              [dossierId]: { ...d, dividendes: [...d.dividendes, emptyFlux("DIVIDENDE", groupe)], hasUnsavedDividendes: true },
             },
           };
         }),
-      duplicateDividende: (dossierId, index) =>
+      updateDividende: (dossierId, id, data) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
-          const source = d.dividendes[index];
-          if (!source) return s;
-          const { id, ...rest } = source;
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, dividendes: d.dividendes.map((r) => (r.id === id ? { ...r, ...data } : r)), hasUnsavedDividendes: true },
+            },
+          };
+        }),
+      removeDividende: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, dividendes: d.dividendes.filter((r) => r.id !== id), hasUnsavedDividendes: true },
+            },
+          };
+        }),
+      duplicateDividende: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const idx = d.dividendes.findIndex((r) => r.id === id);
+          if (idx === -1) return s;
+          const { id: _id, ...rest } = d.dividendes[idx];
+          const copy = { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` };
           const rows = [...d.dividendes];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(idx + 1, 0, copy);
           return {
             drafts: {
               ...s.drafts,
@@ -351,7 +421,7 @@ export const useDiversStore = create<DiversState>()(
           },
         })),
 
-      // ── Déblocages participation ─────────────────────────────────────────────
+      // ── DeblocagesParticipation ──
       setDeblocagesParticipation: (dossierId, rows) =>
         set((s) => ({
           drafts: {
@@ -376,34 +446,55 @@ export const useDiversStore = create<DiversState>()(
             },
           };
         }),
-      updateDeblocageParticipation: (dossierId, index, data) =>
+      addDeblocagesParticipationGroup: (dossierId) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, deblocagesParticipation: updateAt(d.deblocagesParticipation, index, data), hasUnsavedDeblocagesParticipation: true },
+              [dossierId]: { ...d, deblocagesParticipation: [...d.deblocagesParticipation, emptyFlux("DEBLOCAGE_PARTICIPATION", nextGroupName(d.deblocagesParticipation))], hasUnsavedDeblocagesParticipation: true },
             },
           };
         }),
-      removeDeblocageParticipation: (dossierId, index) =>
+      addDeblocagesParticipationToGroup: (dossierId, groupe) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, deblocagesParticipation: d.deblocagesParticipation.filter((_, i) => i !== index), hasUnsavedDeblocagesParticipation: true },
+              [dossierId]: { ...d, deblocagesParticipation: [...d.deblocagesParticipation, emptyFlux("DEBLOCAGE_PARTICIPATION", groupe)], hasUnsavedDeblocagesParticipation: true },
             },
           };
         }),
-      duplicateDeblocageParticipation: (dossierId, index) =>
+      updateDeblocageParticipation: (dossierId, id, data) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
-          const source = d.deblocagesParticipation[index];
-          if (!source) return s;
-          const { id, ...rest } = source;
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, deblocagesParticipation: d.deblocagesParticipation.map((r) => (r.id === id ? { ...r, ...data } : r)), hasUnsavedDeblocagesParticipation: true },
+            },
+          };
+        }),
+      removeDeblocageParticipation: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, deblocagesParticipation: d.deblocagesParticipation.filter((r) => r.id !== id), hasUnsavedDeblocagesParticipation: true },
+            },
+          };
+        }),
+      duplicateDeblocageParticipation: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const idx = d.deblocagesParticipation.findIndex((r) => r.id === id);
+          if (idx === -1) return s;
+          const { id: _id, ...rest } = d.deblocagesParticipation[idx];
+          const copy = { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` };
           const rows = [...d.deblocagesParticipation];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(idx + 1, 0, copy);
           return {
             drafts: {
               ...s.drafts,
@@ -419,7 +510,7 @@ export const useDiversStore = create<DiversState>()(
           },
         })),
 
-      // ── Encaissements ────────────────────────────────────────────────────────
+      // ── Encaissements ──
       setEncaissements: (dossierId, rows) =>
         set((s) => ({
           drafts: {
@@ -444,34 +535,55 @@ export const useDiversStore = create<DiversState>()(
             },
           };
         }),
-      updateEncaissement: (dossierId, index, data) =>
+      addEncaissementsGroup: (dossierId) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, encaissements: updateAt(d.encaissements, index, data), hasUnsavedEncaissements: true },
+              [dossierId]: { ...d, encaissements: [...d.encaissements, emptyFlux("ENCAISSEMENT", nextGroupName(d.encaissements))], hasUnsavedEncaissements: true },
             },
           };
         }),
-      removeEncaissement: (dossierId, index) =>
+      addEncaissementsToGroup: (dossierId, groupe) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, encaissements: d.encaissements.filter((_, i) => i !== index), hasUnsavedEncaissements: true },
+              [dossierId]: { ...d, encaissements: [...d.encaissements, emptyFlux("ENCAISSEMENT", groupe)], hasUnsavedEncaissements: true },
             },
           };
         }),
-      duplicateEncaissement: (dossierId, index) =>
+      updateEncaissement: (dossierId, id, data) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
-          const source = d.encaissements[index];
-          if (!source) return s;
-          const { id, ...rest } = source;
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, encaissements: d.encaissements.map((r) => (r.id === id ? { ...r, ...data } : r)), hasUnsavedEncaissements: true },
+            },
+          };
+        }),
+      removeEncaissement: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, encaissements: d.encaissements.filter((r) => r.id !== id), hasUnsavedEncaissements: true },
+            },
+          };
+        }),
+      duplicateEncaissement: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const idx = d.encaissements.findIndex((r) => r.id === id);
+          if (idx === -1) return s;
+          const { id: _id, ...rest } = d.encaissements[idx];
+          const copy = { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` };
           const rows = [...d.encaissements];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(idx + 1, 0, copy);
           return {
             drafts: {
               ...s.drafts,
@@ -487,7 +599,7 @@ export const useDiversStore = create<DiversState>()(
           },
         })),
 
-      // ── Décaissements ───────────────────────────────────────────────────────
+      // ── Decaissements ──
       setDecaissements: (dossierId, rows) =>
         set((s) => ({
           drafts: {
@@ -512,34 +624,55 @@ export const useDiversStore = create<DiversState>()(
             },
           };
         }),
-      updateDecaissement: (dossierId, index, data) =>
+      addDecaissementsGroup: (dossierId) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, decaissements: updateAt(d.decaissements, index, data), hasUnsavedDecaissements: true },
+              [dossierId]: { ...d, decaissements: [...d.decaissements, emptyFlux("DECAISSEMENT", nextGroupName(d.decaissements))], hasUnsavedDecaissements: true },
             },
           };
         }),
-      removeDecaissement: (dossierId, index) =>
+      addDecaissementsToGroup: (dossierId, groupe) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, decaissements: d.decaissements.filter((_, i) => i !== index), hasUnsavedDecaissements: true },
+              [dossierId]: { ...d, decaissements: [...d.decaissements, emptyFlux("DECAISSEMENT", groupe)], hasUnsavedDecaissements: true },
             },
           };
         }),
-      duplicateDecaissement: (dossierId, index) =>
+      updateDecaissement: (dossierId, id, data) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
-          const source = d.decaissements[index];
-          if (!source) return s;
-          const { id, ...rest } = source;
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, decaissements: d.decaissements.map((r) => (r.id === id ? { ...r, ...data } : r)), hasUnsavedDecaissements: true },
+            },
+          };
+        }),
+      removeDecaissement: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, decaissements: d.decaissements.filter((r) => r.id !== id), hasUnsavedDecaissements: true },
+            },
+          };
+        }),
+      duplicateDecaissement: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const idx = d.decaissements.findIndex((r) => r.id === id);
+          if (idx === -1) return s;
+          const { id: _id, ...rest } = d.decaissements[idx];
+          const copy = { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` };
           const rows = [...d.decaissements];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(idx + 1, 0, copy);
           return {
             drafts: {
               ...s.drafts,
@@ -555,7 +688,7 @@ export const useDiversStore = create<DiversState>()(
           },
         })),
 
-      // ── Augmentations de capital ─────────────────────────────────────────────
+      // ── AugmentationsCapital ──
       setAugmentationsCapital: (dossierId, rows) =>
         set((s) => ({
           drafts: {
@@ -580,34 +713,55 @@ export const useDiversStore = create<DiversState>()(
             },
           };
         }),
-      updateAugmentationCapital: (dossierId, index, data) =>
+      addAugmentationsCapitalGroup: (dossierId) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, augmentationsCapital: updateAt(d.augmentationsCapital, index, data), hasUnsavedAugmentationsCapital: true },
+              [dossierId]: { ...d, augmentationsCapital: [...d.augmentationsCapital, emptyOperationCapital("AUGMENTATION_INCORPORATION", nextGroupName(d.augmentationsCapital))], hasUnsavedAugmentationsCapital: true },
             },
           };
         }),
-      removeAugmentationCapital: (dossierId, index) =>
+      addAugmentationsCapitalToGroup: (dossierId, groupe) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, augmentationsCapital: d.augmentationsCapital.filter((_, i) => i !== index), hasUnsavedAugmentationsCapital: true },
+              [dossierId]: { ...d, augmentationsCapital: [...d.augmentationsCapital, emptyOperationCapital("AUGMENTATION_INCORPORATION", groupe)], hasUnsavedAugmentationsCapital: true },
             },
           };
         }),
-      duplicateAugmentationCapital: (dossierId, index) =>
+      updateAugmentationCapital: (dossierId, id, data) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
-          const source = d.augmentationsCapital[index];
-          if (!source) return s;
-          const { id, ...rest } = source;
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, augmentationsCapital: d.augmentationsCapital.map((r) => (r.id === id ? { ...r, ...data } : r)), hasUnsavedAugmentationsCapital: true },
+            },
+          };
+        }),
+      removeAugmentationCapital: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, augmentationsCapital: d.augmentationsCapital.filter((r) => r.id !== id), hasUnsavedAugmentationsCapital: true },
+            },
+          };
+        }),
+      duplicateAugmentationCapital: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const idx = d.augmentationsCapital.findIndex((r) => r.id === id);
+          if (idx === -1) return s;
+          const { id: _id, ...rest } = d.augmentationsCapital[idx];
+          const copy = { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` };
           const rows = [...d.augmentationsCapital];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(idx + 1, 0, copy);
           return {
             drafts: {
               ...s.drafts,
@@ -623,7 +777,7 @@ export const useDiversStore = create<DiversState>()(
           },
         })),
 
-      // ── Réductions de capital ────────────────────────────────────────────────
+      // ── ReductionsCapital ──
       setReductionsCapital: (dossierId, rows) =>
         set((s) => ({
           drafts: {
@@ -648,34 +802,55 @@ export const useDiversStore = create<DiversState>()(
             },
           };
         }),
-      updateReductionCapital: (dossierId, index, data) =>
+      addReductionsCapitalGroup: (dossierId) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, reductionsCapital: updateAt(d.reductionsCapital, index, data), hasUnsavedReductionsCapital: true },
+              [dossierId]: { ...d, reductionsCapital: [...d.reductionsCapital, emptyOperationCapital("REDUCTION", nextGroupName(d.reductionsCapital))], hasUnsavedReductionsCapital: true },
             },
           };
         }),
-      removeReductionCapital: (dossierId, index) =>
+      addReductionsCapitalToGroup: (dossierId, groupe) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, reductionsCapital: d.reductionsCapital.filter((_, i) => i !== index), hasUnsavedReductionsCapital: true },
+              [dossierId]: { ...d, reductionsCapital: [...d.reductionsCapital, emptyOperationCapital("REDUCTION", groupe)], hasUnsavedReductionsCapital: true },
             },
           };
         }),
-      duplicateReductionCapital: (dossierId, index) =>
+      updateReductionCapital: (dossierId, id, data) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
-          const source = d.reductionsCapital[index];
-          if (!source) return s;
-          const { id, ...rest } = source;
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, reductionsCapital: d.reductionsCapital.map((r) => (r.id === id ? { ...r, ...data } : r)), hasUnsavedReductionsCapital: true },
+            },
+          };
+        }),
+      removeReductionCapital: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, reductionsCapital: d.reductionsCapital.filter((r) => r.id !== id), hasUnsavedReductionsCapital: true },
+            },
+          };
+        }),
+      duplicateReductionCapital: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const idx = d.reductionsCapital.findIndex((r) => r.id === id);
+          if (idx === -1) return s;
+          const { id: _id, ...rest } = d.reductionsCapital[idx];
+          const copy = { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` };
           const rows = [...d.reductionsCapital];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(idx + 1, 0, copy);
           return {
             drafts: {
               ...s.drafts,
@@ -691,7 +866,7 @@ export const useDiversStore = create<DiversState>()(
           },
         })),
 
-      // ── Prêts inter-entreprises ──────────────────────────────────────────────
+      // ── Prêts inter-entreprises ──
       setPrets: (dossierId, rows) =>
         set((s) => ({
           drafts: {
@@ -716,34 +891,55 @@ export const useDiversStore = create<DiversState>()(
             },
           };
         }),
-      updatePret: (dossierId, index, data) =>
+      addPretsGroup: (dossierId) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, prets: updateAt(d.prets, index, data), hasUnsavedPrets: true },
+              [dossierId]: { ...d, prets: [...d.prets, emptyPret(nextGroupName(d.prets))], hasUnsavedPrets: true },
             },
           };
         }),
-      removePret: (dossierId, index) =>
+      addPretsToGroup: (dossierId, groupe) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
           return {
             drafts: {
               ...s.drafts,
-              [dossierId]: { ...d, prets: d.prets.filter((_, i) => i !== index), hasUnsavedPrets: true },
+              [dossierId]: { ...d, prets: [...d.prets, emptyPret(groupe)], hasUnsavedPrets: true },
             },
           };
         }),
-      duplicatePret: (dossierId, index) =>
+      updatePret: (dossierId, id, data) =>
         set((s) => {
           const d = s.drafts[dossierId] ?? emptyDraft();
-          const source = d.prets[index];
-          if (!source) return s;
-          const { id, ...rest } = source;
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, prets: d.prets.map((r) => (r.id === id ? { ...r, ...data } : r)), hasUnsavedPrets: true },
+            },
+          };
+        }),
+      removePret: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          return {
+            drafts: {
+              ...s.drafts,
+              [dossierId]: { ...d, prets: d.prets.filter((r) => r.id !== id), hasUnsavedPrets: true },
+            },
+          };
+        }),
+      duplicatePret: (dossierId, id) =>
+        set((s) => {
+          const d = s.drafts[dossierId] ?? emptyDraft();
+          const idx = d.prets.findIndex((r) => r.id === id);
+          if (idx === -1) return s;
+          const { id: _id, ...rest } = d.prets[idx];
+          const copy = { ...rest, id: tempId(), libelle: `${rest.libelle} (copie)` };
           const rows = [...d.prets];
-          rows.splice(index + 1, 0, { ...rest, libelle: `${rest.libelle} (copie)` });
+          rows.splice(idx + 1, 0, copy);
           return {
             drafts: {
               ...s.drafts,
