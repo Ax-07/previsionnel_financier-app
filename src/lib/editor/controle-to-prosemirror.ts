@@ -24,8 +24,10 @@ export type { NormalizedTable, NormalizedTableRow };
 
 // ─── Helpers de formatage ─────────────────────────────────────────────────────
 
-const fmtAmount = (n: number): string =>
-  new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(n);
+const fmtAmount = (n: number | null): string => {
+  if (n === null) return "—";
+  return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(n);
+};
 
 const fmtPct = (pct: number | null): string => {
   if (pct === null) return "";
