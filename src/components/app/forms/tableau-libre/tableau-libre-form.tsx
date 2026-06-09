@@ -39,13 +39,19 @@ import { formatNumber } from "@/lib/format";
 
 import {
   FORMAT_OPTIONS,
-  MOIS_LABELS,
   calculerN1,
   calculerN2,
   type TableauLibreRow,
   type TableauLibreLigneRow,
   type DetailMensuelRow,
 } from "@/lib/schemas/tableau-libre";
+import {
+  buildExercicesConfig,
+  buildMoisLabels,
+  type ExerciceCalendrierEntry,
+  type ExerciceKey,
+  type ExercicesConfig,
+} from "@/lib/finance/forms-calendar";
 
 import { useTableauxLibresStore } from "@/stores/tableau-libre-store";
 import { saveTableauxLibres } from "@/app/actions/tableau-libre";
@@ -116,14 +122,16 @@ interface DétailMensuelDialogProps {
   onClose: () => void;
   ligne: TableauLibreLigneRow;
   onSave: (details: DetailMensuelRow[]) => void;
+  exercicesConfig: ExercicesConfig;
 }
 
 function buildDefaultDetails(
   existingDetails: DetailMensuelRow[],
-  exercice: "N" | "N1" | "N2"
+  exercice: ExerciceKey,
+  duree: number,
 ): DetailMensuelRow[] {
   const result: DetailMensuelRow[] = [];
-  for (let m = 1; m <= 12; m++) {
+  for (let m = 1; m <= duree; m++) {
     const existing = existingDetails.find((d) => d.mois === m && d.exercice === exercice);
     result.push(
       existing ?? { mois: m, montant: 0, pourcentage: 0, exercice }
@@ -132,7 +140,7 @@ function buildDefaultDetails(
   return result;
 }
 
-function DétailMensuelDialog({ open, onClose, ligne, onSave }: DétailMensuelDialogProps) {
+function DétailMensuelDialog({ open, onClose, ligne, onSave, exercicesConfig }: DétailMensuelDialogProps) {
   const [details, setDetails] = useState<DetailMensuelRow[]>(() => ligne.details);
 
   useEffect(() => {
@@ -143,11 +151,11 @@ function DétailMensuelDialog({ open, onClose, ligne, onSave }: DétailMensuelDi
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function getDetailForExercice(exercice: "N" | "N1" | "N2"): DetailMensuelRow[] {
-    return buildDefaultDetails(details, exercice);
+  function getDetailForExercice(exercice: ExerciceKey): DetailMensuelRow[] {
+    return buildDefaultDetails(details, exercice, exercicesConfig[exercice].duree);
   }
 
-  function updateDetail(exercice: "N" | "N1" | "N2", mois: number, montant: number) {
+  function updateDetail(exercice: ExerciceKey, mois: number, montant: number) {
     setDetails((prev) => {
       const filtered = prev.filter((d) => !(d.mois === mois && d.exercice === exercice));
       const total = filtered
@@ -170,23 +178,30 @@ function DétailMensuelDialog({ open, onClose, ligne, onSave }: DétailMensuelDi
     });
   }
 
-  function handleRepartir(exercice: "N" | "N1" | "N2") {
+  function handleRepartir(exercice: ExerciceKey) {
     const baseValue = exercice === "N" ? ligne.nValeur : exercice === "N1" ? calculerN1(ligne) : calculerN2(ligne);
-    const perMonth = baseValue / 12;
+    const duree = exercicesConfig[exercice].duree;
+    const perMonth = duree > 0 ? baseValue / duree : 0;
     setDetails((prev) => {
       const filtered = prev.filter((d) => d.exercice !== exercice);
-      const newDetails: DetailMensuelRow[] = Array.from({ length: 12 }, (_, i) => ({
+      const newDetails: DetailMensuelRow[] = Array.from({ length: duree }, (_, i) => ({
         mois: i + 1,
         montant: perMonth,
-        pourcentage: 100 / 12,
+        pourcentage: duree > 0 ? 100 / duree : 0,
         exercice,
       }));
       return [...filtered, ...newDetails];
     });
   }
 
-  function renderExerciceTab(exercice: "N" | "N1" | "N2") {
+  function sanitizeDetails(): DetailMensuelRow[] {
+    return details.filter((detail) => detail.mois <= exercicesConfig[detail.exercice].duree);
+  }
+
+  function renderExerciceTab(exercice: ExerciceKey) {
+    const config = exercicesConfig[exercice];
     const rows = getDetailForExercice(exercice);
+    const moisLabels = buildMoisLabels(config.startMonth, config.startYear, config.duree);
     const total = rows.reduce((s, d) => s + d.montant, 0);
     const totalPct = rows.reduce((s, d) => s + d.pourcentage, 0);
 
@@ -209,7 +224,7 @@ function DétailMensuelDialog({ open, onClose, ligne, onSave }: DétailMensuelDi
             <tbody>
               {rows.map((row) => (
                 <tr key={row.mois} className="border-b last:border-b-0 hover:bg-muted/30">
-                  <td className="px-2 py-1 text-muted-foreground text-xs">{MOIS_LABELS[row.mois - 1]}</td>
+                  <td className="px-2 py-1 text-muted-foreground text-xs">{moisLabels[row.mois - 1]}</td>
                   <td className="px-0 py-0">
                     <input
                       type="number"
@@ -263,7 +278,7 @@ function DétailMensuelDialog({ open, onClose, ligne, onSave }: DétailMensuelDi
         </Tabs>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={onClose}>Annuler</Button>
-          <Button size="sm" onClick={() => { onSave(details); onClose(); }}>Valider</Button>
+          <Button size="sm" onClick={() => { onSave(sanitizeDetails()); onClose(); }}>Valider</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -403,9 +418,10 @@ interface TableauCardProps {
   tableau: TableauLibreRow;
   tableauIndex: number;
   dossierId: string;
+  exercicesConfig: ExercicesConfig;
 }
 
-function TableauCard({ tableau, tableauIndex, dossierId }: TableauCardProps) {
+function TableauCard({ tableau, tableauIndex, dossierId, exercicesConfig }: TableauCardProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [propsOpen, setPropsOpen] = useState(false);
   const [detailLigneIndex, setDetailLigneIndex] = useState<number | null>(null);
@@ -563,6 +579,7 @@ function TableauCard({ tableau, tableauIndex, dossierId }: TableauCardProps) {
           open={detailLigneIndex !== null}
           onClose={() => setDetailLigneIndex(null)}
           ligne={activeDetail}
+          exercicesConfig={exercicesConfig}
           onSave={(newDetails) => {
             setDetails(dossierId, tableauIndex, detailLigneIndex, newDetails);
           }}
@@ -577,9 +594,16 @@ function TableauCard({ tableau, tableauIndex, dossierId }: TableauCardProps) {
 export interface TableauxLibresFormProps {
   dossierId: string;
   initialData: TableauLibreRow[];
+  dateDebutExerciceN?: string;
+  exercices?: ExerciceCalendrierEntry[];
 }
 
-export function TableauxLibresForm({ dossierId, initialData }: TableauxLibresFormProps) {
+export function TableauxLibresForm({
+  dossierId,
+  initialData,
+  dateDebutExerciceN,
+  exercices,
+}: TableauxLibresFormProps) {
   const [isPending, startTransition] = useTransition();
   const hydrated = useRef(false);
 
@@ -588,6 +612,7 @@ export function TableauxLibresForm({ dossierId, initialData }: TableauxLibresFor
   const tableaux = draft.tableaux;
   const hasUnsaved = store.hasUnsavedChanges(dossierId);
   const invalidateControleStores = useInvalidateControleStores();
+  const exercicesConfig = buildExercicesConfig(dateDebutExerciceN, exercices);
 
 
   // Hydratation depuis le serveur.
@@ -614,10 +639,10 @@ export function TableauxLibresForm({ dossierId, initialData }: TableauxLibresFor
         toast.error(result.error);
       }
     });
-  }, [dossierId, tableaux, store]);
+  }, [dossierId, tableaux, store, invalidateControleStores]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col py-8 px-4 2xl:px-32">
       {/* Barre d'actions */}
       <div className="shrink-0 flex items-center justify-between px-6 py-3 border-b bg-background">
         <div className="flex items-center gap-3">
@@ -676,6 +701,7 @@ export function TableauxLibresForm({ dossierId, initialData }: TableauxLibresFor
               tableau={tableau}
               tableauIndex={tIdx}
               dossierId={dossierId}
+              exercicesConfig={exercicesConfig}
             />
           ))
         )}
