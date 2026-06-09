@@ -154,6 +154,7 @@ export function buildDashboardKpiData(
   const resCourant = fc.resCourant;
   const resNet = fc.resNet;
   const cafAmt = fc.caf;
+  const nMoisCtx = fc.calendar.dureesMois;
 
   // ── Séries mensuelles pour le calcul du runway ────────────────────────────
   const totalEncMonthly = extractTresoMonthly(tresoRows, "enc-total");
@@ -202,14 +203,14 @@ export function buildDashboardKpiData(
 
   // Runway (mois avant trésorerie nulle)
   function calcRunway(encSeries: number[], decSeries: number[], lastSolde: number): number {
-    const avgBurn = decSeries.reduce((s, v, i) => s + v - (encSeries[i] ?? 0), 0) / 12;
+    const avgBurn = decSeries.reduce((s, v, i) => s + v - (encSeries[i] ?? 0), 0) / Math.max(1, decSeries.length);
     if (avgBurn <= 0) return 36; // génère du cash → runway infini
     return lastSolde > 0 ? lastSolde / avgBurn : 0;
   }
   const runwayAmt: Record<YearKey, number> = {
-    y1: calcRunway(totalEncMonthly.y1, totalDecMonthly.y1, soldeFinal.y1[11] ?? 0),
-    y2: calcRunway(totalEncMonthly.y2, totalDecMonthly.y2, soldeFinal.y2[11] ?? 0),
-    y3: calcRunway(totalEncMonthly.y3, totalDecMonthly.y3, soldeFinal.y3[11] ?? 0),
+    y1: calcRunway(totalEncMonthly.y1, totalDecMonthly.y1, soldeFinal.y1[soldeFinal.y1.length - 1] ?? 0),
+    y2: calcRunway(totalEncMonthly.y2, totalDecMonthly.y2, soldeFinal.y2[soldeFinal.y2.length - 1] ?? 0),
+    y3: calcRunway(totalEncMonthly.y3, totalDecMonthly.y3, soldeFinal.y3[soldeFinal.y3.length - 1] ?? 0),
   };
 
   // ── Plan de financement & KPIs Investissements / Financement ──────────────
@@ -380,7 +381,7 @@ export function buildDashboardKpiData(
         { ...buildCard("total_ressources", "Total ressources", "financement", "currency", "up", totalRessourcesKpi, ZERO, false, "Apports + emprunts + CAF"), y0value: { amount: pfTotalRessources.y0, trend: null } },
         buildCard("total_besoins_initial", "Besoins initiaux (y0)", "financement", "currency", "up", totalBesoinsInitialKpi, ZERO, false, "Snapshot démarrage"),
         buildCard("total_ressources_initial", "Ressources initiales (y0)", "financement", "currency", "up", totalRessourcesInitialKpi, ZERO, false, "Snapshot démarrage"),
-        buildCard("mensualite_emprunt", "Mensualité emprunt", "financement", "currency", "down", { y1: Math.round((fc.capitalRembourse.y1 + fc.interetsEmprunts.y1) / 12), y2: Math.round((fc.capitalRembourse.y2 + fc.interetsEmprunts.y2) / 12), y3: Math.round((fc.capitalRembourse.y3 + fc.interetsEmprunts.y3) / 12) }, ZERO, false, "Capital + intérêts / 12"),
+        buildCard("mensualite_emprunt", "Mensualité emprunt", "financement", "currency", "down", { y1: Math.round((fc.capitalRembourse.y1 + fc.interetsEmprunts.y1) / nMoisCtx.y1), y2: Math.round((fc.capitalRembourse.y2 + fc.interetsEmprunts.y2) / nMoisCtx.y2), y3: Math.round((fc.capitalRembourse.y3 + fc.interetsEmprunts.y3) / nMoisCtx.y3) }, ZERO, false, "Capital + intérêts / mois"),
         buildCard("capital_restant_du", "Capital restant dû", "financement", "currency", "down", empruntsPassif, ZERO, false, "Bilan fin d'exercice"),
         buildCard("capitaux_propres", "Capitaux propres", "financement", "currency", "up", capitauxPropres, ZERO, false, "Bilan fin d'exercice"),
         { ...buildCard("remboursement_capital", "Remboursement capital", "financement", "currency", "down", { y1: fc.capitalRembourse.y1, y2: fc.capitalRembourse.y2, y3: fc.capitalRembourse.y3 }, ZERO, false, "Annuel"), y0value: { amount: pfRemboursementCapital.y0, trend: null } },
