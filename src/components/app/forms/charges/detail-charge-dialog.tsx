@@ -16,12 +16,15 @@ import { formatNumber, formatAmount } from "@/lib/format";
 import { useChargesStore } from "@/stores/charges-store";
 import { useActiviteStore } from "@/stores/activite-store";
 import type { ChargeExploitationRow } from "@/lib/schemas/charges";
-import type {
-  ExerciceKey,
-  ExerciceCalendrierEntry,
-  ExerciceConfig,
-  ExercicesConfig,
-} from "@/hooks/use-activite-calculs";
+import {
+  buildEvenSaisonnalite as sharedBuildEvenSaisonnalite,
+  buildExercicesConfig as sharedBuildExercicesConfig,
+  buildMoisLabels as sharedBuildMoisLabels,
+  resampleSaisonnalite,
+  type ExerciceCalendrierEntry,
+  type ExerciceKey,
+  type ExercicesConfig,
+} from "@/lib/finance/forms-calendar";
 import { cellInput } from "../helpers/cell-styles";
 import { Th } from "../helpers/table-helpers";
 
@@ -48,26 +51,20 @@ const TOUS_MOIS = [
 ] as const;
 
 /** Parse une string "YYYY-MM-DD" en Date locale (sans décalage UTC). */
-function parseLocalDate(str: string): Date {
-  const [y, m, d] = str.split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
 
 /** Génère les étiquettes « Mar. 26 » pour chaque mois de l'exercice. */
 function buildMoisLabels(startMonth: number, startYear: number, duree: number): readonly string[] {
-  return Array.from({ length: duree }, (_, i) => {
-    const moisIdx = (startMonth + i) % 12;
-    const yearOffset = Math.floor((startMonth + i) / 12);
-    const yy = String((startYear + yearOffset) % 100).padStart(2, "0");
-    return `${TOUS_MOIS[moisIdx]} ${yy}`;
-  });
+  return sharedBuildMoisLabels(startMonth, startYear, duree);
 }
 
 /** Répartition équitable sur `duree` mois. */
 function buildEvenSaisonnalite(duree: number): number[] {
-  const val = +(100 / duree).toFixed(2);
-  const last = +(100 - val * (duree - 1)).toFixed(2);
-  return [...Array(duree - 1).fill(val), last];
+  return sharedBuildEvenSaisonnalite(duree);
+}
+
+function normalizeSaisonnalite(source: number[] | undefined, duree: number): number[] {
+  if (!Array.isArray(source) || source.length === 0) return buildEvenSaisonnalite(duree);
+  return resampleSaisonnalite(source, duree);
 }
 
 /** Calcule startMonth, startYear et duree pour chaque exercice. */
@@ -75,38 +72,7 @@ function buildExercicesConfig(
   dateDebutN: string | undefined,
   exercices: ExerciceCalendrierEntry[] | undefined,
 ): ExercicesConfig {
-  const currentYear = new Date().getFullYear();
-  const DEFAULT: ExerciceConfig = { startMonth: 0, startYear: currentYear, duree: 12 };
-  if (!dateDebutN) return { N: DEFAULT, N1: DEFAULT, N2: DEFAULT };
-
-  const [yearNStr, monthNStr] = dateDebutN.split("-");
-  const startN     = parseInt(monthNStr, 10) - 1;
-  const startYearN = parseInt(yearNStr, 10);
-  const dureeN     = exercices?.[0]?.duree ?? 12;
-
-  let startN1 = 0, startYearN1 = startYearN;
-  const dureeN1 = exercices?.[1]?.duree ?? 12;
-  if (exercices?.[0]?.dateCloture) {
-    const clot = parseLocalDate(exercices[0].dateCloture);
-    clot.setDate(clot.getDate() + 1);
-    startN1     = clot.getMonth();
-    startYearN1 = clot.getFullYear();
-  }
-
-  let startN2 = 0, startYearN2 = startYearN1;
-  const dureeN2 = exercices?.[2]?.duree ?? 12;
-  if (exercices?.[1]?.dateCloture) {
-    const clot = parseLocalDate(exercices[1].dateCloture);
-    clot.setDate(clot.getDate() + 1);
-    startN2     = clot.getMonth();
-    startYearN2 = clot.getFullYear();
-  }
-
-  return {
-    N:  { startMonth: startN,  startYear: startYearN,  duree: dureeN  },
-    N1: { startMonth: startN1, startYear: startYearN1, duree: dureeN1 },
-    N2: { startMonth: startN2, startYear: startYearN2, duree: dureeN2 },
-  };
+  return sharedBuildExercicesConfig(dateDebutN, exercices);
 }
 
 const fmt = (v: number, dec = 0): string => v === 0 ? "—" : formatNumber(v, dec);
@@ -171,28 +137,31 @@ function TableauMensuel({ lignes, moisLabels }: { lignes: LigneMensuelle[]; mois
               )}>
                 {ligne.label}
               </td>
-              {ligne.values.map((val, idx) => (
-                <td key={idx} className="px-0 py-0 align-middle border-r border-border/40 last:border-r-0 w-14">
-                  {ligne.editable ? (
-                    <input
-                      type="number"
-                      className={cn(cellInput, "text-right")}
-                      value={val === 0 ? "" : val}
-                      placeholder="0"
-                      inputMode="decimal"
-                      step={ligne.format === "percent" ? "0.01" : "1"}
-                      onChange={(e) => ligne.onChange?.(idx, numVal(e.target.value))}
-                    />
-                  ) : (
-                    <span className={cn(
-                      "block px-1 py-1.5 text-xs text-right tabular-nums",
-                      val === 0 ? "text-muted-foreground/40" : ligne.highlight ? "font-semibold" : "",
-                    )}>
-                      {fmtCell(val, ligne.format)}
-                    </span>
-                  )}
-                </td>
-              ))}
+              {mois.map((_, idx) => {
+                const val = ligne.values[idx] ?? 0;
+                return (
+                  <td key={idx} className="px-0 py-0 align-middle border-r border-border/40 last:border-r-0 w-14">
+                    {ligne.editable ? (
+                      <input
+                        type="number"
+                        className={cn(cellInput, "text-right")}
+                        value={val === 0 ? "" : val}
+                        placeholder="0"
+                        inputMode="decimal"
+                        step={ligne.format === "percent" ? "0.01" : "1"}
+                        onChange={(e) => ligne.onChange?.(idx, numVal(e.target.value))}
+                      />
+                    ) : (
+                      <span className={cn(
+                        "block px-1 py-1.5 text-xs text-right tabular-nums",
+                        val === 0 ? "text-muted-foreground/40" : ligne.highlight ? "font-semibold" : "",
+                      )}>
+                        {fmtCell(val, ligne.format)}
+                      </span>
+                    )}
+                  </td>
+                );
+              })}
               <td className={cn(
                 "px-2 py-1.5 text-xs font-semibold text-right tabular-nums w-20 border-l border-border",
                 ligne.totalClass,
@@ -218,8 +187,8 @@ interface DialogBodyProps {
 }
 
 function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfig }: DialogBodyProps) {
-  const { updateFourniture, updateService } = useChargesStore();
-  const updateCharge = categorie === "FOURNITURE_CONSOMMABLE" ? updateFourniture : updateService;
+  const { updateFournitureRow, updateServiceRow } = useChargesStore();
+  const updateCharge = categorie === "FOURNITURE_CONSOMMABLE" ? updateFournitureRow : updateServiceRow;
 
   const activiteDraft = useActiviteStore((s) => s.getDraft(dossierId));
   const activites = activiteDraft.activites;
@@ -297,9 +266,7 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
       const saisons = activites[i]?.saisonnaliteCA as Record<string, number[]> | undefined;
       // Fallback : saisonnalité de l'année N si l'année cible n'est pas renseignée
       const actSaisonRaw = saisons?.[exKey] ?? saisons?.["N"];
-      const actSaison = Array.isArray(actSaisonRaw) && actSaisonRaw.length >= duree
-        ? actSaisonRaw
-        : buildEvenSaisonnalite(duree);
+      const actSaison = normalizeSaisonnalite(actSaisonRaw, duree);
       for (let m = 0; m < duree; m++) {
         result[m] += weight * (actSaison[m] ?? 0);
       }
@@ -320,9 +287,9 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
   const [saisonnalite, setSaisonnalite] = useState<Record<ExerciceKey, number[]>>(() => {
     const savedSaison = stored?.saisonnaliteCA;
     return {
-      N:  Array.isArray(savedSaison?.["N"])  ? savedSaison["N"]  : buildEvenSaisonnalite(exercicesConfig.N.duree),
-      N1: Array.isArray(savedSaison?.["N1"]) ? savedSaison["N1"] : buildEvenSaisonnalite(exercicesConfig.N1.duree),
-      N2: Array.isArray(savedSaison?.["N2"]) ? savedSaison["N2"] : buildEvenSaisonnalite(exercicesConfig.N2.duree),
+      N:  normalizeSaisonnalite(savedSaison?.["N"],  exercicesConfig.N.duree),
+      N1: normalizeSaisonnalite(savedSaison?.["N1"], exercicesConfig.N1.duree),
+      N2: normalizeSaisonnalite(savedSaison?.["N2"], exercicesConfig.N2.duree),
     };
   });
 
@@ -346,7 +313,7 @@ function DialogBody({ dossierId, currentIndex, categorie, charge, exercicesConfi
       evolutionN1: modeCalc === "FIXE" ? charge.evolutionN1 : getMontant("N") !== 0 ? +(((totalBaseCA("N1") - totalBaseCA("N")) / totalBaseCA("N")) * 100).toFixed(2) : 0,
       evolutionN2: modeCalc === "FIXE" ? charge.evolutionN2 : getMontant("N1") !== 0 ? +(((totalBaseCA("N2") - totalBaseCA("N1")) / totalBaseCA("N1")) * 100).toFixed(2) : 0,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modeCalc, saisonnalite, tauxParActivite, activitesSel]);
 
   // ── Mode % CA : recalcul montants + saisonnalité quand taux/sélection changent ──
@@ -708,7 +675,7 @@ export function DetailChargeDialog({
   // Sync currentIndex quand le dialog s'ouvre sur une ligne différente.
   // DetailChargeDialog est toujours monté (jamais démonté) → useState n'init qu'une fois.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (open) setCurrentIndex(chargeIndex);
   }, [open, chargeIndex]);
 
