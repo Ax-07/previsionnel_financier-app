@@ -13,10 +13,15 @@ import type { TresorerieRowsInput } from "./types";
 
 export function buildTresorerieRows(input: TresorerieRowsInput): TresorerieRow[] {
   const { enc, dec, soldePrecedent, variation, soldeFinal, encoursFournisseurs, immosParNature } = input;
+  const durees = {
+    y1: enc.totalEnc.y1.length,
+    y2: enc.totalEnc.y2.length,
+    y3: enc.totalEnc.y3.length,
+  };
 
   return [
     // ──── ENCAISSEMENTS ─────────────────────────────────────────────────────
-    sectionRow("enc-section", "ENCAISSEMENTS"),
+    sectionRow("enc-section", "ENCAISSEMENTS", durees),
     mkRow("enc-capital", "Apports en capital", "normal", enc.encApportsCapital, { hideIfZero: true }),
     mkRow("enc-cc", "Apports en comptes courants", "normal", enc.encApportsCC, { hideIfZero: true }),
     mkRow("enc-emprunts", "Emprunts (déblocages)", "normal", enc.encEmprunts, { hideIfZero: true }),
@@ -33,7 +38,7 @@ export function buildTresorerieRows(input: TresorerieRowsInput): TresorerieRow[]
     mkRow("enc-total", "Total des encaissements", "subtotal", enc.totalEnc),
 
     // ──── DÉCAISSEMENTS ─────────────────────────────────────────────────────
-    sectionRow("dec-section", "DÉCAISSEMENTS"),
+    sectionRow("dec-section", "DÉCAISSEMENTS", durees),
 
     mkRow("dec-immo", "Immobilisations (Total)", "normal", dec.decImmoTTC, {
       hideIfZero: true,
@@ -124,7 +129,7 @@ export function buildTresorerieRows(input: TresorerieRowsInput): TresorerieRow[]
     mkRow("dec-total", "Total des décaissements", "subtotal", dec.totalDec),
 
     // ──── SOLDE ─────────────────────────────────────────────────────────────
-    sectionRow("tres-section", "SOLDE DE TRÉSORERIE"),
+    sectionRow("tres-section", "SOLDE DE TRÉSORERIE", durees),
     mkRow("tres-solde-prec", "Solde précédent", "result", soldePrecedent, { totalIsFirstValue: true }),
     mkRow("tres-variation", "Variation de trésorerie", "result", variation),
     mkRow("tres-solde-final", "Solde de trésorerie", "highlight", soldeFinal, { totalIsEndValue: true }),

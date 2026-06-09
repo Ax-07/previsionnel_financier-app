@@ -4,6 +4,7 @@
  */
 
 import type { MonthlySeries } from "@/lib/finance/calculs/monthly";
+import type { YearKey } from "@/lib/finance/utils";
 import type { TresorerieValue, TresorerieRow, TresorerieRowStyle, Yk3 } from "@/lib/finance/tresorerie-types";
 
 export function tresoValue(
@@ -14,7 +15,7 @@ export function tresoValue(
   const total = firstValue
     ? (months[0] ?? 0)
     : endValue
-      ? (months[11] ?? 0)
+      ? (months[months.length - 1] ?? 0)
       : months.reduce((a, b) => a + b, 0);
   return { months, total };
 }
@@ -51,8 +52,15 @@ export function mkRow(
   };
 }
 
-export function sectionRow(key: string, label: string): TresorerieRow {
-  const zero = new Array(12).fill(0) as MonthlySeries;
-  const empty: Yk3 = { y1: zero, y2: zero, y3: zero };
+export function sectionRow(
+  key: string,
+  label: string,
+  durees: Record<YearKey, number> = { y1: 12, y2: 12, y3: 12 },
+): TresorerieRow {
+  const empty: Yk3 = {
+    y1: new Array(durees.y1).fill(0) as MonthlySeries,
+    y2: new Array(durees.y2).fill(0) as MonthlySeries,
+    y3: new Array(durees.y3).fill(0) as MonthlySeries,
+  };
   return mkRow(key, label, "section", empty);
 }
