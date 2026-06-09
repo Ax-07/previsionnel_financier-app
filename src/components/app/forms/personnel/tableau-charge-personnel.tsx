@@ -9,13 +9,14 @@ import { useHypotheseStore } from "@/stores/hypothese-store";
 import { HYPOTHESES_PERSONNEL, type LigneChargePersonnelRow } from "@/lib/schemas/personnel";
 import { usePersonnelStore, type PersonnelDraft } from "@/stores/personnel-store";
 import { saveLignesChargesPersonnel } from "@/app/actions/personnel";
-import { SectionHeader } from "./section-header";
-import { Th, Td, cellInput, cellSelect } from "./personnel-form-shared";
 import { GroupedDndTable } from "@/components/ui/grouped-dnd-table";
 import { useGroupedDnd } from "@/hooks/use-grouped-dnd";
 import { SortableTableRow, DragHandleCell } from "@/components/ui/sortable-table-row";
 import { formatNumber } from "@/lib/format";
 import { useReloadScenarioData } from "@/hooks/use-reload-scenario-data";
+import { cellInput, cellSelect } from "../helpers/cell-styles";
+import { Td, Th } from "../helpers/table-helpers";
+import { SectionHeader } from "../helpers/section-header";
 
 export type TypeChargePersonnel = "AUTRE" | "REMBOURSEMENT" | "PARTICIPATION";
 

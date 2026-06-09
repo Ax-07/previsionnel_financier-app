@@ -9,21 +9,20 @@ import { useHypotheseStore } from "@/stores/hypothese-store";
 import { HYPOTHESES_PERSONNEL, type LigneTaxeSalaireRow } from "@/lib/schemas/personnel";
 import { usePersonnelStore } from "@/stores/personnel-store";
 import { saveLignesTaxesSalaires, fetchDossierDebutExercice } from "@/app/actions/personnel";
-import { SectionHeader } from "./section-header";
-import { Th, Td, cellInput, cellSelect } from "./personnel-form-shared";
 import { GroupedDndTable } from "@/components/ui/grouped-dnd-table";
 import { useGroupedDnd } from "@/hooks/use-grouped-dnd";
 import { SortableTableRow, DragHandleCell } from "@/components/ui/sortable-table-row";
 import { useReloadScenarioData } from "@/hooks/use-reload-scenario-data";
 import { formatNumber } from "@/lib/format";
+import { cellInput, cellSelect } from "../helpers/cell-styles";
+import { Td, tempId, Th } from "../helpers/table-helpers";
+import { SectionHeader } from "../helpers/section-header";
 
 const EMPTY_TAXES: LigneTaxeSalaireRow[] = [];
 const EMPTY_SALARIES_FOR_TAXES: import("@/lib/schemas/personnel").LigneSalarieRow[] = [];
 
 const COL_SPAN = 13;
 const GROUP_NAME_COL_SPAN = 5; // Act. | Libelle | Hyp. | Calc. | Taux %
-
-const tempId = () => "__new__" + crypto.randomUUID();
 
 function emptyRow(groupe?: string): LigneTaxeSalaireRow {
   return {

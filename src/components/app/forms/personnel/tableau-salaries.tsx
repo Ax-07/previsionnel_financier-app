@@ -24,17 +24,15 @@ import { saveLignesSalaries } from "@/app/actions/personnel";
 import { GroupedDndTable } from "@/components/ui/grouped-dnd-table";
 import { useGroupedDnd } from "@/hooks/use-grouped-dnd";
 import { SortableTableRow, DragHandleCell } from "@/components/ui/sortable-table-row";
-import { SectionHeader } from "./section-header";
 import {
-  Th,
-  Td,
   TotauxSalariesRow,
-  cellInput,
-  cellSelect,
   applyEvolution,
   calcEvolution,
 } from "./personnel-form-shared";
 import { formatNumber } from "@/lib/format";
+import { cellInput, cellSelect } from "../helpers/cell-styles";
+import { Td, Th } from "../helpers/table-helpers";
+import { SectionHeader } from "../helpers/section-header";
 
 const tempId = () => `__new__${crypto.randomUUID()}`;
 

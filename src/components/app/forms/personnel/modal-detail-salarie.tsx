@@ -32,35 +32,22 @@ import {
 } from "@/lib/schemas/personnel";
 import { numVal } from "@/lib/utils";
 import { formatNumber } from "@/lib/format";
-import type {
-  ExerciceCalendrierEntry,
-  ExerciceConfig,
-  ExercicesConfig,
-} from "@/hooks/use-activite-calculs";
+import {
+  buildExercicesConfig as sharedBuildExercicesConfig,
+  buildMoisLabels as sharedBuildMoisLabels,
+  type ExerciceCalendrierEntry,
+  type ExerciceConfig,
+  type ExercicesConfig,
+} from "@/lib/finance/forms-calendar";
 
 // ── Types & helpers calendrier ───────────────────────────────────────────────────
-
-const TOUS_MOIS = [
-  "Jan.", "Fév.", "Mar.", "Avr.", "Mai", "Juin",
-  "Juil.", "Aoû.", "Sep.", "Oct.", "Nov.", "Déc.",
-] as const;
-
-function parseLocalDate(str: string): Date {
-  const [y, m, d] = str.split("-").map(Number);
-  return new Date(y, (m ?? 1) - 1, d ?? 1);
-}
 
 function buildMoisLabels(
   startMonth: number,
   startYear: number,
   duree: number,
 ): readonly string[] {
-  return Array.from({ length: duree }, (_, i) => {
-    const monthIdx = (startMonth + i) % 12;
-    const yearOffset = Math.floor((startMonth + i) / 12);
-    const yr = (startYear + yearOffset) % 100;
-    return `${TOUS_MOIS[monthIdx]} ${String(yr).padStart(2, "0")}`;
-  });
+  return sharedBuildMoisLabels(startMonth, startYear, duree);
 }
 
 /**
@@ -116,36 +103,7 @@ function buildExercicesConfig(
   dateDebutExerciceN?: string,
   exercices?: ExerciceCalendrierEntry[],
 ): ExercicesConfig {
-  const DEFAULT: ExerciceConfig = { startMonth: 0, startYear: 0, duree: 12 };
-  if (!dateDebutExerciceN || !exercices || exercices.length === 0) {
-    return { N: DEFAULT, N1: DEFAULT, N2: DEFAULT };
-  }
-
-  const startDate  = parseLocalDate(dateDebutExerciceN);
-  const startMonth = startDate.getMonth();
-  const startYear  = startDate.getFullYear();
-
-  const exN  = exercices[0];
-  const exN1 = exercices[1];
-  const exN2 = exercices[2];
-
-  const clotureN  = exN  ? parseLocalDate(exN.dateCloture)  : null;
-  const clotureN1 = exN1 ? parseLocalDate(exN1.dateCloture) : null;
-
-  const startN1Month = clotureN  ? (clotureN.getMonth()  + 1) % 12 : 0;
-  const startN1Year  = clotureN
-    ? clotureN.getFullYear() + (clotureN.getMonth() === 11 ? 1 : 0)
-    : startYear + 1;
-  const startN2Month = clotureN1 ? (clotureN1.getMonth() + 1) % 12 : 0;
-  const startN2Year  = clotureN1
-    ? clotureN1.getFullYear() + (clotureN1.getMonth() === 11 ? 1 : 0)
-    : startYear + 2;
-
-  return {
-    N:  { startMonth,            startYear,            duree: exN?.duree  ?? 12 },
-    N1: { startMonth: startN1Month, startYear: startN1Year, duree: exN1?.duree ?? 12 },
-    N2: { startMonth: startN2Month, startYear: startN2Year, duree: exN2?.duree ?? 12 },
-  };
+  return sharedBuildExercicesConfig(dateDebutExerciceN, exercices);
 }
 
 

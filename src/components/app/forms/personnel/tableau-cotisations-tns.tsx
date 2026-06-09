@@ -35,13 +35,14 @@ import {
   simulerTresorerieUrssafSur3Ans,
   type ModeCalculTNS,
 } from "@/lib/calcul/taux-tns";
-import { SectionHeader } from "./section-header";
-import { Th, Td, cellInput } from "./personnel-form-shared";
 import { GroupedDndTable } from "@/components/ui/grouped-dnd-table";
 import { useGroupedDnd } from "@/hooks/use-grouped-dnd";
 import { SortableTableRow, DragHandleCell } from "@/components/ui/sortable-table-row";
 import { formatNumber } from "@/lib/format";
 import { useReloadScenarioData } from "@/hooks/use-reload-scenario-data";
+import { cellInput } from "../helpers/cell-styles";
+import { Td, Th } from "../helpers/table-helpers";
+import { SectionHeader } from "../helpers/section-header";
 
 // ── Mapping libellé → index dans MontantsTNSLigne[] ──────────────────────────
 // Nouveaux libellés (réforme 2026) + anciens pour rétrocompatibilité BDD.
