@@ -43,12 +43,12 @@ export function salarieMonthlyBrut(
   montantAnnuel: number,
   detail: unknown,
   moisDebut = 0,
+  nMois = 12,
 ): MonthlySeries {
   const raw = parseDetailMensuel(detail);
-  if (!raw) return uniformMonthly(montantAnnuel);
-  if (moisDebut === 0) return raw;
+  if (!raw) return uniformMonthly(montantAnnuel, nMois);
   // Pivot : exercice[k] = calendrier[(moisDebut + k) % 12]
-  return Array.from({ length: 12 }, (_, k) => raw[(moisDebut + k) % 12]!) as MonthlySeries;
+  return Array.from({ length: nMois }, (_, k) => raw[(moisDebut + k) % 12]!) as MonthlySeries;
 }
 
 // ── Décalages client / fournisseur ────────────────────────────────────────────
@@ -62,23 +62,25 @@ export function shiftSeries(
   series: MonthlySeries,
   delayMonths: number,
   prevYearOverflow?: MonthlySeries,
+  outputLength = series.length,
+  overflowLength = series.length,
 ): { shifted: MonthlySeries; overflow: MonthlySeries } {
-  const shifted = zeroSeries();
-  const overflow = zeroSeries();
+  const shifted = zeroSeries(outputLength);
+  const overflow = zeroSeries(overflowLength);
 
   if (prevYearOverflow) {
-    for (let m = 0; m < 12; m++) {
+    for (let m = 0; m < outputLength; m++) {
       shifted[m] = (shifted[m] ?? 0) + (prevYearOverflow[m] ?? 0);
     }
   }
 
-  for (let m = 0; m < 12; m++) {
+  for (let m = 0; m < series.length; m++) {
     const val = series[m] ?? 0;
     const target = m + delayMonths;
-    if (target < 12) {
+    if (target < outputLength) {
       shifted[target] = (shifted[target] ?? 0) + val;
-    } else if (target < 24) {
-      overflow[target - 12] = (overflow[target - 12] ?? 0) + val;
+    } else if (target < outputLength + overflowLength) {
+      overflow[target - outputLength] = (overflow[target - outputLength] ?? 0) + val;
     }
   }
   return { shifted, overflow };
@@ -96,12 +98,14 @@ export function shiftSeriesWeighted(
   series: MonthlySeries,
   delayMonths: number,
   prevYearOverflow?: MonthlySeries,
+  outputLength = series.length,
+  overflowLength = series.length,
 ): { shifted: MonthlySeries; overflow: MonthlySeries } {
-  const shifted = zeroSeries();
-  const overflow = zeroSeries();
+  const shifted = zeroSeries(outputLength);
+  const overflow = zeroSeries(overflowLength);
 
   if (prevYearOverflow) {
-    for (let m = 0; m < 12; m++) {
+    for (let m = 0; m < outputLength; m++) {
       shifted[m] = (shifted[m] ?? 0) + (prevYearOverflow[m] ?? 0);
     }
   }
@@ -111,20 +115,20 @@ export function shiftSeriesWeighted(
   const w0 = 1 - frac;
   const w1 = frac;
 
-  for (let m = 0; m < 12; m++) {
+  for (let m = 0; m < series.length; m++) {
     const val = series[m] ?? 0;
     if (val === 0) continue;
 
     if (w0 > 0) {
       const t0 = m + floor;
-      if (t0 < 12) shifted[t0] = (shifted[t0] ?? 0) + val * w0;
-      else if (t0 < 24) overflow[t0 - 12] = (overflow[t0 - 12] ?? 0) + val * w0;
+      if (t0 < outputLength) shifted[t0] = (shifted[t0] ?? 0) + val * w0;
+      else if (t0 < outputLength + overflowLength) overflow[t0 - outputLength] = (overflow[t0 - outputLength] ?? 0) + val * w0;
     }
 
     if (w1 > 0) {
       const t1 = m + floor + 1;
-      if (t1 < 12) shifted[t1] = (shifted[t1] ?? 0) + val * w1;
-      else if (t1 < 24) overflow[t1 - 12] = (overflow[t1 - 12] ?? 0) + val * w1;
+      if (t1 < outputLength) shifted[t1] = (shifted[t1] ?? 0) + val * w1;
+      else if (t1 < outputLength + overflowLength) overflow[t1 - outputLength] = (overflow[t1 - outputLength] ?? 0) + val * w1;
     }
   }
   return { shifted, overflow };
@@ -142,10 +146,10 @@ export function computeSoldeMonthly(
   variation: MonthlySeries,
   initialSolde: number,
 ): { soldePrecedent: MonthlySeries; soldeFinal: MonthlySeries } {
-  const soldePrecedent = zeroSeries();
-  const soldeFinal = zeroSeries();
+  const soldePrecedent = zeroSeries(variation.length);
+  const soldeFinal = zeroSeries(variation.length);
   let running = initialSolde;
-  for (let m = 0; m < 12; m++) {
+  for (let m = 0; m < variation.length; m++) {
     soldePrecedent[m] = running;
     soldeFinal[m] = running + (variation[m] ?? 0);
     running = soldeFinal[m]!;
@@ -159,14 +163,11 @@ export function computeSoldeMonthly(
  * Répartit l'IS annuel en 4 acomptes trimestriels versés aux mois 3, 6, 9 et 12
  * (index 2, 5, 8, 11 en base zéro).
  */
-export function isQuarterly(isTotal: number): MonthlySeries {
-  if (isTotal <= 0) return zeroSeries();
+export function isQuarterly(isTotal: number, nMois = 12): MonthlySeries {
+  if (isTotal <= 0) return zeroSeries(nMois);
   const q = isTotal / 4;
-  const s = zeroSeries();
-  s[2] = q;
-  s[5] = q;
-  s[8] = q;
-  s[11] = q;
+  const s = zeroSeries(nMois);
+  for (const idx of quarterSlots(nMois, true)) s[idx] = (s[idx] ?? 0) + q;
   return s;
 }
 
@@ -183,14 +184,24 @@ export function isQuarterly(isTotal: number): MonthlySeries {
  * @param isCurrent  IS de l'exercice en cours (3 acomptes dans l'année)
  * @param isPrevious IS de l'exercice précédent (solde ← 4ème acompte en M12)
  */
-export function isQuarterlyDecaissement(isCurrent: number, isPrevious: number): MonthlySeries {
-  const s = zeroSeries();
+export function isQuarterlyDecaissement(isCurrent: number, isPrevious: number, nMois = 12): MonthlySeries {
+  const s = zeroSeries(nMois);
   if (isCurrent > 0) {
     const q = isCurrent / 4;
-    s[2] = q;
-    s[5] = q;
-    s[8] = q;
+    for (const idx of quarterSlots(nMois, false)) s[idx] = (s[idx] ?? 0) + q;
   }
-  if (isPrevious > 0) s[11] = isPrevious / 4;
+  if (isPrevious > 0) s[nMois - 1] = (s[nMois - 1] ?? 0) + isPrevious / 4;
   return s;
+}
+
+function quarterSlots(nMois: number, includeLast: boolean): number[] {
+  if (nMois === 12) return includeLast ? [2, 5, 8, 11] : [2, 5, 8];
+  const factors = includeLast ? [0.25, 0.5, 0.75, 1] : [0.25, 0.5, 0.75];
+  return Array.from(
+    new Set(
+      factors
+        .map((f) => Math.min(nMois - 1, Math.max(0, Math.ceil(nMois * f) - 1)))
+        .filter((idx) => idx >= 0),
+    ),
+  );
 }

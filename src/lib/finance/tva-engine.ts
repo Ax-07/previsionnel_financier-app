@@ -38,14 +38,15 @@ export function computeTVAMonthly(
   periodicite: "mensuel" | "trimestriel",
   initialCredit = 0,
 ): TVAMonthlyResult {
-  const tvaNetteMonthly = zeroSeries();
-  const creditReporteMonthly = zeroSeries();
-  const tvaAPayerMonthly = zeroSeries();
+  const nMois = Math.max(collectee.length, deductible.length);
+  const tvaNetteMonthly = zeroSeries(nMois);
+  const creditReporteMonthly = zeroSeries(nMois);
+  const tvaAPayerMonthly = zeroSeries(nMois);
 
   let credit = initialCredit;
   let accumTrimestre = 0;
 
-  for (let m = 0; m < 12; m++) {
+  for (let m = 0; m < nMois; m++) {
     const brute = (collectee[m] ?? 0) - (deductible[m] ?? 0);
     tvaNetteMonthly[m] = brute;
 
@@ -63,7 +64,7 @@ export function computeTVAMonthly(
     } else {
       // Trimestriel : accumulation puis paiement en fin de trimestre
       accumTrimestre += brute;
-      if ((m + 1) % 3 === 0) {
+      if ((m + 1) % 3 === 0 || m === nMois - 1) {
         const netAvecCredit = accumTrimestre - credit;
         if (netAvecCredit < 0) {
           creditReporteMonthly[m] = -netAvecCredit;

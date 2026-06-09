@@ -11,6 +11,7 @@
 import type { YearAcc, YearAcc4, MonthlyAcc } from "./series";
 import type { MonthlyCalcResult } from "@/lib/finance/calculs/monthly";
 import type { TVACalcResult } from "@/lib/finance/calculs/calc-tva";
+import type { ScenarioCalendar } from "@/lib/finance/pipeline/calendar";
 export type { TVACalcResult };
 
 // ── Interfaces composables ─────────────────────────────────────────────────────
@@ -21,6 +22,7 @@ export interface FinCalcMeta {
   moisDebut: number;
   /** Durée de projection configurée (1, 2 ou 3 ans). Les consommateurs utilisent ce champ pour masquer les colonnes y2/y3. */
   dureeProjection: 1 | 2 | 3;
+  calendar: ScenarioCalendar;
   yearLabels: Record<"y1" | "y2" | "y3", string>;
   toExerciceKey: (date: Date | string) => "y1" | "y2" | "y3" | null;
   exBorne1: Date;

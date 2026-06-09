@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDefaultScenario } from "@/lib/db/scenario";
+import { buildScenarioCalendar } from "@/lib/finance/pipeline/calendar";
 
 /**
  * Vérifie que l'utilisateur identifié par `userId` a bien accès au dossier
@@ -45,8 +46,8 @@ export async function fetchScenarioData(dossierId: string) {
     where: { id: dossierId },
     select: { dateDemarrage: true, dureeProjection: true },
   });
-  const dateDemarrage = new Date(dossier.dateDemarrage);
-  const dureeProjection = dossier.dureeProjection;
+  const dossierDateDemarrage = new Date(dossier.dateDemarrage);
+  const dossierDureeProjection = dossier.dureeProjection;
 
   // ── 2. Scénario par défaut ──────────────────────────────────────────────────
   const scenarioId = await getOrCreateDefaultScenario(dossierId);
@@ -62,6 +63,8 @@ export async function fetchScenarioData(dossierId: string) {
           moisPaiementSalaires: true,
           tnsRegimeSocial: true,
           tnsModeCalcul: true,
+          dateDebutExerciceN: true,
+          dureePrevisionnelle: true,
           exercices: {
             orderBy: { ordre: "asc" },
             select: { dateCloture: true, duree: true, ordre: true, annee: true },
@@ -71,6 +74,13 @@ export async function fetchScenarioData(dossierId: string) {
     },
   });
   const isIS = (scenario.parametres?.regimeFiscal ?? "IS") === "IS";
+  const calendar = buildScenarioCalendar({
+    dossierDateDemarrage,
+    dossierDureeProjection,
+    parametres: scenario.parametres,
+  });
+  const dateDemarrage = calendar.dateDebut;
+  const dureeProjection = calendar.dureeProjection;
 
   // ── 3. Fetch parallèle ──────────────────────────────────────────────────────
   // Fix C2 : encapsulation dans .catch() pour éviter qu'une seule requête DB
@@ -181,6 +191,9 @@ export async function fetchScenarioData(dossierId: string) {
     scenarioId,
     dateDemarrage,
     dureeProjection,
+    dossierDateDemarrage,
+    dossierDureeProjection,
+    calendar,
     scenario,
     isIS,
     activites,
