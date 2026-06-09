@@ -260,3 +260,291 @@
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
 }
+
+/* ─── Layout page style Google Docs ─── */
+
+.page-editor-bg {
+  background: hsl(220 13% 91%);
+  padding: 24px 16px 48px;
+}
+
+.dark .page-editor-bg {
+  background: hsl(220 13% 16%);
+}
+
+/* ─── ProseMirror — feuille A4 centrée ─── */
+/* Les variables --pm-* sont injectées par applyPageCssVariables() au premier RAF.
+   Les valeurs statiques ci-dessous sont les fallbacks pour le SSR/premier rendu. */
+
+.ProseMirror {
+  box-sizing: border-box;
+  /* Largeur fixe définie par la config page (fallback A4 = 794px) */
+  width: var(--pm-page-width, 794px);
+  min-width: var(--pm-page-width, 794px);
+  max-width: var(--pm-page-width, 794px);
+  /* Hauteur minimale = 1 page (gérée dynamiquement par le plugin) */
+  min-height: var(--pm-page-height, 1123px);
+  margin: 0 auto;
+  /* Paddings pilotés par la config — source de vérité unique */
+  /* padding-top: var(--pm-margin-top, 96px); */
+  padding-bottom: var(--pm-margin-bottom, 96px);
+  padding-left: var(--pm-margin-left, 96px);
+  padding-right: var(--pm-margin-right, 96px);
+  background: hsl(0 0% 100%);
+  color: hsl(220 13% 10%);
+  line-height: 1.35;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+  outline: none;
+}
+
+/* Masquer les widgets de pagination PENDANT la mesure DOM.
+   Le plugin pose data-pagination-measuring="true" le temps de
+   getBoundingClientRect(), puis retire l'attribut. */
+.ProseMirror[data-pagination-measuring="true"] .pm-page-break {
+  display: none !important;
+}
+
+.dark .ProseMirror {
+  background: hsl(220 13% 24%);
+  color: hsl(220 13% 90%);
+}
+
+.ProseMirror:focus {
+  outline: none;
+}
+
+.ProseMirror p {
+  margin: 0.5rem 0;
+}
+
+.ProseMirror h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin: 0.67em 0;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 0.75em 0;
+}
+
+.ProseMirror h3 {
+  font-size: 1.17em;
+  font-weight: bold;
+  margin: 0.83em 0;
+}
+
+/* Tailwind resets list-style-type — valeurs forcées par type */
+.ProseMirror ul {
+  margin: 0.5rem 0;
+  padding-left: 2rem;
+  list-style-type: disc;
+}
+
+.ProseMirror ol {
+  margin: 0.5rem 0;
+  padding-left: 2rem;
+  list-style-type: decimal;
+}
+
+.ProseMirror li {
+  margin: 0.25rem 0;
+}
+
+/* ─── Saut de page manuel (nœud page_break) ─── */
+/*
+ * Le nœud page_break est un marqueur logique positionnel.
+ * Il s'affiche comme un trait pointillé discret avec un label flottant.
+ * La vraie visualisation de séparation (bande grise inter-page) est gérée
+ * par le plugin de pagination via ses Decoration.widget.
+ */
+
+.ProseMirror .page-break {
+  position: relative;
+  display: block;
+  height: 0;
+  margin: 10px calc(-1 * var(--pm-margin-left, 96px));
+  border: none;
+  border-top: 1.5px dashed var(--border);
+  background: none;
+  box-shadow: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ProseMirror .page-break-label {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  background: var(--background);
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+
+/* Saut manuel sélectionné */
+.ProseMirror-selectednode .page-break {
+  border-top-color: var(--ring);
+}
+
+.ProseMirror-selectednode .page-break-label {
+  color: var(--ring);
+}
+
+/* ─── Saut de page automatique (Decoration.widget) ─── */
+/* Rendu par le plugin — pur visuel, absent du document.
+   La hauteur est fixée dynamiquement par JS.
+   La bande grise (.pm-page-break__gap) est positionnée par JS
+   exactement à la frontière bas-de-page / haut-de-page-suivante. */
+
+.pm-page-break {
+  /* hauteur injectée via el.style.height — ne pas fixer ici */
+  display: block;
+  position: relative;
+  margin: 0 calc(-1 * var(--pm-margin-left, 96px));
+  pointer-events: none;
+  user-select: none;
+}
+
+.pm-page-break__gap {
+  /* margin-top injecté via JS pour positionner la bande grise */
+  height: var(--pm-page-gap, 24px);
+  background: hsl(220 13% 88%);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 -2px 6px rgba(0, 0, 0, 0.06),
+    0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* Separation entre les 2 pages */
+.dark .pm-page-break__gap {
+  background: hsl(220 13% 16%);
+  border-top-color: rgba(255, 255, 255, 0.05);
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Impression — vrais sauts de page CSS ─── */
+@media print {
+  .page-editor-bg {
+    background: none;
+    padding: 0;
+  }
+
+  .ProseMirror {
+    max-width: 100%;
+    min-height: unset;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Sauts manuels */
+  .ProseMirror .page-break {
+    page-break-after: always;
+    break-after: page;
+    height: 0;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+    visibility: hidden;
+  }
+
+  /* Sauts automatiques (décoration) */
+  .rm-page-break {
+    display: none;
+  }
+}
+
+/* ─── Tableaux (prosemirror-tables) ─── */
+
+.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  overflow: hidden;
+  margin: 0.75rem 0;
+}
+
+.ProseMirror td,
+.ProseMirror th {
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  min-width: 20px;
+  font-size: 12px;
+}
+
+.ProseMirror tr:first-child td {
+  background-color: var(--muted);
+}
+
+.ProseMirror th {
+  font-weight: 600;
+  background-color: var(--muted);
+}
+
+.ProseMirror th:first-child,
+.ProseMirror td:first-child {
+  width: 35%;
+  min-width: 140px;
+  text-align: left;
+}
+
+/* Cellule sélectionnée (prosemirror-tables) */
+.ProseMirror .selectedCell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Poignée de redimensionnement de colonne */
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: var(--primary);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+
+/* ─── Rechercher / Remplacer ─── */
+
+.pm-find-match {
+  background-color: #fef08a;
+  border-radius: 2px;
+}
+
+.pm-find-active {
+  background-color: #fb923c;
+  border-radius: 2px;
+  outline: 1px solid #ea580c;
+}
+
+.dark .pm-find-match {
+  background-color: oklch(0.905 0.19 95.45 / 30%);
+}
+
+.dark .pm-find-active {
+  background-color: oklch(0.75 0.183 55.93 / 50%);
+  outline-color: oklch(0.705 0.213 47.604);
+}
