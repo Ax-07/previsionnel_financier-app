@@ -1,10 +1,8 @@
 ﻿"use client";
 
 import { useCallback, useTransition, useEffect } from "react";
-import { Trash2, Copy } from "lucide-react";
 import { cn, numVal } from "@/lib/utils";
 import { toast } from "sonner";
-
 import {
   type ActiviteCommissionRow,
   HYPOTHESES_ACTIVITE,
@@ -13,119 +11,109 @@ import {
 } from "@/lib/schemas/activite";
 import { filterByHypothese } from "@/lib/schemas/hypothese";
 import { useHypotheseStore } from "@/stores/hypothese-store";
-import { useActiviteStore } from "@/stores/activite-store";
+import { LocalActiviteCommissionRow, useActiviteStore } from "@/stores/activite-store";
 import { saveActivitesCommission } from "@/app/actions/activite";
-import { useInvalidateControleStores } from "@/hooks/use-invalidate-controle-stores";
 import { GroupedDndTable } from "@/components/ui/grouped-dnd-table";
 import { useGroupedDnd } from "@/hooks/use-grouped-dnd";
 import { SortableTableRow, DragHandleCell } from "@/components/ui/sortable-table-row";
-import { SectionHeader } from "./section-header";
-import { cellInput, cellSelect, intVal, Th, Td } from "./activite-table-helpers";
-
-const tempId = () => `__new__${crypto.randomUUID()}`;
-
-function emptyCommissionRow(groupe?: string): ActiviteCommissionRow {
-  return {
-    id: tempId(),
-    libelle: "",
-    hypothese: "COMMUNE",
-    montantN: 0, evolutionN1: 0, montantN1: 0, evolutionN2: 0, montantN2: 0,
-    calculCommission: "HT",
-    tauxCommission: 0,
-    tvaCommission: 20,
-    stocks: 0,
-    reglementFournisseurs: 30,
-    actif: true,
-    ...(groupe !== undefined ? { groupe } : {}),
-  };
-}
+import { Td, Th, NumericCellInput } from "../helpers/table-helpers";
+import { cellInput, cellSelect } from "../helpers/cell-styles";
+import { SectionHeader } from "../helpers/section-header";
+import { useReloadScenarioData } from "@/hooks/use-reload-scenario-data";
+import { RowActions } from "../helpers/row-actions";
 
 interface TableauActivitesCommissionsProps {
   dossierId: string;
   initialData: ActiviteCommissionRow[];
 }
+function TotauxCommissions({ rows, dossierId }: { rows: LocalActiviteCommissionRow[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const actifs = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
+  const fmt = (v: number) => v.toLocaleString("fr-FR", { maximumFractionDigits: 0 });
+  return (
+    <tfoot className="border-t-2 border-border bg-muted/30">
+      <tr>
+        <td colSpan={4} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
+          Total (actifs)
+        </td>
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
+          {fmt(actifs.reduce((s, r) => s + r.montantN, 0))}
+        </td>
+        <td />
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
+          {fmt(actifs.reduce((s, r) => s + r.montantN1, 0))}
+        </td>
+        <td />
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
+          {fmt(actifs.reduce((s, r) => s + r.montantN2, 0))}
+        </td>
+        <td colSpan={6} />
+      </tr>
+    </tfoot>
+  );
+}
 
+function GroupSummaryCommissions({ rows, dossierId }: { rows: LocalActiviteCommissionRow[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const actifs = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
+  const fmt = (v: number) => v.toLocaleString("fr-FR", { maximumFractionDigits: 0 });
+  return (
+    <>
+      <td className="px-2 py-1 text-xs font-medium text-right tabular-nums">
+        {fmt(actifs.reduce((s, r) => s + r.montantN, 0))}
+      </td>
+      <td />
+      <td className="px-2 py-1 text-xs font-medium text-right tabular-nums">
+        {fmt(actifs.reduce((s, r) => s + r.montantN1, 0))}
+      </td>
+      <td />
+      <td className="px-2 py-1 text-xs font-medium text-right tabular-nums">
+        {fmt(actifs.reduce((s, r) => s + r.montantN2, 0))}
+      </td>
+      <td colSpan={5} />
+    </>
+  );
+}
 /**
  * Tableau inline éditable des activités commissionnées — auto-contenu avec DnD et groupes.
  * N+1 et N+2 sont calculés automatiquement depuis le taux d'évolution.
  */
-export function TableauActivitesCommissions({
-  dossierId,
-  initialData,
-}: TableauActivitesCommissionsProps) {
+export function TableauActivitesCommissions({ dossierId, initialData }: TableauActivitesCommissionsProps) {
   const [isPending, startTransition] = useTransition();
-  const { getDraft, setActivitesCommissionnees, setCommissionsRows, markCommissionsSaved } = useActiviteStore();
-  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
-  const invalidateControleStores = useInvalidateControleStores();
+  const store = useActiviteStore();
+  const invalidateControleStores = useReloadScenarioData();
 
   useEffect(() => {
-    const cur = useActiviteStore.getState().getDraft(dossierId);
-    if (!cur.hasUnsavedCommissions) {
-      const serverIds = new Set(initialData.map((r) => r.id).filter(Boolean));
-      const ahead = cur.activitesCommissionnees.some((r) => r.id && !serverIds.has(r.id));
-      if (!ahead) setActivitesCommissionnees(dossierId, initialData);
-    }
+    store.hydrateCommissions(dossierId, initialData.map((r) => ({ ...r, _dirty: false })));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dossierId]);
 
-  const draft = getDraft(dossierId);
+  const draft = store.getDraft(dossierId);
   const rows = draft.activitesCommissionnees;
-  const isDirty = draft.hasUnsavedCommissions;
+  const isDirty = rows.some((r) => r._dirty) || (draft._deletedCommissionIds?.length ?? 0) > 0;
 
   const setRows = useCallback(
     (updater: (prev: ActiviteCommissionRow[]) => ActiviteCommissionRow[]) => {
-      const d = useActiviteStore.getState().getDraft(dossierId);
-      setCommissionsRows(dossierId, updater(d.activitesCommissionnees));
+      const d = store.getDraft(dossierId);
+      store.setCommissionsRows(dossierId, updater(d.activitesCommissionnees));
     },
-    [dossierId, setCommissionsRows]
+    [dossierId, store],
   );
-
   const dnd = useGroupedDnd({ rows, setRows });
-
-  const addRow = useCallback(
-    () => setRows((prev) => [...prev, emptyCommissionRow()]),
-    [setRows]
-  );
-
-  const addGroupe = useCallback(() => {
-    const existing = new Set(rows.filter((r) => r.groupe).map((r) => r.groupe!));
-    let n = 1;
-    while (existing.has(`Groupe ${n}`)) n++;
-    setRows((prev) => [...prev, emptyCommissionRow(`Groupe ${n}`)]);
-  }, [setRows, rows]);
-
-  const addRowToGroupe = useCallback(
-    (groupe: string) => setRows((prev) => [...prev, emptyCommissionRow(groupe)]),
-    [setRows]
-  );
-
-  const updateRow = useCallback(
-    (idx: number, data: Partial<ActiviteCommissionRow>) =>
-      setRows((prev) => { const n = [...prev]; n[idx] = { ...n[idx], ...data }; return n; }),
-    [setRows]
-  );
-
-  const removeRow = useCallback(
-    (idx: number) => setRows((prev) => prev.filter((_, i) => i !== idx)),
-    [setRows]
-  );
-
-  const duplicateRow = useCallback(
-    (idx: number) =>
-      setRows((prev) => {
-        const { id: _id, ...rest } = prev[idx];
-        return [...prev, { ...rest, id: tempId() }];
-      }),
-    [setRows]
-  );
 
   const saveAll = useCallback(() => {
     startTransition(async () => {
       try {
-        const d = useActiviteStore.getState().getDraft(dossierId);
+        const d = store.getDraft(dossierId);
         const result = await saveActivitesCommission(dossierId, d.activitesCommissionnees);
         if (result.success) {
-          markCommissionsSaved(dossierId);
+          if (result.idMap && Object.keys(result.idMap).length > 0) {
+            const idMap = result.idMap;
+            store.setCommissions(dossierId, (prev) =>
+              prev.map((r) => ({ ...r, id: r.id && idMap[r.id] ? idMap[r.id] : r.id }))
+            );
+          }
+          store.markCommissionsSaved(dossierId);
           toast.success(result.message);
           invalidateControleStores(dossierId);
         } else {
@@ -135,10 +123,10 @@ export function TableauActivitesCommissions({
         toast.error("Erreur lors de la sauvegarde");
       }
     });
-  }, [dossierId, markCommissionsSaved, invalidateControleStores]);
+  }, [dossierId, store, invalidateControleStores]);
 
   const renderRow = useCallback(
-    (row: ActiviteCommissionRow & { id: string }, isLastInGroup = false) => {
+    (row: LocalActiviteCommissionRow & { id: string }, isLastInGroup = false) => {
       const idx = rows.findIndex((r) => r.id === row.id);
       return (
         <SortableTableRow
@@ -148,7 +136,8 @@ export function TableauActivitesCommissions({
             "border-t border-border border-l-2 border-l-transparent bg-background hover:bg-muted/30 transition-colors",
             row.groupe && "border-l-primary/20 bg-primary/5 hover:bg-primary/10",
             row.groupe && isLastInGroup && "border-b-2 border-b-primary/20",
-            !(row.actif ?? true) && "opacity-50"
+            row._dirty && "bg-amber-50/40 dark:bg-amber-900/10",
+            !(row.actif ?? true) && "opacity-50",
           )}
         >
           <DragHandleCell />
@@ -157,7 +146,7 @@ export function TableauActivitesCommissions({
               type="checkbox"
               className="h-3.5 w-3.5 cursor-pointer accent-primary"
               checked={row.actif ?? true}
-              onChange={(e) => updateRow(idx, { actif: e.target.checked })}
+              onChange={(e) => store.updateActiviteCommissionRow(dossierId, idx, { actif: e.target.checked })}
             />
           </Td>
           <Td>
@@ -165,45 +154,43 @@ export function TableauActivitesCommissions({
               className={cellInput}
               value={row.libelle}
               placeholder="Libellé"
-              onChange={(e) => updateRow(idx, { libelle: e.target.value })}
+              onChange={(e) => store.updateActiviteCommissionRow(dossierId, idx, { libelle: e.target.value })}
             />
           </Td>
           <Td>
             <select
               className={cellSelect}
               value={row.hypothese}
-              onChange={(e) => updateRow(idx, { hypothese: e.target.value as ActiviteCommissionRow["hypothese"] })}
+              onChange={(e) =>
+                store.updateActiviteCommissionRow(dossierId, idx, {
+                  hypothese: e.target.value as ActiviteCommissionRow["hypothese"],
+                })
+              }
             >
               {HYPOTHESES_ACTIVITE.map((h) => (
-                <option key={h.value} value={h.value} className="bg-background text-foreground">{h.label}</option>
+                <option key={h.value} value={h.value} className="bg-background text-foreground">
+                  {h.label}
+                </option>
               ))}
             </select>
           </Td>
           <Td>
-            <input
-              type="number"
-              className={cn(cellInput, "text-right")}
-              value={row.montantN === 0 ? "" : row.montantN}
-              placeholder="0"
-              onChange={(e) => {
-                const n = numVal(e.target.value);
+            <NumericCellInput
+              value={row.montantN}
+              onChange={(n) => {
                 const n1 = parseFloat((n * (1 + row.evolutionN1 / 100)).toFixed(2));
                 const n2 = parseFloat((n1 * (1 + row.evolutionN2 / 100)).toFixed(2));
-                updateRow(idx, { montantN: n, montantN1: n1, montantN2: n2 });
+                store.updateActiviteCommissionRow(dossierId, idx, { montantN: n, montantN1: n1, montantN2: n2 });
               }}
             />
           </Td>
           <Td>
-            <input
-              type="number"
-              className={cn(cellInput, "text-right")}
-              value={row.evolutionN1 === 0 ? "" : row.evolutionN1}
-              placeholder="0"
-              onChange={(e) => {
-                const ev1 = numVal(e.target.value);
+            <NumericCellInput
+              value={row.evolutionN1}
+              onChange={(ev1) => {
                 const n1 = parseFloat((row.montantN * (1 + ev1 / 100)).toFixed(2));
                 const n2 = parseFloat((n1 * (1 + row.evolutionN2 / 100)).toFixed(2));
-                updateRow(idx, { evolutionN1: ev1, montantN1: n1, montantN2: n2 });
+                store.updateActiviteCommissionRow(dossierId, idx, { evolutionN1: ev1, montantN1: n1, montantN2: n2 });
               }}
             />
           </Td>
@@ -219,15 +206,11 @@ export function TableauActivitesCommissions({
             />
           </Td>
           <Td>
-            <input
-              type="number"
-              className={cn(cellInput, "text-right")}
-              value={row.evolutionN2 === 0 ? "" : row.evolutionN2}
-              placeholder="0"
-              onChange={(e) => {
-                const ev2 = numVal(e.target.value);
+            <NumericCellInput
+              value={row.evolutionN2}
+              onChange={(ev2) => {
                 const n2 = parseFloat((row.montantN1 * (1 + ev2 / 100)).toFixed(2));
-                updateRow(idx, { evolutionN2: ev2, montantN2: n2 });
+                store.updateActiviteCommissionRow(dossierId, idx, { evolutionN2: ev2, montantN2: n2 });
               }}
             />
           </Td>
@@ -246,78 +229,65 @@ export function TableauActivitesCommissions({
             <select
               className={cellSelect}
               value={row.calculCommission}
-              onChange={(e) => updateRow(idx, { calculCommission: e.target.value as ActiviteCommissionRow["calculCommission"] })}
+              onChange={(e) =>
+                store.updateActiviteCommissionRow(dossierId, idx, {
+                  calculCommission: e.target.value as ActiviteCommissionRow["calculCommission"],
+                })
+              }
             >
               {MODES_CALCUL_COMMISSION.map((m) => (
-                <option key={m.value} value={m.value} className="bg-background text-foreground">{m.label}</option>
+                <option key={m.value} value={m.value} className="bg-background text-foreground">
+                  {m.label}
+                </option>
               ))}
             </select>
           </Td>
           <Td>
-            <input
-              type="number"
-              className={cn(cellInput, "text-right")}
-              value={row.tauxCommission === 0 ? "" : row.tauxCommission}
-              placeholder="0"
-              onChange={(e) => updateRow(idx, { tauxCommission: numVal(e.target.value) })}
+            <NumericCellInput
+              value={row.tauxCommission}
+              onChange={(v) => store.updateActiviteCommissionRow(dossierId, idx, { tauxCommission: v })}
             />
           </Td>
           <Td>
             <select
               className={cellSelect}
               value={row.tvaCommission}
-              onChange={(e) => updateRow(idx, { tvaCommission: numVal(e.target.value) })}
+              onChange={(e) => store.updateActiviteCommissionRow(dossierId, idx, { tvaCommission: numVal(e.target.value) })}
             >
               {TAUX_TVA_OPTIONS.map((t) => (
-                <option key={t.value} value={t.value} className="bg-background text-foreground">{t.label}</option>
+                <option key={t.value} value={t.value} className="bg-background text-foreground">
+                  {t.label}
+                </option>
               ))}
             </select>
           </Td>
           <Td>
-            <input
-              type="number"
-              className={cn(cellInput, "text-right")}
-              value={row.stocks === 0 ? "" : (row.stocks ?? "")}
-              placeholder="0"
-              onChange={(e) => updateRow(idx, { stocks: intVal(e.target.value) })}
+            <NumericCellInput
+              value={row.stocks}
+              onChange={(v) => store.updateActiviteCommissionRow(dossierId, idx, { stocks: v })}
+              step={1}
             />
           </Td>
           <Td>
-            <input
-              type="number"
-              className={cn(cellInput, "text-right")}
-              value={row.reglementFournisseurs === 0 ? "" : (row.reglementFournisseurs ?? "")}
-              placeholder="0"
-              onChange={(e) => updateRow(idx, { reglementFournisseurs: intVal(e.target.value) })}
+            <NumericCellInput
+              value={row.reglementFournisseurs}
+              onChange={(v) => store.updateActiviteCommissionRow(dossierId, idx, { reglementFournisseurs: v })}
+              step={1}
             />
           </Td>
           <Td className="text-center px-1">
-            <div className="flex items-center justify-center gap-0.5">
-              <button
-                type="button"
-                className="p-1 text-muted-foreground hover:text-primary transition-colors"
-                onClick={() => duplicateRow(idx)}
-                title="Dupliquer"
-              >
-                <Copy className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                onClick={() => removeRow(idx)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
+              <RowActions
+                onDelete={() => store.removeActiviteCommissionRow(dossierId, idx)}
+                onDuplicate={() => store.duplicateActiviteCommissionRow(dossierId, idx)}
+                isPending={isPending}
+                groupe={row.groupe ?? null}
+              />
           </Td>
         </SortableTableRow>
       );
     },
-    [rows, updateRow, removeRow, duplicateRow]
+    [rows, isPending, store, dossierId],
   );
-
-  const filteredActifs = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif ?? true);
-  const fmt = (v: number) => v.toLocaleString("fr-FR", { maximumFractionDigits: 0 });
 
   return (
     <div className="space-y-3">
@@ -326,57 +296,21 @@ export function TableauActivitesCommissions({
         description="Revenus issus de commissions sur ventes ou prestations"
         isDirty={isDirty}
         isSaving={isPending}
-        onAdd={addRow}
+        onAdd={() => store.addActiviteCommissionRow(dossierId)}
         onSave={saveAll}
-        onAddGroup={addGroupe}
+        onAddGroup={() => store.addActiviteCommissionGroup(dossierId)}
       />
       <GroupedDndTable
         dnd={dnd}
         colSpan={15}
-        onAddRowToGroupe={addRowToGroupe}
+        onAddRowToGroupe={(groupe) => store.addActiviteCommissionToGroup(dossierId, groupe)}
         renderRow={renderRow}
         emptyMessage="Aucune activité commissionnée — cliquez sur « Ajouter »"
-        footer={
-          <tfoot className="border-t-2 border-border bg-muted/30">
-            <tr>
-              <td colSpan={4} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
-                Total (actifs)
-              </td>
-              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
-                {fmt(filteredActifs.reduce((s, r) => s + r.montantN, 0))}
-              </td>
-              <td />
-              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
-                {fmt(filteredActifs.reduce((s, r) => s + r.montantN1, 0))}
-              </td>
-              <td />
-              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
-                {fmt(filteredActifs.reduce((s, r) => s + r.montantN2, 0))}
-              </td>
-              <td colSpan={6} />
-            </tr>
-          </tfoot>
-        }
-        groupNameColSpan={4}
-        renderGroupSummaryCells={(groupRows) => {
-          const actifs = filterByHypothese(groupRows, hypotheseActive).filter((r) => r.actif ?? true);
-          return (
-            <>
-              <td className="px-2 py-1 text-xs font-medium text-right tabular-nums">
-                {fmt(actifs.reduce((s, r) => s + r.montantN, 0))}
-              </td>
-              <td />
-              <td className="px-2 py-1 text-xs font-medium text-right tabular-nums">
-                {fmt(actifs.reduce((s, r) => s + r.montantN1, 0))}
-              </td>
-              <td />
-              <td className="px-2 py-1 text-xs font-medium text-right tabular-nums">
-                {fmt(actifs.reduce((s, r) => s + r.montantN2, 0))}
-              </td>
-              <td colSpan={6} />
-            </>
-          );
-        }}
+        footer={<TotauxCommissions rows={rows} dossierId={dossierId} />}
+        groupNameColSpan={2}
+        renderGroupSummaryCells={(groupRows) => (
+          <GroupSummaryCommissions rows={groupRows as LocalActiviteCommissionRow[]} dossierId={dossierId} />
+        )}
       >
         <thead className="bg-muted/50 border-b-2 border-primary/20">
           <tr>

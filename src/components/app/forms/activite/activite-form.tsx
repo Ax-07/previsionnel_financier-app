@@ -36,7 +36,7 @@ export function ActiviteForm({
   exercices,
 }: ActiviteFormProps) {
   return (
-    <div className="h-full space-y-10 overflow-y-auto py-8 px-32">
+    <div className="h-full space-y-10 overflow-y-auto py-8 px-4 2xl:px-32">
       <TableauActivites
         dossierId={dossierId}
         initialData={activites}

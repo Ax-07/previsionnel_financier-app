@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useCallback, useTransition, useEffect } from "react";
-import { Trash2, Copy, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { cn, numVal } from "@/lib/utils";
 import { toast } from "sonner";
-
 import {
   type ActiviteRow,
   SECTEURS_ACTIVITE,
@@ -13,33 +12,75 @@ import {
 } from "@/lib/schemas/activite";
 import { filterByHypothese } from "@/lib/schemas/hypothese";
 import { useHypotheseStore } from "@/stores/hypothese-store";
-import { useActiviteStore } from "@/stores/activite-store";
+import { useActiviteStore, type LocalActiviteRow } from "@/stores/activite-store";
 import { saveActivites } from "@/app/actions/activite";
-import { useInvalidateControleStores } from "@/hooks/use-invalidate-controle-stores";
 import { useExercicesDisplay } from "@/hooks/use-exercices-display";
 import { GroupedDndTable } from "@/components/ui/grouped-dnd-table";
 import { useGroupedDnd } from "@/hooks/use-grouped-dnd";
 import { SortableTableRow, DragHandleCell } from "@/components/ui/sortable-table-row";
-import { SectionHeader } from "./section-header";
 import { DetailActiviteDialog } from "./detail-activite-dialog";
-import { cellInput, cellSelect, intVal, Th, Td } from "./activite-table-helpers";
+import { formatNumber } from "@/lib/format";
+import { useReloadScenarioData } from "@/hooks/use-reload-scenario-data";
+import { Td, Th, NumericCellInput } from "../helpers/table-helpers";
+import { cellInput, cellSelect } from "../helpers/cell-styles";
+import { SectionHeader } from "../helpers/section-header";
+import { RowActions } from "../helpers/row-actions";
 
-const tempId = () => `__new__${crypto.randomUUID()}`;
+function TotauxActivites({ rows, dossierId}: { rows: LocalActiviteRow[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const { showN1, showN2 } = useExercicesDisplay(dossierId);
+  const actifs = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
+  return (
+    <tfoot className="border-t-2 border-border bg-muted/30">
+      <tr>
+        <td colSpan={6} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
+          Total (actifs)
+        </td>
+        <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
+          {formatNumber(actifs.reduce((s, r) => s + (r.montantN ?? 0), 0))}
+        </td>
+        {showN1 && <td />}
+        {showN1 && (
+          <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
+            {formatNumber(actifs.reduce((s, r) => s + (r.montantN1 ?? 0), 0))}
+          </td>
+        )}
+        {showN2 && <td />}
+        {showN2 && (
+          <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
+            {formatNumber(actifs.reduce((s, r) => s + (r.montantN2 ?? 0), 0))}
+          </td>
+        )}
+        <td colSpan={7} />
+      </tr>
+    </tfoot>
+  );
+}
 
-/** Ligne vide avec valeurs par défaut (miroir de createEmptyActivite du store). */
-function emptyActiviteRow(groupe?: string): ActiviteRow {
-  return {
-    id: tempId(),
-    libelle: "",
-    secteur: "PRODUCTION",
-    hypothese: "COMMUNE",
-    montantN: 0, evolutionN1: 0, montantN1: 0, evolutionN2: 0, montantN2: 0,
-    tauxMarge: 0, stocks: 0,
-    reglementClients: 30, tvaVentes: 20,
-    reglementFournisseurs: 30, tvaAchats: 20,
-    actif: true,
-    ...(groupe !== undefined ? { groupe } : {}),
-  };
+function GroupSummaryActivites({ rows, dossierId}: { rows: LocalActiviteRow[]; dossierId: string }) {
+  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
+  const { showN1, showN2 } = useExercicesDisplay(dossierId);
+  const actifs = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif !== false);
+  return (
+    <>
+      <td className="px-2 py-1 text-xs font-medium text-right tabular-nums">
+        {formatNumber(actifs.reduce((s, r) => s + (r.montantN ?? 0), 0))}
+      </td>
+      {showN1 && <td />}
+      {showN1 && (
+        <td className="px-2 py-1 text-xs font-medium text-right tabular-nums">
+          {formatNumber(actifs.reduce((s, r) => s + (r.montantN1 ?? 0), 0))}
+        </td>
+      )}
+      {showN2 && <td />}
+      {showN2 && (
+        <td className="px-2 py-1 text-xs font-medium text-right tabular-nums">
+          {formatNumber(actifs.reduce((s, r) => s + (r.montantN2 ?? 0), 0))}
+        </td>
+      )}
+      <td colSpan={5} />
+    </>
+  );
 }
 
 interface TableauActivitesProps {
@@ -49,10 +90,6 @@ interface TableauActivitesProps {
   exercices?: Array<{ dateCloture: string; duree: number; annee: number }>;
 }
 
-/**
- * Tableau inline éditable du chiffre d'affaires — auto-contenu avec DnD et groupes.
- * Gère sa propre hydration, ses mutations, et la sauvegarde.
- */
 export function TableauActivites({
   dossierId,
   initialData,
@@ -62,84 +99,44 @@ export function TableauActivites({
   const [detailIdx, setDetailIdx] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const { getDraft, setActivites, setActivitesRows, markActivitesSaved } = useActiviteStore();
-  const hypotheseActive = useHypotheseStore((s) => s.getActive(dossierId));
-  const invalidateControleStores = useInvalidateControleStores();
+  const store = useActiviteStore();
+  const invalidateControleStores = useReloadScenarioData();
 
-  // Hydration unique : n'écrase le store que si aucune modif non sauvegardée
-  // et que le store n'est pas en avance sur les données serveur (stale RSC).
   useEffect(() => {
-    const cur = useActiviteStore.getState().getDraft(dossierId);
-    if (!cur.hasUnsavedActivites) {
-      const serverIds = new Set(initialData.map((r) => r.id).filter(Boolean));
-      const ahead = cur.activites.some((r) => r.id && !serverIds.has(r.id));
-      if (!ahead) setActivites(dossierId, initialData);
-    }
+    store.hydrateActivites(dossierId, initialData.map((r) => ({ ...r, _dirty: false })));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dossierId]);
 
-  const draft = getDraft(dossierId);
+  const draft = store.getDraft(dossierId);
   const { y1Label, y2Label, y3Label, showN1, showN2 } = useExercicesDisplay(dossierId);
   const rows = draft.activites;
-  const isDirty = draft.hasUnsavedActivites;
+  const isDirty = rows.some((r) => r._dirty) || (draft._deletedActiviteIds?.length ?? 0) > 0;
 
   // Bridge stable : appelle setActivitesRows (dirty=true) en lisant le store courant.
   const setRows = useCallback(
     (updater: (prev: ActiviteRow[]) => ActiviteRow[]) => {
-      const d = useActiviteStore.getState().getDraft(dossierId);
-      setActivitesRows(dossierId, updater(d.activites));
+      const d = store.getDraft(dossierId);
+      store.setActivitesRows(dossierId, updater(d.activites));
     },
-    [dossierId, setActivitesRows]
+    [dossierId, store]
   );
-
   const dnd = useGroupedDnd({ rows, setRows });
 
   // ── Mutations ─────────────────────────────────────────────────────────────
 
-  const addRow = useCallback(
-    () => setRows((prev) => [...prev, emptyActiviteRow()]),
-    [setRows]
-  );
-
-  const addGroupe = useCallback(() => {
-    const existing = new Set(rows.filter((r) => r.groupe).map((r) => r.groupe!));
-    let n = 1;
-    while (existing.has(`Groupe ${n}`)) n++;
-    setRows((prev) => [...prev, emptyActiviteRow(`Groupe ${n}`)]);
-  }, [setRows, rows]);
-
-  const addRowToGroupe = useCallback(
-    (groupe: string) => setRows((prev) => [...prev, emptyActiviteRow(groupe)]),
-    [setRows]
-  );
-
-  const updateRow = useCallback(
-    (idx: number, data: Partial<ActiviteRow>) =>
-      setRows((prev) => { const n = [...prev]; n[idx] = { ...n[idx], ...data }; return n; }),
-    [setRows]
-  );
-
-  const removeRow = useCallback(
-    (idx: number) => setRows((prev) => prev.filter((_, i) => i !== idx)),
-    [setRows]
-  );
-
-  const duplicateRow = useCallback(
-    (idx: number) =>
-      setRows((prev) => {
-        const { id: _id, ...rest } = prev[idx];
-        return [...prev, { ...rest, id: tempId() }];
-      }),
-    [setRows]
-  );
-
   const saveAll = useCallback(() => {
     startTransition(async () => {
       try {
-        const d = useActiviteStore.getState().getDraft(dossierId);
+        const d = store.getDraft(dossierId);
         const result = await saveActivites(dossierId, d.activites);
         if (result.success) {
-          markActivitesSaved(dossierId);
+          if (result.idMap && Object.keys(result.idMap).length > 0) {
+            const idMap = result.idMap;
+            store.setActivites(dossierId, (prev) =>
+              prev.map((r) => ({ ...r, id: r.id && idMap[r.id] ? idMap[r.id] : r.id }))
+            );
+          }
+          store.markActivitesSaved(dossierId);
           toast.success(result.message);
           invalidateControleStores(dossierId);
         } else {
@@ -149,12 +146,12 @@ export function TableauActivites({
         toast.error("Erreur lors de la sauvegarde");
       }
     });
-  }, [dossierId, markActivitesSaved, invalidateControleStores]);
+  }, [dossierId, store, invalidateControleStores]);
 
   // ── Rendu de ligne ────────────────────────────────────────────────────────
 
     const renderRow = useCallback(
-    (row: ActiviteRow & { id: string }, isLastInGroup = false) => {
+    (row: LocalActiviteRow & { id: string }, isLastInGroup = false) => {
       const idx = rows.findIndex((r) => r.id === row.id);
       return (
         <SortableTableRow
@@ -162,8 +159,9 @@ export function TableauActivites({
           id={row.id}
           className={cn(
             "border-t border-border border-l-2 border-l-transparent bg-background hover:bg-muted/30 transition-colors",
-            row.groupe && "border-l-primary/20 bg-primary/5 hover:bg-primary/10",
+            row.groupe && "border-l-primary/20 bg-secondary/5 hover:bg-secondary/10",
             row.groupe && isLastInGroup && "border-b-2 border-b-primary/20",
+            row._dirty && "bg-amber-50/40 dark:bg-amber-900/10",
             !(row.actif ?? true) && "opacity-50"
           )}
         >
@@ -173,7 +171,7 @@ export function TableauActivites({
               type="checkbox"
               className="h-3.5 w-3.5 cursor-pointer accent-primary"
               checked={row.actif ?? true}
-              onChange={(e) => updateRow(idx, { actif: e.target.checked })}
+              onChange={(e) => store.updateActiviteRow(dossierId, idx, { actif: e.target.checked })}
             />
           </Td>
           <Td>
@@ -181,28 +179,28 @@ export function TableauActivites({
               className={cellInput}
               value={row.libelle}
               placeholder="Libellé"
-              onChange={(e) => updateRow(idx, { libelle: e.target.value })}
+              onChange={(e) => store.updateActiviteRow(dossierId, idx, { libelle: e.target.value })}
             />
           </Td>
           <Td>
             <select
-              className={cellSelect}
+              className={cn(cellSelect)}
               value={row.secteur}
-              onChange={(e) => updateRow(idx, { secteur: e.target.value as ActiviteRow["secteur"] })}
+              onChange={(e) => store.updateActiviteRow(dossierId, idx, { secteur: e.target.value as ActiviteRow["secteur"] })}
             >
               {SECTEURS_ACTIVITE.map((s) => (
-                <option key={s.value} value={s.value} className="bg-background text-foreground">{s.label}</option>
+                <option key={s.value} value={s.value} className={cn("bg-background text-foreground")}>{s.label}</option>
               ))}
             </select>
           </Td>
           <Td>
             <select
-              className={cellSelect}
+              className={cn(cellSelect)}
               value={row.hypothese}
-              onChange={(e) => updateRow(idx, { hypothese: e.target.value as ActiviteRow["hypothese"] })}
+              onChange={(e) => store.updateActiviteRow(dossierId, idx, { hypothese: e.target.value as ActiviteRow["hypothese"] })}
             >
               {HYPOTHESES_ACTIVITE.map((h) => (
-                <option key={h.value} value={h.value} className="bg-background text-foreground">{h.label}</option>
+                <option key={h.value} value={h.value} className={cn("bg-background text-foreground")}>{h.label}</option>
               ))}
             </select>
           </Td>
@@ -217,170 +215,127 @@ export function TableauActivites({
             </button>
           </Td>
           <Td>
-            <input
-              type="number"
-              className={cn(cellInput, "text-right")}
-              value={row.montantN === 0 ? "" : row.montantN}
-              placeholder="0"
-              onChange={(e) => {
-                const n = numVal(e.target.value);
+            <NumericCellInput
+              value={row.montantN}
+              onChange={(n) => {
                 const n1 = parseFloat((n * (1 + row.evolutionN1 / 100)).toFixed(2));
                 const n2 = parseFloat((n1 * (1 + row.evolutionN2 / 100)).toFixed(2));
-                updateRow(idx, { montantN: n, montantN1: n1, montantN2: n2 });
+                store.updateActiviteRow(dossierId, idx, { montantN: n, montantN1: n1, montantN2: n2 });
               }}
             />
           </Td>
           {showN1 && (
             <Td>
-              <input
-                type="number"
-                className={cn(cellInput, "text-right")}
-                value={row.evolutionN1 === 0 ? "" : row.evolutionN1}
-                placeholder="0"
-                onChange={(e) => {
-                  const ev1 = numVal(e.target.value);
+              <NumericCellInput
+                value={row.evolutionN1}
+                onChange={(ev1) => {
                   const n1 = parseFloat((row.montantN * (1 + ev1 / 100)).toFixed(2));
                   const n2 = parseFloat((n1 * (1 + row.evolutionN2 / 100)).toFixed(2));
-                  updateRow(idx, { evolutionN1: ev1, montantN1: n1, montantN2: n2 });
+                  store.updateActiviteRow(dossierId, idx, { evolutionN1: ev1, montantN1: n1, montantN2: n2 });
                 }}
               />
             </Td>
           )}
           {showN1 && (
             <Td>
-              <input
-                type="number"
-                className={cn(cellInput, "text-right")}
-                value={row.montantN1 === 0 ? "" : row.montantN1}
-                placeholder="0"
+              <NumericCellInput
+                value={row.montantN1}
                 title="Saisie directe → taux calculé / Taux évol. → montant calculé"
-                onChange={(e) => {
-                  const n1 = numVal(e.target.value);
+                onChange={(n1) => {
                   const ev1 = row.montantN > 0 ? parseFloat(((n1 / row.montantN - 1) * 100).toFixed(2)) : 0;
                   const n2 = parseFloat((n1 * (1 + row.evolutionN2 / 100)).toFixed(2));
-                  updateRow(idx, { montantN1: n1, evolutionN1: ev1, montantN2: n2 });
+                  store.updateActiviteRow(dossierId, idx, { montantN1: n1, evolutionN1: ev1, montantN2: n2 });
                 }}
               />
             </Td>
           )}
           {showN2 && (
             <Td>
-              <input
-                type="number"
-                className={cn(cellInput, "text-right")}
-                value={row.evolutionN2 === 0 ? "" : row.evolutionN2}
-                placeholder="0"
-                onChange={(e) => {
-                  const ev2 = numVal(e.target.value);
+              <NumericCellInput
+                value={row.evolutionN2}
+                onChange={(ev2) => {
                   const n2 = parseFloat((row.montantN1 * (1 + ev2 / 100)).toFixed(2));
-                  updateRow(idx, { evolutionN2: ev2, montantN2: n2 });
+                  store.updateActiviteRow(dossierId, idx, { evolutionN2: ev2, montantN2: n2 });
                 }}
               />
             </Td>
           )}
           {showN2 && (
             <Td>
-              <input
-                type="number"
-                className={cn(cellInput, "text-right")}
-                value={row.montantN2 === 0 ? "" : row.montantN2}
-                placeholder="0"
+              <NumericCellInput
+                value={row.montantN2}
                 title="Saisie directe → taux calculé / Taux évol. → montant calculé"
-                onChange={(e) => {
-                  const n2 = numVal(e.target.value);
+                onChange={(n2) => {
                   const ev2 = row.montantN1 > 0 ? parseFloat(((n2 / row.montantN1 - 1) * 100).toFixed(2)) : 0;
-                  updateRow(idx, { montantN2: n2, evolutionN2: ev2 });
+                  store.updateActiviteRow(dossierId, idx, { montantN2: n2, evolutionN2: ev2 });
                 }}
               />
             </Td>
           )}
           <Td>
-            <input
-              type="number"
-              className={cn(cellInput, "text-right")}
-              value={row.tauxMarge === 0 ? "" : row.tauxMarge}
-              placeholder="0"
-              onChange={(e) => updateRow(idx, { tauxMarge: numVal(e.target.value) })}
+            <NumericCellInput
+              value={row.tauxMarge}
+              onChange={(v) => store.updateActiviteRow(dossierId, idx, { tauxMarge: v })}
             />
           </Td>
           <Td>
-            <input
-              type="number"
-              className={cn(cellInput, "text-right")}
-              value={row.stocks === 0 ? "" : (row.stocks ?? "")}
-              placeholder="0"
-              onChange={(e) => updateRow(idx, { stocks: intVal(e.target.value) })}
+            <NumericCellInput
+              value={row.stocks}
+              onChange={(v) => store.updateActiviteRow(dossierId, idx, { stocks: v })}
+              step={1}
             />
           </Td>
           <Td>
-            <input
-              type="number"
-              className={cn(cellInput, "text-right")}
-              value={row.reglementClients === 0 ? "" : (row.reglementClients ?? "")}
-              placeholder="0"
-              onChange={(e) => updateRow(idx, { reglementClients: intVal(e.target.value) })}
+            <NumericCellInput
+              value={row.reglementClients}
+              onChange={(v) => store.updateActiviteRow(dossierId, idx, { reglementClients: v })}
+              step={1}
             />
           </Td>
           <Td>
             <select
-              className={cellSelect}
+              className={cn(cellSelect)}
               value={row.tvaVentes}
-              onChange={(e) => updateRow(idx, { tvaVentes: numVal(e.target.value) })}
+              onChange={(e) => store.updateActiviteRow(dossierId, idx, { tvaVentes: numVal(e.target.value) })}
             >
               {TAUX_TVA_OPTIONS.map((t) => (
-                <option key={t.value} value={t.value} className="bg-background text-foreground">{t.label}</option>
+                <option key={t.value} value={t.value} className={cn("bg-background text-foreground")}>{t.label}</option>
               ))}
             </select>
           </Td>
           <Td>
-            <input
-              type="number"
-              className={cn(cellInput, "text-right")}
-              value={row.reglementFournisseurs === 0 ? "" : (row.reglementFournisseurs ?? "")}
-              placeholder="0"
-              onChange={(e) => updateRow(idx, { reglementFournisseurs: intVal(e.target.value) })}
+            <NumericCellInput
+              value={row.reglementFournisseurs}
+              onChange={(v) => store.updateActiviteRow(dossierId, idx, { reglementFournisseurs: v })}
+              step={1}
             />
           </Td>
           <Td>
             <select
-              className={cellSelect}
+              className={cn(cellSelect)}
               value={row.tvaAchats}
-              onChange={(e) => updateRow(idx, { tvaAchats: numVal(e.target.value) })}
+              onChange={(e) => store.updateActiviteRow(dossierId, idx, { tvaAchats: numVal(e.target.value) })}
             >
               {TAUX_TVA_OPTIONS.map((t) => (
-                <option key={t.value} value={t.value} className="bg-background text-foreground">{t.label}</option>
+                <option key={t.value} value={t.value} className={cn("bg-background text-foreground")}>{t.label}</option>
               ))}
             </select>
           </Td>
           <Td className="text-center px-1">
-            <div className="flex items-center justify-center gap-0.5">
-              <button
-                type="button"
-                className="p-1 text-muted-foreground hover:text-primary transition-colors"
-                onClick={() => duplicateRow(idx)}
-                title="Dupliquer"
-              >
-                <Copy className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                onClick={() => removeRow(idx)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <RowActions
+              onDelete={() => store.removeActiviteRow(dossierId, idx)}
+              onDuplicate={() => store.duplicateActiviteRow(dossierId, idx)}
+              isPending={isPending}
+              groupe={row.groupe ?? null}
+            />
           </Td>
         </SortableTableRow>
       );
     },
-    [rows, updateRow, removeRow, duplicateRow, showN1, showN2]
+    [rows, showN1, showN2, isPending, store, dossierId]
   );
 
   // ── Rendu ─────────────────────────────────────────────────────────────────
-
-  const filteredActifs = filterByHypothese(rows, hypotheseActive).filter((r) => r.actif ?? true);
-  const fmt = (v: number) => v.toLocaleString("fr-FR", { maximumFractionDigits: 0 });
 
   return (
     <div className="space-y-3">
@@ -389,65 +344,21 @@ export function TableauActivites({
         description="Projections de chiffre d'affaires sur 3 ans (N, N+1, N+2)"
         isDirty={isDirty}
         isSaving={isPending}
-        onAdd={addRow}
+        onAdd={() => store.addActiviteRow(dossierId)}
         onSave={saveAll}
-        onAddGroup={addGroupe}
+        onAddGroup={() => store.addActiviteGroup(dossierId)}
       />
       <GroupedDndTable
         dnd={dnd}
         colSpan={14 + (showN1 ? 2 : 0) + (showN2 ? 2 : 0)}
-        onAddRowToGroupe={addRowToGroupe}
+        onAddRowToGroupe={(groupe) => store.addActiviteToGroup(dossierId, groupe)}
         renderRow={renderRow}
         emptyMessage="Aucune activité — cliquez sur « Ajouter »"
-        footer={
-          <tfoot className="border-t-2 border-border bg-muted/30">
-            <tr>
-              <td colSpan={6} className="px-2 py-1.5 text-xs font-semibold text-right text-muted-foreground">
-                Total (actifs)
-              </td>
-              <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
-                {fmt(filteredActifs.reduce((s, r) => s + r.montantN, 0))}
-              </td>
-              {showN1 && <td />}
-              {showN1 && (
-                <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
-                  {fmt(filteredActifs.reduce((s, r) => s + r.montantN1, 0))}
-                </td>
-              )}
-              {showN2 && <td />}
-              {showN2 && (
-                <td className="px-2 py-1.5 text-xs font-semibold text-right tabular-nums">
-                  {fmt(filteredActifs.reduce((s, r) => s + r.montantN2, 0))}
-                </td>
-              )}
-              <td colSpan={7} />
-            </tr>
-          </tfoot>
-        }
-        groupNameColSpan={6}
-        renderGroupSummaryCells={(groupRows) => {
-          const actifs = filterByHypothese(groupRows, hypotheseActive).filter((r) => r.actif ?? true);
-          return (
-            <>
-              <td className="px-2 py-1 text-xs font-medium text-right tabular-nums">
-                {fmt(actifs.reduce((s, r) => s + r.montantN, 0))}
-              </td>
-              {showN1 && <td />}
-              {showN1 && (
-                <td className="px-2 py-1 text-xs font-medium text-right tabular-nums">
-                  {fmt(actifs.reduce((s, r) => s + r.montantN1, 0))}
-                </td>
-              )}
-              {showN2 && <td />}
-              {showN2 && (
-                <td className="px-2 py-1 text-xs font-medium text-right tabular-nums">
-                  {fmt(actifs.reduce((s, r) => s + r.montantN2, 0))}
-                </td>
-              )}
-              <td colSpan={7} />
-            </>
-          );
-        }}
+        footer={rows.length > 0 ? <TotauxActivites rows={rows} dossierId={dossierId} /> : undefined}
+        groupNameColSpan={5}
+        renderGroupSummaryCells={(groupRows) => (
+          <GroupSummaryActivites rows={groupRows as LocalActiviteRow[]} dossierId={dossierId} />
+        )}
       >
         <thead className="bg-muted/50 border-b-2 border-primary/20">
           <tr>
@@ -466,7 +377,7 @@ export function TableauActivites({
             <Th className="w-14 text-center">Stocks</Th>
             <Th className="w-14 text-center">Règl. client</Th>
             <Th className="w-16 text-center">TVA ventes</Th>
-            <Th className="w-14 text-center">Règl. fournisseur</Th>
+            <Th className="w-14 text-center">Règl. fourn.</Th>
             <Th className="w-16 text-center">TVA achats</Th>
             <Th className="w-8" />
           </tr>

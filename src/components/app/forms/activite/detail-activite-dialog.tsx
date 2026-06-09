@@ -16,12 +16,10 @@ import {
   buildExercicesConfig,
   useActiviteCalculs,
 } from "@/hooks/use-activite-calculs";
-import { cellInput, cellSelect, intVal, Th } from "./activite-table-helpers";
+import { cellInput, cellSelect } from "../helpers/cell-styles";
+import { intVal, Th } from "../helpers/table-helpers";
 
 // ── Types locaux ─────────────────────────────────────────────────────────────
-
-
-
 interface DetailActiviteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -74,7 +72,7 @@ function TableauMensuel({ lignes, moisLabels }: { lignes: LigneMensuelle[]; mois
   const mois = moisLabels;
   return (
     <div className="rounded border border-border overflow-x-auto">
-      <table className="text-sm border-collapse" style={{ minWidth: "960px", width: "100%" }}>
+      <table className="text-xs border-collapse" style={{ minWidth: `${Math.max(960, 180 + mois.length * 64)}px`, width: "100%" }}>
         <thead className="bg-muted/50">
           <tr>
             <th className="px-2 py-1.5 text-left text-xs font-medium text-muted-foreground whitespace-nowrap sticky left-0 bg-muted/50 z-10 w-44">
@@ -113,29 +111,32 @@ function TableauMensuel({ lignes, moisLabels }: { lignes: LigneMensuelle[]; mois
               </td>
 
               {/* Cellules mensuelles */}
-              {ligne.values.map((val, idx) => (
-                <td key={idx} className="px-0 py-0 align-middle border-r border-border/40 last:border-r-0 w-15">
-                  {ligne.editable ? (
-                    <input
-                      type="number"
-                      className={cn(cellInput, "text-right")}
-                      value={val === 0 ? "" : val}
-                      placeholder="0"
-                      step={ligne.format === "percent" ? "0.01" : "1"}
-                      onChange={(e) => ligne.onChange?.(idx, numVal(e.target.value))}
-                    />
-                  ) : (
-                    <span
-                      className={cn(
-                        "block px-1 py-1.5 text-xs text-right tabular-nums",
-                        val === 0 ? "text-muted-foreground/40" : ligne.highlight ? "font-semibold" : "",
-                      )}
-                    >
-                      {fmtVal(val, ligne.format)}
-                    </span>
-                  )}
-                </td>
-              ))}
+              {mois.map((_, idx) => {
+                const val = ligne.values[idx] ?? 0;
+                return (
+                  <td key={idx} className="px-0 py-0 align-middle border-r border-border/40 last:border-r-0 w-15">
+                    {ligne.editable ? (
+                      <input
+                        type="number"
+                        className={cn(cellInput, "text-right")}
+                        value={val === 0 ? "" : val}
+                        placeholder="0"
+                        step={ligne.format === "percent" ? "0.01" : "1"}
+                        onChange={(e) => ligne.onChange?.(idx, numVal(e.target.value))}
+                      />
+                    ) : (
+                      <span
+                        className={cn(
+                          "block px-1 py-1.5 text-xs text-right tabular-nums",
+                          val === 0 ? "text-muted-foreground/40" : ligne.highlight ? "font-semibold" : "",
+                        )}
+                      >
+                        {fmtVal(val, ligne.format)}
+                      </span>
+                    )}
+                  </td>
+                );
+              })}
 
               {/* Total */}
               <td
@@ -163,7 +164,7 @@ interface DialogBodyProps {
 }
 
 function DialogBody({ dossierId, currentIndex, exercicesConfig }: DialogBodyProps) {
-  const { getDraft, updateActivite } = useActiviteStore();
+  const { getDraft, updateActiviteRow: updateActivite } = useActiviteStore();
   const draft = getDraft(dossierId);
   const activite = draft.activites[currentIndex];
 
@@ -415,7 +416,7 @@ function DialogBody({ dossierId, currentIndex, exercicesConfig }: DialogBodyProp
 
             {/* ── Tableau Chiffre d'affaires ───────────────────────── */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center space-x-1 mb-1.5">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                   {"Chiffre d'affaires"}
                 </p>
