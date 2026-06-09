@@ -22,7 +22,7 @@ export type ExerciceValue = (typeof EXERCICE_OPTIONS)[number]["value"];
 
 export const detailMensuelSchema = z.object({
   id: z.string().optional(),
-  mois: z.number().int().min(1).max(12),
+  mois: z.number().int().min(1).max(24),
   montant: z.number().default(0),
   pourcentage: z.number().min(0).max(100).default(0),
   exercice: z.enum(["N", "N1", "N2"]).default("N"),

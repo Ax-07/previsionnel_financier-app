@@ -45,7 +45,7 @@ export const entrepriseSchema = z.object({
     .number()
     .int("Entier requis")
     .min(1, "Minimum : 1 exercice")
-    .max(5, "Maximum : 5 exercices"),
+    .max(3, "Maximum : 3 exercices en v1"),
 
   // ── Exercices prévisionnels ───────────────────────────────────────────────
   exercices: z
@@ -58,6 +58,7 @@ export const entrepriseSchema = z.object({
         annee: z.number().int().min(2000).max(2100),
       })
     )
+    .max(3, "Maximum : 3 exercices en v1")
     .optional(),
 });
 

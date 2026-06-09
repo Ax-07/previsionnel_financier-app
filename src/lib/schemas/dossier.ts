@@ -10,8 +10,9 @@ export const TYPES_DOSSIER = [
 export type TypeDossier = (typeof TYPES_DOSSIER)[number]["value"];
 
 export const DUREES_PROJECTION = [
+  { value: 1, label: "1 an" },
+  { value: 2, label: "2 ans" },
   { value: 3, label: "3 ans" },
-  { value: 5, label: "5 ans" },
 ] as const;
 
 export type DureeProjection = (typeof DUREES_PROJECTION)[number]["value"];
@@ -29,8 +30,8 @@ export const createDossierSchema = z.object({
     .min(1, "La date de démarrage est obligatoire")
     .refine((v) => !isNaN(Date.parse(v)), "Date invalide"),
   dureeProjection: z
-    .union([z.literal(3), z.literal(5)], {
-      error: "La durée doit être 3 ou 5 ans",
+    .union([z.literal(1), z.literal(2), z.literal(3)], {
+      error: "La durée doit être entre 1 et 3 ans",
     }),
   reference: z
     .string()
