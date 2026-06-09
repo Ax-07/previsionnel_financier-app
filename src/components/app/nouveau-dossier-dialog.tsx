@@ -171,7 +171,7 @@ export const NouveauDossierDialog: React.FC<React.ComponentProps<typeof DialogTr
               <Select
                 defaultValue="3"
                 onValueChange={(v) =>
-                  setValue("dureeProjection", Number(v) as 3 | 5)
+                  setValue("dureeProjection", Number(v) as 1 | 2 | 3)
                 }
               >
                 <SelectTrigger id="nd-duree" aria-label="Durée de projection">
