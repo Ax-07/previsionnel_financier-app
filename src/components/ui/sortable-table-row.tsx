@@ -11,12 +11,18 @@ import { GripVertical } from "lucide-react";
 interface SortableRowContextValue {
   attributes: React.HTMLAttributes<HTMLElement>;
   listeners: DraggableSyntheticListeners;
+  rowId: string;
 }
 
 const SortableRowContext = React.createContext<SortableRowContextValue>({
   attributes: {},
   listeners: undefined,
+  rowId: "",
 });
+
+export function useSortableRowContext() {
+  return React.useContext(SortableRowContext);
+}
 
 // ── SortableTableRow ─────────────────────────────────────────────────────────
 
@@ -37,7 +43,7 @@ export function SortableTableRow({ id, className, children }: SortableTableRowPr
   };
 
   return (
-    <SortableRowContext.Provider value={{ attributes, listeners }}>
+    <SortableRowContext.Provider value={{ attributes, listeners, rowId: id }}>
       <tr ref={setNodeRef} style={style} className={className}>
         {children}
       </tr>
