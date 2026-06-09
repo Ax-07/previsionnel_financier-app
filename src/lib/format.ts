@@ -122,7 +122,7 @@ export function formatAmountColored(v: number): { text: string; cls: string } {
  */
 export function formatPct(v: number | null, decimals = 1): string {
   if (v === null) return "";
-  return `${(v * 100).toFixed(decimals)} %`;
+  return `${(v).toFixed(decimals)} %`;
 }
 
 // ── Formatage date ────────────────────────────────────────────────────────────
@@ -154,4 +154,16 @@ export function formatDateTimestamp(ts: number): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/**
+ * Convertit une chaîne de caractères en nombre, en gérant les formats français
+ * (virgule comme séparateur décimal, espaces comme séparateurs de milliers).
+ *
+ * @param v - Chaîne de caractères à convertir
+ * @returns Le nombre correspondant, ou 0 si la conversion échoue
+ */
+export function numVal(v: string): number {
+  const n = parseFloat(v.replace(",", ".").replace(/\s/g, ""));
+  return isNaN(n) ? 0 : n;
 }
