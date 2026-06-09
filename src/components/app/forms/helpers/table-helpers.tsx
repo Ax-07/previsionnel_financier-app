@@ -7,7 +7,8 @@
  */
 
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import { cn, numVal } from "@/lib/utils";
+import { cellNum } from "./cell-styles";
 
 // ── Fonctions utilitaires ─────────────────────────────────────────────────────
 
@@ -79,6 +80,50 @@ export function ActiveCheckbox({
       className="h-3.5 w-3.5 cursor-pointer accent-primary disabled:opacity-30"
       title={checked ? "D\u00e9sactiver" : "Activer"}
       disabled={isPending}
+    />
+  );
+}
+
+// ── Input numérique standard ──────────────────────────────────────────────────
+
+/**
+ * Input numérique standardisé pour les cellules de tableau.
+ * - Affiche vide quand la valeur est 0 ou null/undefined (laisse place au placeholder)
+ * - Appelle `numVal` (parseFloat) en interne — le `onChange` reçoit directement le nombre
+ * - Utilise `cellNum` (= cellInput + text-right)
+ * - Pour les champs entiers, passer `step={1}`
+ */
+export function NumericCellInput({
+  value,
+  onChange,
+  disabled,
+  title,
+  min,
+  max,
+  step,
+  placeholder = "0",
+}: {
+  value: number | null | undefined;
+  onChange: (v: number) => void;
+  disabled?: boolean;
+  title?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  placeholder?: string;
+}) {
+  return (
+    <input
+      type="number"
+      className={cellNum}
+      value={value == null || value === 0 ? "" : value}
+      placeholder={placeholder}
+      disabled={disabled}
+      title={title}
+      min={min}
+      max={max}
+      step={step}
+      onChange={(e) => onChange(numVal(e.target.value))}
     />
   );
 }

@@ -1,23 +1,27 @@
 "use client";
 
 import { Copy, Trash2 } from "lucide-react";
+import { GroupSelectorButton } from "@/components/ui/grouped-dnd-table";
 
 export interface RowActionsProps {
-  /** Callback appel\u00e9 lors du clic sur "Supprimer". */
+  /** Callback appelé lors du clic sur "Supprimer". */
   onDelete: () => void;
-  /** Callback optionnel pour "Dupliquer" \u2014 bouton masqu\u00e9 si absent. */
+  /** Callback optionnel pour "Dupliquer" — bouton masqué si absent. */
   onDuplicate?: () => void;
-  /** D\u00e9sactive les boutons pendant une transition async. */
+  /** Désactive les boutons pendant une transition async. */
   isPending?: boolean;
+  /** Groupe courant de la ligne — affiche le bouton de sélection de groupe si fourni. */
+  groupe?: string | null;
 }
 
 /**
  * Paire de boutons d\u2019action de ligne : Dupliquer (optionnel) + Supprimer.
  * \u00c0 placer dans une cellule `<Td>` centr\u00e9e dans tous les tableaux de formulaires.
  */
-export function RowActions({ onDelete, onDuplicate, isPending = false }: RowActionsProps) {
+export function RowActions({ onDelete, onDuplicate, isPending = false, groupe }: RowActionsProps) {
   return (
     <div className="flex items-center justify-center gap-0.5">
+      {groupe !== undefined && <GroupSelectorButton currentGroupe={groupe} />}
       {onDuplicate && (
         <button
           className="p-1 text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
