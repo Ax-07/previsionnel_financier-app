@@ -2,6 +2,12 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useActiviteStore } from "@/stores/activite-store";
+import {
+  buildEvenSaisonnalite as sharedBuildEvenSaisonnalite,
+  buildExercicesConfig as sharedBuildExercicesConfig,
+  buildMoisLabels as sharedBuildMoisLabels,
+  resampleSaisonnalite as sharedResampleSaisonnalite,
+} from "@/lib/finance/forms-calendar";
 
 // ── Types exportés ────────────────────────────────────────────────────────────
 
@@ -84,32 +90,14 @@ export interface UseActiviteCalculsReturn {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const TOUS_MOIS = [
-  "Jan.", "Fév.", "Mar.", "Avr.", "Mai",  "Juin",
-  "Juil.", "Aoû.", "Sep.", "Oct.", "Nov.", "Déc.",
-] as const;
-
-/** Parse une string "YYYY-MM-DD" en Date locale (sans décalage UTC). */
-function parseLocalDate(str: string): Date {
-  const [y, m, d] = str.split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-
 /** Génère les étiquettes de mois « Mar. 26 » */
 export function buildMoisLabels(startMonth: number, startYear: number, duree: number): readonly string[] {
-  return Array.from({ length: duree }, (_, i) => {
-    const moisIdx = (startMonth + i) % 12;
-    const yearOffset = Math.floor((startMonth + i) / 12);
-    const yy = String((startYear + yearOffset) % 100).padStart(2, "0");
-    return `${TOUS_MOIS[moisIdx]} ${yy}`;
-  });
+  return sharedBuildMoisLabels(startMonth, startYear, duree);
 }
 
 /** Répartition équitable sur `duree` mois (dernier mois absorbe l'arrondi). */
 export function buildEvenSaisonnalite(duree: number): number[] {
-  const val = +(100 / duree).toFixed(2);
-  const last = +(100 - val * (duree - 1)).toFixed(2);
-  return [...Array(duree - 1).fill(val), last];
+  return sharedBuildEvenSaisonnalite(duree);
 }
 
 /** Calcule la config calendaire de chaque exercice depuis les données entreprise. */
@@ -117,38 +105,7 @@ export function buildExercicesConfig(
   dateDebutN: string | undefined,
   exercices: ExerciceCalendrierEntry[] | undefined,
 ): ExercicesConfig {
-  const currentYear = new Date().getFullYear();
-  const DEFAULT: ExerciceConfig = { startMonth: 0, startYear: currentYear, duree: 12 };
-  if (!dateDebutN) return { N: DEFAULT, N1: DEFAULT, N2: DEFAULT };
-
-  const [yearNStr, monthNStr] = dateDebutN.split("-");
-  const startN = parseInt(monthNStr, 10) - 1;
-  const startYearN = parseInt(yearNStr, 10);
-  const dureeN = exercices?.[0]?.duree ?? 12;
-
-  let startN1 = 0, startYearN1 = startYearN;
-  const dureeN1 = exercices?.[1]?.duree ?? 12;
-  if (exercices?.[0]?.dateCloture) {
-    const clot = parseLocalDate(exercices[0].dateCloture);
-    clot.setDate(clot.getDate() + 1);
-    startN1 = clot.getMonth();
-    startYearN1 = clot.getFullYear();
-  }
-
-  let startN2 = 0, startYearN2 = startYearN1;
-  const dureeN2 = exercices?.[2]?.duree ?? 12;
-  if (exercices?.[1]?.dateCloture) {
-    const clot = parseLocalDate(exercices[1].dateCloture);
-    clot.setDate(clot.getDate() + 1);
-    startN2 = clot.getMonth();
-    startYearN2 = clot.getFullYear();
-  }
-
-  return {
-    N:  { startMonth: startN,  startYear: startYearN,  duree: dureeN  },
-    N1: { startMonth: startN1, startYear: startYearN1, duree: dureeN1 },
-    N2: { startMonth: startN2, startYear: startYearN2, duree: dureeN2 },
-  };
+  return sharedBuildExercicesConfig(dateDebutN, exercices);
 }
 
 /**
@@ -156,19 +113,7 @@ export function buildExercicesConfig(
  * puis renormalise à 100 %.
  */
 export function resampleSaisonnalite(source: number[], targetLen: number): number[] {
-  if (targetLen === source.length) return [...source];
-  const result: number[] = [];
-  const srcLen = source.length;
-  for (let i = 0; i < targetLen; i++) {
-    const ratio = (i / targetLen) * srcLen;
-    const lo = Math.floor(ratio);
-    const hi = Math.min(lo + 1, srcLen - 1);
-    const frac = ratio - lo;
-    result.push(source[lo]! * (1 - frac) + source[hi]! * frac);
-  }
-  const total = result.reduce((s, v) => s + v, 0);
-  if (total === 0) return Array(targetLen).fill(+(100 / targetLen).toFixed(4));
-  return result.map((v) => +((v / total) * 100).toFixed(4));
+  return sharedResampleSaisonnalite(source, targetLen);
 }
 
 // ── Calcul pur des stocks et achats (formule RCA) ─────────────────────────────
@@ -220,6 +165,20 @@ interface UseActiviteCalculsParams {
   exercicesConfig: ExercicesConfig;
 }
 
+function normalizeSaisonnalite(source: number[] | undefined, duree: number): number[] {
+  if (!Array.isArray(source) || source.length === 0) return buildEvenSaisonnalite(duree);
+  return resampleSaisonnalite(source, duree);
+}
+
+function resizeMontants(source: number[] | undefined, duree: number): number[] {
+  const result = Array(duree).fill(0) as number[];
+  if (!Array.isArray(source)) return result;
+  for (let i = 0; i < duree; i++) {
+    result[i] = source[i] ?? 0;
+  }
+  return result;
+}
+
 /** Extrait les saisonnalités CA depuis une activité du store. */
 function extractSaisonnaliteCA(
   activite: ReturnType<ReturnType<typeof useActiviteStore.getState>["getDraft"]>["activites"][number] | undefined,
@@ -227,9 +186,9 @@ function extractSaisonnaliteCA(
 ): Record<ExerciceKey, number[]> {
   const stored = activite?.saisonnaliteCA as Record<string, number[]> | undefined;
   return {
-    N:  stored?.N  ?? buildEvenSaisonnalite(exercicesConfig.N.duree),
-    N1: stored?.N1 ?? buildEvenSaisonnalite(exercicesConfig.N1.duree),
-    N2: stored?.N2 ?? buildEvenSaisonnalite(exercicesConfig.N2.duree),
+    N:  normalizeSaisonnalite(stored?.N,  exercicesConfig.N.duree),
+    N1: normalizeSaisonnalite(stored?.N1, exercicesConfig.N1.duree),
+    N2: normalizeSaisonnalite(stored?.N2, exercicesConfig.N2.duree),
   };
 }
 
@@ -241,15 +200,15 @@ function extractSaisonnaliteAchats(
   const storedAchats = activite?.saisonnaliteAchats as Record<string, number[]> | undefined;
   if (storedAchats)
     return {
-      N:  storedAchats.N  ?? buildEvenSaisonnalite(exercicesConfig.N.duree),
-      N1: storedAchats.N1 ?? buildEvenSaisonnalite(exercicesConfig.N1.duree),
-      N2: storedAchats.N2 ?? buildEvenSaisonnalite(exercicesConfig.N2.duree),
+      N:  normalizeSaisonnalite(storedAchats.N,  exercicesConfig.N.duree),
+      N1: normalizeSaisonnalite(storedAchats.N1, exercicesConfig.N1.duree),
+      N2: normalizeSaisonnalite(storedAchats.N2, exercicesConfig.N2.duree),
     };
   const storedCA = activite?.saisonnaliteCA as Record<string, number[]> | undefined;
   return {
-    N:  storedCA?.N  ?? buildEvenSaisonnalite(exercicesConfig.N.duree),
-    N1: storedCA?.N1 ?? buildEvenSaisonnalite(exercicesConfig.N1.duree),
-    N2: storedCA?.N2 ?? buildEvenSaisonnalite(exercicesConfig.N2.duree),
+    N:  normalizeSaisonnalite(storedCA?.N,  exercicesConfig.N.duree),
+    N1: normalizeSaisonnalite(storedCA?.N1, exercicesConfig.N1.duree),
+    N2: normalizeSaisonnalite(storedCA?.N2, exercicesConfig.N2.duree),
   };
 }
 
@@ -260,9 +219,9 @@ function extractAchatsStockPonctuel(
 ): Record<ExerciceKey, number[]> {
   const stored = activite?.achatsStockPonctuel as Record<string, number[]> | undefined;
   return {
-    N:  stored?.N  ?? Array(exercicesConfig.N.duree).fill(0),
-    N1: stored?.N1 ?? Array(exercicesConfig.N1.duree).fill(0),
-    N2: stored?.N2 ?? Array(exercicesConfig.N2.duree).fill(0),
+    N:  resizeMontants(stored?.N,  exercicesConfig.N.duree),
+    N1: resizeMontants(stored?.N1, exercicesConfig.N1.duree),
+    N2: resizeMontants(stored?.N2, exercicesConfig.N2.duree),
   };
 }
 
@@ -271,7 +230,7 @@ export function useActiviteCalculs({
   currentIndex,
   exercicesConfig,
 }: UseActiviteCalculsParams): UseActiviteCalculsReturn {
-  const { getDraft, updateActivite } = useActiviteStore();
+  const { getDraft, updateActiviteRow: updateActivite } = useActiviteStore();
   const draft = getDraft(dossierId);
   const activite = draft.activites[currentIndex];
 

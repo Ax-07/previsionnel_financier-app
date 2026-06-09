@@ -21,6 +21,7 @@ export interface GroupableRow {
   id?: string | null;
   groupe?: string | null;
   ordre?: number | null;
+  actif?: boolean | null;
   _dirty?: boolean;
 }
 
@@ -53,6 +54,12 @@ export interface UseGroupedDndReturn<T extends GroupableRow> {
    * Permet au composant d'adapter le SortableContext selon le type de drag.
    */
   activeDragId: string | null;
+  /**
+   * Groupe de la ligne au DÉMARRAGE du drag (immuable pendant tout le drag).
+   * `null` = pas de drag en cours, ou ligne sans groupe, ou drag de groupe.
+   * Utilisé pour afficher UngroupDropZone sans qu'elle disparaisse lors du survol.
+   */
+  activeDragSourceGroupe: string | null;
   /** Handlers DnD */
   handleDragStart: (event: DragStartEvent) => void;
   handleDragOver: (event: DragOverEvent) => void;
@@ -63,6 +70,8 @@ export interface UseGroupedDndReturn<T extends GroupableRow> {
   renameGroupe: (oldName: string, newName: string) => void;
   deleteGroupe: (groupe: string) => void;
   moveToGroupe: (rowId: string, groupe: string | null) => void;
+  /** Active ou désactive toutes les lignes d'un groupe (si le champ actif existe) */
+  toggleGroupeActif: (groupe: string, actif: boolean) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -235,7 +244,9 @@ export function useGroupedDnd<T extends GroupableRow>({
       // ── Drag d'une ligne ─────────────────────────────────────────────────
       if (!dragState || activeId === overId) return;
       let targetGroupe: string | null;
-      if (overId.startsWith("__group__")) {
+      if (overId === "__ungroup__") {
+        targetGroupe = null;
+      } else if (overId.startsWith("__group__")) {
         targetGroupe = overId.slice(9);
       } else {
         const overRow = effectiveRows.find((r) => r.id === overId);
@@ -379,6 +390,15 @@ export function useGroupedDnd<T extends GroupableRow>({
     [setRows]
   );
 
+  const toggleGroupeActif = useCallback(
+    (groupe: string, actif: boolean) => {
+      setRows((prev) =>
+        prev.map((r) => (r.groupe === groupe ? { ...r, actif, _dirty: true } : r))
+      );
+    },
+    [setRows]
+  );
+
   // Mémoïser l'objet retourné pour éviter que GroupedDndTable reçoive une
   // nouvelle référence à chaque render du composant parent, ce qui propagerait
   // des re-renders inutiles dans tous les enfants dnd-kit.
@@ -391,6 +411,7 @@ export function useGroupedDnd<T extends GroupableRow>({
       ungroupedRows,
       collapsed,
       activeDragId,
+      activeDragSourceGroupe: dragState?.sourceGroupe ?? null,
       handleDragStart,
       handleDragOver,
       handleDragEnd,
@@ -399,11 +420,13 @@ export function useGroupedDnd<T extends GroupableRow>({
       renameGroupe,
       deleteGroupe,
       moveToGroupe,
+      toggleGroupeActif,
     }),
     [
       effectiveRows, effectiveGlobalOrder, sortableItems, groups, ungroupedRows,
       collapsed, activeDragId, handleDragStart, handleDragOver, handleDragEnd,
-      handleDragCancel, toggleCollapse, renameGroupe, deleteGroupe, moveToGroupe,
+      handleDragCancel, toggleCollapse, renameGroupe, deleteGroupe, moveToGroupe, toggleGroupeActif,
+      // activeDragSourceGroupe est un scalaire dérivé de dragState, pas besoin de le lister
     ]
   );
 }
