@@ -32,16 +32,14 @@ export type { SyntheseData } from "@/lib/finance/aggregations/synthese";
  */
 function buildTresoRows(fc: FinCalcResult): TresorerieRow[] {
   const d = fc.filteredData;
-  const { dateDemarrage, scenario } = d;
+  const { scenario } = d;
+  const calendar = fc.calendar;
 
   const regimeTVA = scenario.parametres?.regimeTVA ?? "REEL_NORMAL";
   const isFranchise = regimeTVA === "FRANCHISE";
   const effectiveMoisPaiement = scenario.parametres?.moisPaiementSalaires ?? 1;
 
-  const anneeDebut = dateDemarrage.getFullYear();
-  const moisDebut = dateDemarrage.getMonth();
-
-  const ctx = buildTemporelCtx(dateDemarrage, isFranchise);
+  const ctx = buildTemporelCtx(calendar, isFranchise);
   const enc = calcEncaissements(d, ctx);
   const dec = calcDecaissements(d, ctx, effectiveMoisPaiement, fc.isParAnnee, fc.tva);
 
@@ -52,13 +50,13 @@ function buildTresoRows(fc: FinCalcResult): TresorerieRow[] {
   };
 
   const y1Sol = computeSoldeMonthly(variation.y1, 0);
-  const y2Sol = computeSoldeMonthly(variation.y2, y1Sol.soldeFinal[11] ?? 0);
-  const y3Sol = computeSoldeMonthly(variation.y3, y2Sol.soldeFinal[11] ?? 0);
+  const y2Sol = computeSoldeMonthly(variation.y2, y1Sol.soldeFinal[y1Sol.soldeFinal.length - 1] ?? 0);
+  const y3Sol = computeSoldeMonthly(variation.y3, y2Sol.soldeFinal[y2Sol.soldeFinal.length - 1] ?? 0);
 
   const soldePrecedent = { y1: y1Sol.soldePrecedent, y2: y2Sol.soldePrecedent, y3: y3Sol.soldePrecedent };
   const soldeFinal     = { y1: y1Sol.soldeFinal,     y2: y2Sol.soldeFinal,     y3: y3Sol.soldeFinal     };
 
-  const decAchatsRaw = calcAchatsRaw(d.activites, isFranchise);
+  const decAchatsRaw = calcAchatsRaw(d.activites, isFranchise, ctx.dureesMois);
   const encoursFournisseurs = calcEncoursFournisseurs(decAchatsRaw, dec.decAchats);
 
   return buildTresorerieRows({

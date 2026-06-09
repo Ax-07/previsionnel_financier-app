@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useFinCalc } from "@/hooks/use-fin-calc";
-import { buildMonthLabels, subSeries } from "@/lib/finance/calculs/monthly";
+import { subSeries } from "@/lib/finance/calculs/monthly";
 import { computeSoldeMonthly } from "@/lib/finance/tresorerie-engine";
 import { buildTemporelCtx } from "@/lib/finance/pipeline/calendar";
 import {
@@ -29,32 +29,18 @@ export function useTresorerieData(
   const result = useMemo<TresorerieData | null>(() => {
     if (!data || !fc) return null;
 
-    const { dateDemarrage, scenario } = fc.filteredData;
+    const { scenario } = fc.filteredData;
+    const calendar = fc.calendar;
     const effectiveMoisPaiement =
       moisPaiementSalairesOverride ?? scenario.parametres?.moisPaiementSalaires ?? 1;
 
     const regimeTVA = scenario.parametres?.regimeTVA ?? "REEL_NORMAL";
     const isFranchise = regimeTVA === "FRANCHISE";
 
-    const anneeDebut = dateDemarrage.getFullYear();
-    const moisDebut = dateDemarrage.getMonth();
+    const yearLabels: Record<YearKey, string> = fc.yearLabels;
+    const monthLabels: Record<YearKey, string[]> = calendar.monthLabels;
 
-    const fmtEx = (yr: number) =>
-      moisDebut === 0 ? `${yr}` : `${yr}\u2013${yr + 1}`;
-
-    const yearLabels: Record<YearKey, string> = {
-      y1: fmtEx(anneeDebut),
-      y2: fmtEx(anneeDebut + 1),
-      y3: fmtEx(anneeDebut + 2),
-    };
-
-    const monthLabels: Record<YearKey, string[]> = {
-      y1: buildMonthLabels(moisDebut, anneeDebut),
-      y2: buildMonthLabels(moisDebut, anneeDebut + 1),
-      y3: buildMonthLabels(moisDebut, anneeDebut + 2),
-    };
-
-    const ctx = buildTemporelCtx(dateDemarrage, isFranchise);
+    const ctx = buildTemporelCtx(calendar, isFranchise);
 
     const enc = calcEncaissements(fc.filteredData, ctx);
     const dec = calcDecaissements(fc.filteredData, ctx, effectiveMoisPaiement, fc.isParAnnee, fc.tva);
@@ -66,8 +52,8 @@ export function useTresorerieData(
     };
 
     const y1Sol = computeSoldeMonthly(variation.y1, 0);
-    const y2Sol = computeSoldeMonthly(variation.y2, y1Sol.soldeFinal[11] ?? 0);
-    const y3Sol = computeSoldeMonthly(variation.y3, y2Sol.soldeFinal[11] ?? 0);
+    const y2Sol = computeSoldeMonthly(variation.y2, y1Sol.soldeFinal[y1Sol.soldeFinal.length - 1] ?? 0);
+    const y3Sol = computeSoldeMonthly(variation.y3, y2Sol.soldeFinal[y2Sol.soldeFinal.length - 1] ?? 0);
 
     const soldePrecedent = {
       y1: y1Sol.soldePrecedent,
@@ -80,7 +66,7 @@ export function useTresorerieData(
       y3: y3Sol.soldeFinal,
     };
 
-    const decAchatsRaw = calcAchatsRaw(fc.filteredData.activites, isFranchise);
+    const decAchatsRaw = calcAchatsRaw(fc.filteredData.activites, isFranchise, ctx.dureesMois);
     const encoursFournisseurs = calcEncoursFournisseurs(decAchatsRaw, dec.decAchats);
 
     const rows = buildTresorerieRows({
