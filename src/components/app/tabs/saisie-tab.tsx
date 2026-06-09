@@ -4,8 +4,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import PorteurForm from "@/components/app/forms/porteur-form";
 import EntrepriseForm from "@/components/app/forms/entreprise-form";
-import { InvestissementForm } from "@/components/app/forms/investissement-form";
-import { FinancementForm } from "@/components/app/forms/financement-form";
+import { InvestissementForm } from "@/components/app/forms/investissement/investissement-form";
+import { FinancementForm } from "@/components/app/forms/financement/financement-form";
 import { ActiviteForm } from "../forms/activite/activite-form";
 import { ChargesForm } from "../forms/charges/charges-form";
 import { PersonnelForm } from "../forms/personnel/personnel-form";
@@ -197,7 +197,12 @@ export default function SaisieTab({ dossierId }: SaisieTabProps) {
             </TabsContent>
 
             <TabsContent value="tableaux-libres" className="h-full overflow-hidden data-[state=inactive]:hidden">
-              <TableauxLibresForm dossierId={dossierId} initialData={data.tableauxLibres ?? []} />
+              <TableauxLibresForm
+                dossierId={dossierId}
+                initialData={data.tableauxLibres ?? []}
+                dateDebutExerciceN={data.entreprise?.dateDebutExerciceN}
+                exercices={data.entreprise?.exercices}
+              />
             </TabsContent>
           </>
         ) : null}
