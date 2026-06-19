@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { createEditorState } from "./editorConfig";
+import { PageNavigator } from "./PageNavigator";
 import { Toolbar } from "./toolbar/Toolbar";
 import type { PageFormatState } from "./toolbar/types";
 import type { PaginationOptions } from "./pagination/paginationPlugin";
@@ -18,10 +19,12 @@ export const TextEditor: React.FC<TextEditorProps> = ({ dossierId = "" }) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const [editorState, setEditorState] = useState<EditorState>(createEditorState);
+  const [viewVersion, setViewVersion] = useState(0);
   const [pageFormat, setPageFormat] = useState<PageFormatState>({
     format: "A4",
     orientation: "portrait",
     showPageNumbers: true,
+    showTableOfContents: false,
   });
   // Ref toujours synchronisé — évite les stale closures dans useCallback.
   const pageFormatRef = useRef<PageFormatState>(pageFormat);
@@ -43,6 +46,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ dossierId = "" }) => {
       state: editorState,
       dispatchTransaction,
     });
+    setViewVersion((version) => version + 1);
 
     return () => {
       viewRef.current?.destroy();
@@ -64,7 +68,20 @@ export const TextEditor: React.FC<TextEditorProps> = ({ dossierId = "" }) => {
     // Conserver le document courant (texte + structure).
     const doc = viewRef.current?.state.doc;
     const newEditorState = createEditorState(
-      { ...orientedSize, footerRight: newFormat.showPageNumbers ? "{page}" : "" },
+      {
+        ...orientedSize,
+        footerRight: newFormat.showPageNumbers ? "{page}" : "",
+        pageBackgroundImage: newFormat.pageBackgroundImage,
+        pageBackgroundImageOpacity: newFormat.pageBackgroundImageOpacity,
+        pageBackgroundImageSize: newFormat.pageBackgroundImageSize,
+        marginLeftImage: newFormat.marginLeftImage,
+        marginRightImage: newFormat.marginRightImage,
+        marginTopImages: newFormat.marginTopImages ?? newFormat.headerImages,
+        marginBottomImages: newFormat.marginBottomImages ?? newFormat.footerImages,
+        headerImages: newFormat.headerImages,
+        footerImages: newFormat.footerImages,
+        showTableOfContents: newFormat.showTableOfContents,
+      },
       doc,
     );
 
@@ -77,6 +94,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ dossierId = "" }) => {
         state: newEditorState,
         dispatchTransaction,
       });
+      setViewVersion((version) => version + 1);
     }
 
     setPageFormat(newFormat);
@@ -84,8 +102,8 @@ export const TextEditor: React.FC<TextEditorProps> = ({ dossierId = "" }) => {
   }, [dispatchTransaction]);
 
   return (
-    <div id="text-editor-wrapper">
-      <div className="sticky top-0 z-10 bg-background border-b">
+    <div id="text-editor-wrapper" className="print:m-0 print:block print:h-auto print:p-0" data-print-root="business-plan-editor">
+      <div className="sticky top-0 z-10 bg-background border-b print:hidden">
         <Toolbar
           editorState={editorState}
           viewRef={viewRef}
@@ -94,8 +112,13 @@ export const TextEditor: React.FC<TextEditorProps> = ({ dossierId = "" }) => {
           dossierId={dossierId}
         />
       </div>
-      <div className="page-editor-bg">
-        <div ref={editorRef} />
+      <div className="bg-foreground/10 print:m-0 print:block print:bg-transparent print:p-0">
+        <div className="mx-auto grid max-w-345 grid-cols-[250px_minmax(0,1fr)] items-start gap-5 print:block print:max-w-none print:gap-0 max-[900px]:block">
+          <PageNavigator editorState={editorState} viewRef={viewRef} viewVersion={viewVersion} />
+          <div className="min-w-0 overflow-x-auto py-5 print:overflow-visible print:p-0">
+            <div ref={editorRef} />
+          </div>
+        </div>
       </div>
     </div>
   );

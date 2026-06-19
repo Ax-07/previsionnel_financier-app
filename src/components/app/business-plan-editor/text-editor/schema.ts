@@ -53,6 +53,36 @@ const orderedListSpec: NodeSpec = {
   ],
 };
 
+function normalizeMarkerColor(value: unknown): string | null {
+  const color = String(value ?? "").trim();
+  if (!color) return null;
+  if (/^#[0-9a-fA-F]{3,8}$/.test(color)) return color;
+  if (/^rgba?\([\d\s.,%]+\)$/i.test(color)) return color;
+  if (/^hsla?\([\d\s.,%a-z-]+\)$/i.test(color)) return color;
+  return null;
+}
+
+const listItemSpec: NodeSpec = {
+  ...baseNodes.get("list_item")!,
+  attrs: { markerColor: { default: null } },
+  parseDOM: [
+    {
+      tag: "li",
+      getAttrs(dom) {
+        if (typeof dom === "string") return {};
+        const el = dom as HTMLElement;
+        return {
+          markerColor: normalizeMarkerColor(el.style.getPropertyValue("--pm-marker-color") || el.style.color),
+        };
+      },
+    },
+  ],
+  toDOM(node) {
+    const markerColor = normalizeMarkerColor(node.attrs.markerColor);
+    return ["li", markerColor ? { style: `--pm-marker-color: ${markerColor}` } : {}, 0];
+  },
+};
+
 /** Paragraphe avec attributs `textAlign` et `indent`. */
 const paragraphSpec: NodeSpec = {
   content: "inline*",
@@ -167,6 +197,33 @@ const highlightSpec: MarkSpec = {
   },
 };
 
+function normalizeFontSize(value: unknown): string | false {
+  const match = /^(\d+(?:\.\d+)?)px$/i.exec(String(value ?? "").trim());
+  if (!match) return false;
+
+  const size = Number(match[1]);
+  if (!Number.isFinite(size) || size < 8 || size > 96) return false;
+
+  return `${size}px`;
+}
+
+const fontSizeSpec: MarkSpec = {
+  attrs: { size: {} },
+  parseDOM: [
+    {
+      style: "font-size",
+      getAttrs(value) {
+        const size = normalizeFontSize(value);
+        return size ? { size } : false;
+      },
+    },
+  ],
+  toDOM(mark) {
+    const size = normalizeFontSize(mark.attrs.size);
+    return ["span", size ? { style: `font-size: ${size}` } : {}, 0];
+  },
+};
+
 /**
  * Schéma ProseMirror de l'éditeur.
  * Étend `prosemirror-schema-basic` avec :
@@ -174,7 +231,7 @@ const highlightSpec: MarkSpec = {
  * - Paragraphes et titres avec textAlign + indent
  * - Saut de page manuel
  * - Tableaux (prosemirror-tables)
- * - Marks : underline, strikethrough, subscript, superscript, textColor, highlight
+ * - Marks : underline, strikethrough, subscript, superscript, textColor, highlight, fontSize
  */
 export const schema = new Schema({
   nodes: baseNodes
@@ -182,6 +239,7 @@ export const schema = new Schema({
     .update("heading", headingSpec)
     .update("bullet_list", bulletListSpec)
     .update("ordered_list", orderedListSpec)
+    .update("list_item", listItemSpec)
     .append({ page_break: pageBreakSpec })
     .append(tblNodes),
   marks: basicSchema.spec.marks.append({
@@ -191,5 +249,6 @@ export const schema = new Schema({
     superscript: superscriptSpec,
     textColor: textColorSpec,
     highlight: highlightSpec,
+    fontSize: fontSizeSpec,
   }),
 });
