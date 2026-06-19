@@ -41,6 +41,7 @@ export const PageSizeControl: React.FC<PageSizeControlProps> = ({
             size="default"
             className="flex justify-between px-2 my-0.5 gap-0.5 min-w-20 border-none"
             aria-label="Format de page"
+            title="Format de page"
           >
             <span className="text-sm">{FORMAT_LABELS[pageFormat.format] ?? pageFormat.format}</span>
             <ChevronDown className="h-3 w-3" />
@@ -48,7 +49,7 @@ export const PageSizeControl: React.FC<PageSizeControlProps> = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           {Object.keys(FORMAT_LABELS).map((key) => (
-            <DropdownMenuItem key={key} onSelect={() => onPageFormatChange({ format: key })}>
+            <DropdownMenuItem key={key} onSelect={() => onPageFormatChange({ format: key })} title={FORMAT_LABELS[key]}>
               {FORMAT_LABELS[key]}
             </DropdownMenuItem>
           ))}

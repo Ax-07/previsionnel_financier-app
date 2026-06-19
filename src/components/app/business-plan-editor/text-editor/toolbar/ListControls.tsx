@@ -32,6 +32,7 @@ export const ListControls: React.FC<ToolbarSectionProps> = ({ editorState, execu
               size="default"
               className="rounded-r-none"
               aria-label="Liste à puces"
+              title="Liste à puces"
             >
               <List className="h-4 w-4" />
             </Toggle>
@@ -40,6 +41,7 @@ export const ListControls: React.FC<ToolbarSectionProps> = ({ editorState, execu
               size="icon"
               className="rounded-l-none border-none border-l w-4"
               aria-label="Choisir le style de liste à puces"
+              title="Choisir le style de liste à puces"
             >
               <ChevronDown className="h-3 w-3" />
             </Button>
@@ -70,6 +72,7 @@ export const ListControls: React.FC<ToolbarSectionProps> = ({ editorState, execu
               size="default"
               className="rounded-r-none"
               aria-label="Liste numérotée"
+              title="Liste numérotée"
             >
               <ListOrdered className="h-4 w-4" />
             </Toggle>
@@ -78,6 +81,7 @@ export const ListControls: React.FC<ToolbarSectionProps> = ({ editorState, execu
               size="icon"
               className="rounded-l-none border-none border-l w-4"
               aria-label="Choisir le style de liste numérotée"
+              title="Choisir le style de liste numérotée"
             >
               <ChevronDown className="h-3 w-3" />
             </Button>

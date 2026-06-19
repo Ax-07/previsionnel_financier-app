@@ -68,6 +68,7 @@ export const BlockTypeControl: React.FC<ToolbarSectionProps> = ({ editorState, e
           size="default"
           className="flex justify-between px-2 my-0.5 gap-0.5 min-w-28 border-none"
           aria-label="Type de bloc"
+          title="Type de bloc"
         >
           <span className="text-sm truncate">{currentLabel}</span>
           <ChevronDown className="h-3 w-3 shrink-0" />
@@ -78,7 +79,7 @@ export const BlockTypeControl: React.FC<ToolbarSectionProps> = ({ editorState, e
           item === null ? (
             <DropdownMenuSeparator key={`sep-${i}`} />
           ) : (
-            <DropdownMenuItem key={item.value} onSelect={() => handleBlockTypeChange(item.value)}>
+            <DropdownMenuItem key={item.value} onSelect={() => handleBlockTypeChange(item.value)} title={item.label}>
               {item.label}
             </DropdownMenuItem>
           ),

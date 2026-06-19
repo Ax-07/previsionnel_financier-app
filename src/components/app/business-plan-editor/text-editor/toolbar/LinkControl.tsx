@@ -44,6 +44,7 @@ export const LinkControl: React.FC<ToolbarSectionProps> = ({ editorState, execut
         onClick={handleOpen}
         aria-label="Lien hypertexte"
         className="my-0.5"
+        title="Lien hypertexte"
       >
         <Link className="h-4 w-4" />
       </Button>

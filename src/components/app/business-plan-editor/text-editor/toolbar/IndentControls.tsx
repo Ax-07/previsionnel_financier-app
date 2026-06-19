@@ -18,6 +18,7 @@ export const IndentControls: React.FC<ToolbarSectionProps> = ({ editorState, exe
         onClick={() => executeCommand(changeIndent(-1))}
         disabled={indent <= 0}
         aria-label="Diminuer l'indentation"
+        title="Diminuer l'indentation"
       >
         <Outdent className="h-4 w-4" />
       </Button>
@@ -27,6 +28,7 @@ export const IndentControls: React.FC<ToolbarSectionProps> = ({ editorState, exe
         onClick={() => executeCommand(changeIndent(1))}
         disabled={indent >= 8}
         aria-label="Augmenter l'indentation"
+        title="Augmenter l'indentation"
       >
         <Indent className="h-4 w-4" />
       </Button>

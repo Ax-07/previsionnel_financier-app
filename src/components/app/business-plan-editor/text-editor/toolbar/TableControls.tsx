@@ -55,7 +55,7 @@ export const TableControls: React.FC<ToolbarSectionProps> = ({ editorState, exec
       {inTable ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="default" className="my-0.5 gap-0.5 px-2" aria-label="Options du tableau">
+            <Button variant="secondary" size="default" className="my-0.5 gap-0.5 px-2" aria-label="Options du tableau" title="Options du tableau">
               <Table className="h-4 w-4" />
               <ChevronDown className="h-3 w-3" />
             </Button>
@@ -87,6 +87,7 @@ export const TableControls: React.FC<ToolbarSectionProps> = ({ editorState, exec
           className="my-0.5"
           onClick={() => setInsertOpen(true)}
           aria-label="Insérer un tableau"
+          title="Insérer un tableau"
         >
           <Table className="h-4 w-4" />
         </Button>
@@ -123,8 +124,8 @@ export const TableControls: React.FC<ToolbarSectionProps> = ({ editorState, exec
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setInsertOpen(false)}>Annuler</Button>
-            <Button onClick={handleInsertTable}>Insérer</Button>
+            <Button variant="outline" onClick={() => setInsertOpen(false)} title="Annuler">Annuler</Button>
+            <Button onClick={handleInsertTable} title="Insérer un tableau">Insérer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

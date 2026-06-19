@@ -19,6 +19,7 @@ export const HistoryControls: React.FC<ToolbarSectionProps> = ({ editorState, ex
         size="icon"
         aria-label="Annuler"
         disabled={!canUndo}
+        title="Annuler (Ctrl+Z)"
       >
         <Undo2 className="h-4 w-4" />
       </Button>
@@ -28,6 +29,7 @@ export const HistoryControls: React.FC<ToolbarSectionProps> = ({ editorState, ex
         size="icon"
         aria-label="Rétablir"
         disabled={!canRedo}
+        title={"Rétablir"}
       >
         <Redo2 className="h-4 w-4" />
       </Button>

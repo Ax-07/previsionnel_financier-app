@@ -2,28 +2,26 @@
 
 import React from "react";
 import { toggleMark } from "prosemirror-commands";
-import { Bold, Italic, Underline, Strikethrough, Code, Subscript, Superscript } from "lucide-react";
-import { Toggle } from "@/components/ui/toggle";
+import { Bold, Code, Italic, Strikethrough, Underline } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
-import { ToolbarSectionProps } from "./types";
+import { Toggle } from "@/components/ui/toggle";
 import { isMarkActive } from "./commands";
+import { ToolbarSectionProps } from "./types";
 
 export const FormattingControls: React.FC<ToolbarSectionProps> = ({ editorState, executeCommand }) => {
   const { schema } = editorState;
 
   const marks = [
-    { key: "strong",        Icon: Bold,          label: "Gras",        shortcut: "Ctrl+B" },
-    { key: "em",            Icon: Italic,        label: "Italique",    shortcut: "Ctrl+I" },
-    { key: "underline",     Icon: Underline,     label: "Souligné",    shortcut: "Ctrl+U" },
-    { key: "strikethrough", Icon: Strikethrough, label: "Barré",       shortcut: "Ctrl+Shift+S" },
-    { key: "code",          Icon: Code,          label: "Code inline", shortcut: "Ctrl+`" },
-    { key: "subscript",     Icon: Subscript,     label: "Indice",      shortcut: "" },
-    { key: "superscript",   Icon: Superscript,   label: "Exposant",    shortcut: "" },
+    { key: "strong", Icon: Bold, label: "Gras", shortcut: "Ctrl+B" },
+    { key: "em", Icon: Italic, label: "Italique", shortcut: "Ctrl+I" },
+    { key: "underline", Icon: Underline, label: "Souligne", shortcut: "Ctrl+U" },
+    { key: "strikethrough", Icon: Strikethrough, label: "Barre", shortcut: "Ctrl+Shift+S" },
+    { key: "code", Icon: Code, label: "Code inline", shortcut: "Ctrl+`" },
   ] as const;
 
   return (
     <ButtonGroup id="formatting-buttons" className="my-0.5">
-      {marks.map(({ key, Icon, label }) => {
+      {marks.map(({ key, Icon, label, shortcut }) => {
         const markType = schema.marks[key];
         if (!markType) return null;
         return (
@@ -33,6 +31,7 @@ export const FormattingControls: React.FC<ToolbarSectionProps> = ({ editorState,
             onPressedChange={() => executeCommand(toggleMark(markType))}
             size="default"
             aria-label={label}
+            title={`${label} (${shortcut})`}
           >
             <Icon className="h-4 w-4" />
           </Toggle>

@@ -177,30 +177,23 @@ export const insertHorizontalRule = (): Command => (state, dispatch) => {
   return true;
 };
 
-/** Insère une image à la position courante. N'accepte que les URLs http(s) et les chemins relatifs. */
-export const insertImage = (src: string, alt?: string): Command => (state, dispatch) => {
-  const { image } = state.schema.nodes;
-  if (!image) return false;
-  try {
-    const url = new URL(src);
-    if (!["http:", "https:"].includes(url.protocol)) return false;
-  } catch {
-    if (!src.startsWith("/") && !src.startsWith("#") && !src.startsWith("./") && !src.startsWith("../")) {
-      return false;
-    }
-  }
-  if (dispatch) dispatch(state.tr.replaceSelectionWith(image.create({ src, alt: alt ?? "" })).scrollIntoView());
-  return true;
-};
-
-/** Insère un tableau NxM à la position courante. */
+/** Insère un tableau NxM à la position courante, suivi d'un paragraphe vide. */
 export const insertTable = (rows: number, cols: number): Command => (state, dispatch) => {
   const { table, table_row, table_cell, paragraph } = state.schema.nodes;
   if (!table || !table_row || !table_cell || !paragraph) return false;
   const createCell = () => table_cell.create(null, [paragraph.create()]);
   const createRow = () => table_row.create(null, Array.from({ length: cols }, createCell));
   const tableNode = table.create(null, Array.from({ length: rows }, createRow));
-  if (dispatch) dispatch(state.tr.replaceSelectionWith(tableNode).scrollIntoView());
+  const trailingParagraph = paragraph.create();
+  if (dispatch) {
+    const { from, to } = state.selection;
+    // Insère le tableau + un paragraphe vide en une seule transaction
+    const tr = state.tr.replaceWith(from, to, [tableNode, trailingParagraph]);
+    // Place le curseur au début du paragraphe qui suit le tableau
+    const cursorPos = from + tableNode.nodeSize + 1;
+    tr.setSelection(TextSelection.create(tr.doc, cursorPos));
+    dispatch(tr.scrollIntoView());
+  }
   return true;
 };
 
@@ -217,15 +210,12 @@ export interface NormalizedTable {
   rows: NormalizedTableRow[];
 }
 
-/**
- * Insère un tableau financier (issu de l'onglet Contrôle) à la position courante.
- * Les lignes `isSectionHeader` produisent une ligne de titre pleine largeur (colspan).
- */
 export const insertFinancialTable = (tableData: NormalizedTable): Command => (state, dispatch) => {
   const { table, table_row, table_cell, table_header, paragraph } = state.schema.nodes;
   if (!table || !table_row || !table_cell || !table_header || !paragraph) return false;
 
   const colCount = tableData.headers.length;
+  if (colCount === 0) return false;
 
   const makeCell = (text: string, isHeader = false) => {
     const type = isHeader ? table_header : table_cell;
@@ -243,37 +233,30 @@ export const insertFinancialTable = (tableData: NormalizedTable): Command => (st
     return table_row.create(null, [cell]);
   };
 
-  const headerRow = table_row.create(null, tableData.headers.map((h) => makeCell(h, true)));
+  const normalizeCells = (cells: string[]) => {
+    const nextCells = cells.slice(0, colCount);
+    while (nextCells.length < colCount) nextCells.push("");
+    return nextCells;
+  };
 
+  const headerRow = table_row.create(null, tableData.headers.map((header) => makeCell(header, true)));
   const dataRows = tableData.rows.map((row) => {
     if (row.isSectionHeader) return makeSectionRow(row.cells[0] ?? "");
-    return table_row.create(null, row.cells.map((c, i) => makeCell(c, i === 0)));
+    return table_row.create(
+      null,
+      normalizeCells(row.cells).map((cell, index) => makeCell(cell, index === 0)),
+    );
   });
 
   const tableNode = table.create(null, [headerRow, ...dataRows]);
+  const trailingParagraph = paragraph.create();
 
   if (dispatch) {
-    let tr = state.tr.replaceSelectionWith(tableNode);
-
-    // Trouver la position de fin du tableau dans le nouveau document
-    const $pos = tr.doc.resolve(tr.selection.from);
-    let tableDepth = 0;
-    for (let d = $pos.depth; d > 0; d--) {
-      if ($pos.node(d).type === table) {
-        tableDepth = d;
-        break;
-      }
-    }
-    const tableEndPos = $pos.after(tableDepth);
-
-    // Si le tableau est en fin de document, insérer un paragraphe vide après
-    if (tableEndPos >= tr.doc.content.size - 1) {
-      tr = tr.insert(tableEndPos, paragraph.create());
-    }
-
-    // Placer le curseur dans le paragraphe qui suit le tableau
-    tr = tr.setSelection(TextSelection.create(tr.doc, tableEndPos + 1)).scrollIntoView();
-    dispatch(tr);
+    const { from, to } = state.selection;
+    const tr = state.tr.replaceWith(from, to, [tableNode, trailingParagraph]);
+    const cursorPos = from + tableNode.nodeSize + 1;
+    tr.setSelection(TextSelection.create(tr.doc, cursorPos));
+    dispatch(tr.scrollIntoView());
   }
 
   return true;

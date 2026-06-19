@@ -70,6 +70,7 @@ export const FindReplacePanel: React.FC<FindReplacePanelProps> = ({ editorState,
         className="h-7 w-7 shrink-0 mt-0.5"
         onClick={() => setShowReplace((v) => !v)}
         aria-label={showReplace ? "Masquer le remplacement" : "Afficher le remplacement"}
+        title={showReplace ? "Masquer le remplacement" : "Afficher le remplacement"}
       >
         <Replace className="h-3.5 w-3.5" />
       </Button>
