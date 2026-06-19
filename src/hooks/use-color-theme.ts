@@ -24,8 +24,6 @@ export interface UseColorThemeReturn {
 
 export function useColorTheme(): UseColorThemeReturn {
   const [currentTheme, setCurrentTheme] = useState<ColorHue>(COLOR_HUES[0]);
-  const [mounted, setMounted] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // Fonction pour appliquer une couleur
   const applyColorTheme = useCallback((theme: ColorHue) => {
@@ -49,19 +47,10 @@ export function useColorTheme(): UseColorThemeReturn {
     }
   }, [applyColorTheme]);
 
-  // Effet de montage
+  // Initialisation au montage - UNE SEULE FOIS
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Initialisation après montage - UNE SEULE FOIS
-  useEffect(() => {
-    if (!mounted || isInitialized || typeof window === 'undefined') return;
-    
     try {
-      // Récupérer le thème sauvegardé
       const savedTheme = localStorage.getItem('color-theme');
-      
       if (savedTheme) {
         const theme = COLOR_HUES.find(t => t.name === savedTheme);
         applyColorTheme(theme ?? COLOR_HUES[0]);
@@ -72,9 +61,8 @@ export function useColorTheme(): UseColorThemeReturn {
       console.error('Erreur lors de la récupération du thème:', error);
       applyColorTheme(COLOR_HUES[0]);
     }
-    
-    setIsInitialized(true);
-  }, [mounted, isInitialized, applyColorTheme]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     currentTheme,
