@@ -264,8 +264,8 @@
 /* ─── Layout page style Google Docs ─── */
 
 .page-editor-bg {
-  background: hsl(220 13% 91%);
-  padding: 24px 16px 48px;
+  /* background: hsl(220 13% 91%); */
+  /* padding: 24px 16px 48px; */
 }
 
 .dark .page-editor-bg {
@@ -293,6 +293,11 @@
   background: hsl(0 0% 100%);
   color: hsl(220 13% 10%);
   line-height: 1.35;
+  /* Crée un contexte d'empilement isolé.
+     Permet aux calques z-index:-1 (fond de page, marges) d'être peints
+     APRÈS le fond blanc (étape 1) mais AVANT le texte (étape 3 flux normal).
+     Sans cela, z-index:-1 irait derrière le fond blanc du parent → invisible. */
+  isolation: isolate;
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.12),
     0 4px 12px rgba(0, 0, 0, 0.08);
@@ -309,6 +314,7 @@
 .dark .ProseMirror {
   background: hsl(220 13% 24%);
   color: hsl(220 13% 90%);
+  isolation: isolate;
 }
 
 .ProseMirror:focus {
@@ -352,6 +358,10 @@
 
 .ProseMirror li {
   margin: 0.25rem 0;
+}
+
+.ProseMirror li::marker {
+  color: var(--pm-marker-color, currentColor);
 }
 
 /* ─── Saut de page manuel (nœud page_break) ─── */
@@ -407,9 +417,14 @@
 
 .pm-page-break {
   /* hauteur injectée via el.style.height — ne pas fixer ici */
+  /* NE PAS ajouter de margin horizontal ici : le plugin CSS étend déjà
+     le footer/gap via calc(100% + margin-left + margin-right).
+     Un margin négatif ici doublerait l'expansion et pousserait le footer
+     hors de la zone visible (numéros de page invisibles). */
+  /* L'espacement vertical est calculé via la hauteur inline du spacer,
+     pas via margin-bottom. */
   display: block;
   position: relative;
-  margin: 0 calc(-1 * var(--pm-margin-left, 96px));
   pointer-events: none;
   user-select: none;
 }
@@ -434,21 +449,85 @@
 
 /* ─── Impression — vrais sauts de page CSS ─── */
 @media print {
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    color: black !important;
+    color-scheme: light !important;
+  }
+
+  body:has([data-print-root="business-plan-editor"]) header,
+  body:has([data-print-root="business-plan-editor"]) [data-slot="tabs-list"],
+  body:has([data-print-root="business-plan-editor"]) [data-sonner-toaster],
+  body:has([data-print-root="business-plan-editor"]) #toolbar,
+  body:has([data-print-root="business-plan-editor"]) #text-editor-wrapper > .sticky,
+  body:has([data-print-root="business-plan-editor"]) #text-editor-wrapper aside {
+    display: none !important;
+  }
+
+  body:has([data-print-root="business-plan-editor"]) > div,
+  body:has([data-print-root="business-plan-editor"]) > div > div,
+  body:has([data-print-root="business-plan-editor"]) main,
+  body:has([data-print-root="business-plan-editor"]) [data-slot="tabs"],
+  body:has([data-print-root="business-plan-editor"]) [data-slot="tabs-content"],
+  body:has([data-print-root="business-plan-editor"]) [data-print-shell="business-plan-editor"],
+  body:has([data-print-root="business-plan-editor"]) #text-editor-wrapper,
+  body:has([data-print-root="business-plan-editor"]) #text-editor-wrapper > div:not(.sticky),
+  body:has([data-print-root="business-plan-editor"]) #text-editor-wrapper > div:not(.sticky) > div,
+  body:has([data-print-root="business-plan-editor"]) #text-editor-wrapper > div:not(.sticky) > div > div {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  body:has([data-print-root="business-plan-editor"]) .rm-with-pagination,
+  body:has([data-print-root="business-plan-editor"]) .pm-print-document,
+  body:has([data-print-root="business-plan-editor"]) .pm-print-page {
+    color: black !important;
+  }
+
   .page-editor-bg {
-    background: none;
-    padding: 0;
+    background: transparent !important;
+    padding: 0 !important;
   }
 
-  .ProseMirror {
-    max-width: 100%;
-    min-height: unset;
-    box-shadow: none;
-    padding: 0;
-    margin: 0;
+  .ProseMirror:not(.rm-with-pagination) {
+    max-width: 100% !important;
+    min-width: unset !important;
+    width: 100% !important;
+    min-height: unset !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    color: black !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 
-  /* Sauts manuels */
-  .ProseMirror .page-break {
+  .ProseMirror:not(.rm-with-pagination) th,
+  .ProseMirror:not(.rm-with-pagination) td {
+    background: transparent !important;
+    color: black !important;
+    border-color: rgba(0, 0, 0, 0.55) !important;
+  }
+
+  .ProseMirror .selectedCell::after,
+  .ProseMirror .ProseMirror-selectednode {
+    display: none !important;
+  }
+
+  .ProseMirror:not(.rm-with-pagination) .page-break {
     page-break-after: always;
     break-after: page;
     height: 0;
@@ -457,20 +536,22 @@
     box-shadow: none;
     visibility: hidden;
   }
-
-  /* Sauts automatiques (décoration) */
-  .rm-page-break {
-    display: none;
-  }
 }
 
 /* ─── Tableaux (prosemirror-tables) ─── */
+
+.ProseMirror .tableWrapper {
+  /* overflow-x: auto activé par prosemirror-tables/style/tables.css clipperait
+     le gap du spacer de pagination — on force visible. */
+  overflow: visible !important;
+}
 
 .ProseMirror table {
   border-collapse: collapse;
   table-layout: fixed;
   width: 100%;
-  overflow: hidden;
+  /* PAS de overflow: hidden ici — cela clipperait les spacers de pagination
+     (.pm-page-break__gap) qui débordent horizontalement sur les marges. */
   margin: 0.75rem 0;
 }
 
@@ -481,24 +562,12 @@
   position: relative;
   border: 1px solid var(--border);
   padding: 6px 10px;
-  min-width: 20px;
-  font-size: 12px;
-}
-
-.ProseMirror tr:first-child td {
-  background-color: var(--muted);
+  min-width: 50px;
 }
 
 .ProseMirror th {
   font-weight: 600;
   background-color: var(--muted);
-}
-
-.ProseMirror th:first-child,
-.ProseMirror td:first-child {
-  width: 35%;
-  min-width: 140px;
-  text-align: left;
 }
 
 /* Cellule sélectionnée (prosemirror-tables) */
