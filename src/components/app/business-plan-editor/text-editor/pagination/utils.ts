@@ -9,6 +9,10 @@ export const updateCssVariables = (targetNode: HTMLElement, config: PageConfig):
         "pm-content-margin-bottom": `${config.contentMarginBottom}px`,
         "pm-page-gap-border-color": `${config.pageGapBorderColor}`,
         "pm-page-width": `${config.pageWidth}px`,
+        // Largeur de la zone de contenu (border-box page - marges).
+        // Valeur absolue : garantit le bon calcul y compris dans les cellules de tableau
+        // où `100%` se résout à la largeur d'une seule colonne, pas de tout le tableau.
+        "pm-content-width": `${config.pageWidth - config.marginLeft - config.marginRight}px`,
     };
     Object.entries(cssVariables).forEach(([key, value]) => {
         targetNode.style.setProperty(`--${key}`, value);
@@ -37,20 +41,32 @@ export const getPageSize = (
         pageGapBorderColor,
     };
 };
+
+function queryPaginationMeasureTarget(targetNode: HTMLElement, selector: string): HTMLElement | null {
+    return Array.from(targetNode.querySelectorAll<HTMLElement>(selector)).find(
+        (el) => !el.closest(".pm-print-document")
+    ) ?? null;
+}
+
 export const getHeaderHeight = (
     targetNode: HTMLElement,
     pageNumbers: number[],
     type: "actual" | "content"
 ): Map<number, number> => {
     const headerHeightMap: Map<number, number> = new Map();
-    // Find general header height
-    const clientHeader = targetNode.querySelector(
-        getHeaderHeightSelector(0, type)
-    );
+    // Hauteur générale : page-0 n'existe jamais (les pages commencent à 1).
+    // Fallback sur page-1 (pm-first-page-header sans table des matières).
+    // Quand la table des matières est active, page-1 est la couverture (pas de header) :
+    // on remonte alors jusqu'à page-2 puis page-3 qui sont dans le front-matter widget.
+    const clientHeader =
+        queryPaginationMeasureTarget(targetNode, getHeaderHeightSelector(0, type)) ??
+        queryPaginationMeasureTarget(targetNode, getHeaderHeightSelector(1, type)) ??
+        queryPaginationMeasureTarget(targetNode, getHeaderHeightSelector(2, type)) ??
+        queryPaginationMeasureTarget(targetNode, getHeaderHeightSelector(3, type));
     headerHeightMap.set(0, clientHeader ? clientHeader.clientHeight : 0);
     // Find header height for each page number
     pageNumbers.forEach((pageNumber: number) => {
-        const clientHeader = targetNode.querySelector(
+        const clientHeader = queryPaginationMeasureTarget(targetNode,
             getHeaderHeightSelector(pageNumber, type)
         );
         const headerHeight = clientHeader ? clientHeader.clientHeight : 0;
@@ -68,12 +84,18 @@ export const getFooterHeight = (
     type: HeaderFooterType
 ): Map<number, number> => {
     const footerHeightMap: Map<number, number> = new Map();
-    // Find general footer height
-    const clientFooter = targetNode.querySelector(getFooterHeightSelector(0, type));
+    // Hauteur générale : page-0 n'existe jamais (les pages commencent à 1).
+    // Fallback sur page-1 : présent dans le premier spacer une fois rendu.
+    // Quand la table des matières est active, page-1 est la couverture (pas de footer) :
+    // on remonte alors jusqu'à page-2 qui est dans le front-matter widget.
+    const clientFooter =
+        queryPaginationMeasureTarget(targetNode, getFooterHeightSelector(0, type)) ??
+        queryPaginationMeasureTarget(targetNode, getFooterHeightSelector(1, type)) ??
+        queryPaginationMeasureTarget(targetNode, getFooterHeightSelector(2, type));
     footerHeightMap.set(0, clientFooter ? clientFooter.clientHeight : 0);
     // Find footer height for each page number
     pageNumbers.forEach((pageNumber: number) => {
-        const clientFooter = targetNode.querySelector(getFooterHeightSelector(pageNumber, type));
+        const clientFooter = queryPaginationMeasureTarget(targetNode, getFooterHeightSelector(pageNumber, type));
         const footerHeight = clientFooter ? clientFooter.clientHeight : 0;
         footerHeightMap.set(pageNumber, footerHeight);
     });
@@ -83,132 +105,14 @@ export const getFooterHeightSelector = (pageNumber: number, type: HeaderFooterTy
     return type === "actual" ? `.rm-page-footer-${pageNumber}` : `.rm-page-footer-${pageNumber} .rm-page-footer-content`;
 };
 
-export function deepEqualIterative(a: unknown, b: unknown): boolean {
-    // Quick reference check
-    if (a === b)
-        return true;
-    // One is null or type mismatch
-    if (typeof a !== "object" || typeof b !== "object" || a == null || b == null) {
-        return false;
-    }
-    // Stack for iterative traversal
-    const stack: StackItem[] = [{ x: a, y: b }];
-    while (stack.length) {
-        const _stackItem = stack.pop();
-        if (!_stackItem)
-            continue;
-        const { x, y } = _stackItem;
-        // If primitive mismatch
-        if (x === y)
-            continue;
-        if (typeof x !== typeof y)
-            return false;
-        if (typeof x !== "object")
-            return false;
-        if (x == null || y == null)
-            return false;
-        const xKeys = Object.keys(x as Record<string, unknown>);
-        const yKeys = Object.keys(y as Record<string, unknown>);
-        // Length mismatch
-        if (xKeys.length !== yKeys.length)
-            return false;
-        // Check keys
-        for (const key of xKeys) {
-            if (!(key in (y as Record<string, unknown>)))
-                return false;
-            const xVal = (x as Record<string, unknown>)[key];
-            const yVal = (y as Record<string, unknown>)[key];
-            // Same reference — skip
-            if (xVal === yVal)
-                continue;
-            // Push nested objects/arrays to stack
-            if (typeof xVal === "object" && typeof yVal === "object") {
-                stack.push({ x: xVal, y: yVal });
-            }
-            else {
-                // Primitive compare
-                if (xVal !== yVal)
-                    return false;
-            }
-        }
-    }
-    return true;
+/**
+ * Sanitize une URL d'image pour une utilisation sûre dans `background-image` et `src`.
+ * Seuls http(s), les chemins absolus "/" et data:image/ sont acceptés.
+ */
+export function sanitizeBgUrl(url: string): string {
+    if (!url) return "";
+    const trimmed = url.trim();
+    if (!/^(https?:\/\/|\/[^/]|data:image\/)/i.test(trimmed)) return "";
+    return trimmed.replace(/['")]/g, "");
 }
-export function getFooter(
-    footerRightContent: string,
-    footerLeftContent: string,
-    onFooterClick: HeaderFooterClickHandler | undefined,
-    pageNumber: number
-): HTMLDivElement {
-    const pageFooter = document.createElement("div");
-    pageFooter.classList.add("rm-page-footer");
-    pageFooter.classList.add(`rm-page-footer-${pageNumber ? pageNumber : 0}`);
-    pageFooter.style.overflow = "visible";
-    pageFooter.style.position = "relative";
-    pageFooter.style.cursor = "pointer";
-    const pageFooterContent = document.createElement("div");
-    pageFooterContent.classList.add("rm-page-footer-content");
-    pageFooterContent.style.width = "100%";
-    pageFooterContent.style.overflow = "hidden";
-    const footerRight = footerRightContent.replace("{page}", `<span class="rm-page-number"></span>`);
-    const footerLeft = footerLeftContent.replace("{page}", `<span class="rm-page-number"></span>`);
-    const pageFooterLeft = document.createElement("div");
-    pageFooterLeft.classList.add("rm-page-footer-left");
-    pageFooterLeft.innerHTML = footerLeft;
-    const pageFooterRight = document.createElement("div");
-    pageFooterRight.classList.add("rm-page-footer-right");
-    pageFooterRight.innerHTML = footerRight;
-    pageFooterContent.append(pageFooterLeft, pageFooterRight);
-    pageFooter.append(pageFooterContent);
-    pageFooter.addEventListener("click", (event: MouseEvent) => {
-        onFooterClick?.({ event, pageNumber });
-    });
-    return pageFooter;
-}
-export function getHeader(
-    headerRightContent: string,
-    headerLeftContent: string,
-    onHeaderClick: HeaderFooterClickHandler | undefined,
-    pageNumber: number
-): HTMLDivElement {
-    const pageHeader = document.createElement("div");
-    pageHeader.classList.add("rm-page-header");
-    pageHeader.classList.add(`rm-page-header-${pageNumber ? pageNumber : 0}`);
-    pageHeader.style.overflow = "hidden";
-    pageHeader.style.cursor = "pointer";
-    pageHeader.style.position = "relative";
-    const pageHeaderContent = document.createElement("div");
-    pageHeaderContent.classList.add("rm-page-header-content");
-    pageHeaderContent.style.width = "100%";
-    pageHeaderContent.style.overflow = "hidden";
-    const headerLeft = headerLeftContent.replace("{page}", `<span class="rm-page-number-plus"></span>`);
-    const headerRight = headerRightContent.replace("{page}", `<span class="rm-page-number-plus"></span>`);
-    const pageHeaderLeft = document.createElement("div");
-    pageHeaderLeft.classList.add("rm-page-header-left");
-    pageHeaderLeft.innerHTML = headerLeft;
-    const pageHeaderRight = document.createElement("div");
-    pageHeaderRight.classList.add("rm-page-header-right");
-    pageHeaderRight.innerHTML = headerRight;
-    pageHeaderContent.append(pageHeaderLeft, pageHeaderRight);
-    pageHeader.append(pageHeaderContent);
-    pageHeader.addEventListener("click", (event: MouseEvent) => {
-        onHeaderClick?.({ event, pageNumber });
-    });
-    return pageHeader;
-}
-
-export const getHeight = (
-    pageOptions: PageConfig,
-    _headerHeight: number,
-    _footerHeight: number
-): HeightCalculationResult => {
-    const _pageHeaderHeight = pageOptions.contentMarginTop + pageOptions.marginTop + _headerHeight;
-    const _pageFooterHeight = pageOptions.contentMarginBottom + pageOptions.marginBottom + _footerHeight;
-    const _pageHeight = pageOptions.pageHeight - _pageHeaderHeight - _pageFooterHeight;
-    return {
-        _pageHeaderHeight,
-        _pageFooterHeight,
-        _pageHeight,
-    };
-};
 

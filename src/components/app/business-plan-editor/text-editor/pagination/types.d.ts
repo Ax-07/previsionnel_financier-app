@@ -20,18 +20,10 @@ interface CssVariables {
     "pm-content-margin-bottom": string;
     "pm-page-gap-border-color": string;
     "pm-page-width": string;
+    "pm-content-width": string;
 }
 
 type HeaderFooterType = "actual" | "content";
-
-interface StackItem {
-    x: unknown;
-    y: unknown;
-}
-
-interface CustomHeaderFooterMap {
-    [key: string]: string;
-}
 
 interface HeaderFooterClickEvent {
     event: MouseEvent;
@@ -39,9 +31,3 @@ interface HeaderFooterClickEvent {
 }
 
 type HeaderFooterClickHandler = (event: HeaderFooterClickEvent) => void;
-
-interface HeightCalculationResult {
-    _pageHeaderHeight: number;
-    _pageFooterHeight: number;
-    _pageHeight: number;
-}
